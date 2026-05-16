@@ -351,13 +351,12 @@ No analytics. No telemetry. No accounts.
 
 ## Roadmap
 
-- [ ] Web Worker model initialization (non-blocking UI during load)
+- [ ] Angular app and add PWA and Web Worker
 - [ ] Chat history persistence via `localStorage` or IndexedDB
 - [ ] Model switcher without page reload
 - [ ] Voice input on Chat and Translate tabs
 - [ ] Export meeting summary as `.txt` / `.md`
-- [ ] Custom system prompt editor per tab
-- [ ] LoRA adapter support (dynamic rank injection)
+- [ ] Handle diverse model based on task
 - [ ] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
 
 ---

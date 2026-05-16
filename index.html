@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LocalAI Studio — On-Device Intelligence</title>
+<title>Ines</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
@@ -912,54 +912,54 @@
 <div id="status-bar">
   <div class="brand">
     <div class="brand-dot"></div>
-    LocalAI Studio
+    Ines
   </div>
   <div id="model-status">
     <div class="status-dot" id="dot"></div>
-    <span id="status-text">Nessun modello caricato</span>
-    <button class="pill-btn" id="load-model-btn" style="margin-left:8px">⚡ Carica modello</button>
+    <span id="status-text">No model loaded</span>
+    <button class="pill-btn" id="load-model-btn" style="margin-left:8px">⚡ Load Model</button>
   </div>
 </div>
 
 <!-- ─── MODEL LOADER OVERLAY ─── -->
 <div id="loader-overlay">
-  <div class="loader-logo">LocalAI Studio</div>
+  <div class="loader-logo">Intelligent Neural Edge System</div>
   <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
 
   <div class="loader-box">
-    <h2>Carica un modello LLM locale</h2>
+    <h2>Load a local LLM model</h2>
     <p>
-      Questo tool usa <strong>Google MediaPipe LLM Inference API</strong> per eseguire modelli
-      completamente nel browser via WebGPU — nessun dato inviato a server esterni.
+      This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models
+      completely in the browser via WebGPU — no data sent to external servers.
     </p>
 
     <div class="model-steps">
       <div class="model-step">
         <div class="step-num">1</div>
-        <div>Scarica un modello compatibile da HuggingFace:
-          <br><a href="https://huggingface.co/litert-community/Gemma3-1B-IT" target="_blank">Gemma-3 1B IT (.task, ~1GB, raccomandato)</a>
-          <br><a href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm" target="_blank">Gemma-3n E2B (.litertlm, ~2GB, multimodale)</a>
+        <div>Download a compatible model from HuggingFace:
+          <br><a href="https://huggingface.co/litert-community/Gemma3-1B-IT" target="_blank">Gemma-3 1B IT (.task, ~1GB, recommended)</a>
+          <br><a href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm" target="_blank">Gemma-3n E2B (.litertlm, ~2GB, multimodal)</a>
         </div>
       </div>
       <div class="model-step">
         <div class="step-num">2</div>
-        <div>Trascina il file .task o .litertlm qui sotto (rimane 100% locale)</div>
+        <div>Drag and drop the .task or .litertlm file here (remains 100% local)</div>
       </div>
       <div class="model-step">
         <div class="step-num">3</div>
-        <div>Richiede Chrome/Edge con <strong>WebGPU abilitato</strong></div>
+        <div>Requires Chrome/Edge with <strong>WebGPU enabled</strong></div>
       </div>
     </div>
 
     <div class="file-drop-zone" id="drop-zone">
       <input type="file" id="model-file-input" accept=".task,.litertlm,.bin">
-      <div id="drop-text">📦 Trascina qui il file del modello o clicca per selezionarlo</div>
+      <div id="drop-text">📦 Drag and drop the model file here or click to select it</div>
     </div>
 
     <div id="progress-bar-wrap">
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="progress-text">
-        <span id="progress-label">Inizializzazione...</span>
+        <span id="progress-label">Initializing...</span>
         <span id="progress-pct">0%</span>
       </div>
     </div>
@@ -1001,22 +1001,22 @@
     <div class="tab-panel active" id="panel-chat">
       <div class="panel-header">
         <div>
-          <div class="panel-title"><span class="panel-title-icon">💬</span> Assistente Generale</div>
-          <div class="panel-desc">Gemma on-device · privato · offline</div>
+          <div class="panel-title"><span class="panel-title-icon">💬</span> General Assistant</div>
+          <div class="panel-desc">Gemma on-device · private · offline</div>
         </div>
-        <button class="pill-btn" onclick="clearChat('chat')">🗑 Pulisci</button>
+        <button class="pill-btn" onclick="clearChat('chat')">🗑 Clear</button>
       </div>
       <div class="chat-area" id="chat-messages">
         <div class="message ai">
           <div class="msg-avatar">G</div>
-          <div class="msg-bubble">Ciao! Sono Gemma, un modello AI che gira direttamente nel tuo browser. Tutto ciò che scrivi rimane privato sul tuo dispositivo. Come posso aiutarti?</div>
+          <div class="msg-bubble">Hi! I’m Gemma, an AI model that runs directly in your browser. Everything you write stays private on your device. How can I help you?</div>
         </div>
       </div>
       <div class="token-info" id="chat-token-info"></div>
       <div class="input-zone">
-        <textarea class="input-field" id="chat-input" placeholder="Scrivi un messaggio..." rows="1"
+        <textarea class="input-field" id="chat-input" placeholder="Write a message..." rows="1"
           onkeydown="handleChatKey(event,'chat')"></textarea>
-        <button class="send-btn" id="chat-send" onclick="sendChat('chat')" title="Invia (Enter)">➤</button>
+        <button class="send-btn" id="chat-send" onclick="sendChat('chat')" title="Send (Enter)">➤</button>
       </div>
     </div>
 
@@ -1025,40 +1025,40 @@
       <div class="panel-header">
         <div>
           <div class="panel-title"><span class="panel-title-icon">✉️</span> Email Assistant</div>
-          <div class="panel-desc">Riscrivi, migliora e adatta il tono delle tue email</div>
+          <div class="panel-desc">Rewrite, improve and adapt the tone of your emails</div>
         </div>
-        <button class="pill-btn" onclick="clearEmail()">🗑 Pulisci</button>
+        <button class="pill-btn" onclick="clearEmail()">🗑 Clear</button>
       </div>
       <div class="controls-row">
         <select class="pill-select" id="email-tone">
-          <option value="professional">🎩 Professionale</option>
-          <option value="friendly">😊 Amichevole</option>
-          <option value="assertive">💪 Diretto/Assertivo</option>
-          <option value="formal">📜 Formale</option>
-          <option value="concise">⚡ Breve e Conciso</option>
+          <option value="professional">🎩 Professional</option>
+          <option value="friendly">😊 Friendly</option>
+          <option value="assertive">💪 Assertive</option>
+          <option value="formal">📜 Formal</option>
+          <option value="concise">⚡ Short and Concise</option>
         </select>
         <select class="pill-select" id="email-action">
-          <option value="improve">✨ Migliora</option>
-          <option value="fix">🔧 Correggi grammatica</option>
-          <option value="shorten">✂️ Accorcia</option>
-          <option value="formal">🎩 Rendi formale</option>
-          <option value="reply">↩️ Scrivi risposta</option>
-          <option value="summary">📋 Riassumi</option>
+          <option value="improve">✨ Improve</option>
+          <option value="fix">🔧 Fix grammar</option>
+          <option value="shorten">✂️ Shorten</option>
+          <option value="formal">🎩 Formal</option>
+          <option value="reply">↩️ Reply</option>
+          <option value="summary">📋 Summary</option>
         </select>
-        <button class="pill-btn" onclick="processEmail()" id="email-process-btn">⚡ Elabora</button>
+        <button class="pill-btn" onclick="processEmail()" id="email-process-btn">⚡ Process</button>
       </div>
       <div class="email-input-area">
         <textarea class="email-original" id="email-input"
-          placeholder="Incolla qui l'email da migliorare o elaborare..."></textarea>
+          placeholder="Paste the email to improve or process here..."></textarea>
         <div class="email-result">
           <div class="email-result-label">
-            <span>✦ RISULTATO</span>
-            <button class="pill-btn" onclick="copyEmailResult()" id="email-copy-btn" style="display:none">📋 Copia</button>
+            <span>✦ RESULT</span>
+            <button class="pill-btn" onclick="copyEmailResult()" id="email-copy-btn" style="display:none">📋 Copy</button>
           </div>
           <div class="email-result-content" id="email-result">
             <div class="empty-state">
               <div class="empty-icon">✉️</div>
-              <div class="empty-text">Incolla un'email sopra, scegli il tono e l'azione, poi premi Elabora</div>
+              <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
             </div>
           </div>
         </div>
@@ -1070,27 +1070,27 @@
       <div class="panel-header">
         <div>
           <div class="panel-title"><span class="panel-title-icon">🎙️</span> Meeting Recorder</div>
-          <div class="panel-desc">Trascrizione vocale + riassunto automatico AI</div>
+          <div class="panel-desc">Vocal transcription + AI-generated summary</div>
         </div>
-        <button class="pill-btn" onclick="clearMeeting()">🗑 Pulisci</button>
+        <button class="pill-btn" onclick="clearMeeting()">🗑 Clear</button>
       </div>
       <div class="meeting-layout">
         <div class="meeting-transcript">
           <div class="meeting-pane-label">
-            <span>📝 TRASCRIZIONE</span>
+            <span>📝 TRANSCRIPTION</span>
             <button class="pill-btn" style="font-size:10px" onclick="copyText(document.getElementById('transcript-content').textContent)">📋</button>
           </div>
           <div class="meeting-scroll" id="transcript-content"></div>
         </div>
         <div class="meeting-summary">
           <div class="meeting-pane-label">
-            <span>✨ RIASSUNTO AI</span>
+            <span>✨ AI SUMMARY</span>
             <button class="pill-btn" style="font-size:10px" onclick="copyText(document.getElementById('summary-content').textContent)">📋</button>
           </div>
           <div class="meeting-scroll" id="summary-content">
             <div class="empty-state" style="height:100%">
               <div class="empty-icon">🤖</div>
-              <div class="empty-text">Il riassunto apparirà automaticamente dopo aver fermato la registrazione</div>
+              <div class="empty-text">The summary will appear automatically after stopping the recording</div>
             </div>
           </div>
         </div>
@@ -1098,11 +1098,11 @@
       <div class="meeting-controls">
         <button class="record-btn" id="record-btn" onclick="toggleRecording()">
           <div class="record-dot"></div>
-          <span id="record-label">Avvia Registrazione</span>
+          <span id="record-label">Start Recording</span>
         </button>
         <span id="record-timer" style="font-family:var(--font-mono);font-size:12px;color:var(--text-2)"></span>
         <div style="flex:1"></div>
-        <button class="pill-btn" onclick="summarizeMeeting()" id="summarize-btn">✨ Riassumi Ora</button>
+        <button class="pill-btn" onclick="summarizeMeeting()" id="summarize-btn">✨ Summarize Now</button>
       </div>
     </div>
 
@@ -1110,8 +1110,8 @@
     <div class="tab-panel" id="panel-translate">
       <div class="panel-header">
         <div>
-          <div class="panel-title"><span class="panel-title-icon">🌍</span> Traduttore</div>
-          <div class="panel-desc">Traduci testi tra qualsiasi lingua — completamente offline</div>
+          <div class="panel-title"><span class="panel-title-icon">🌍</span> Translator</div>
+          <div class="panel-desc">Translate text between any language — completely offline</div>
         </div>
       </div>
       <div class="translate-layout">
@@ -1119,7 +1119,7 @@
           <div class="translate-side">
             <div class="translate-lang-bar">
               <select class="pill-select" id="lang-from" style="flex:1">
-                <option value="auto">🔍 Rileva automaticamente</option>
+                <option value="auto">🔍 Automatically detect language</option>
                 <option value="Italian">🇮🇹 Italiano</option>
                 <option value="English">🇬🇧 English</option>
                 <option value="French">🇫🇷 Français</option>
@@ -1133,12 +1133,12 @@
               </select>
             </div>
             <textarea class="translate-textarea" id="translate-input"
-              placeholder="Testo da tradurre..."
+              placeholder="Text to translate..."
               oninput="autoTranslate()"></textarea>
           </div>
           <div class="translate-side">
             <div class="translate-lang-bar">
-              <button class="swap-btn" onclick="swapLangs()" title="Scambia lingue">⇄</button>
+              <button class="swap-btn" onclick="swapLangs()" title="Swap languages">⇄</button>
               <select class="pill-select" id="lang-to" style="flex:1">
                 <option value="English">🇬🇧 English</option>
                 <option value="Italian">🇮🇹 Italiano</option>
@@ -1154,13 +1154,13 @@
               <button class="pill-btn" style="font-size:10px" onclick="copyText(document.getElementById('translate-result').textContent)">📋</button>
             </div>
             <div class="translate-result-area" id="translate-result">
-              <span style="color:var(--text-2)">La traduzione apparirà qui...</span>
+              <span style="color:var(--text-2)">The translation will appear here...</span>
             </div>
           </div>
         </div>
         <div class="translate-bar">
-          <button class="send-btn" onclick="doTranslate()" style="width:auto;padding:0 18px;border-radius:var(--radius-sm)">🌍 Traduci</button>
-          <button class="pill-btn" onclick="document.getElementById('translate-input').value='';document.getElementById('translate-result').innerHTML='<span style=color:var(--text-2)>La traduzione apparirà qui...</span>'">🗑 Pulisci</button>
+          <button class="send-btn" onclick="doTranslate()" style="width:auto;padding:0 18px;border-radius:var(--radius-sm)">🌍 Translate</button>
+          <button class="pill-btn" onclick="document.getElementById('translate-input').value='';document.getElementById('translate-result').innerHTML='<span style=color:var(--text-2)>The translation will appear here...</span>'">🗑 Clear</button>
         </div>
       </div>
     </div>
@@ -1170,11 +1170,11 @@
       <div class="panel-header">
         <div>
           <div class="panel-title"><span class="panel-title-icon">✅</span> Daily Planner</div>
-          <div class="panel-desc">Organizza la giornata con l'aiuto dell'AI</div>
+          <div class="panel-desc">Organize your day with the help of the AI</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span id="todo-counter" style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)"></span>
-          <button class="pill-btn" onclick="clearDone()">🧹 Rimuovi completati</button>
+          <button class="pill-btn" onclick="clearDone()">🧹 Remove completed</button>
         </div>
       </div>
       <div class="todo-layout">
@@ -1182,27 +1182,27 @@
           <div class="todo-list" id="todo-list">
             <div class="empty-state" id="todo-empty">
               <div class="empty-icon">📋</div>
-              <div class="empty-text">Nessun task. Aggiungine uno manualmente o chiedi all'AI di pianificare la tua giornata!</div>
+              <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
             </div>
           </div>
           <div class="todo-add-row">
-            <input class="todo-input" id="todo-manual-input" placeholder="Aggiungi un task manualmente..."
+            <input class="todo-input" id="todo-manual-input" placeholder="Add a task manually..."
               onkeydown="if(event.key==='Enter')addManualTodo()">
             <select class="pill-select" id="todo-priority">
-              <option value="normal">normale</option>
-              <option value="priority">🔥 priorità</option>
+              <option value="normal">normal</option>
+              <option value="priority">🔥 priority</option>
             </select>
-            <button class="add-btn" onclick="addManualTodo()">+ Aggiungi</button>
+            <button class="add-btn" onclick="addManualTodo()">+ Add</button>
           </div>
         </div>
         <div class="todo-right">
-          <div class="meeting-pane-label">🤖 GENERA CON AI</div>
+          <div class="meeting-pane-label">🤖 GENERATE WITH AI</div>
           <div class="chat-area" id="todo-ai-chat" style="gap:10px"></div>
           <div class="todo-ai-input-area">
             <textarea class="todo-ai-textarea" id="todo-ai-input"
-              placeholder="Descrivi la tua giornata o chiedi di pianificare attività specifiche...&#10;Es: 'Ho una demo alle 15, revisione codice e call col team'"
+              placeholder="Describe your day or ask to plan specific activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();generateTodos()}"></textarea>
-            <button class="add-btn" style="align-self:flex-end" onclick="generateTodos()">✨ Genera Piano</button>
+            <button class="add-btn" style="align-self:flex-end" onclick="generateTodos()">✨ Generate Plan</button>
           </div>
         </div>
       </div>
@@ -1269,20 +1269,20 @@ function setStatus(state, text) {
 }
 
 async function initModel(file) {
-  setStatus('loading', 'Caricamento MediaPipe...');
+  setStatus('loading', 'Loading MediaPipe...');
   document.getElementById('progress-bar-wrap').classList.add('visible');
   document.getElementById('drop-text').textContent = `📦 ${file.name} (${(file.size/1024/1024).toFixed(0)} MB)`;
-  updateProgress(10, 'Inizializzazione WASM runtime...');
+  updateProgress(10, 'Initializing WASM runtime...');
 
   try {
     const genai = await FilesetResolver.forGenAiTasks(
       'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
     );
-    updateProgress(40, 'WASM pronto. Lettura file in memoria...');
+    updateProgress(40, 'WASM ready. Reading file into memory...');
 
     // Read file as ArrayBuffer — blob URLs are not fetchable by the WASM runtime
     const modelBuffer = await file.arrayBuffer();
-    updateProgress(60, 'Caricamento modello in GPU (30-90s)...');
+    updateProgress(60, 'Loading model into GPU (30-90s)...');
 
     llmInference = await LlmInference.createFromOptions(genai, {
       baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
@@ -1292,7 +1292,7 @@ async function initModel(file) {
       randomSeed: 101,
     });
 
-    updateProgress(100, 'Modello pronto!');
+    updateProgress(100, 'Model ready!');
     llmReady = true;
     setStatus('ready', `✓ ${file.name.replace(/\.(task|litertlm|bin)$/,'')}`);
 
@@ -1301,10 +1301,10 @@ async function initModel(file) {
     }, 600);
 
   } catch (err) {
-    setStatus('error', '✗ Errore: ' + err.message);
+    setStatus('error', '✗ Error: ' + err.message);
     updateProgress(0, '❌ ' + err.message);
     console.error('Model init error:', err);
-    showToast('❌ Errore caricamento modello: ' + err.message);
+    showToast('❌ Error loading model: ' + err.message);
   }
 }
 
@@ -1317,7 +1317,7 @@ function updateProgress(pct, label) {
 // ── Core LLM helper (streaming) ────────────────────────
 async function generate(prompt, onToken, signal) {
   if (!llmReady || !llmInference) {
-    throw new Error('Modello non caricato. Clicca "Carica modello" per iniziare.');
+    throw new Error('Model not loaded. Click "Load Model" to get started.');
   }
   return new Promise((resolve, reject) => {
     let full = '';
@@ -1355,9 +1355,9 @@ document.querySelectorAll('.input-field').forEach(el => {
 //  TAB 1: CHAT
 // ════════════════════════════════════════════════════════
 
-const SYSTEM_CHAT = `Sei un assistente AI generale, utile, preciso e amichevole.
-Rispondi in modo conciso ma completo. Usa la stessa lingua dell'utente.
-Non menzionare che sei un modello AI open-source a meno che non venga chiesto.`;
+const SYSTEM_CHAT = `You're a general AI assistant, helpful, precise, and friendly.
+Respond concisely but completely. Use the same language as the user.
+Don't mention that you're an open-source AI model unless asked.`;
 
 function handleChatKey(e, tab) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(tab); }
@@ -1370,7 +1370,7 @@ async function sendChat(tab) {
   if (!text) return;
 
   if (!llmReady) {
-    showToast('⚠️ Carica prima il modello!');
+    showToast('⚠️ Load the model first!');
     document.getElementById('loader-overlay').classList.remove('hidden');
     return;
   }
@@ -1413,7 +1413,7 @@ async function sendChat(tab) {
     });
     if (aiMsg) chatHistory.push({ role: 'assistant', content: aiMsg });
     document.getElementById('chat-token-info').textContent =
-      `${chatHistory.length} messaggi in cronologia`;
+      `${chatHistory.length} messages in history`;
   } catch(e) {
     removeElement(typingId);
     addMessage('chat-messages', 'ai', '❌ ' + e.message);
@@ -1428,7 +1428,7 @@ function clearChat(tab) {
   const el = document.getElementById('chat-messages');
   el.innerHTML = `<div class="message ai">
     <div class="msg-avatar">G</div>
-    <div class="msg-bubble">Chat resettata. Come posso aiutarti?</div>
+    <div class="msg-bubble">Chat cleaned. Can I help you?</div>
   </div>`;
   document.getElementById('chat-token-info').textContent = '';
 }
@@ -1437,29 +1437,29 @@ function clearChat(tab) {
 //  TAB 2: EMAIL
 // ════════════════════════════════════════════════════════
 
-const SYSTEM_EMAIL = `Sei un esperto di comunicazione aziendale e scrittura professionale.
-Il tuo compito è elaborare email secondo le istruzioni.
-Rispondi SOLO con il testo elaborato dell'email, senza spiegazioni aggiuntive, senza intestazioni come "Ecco la tua email:" ecc.
-Usa la lingua del testo originale.`;
+const SYSTEM_EMAIL = `You are a professional in corporate communication and professional writing.
+Your task is to edit emails according to the instructions.
+Respond ONLY with the edited email text, without additional explanations or headers like "Here is your email:" etc.
+Use the language of the original text.`;
 
 async function processEmail() {
   const emailText = document.getElementById('email-input').value.trim();
-  if (!emailText) { showToast('⚠️ Inserisci prima il testo dell\'email'); return; }
-  if (!llmReady) { showToast('⚠️ Carica prima il modello!'); return; }
+  if (!emailText) { showToast('⚠️ Insert the email text first'); return; }
+  if (!llmReady) { showToast('⚠️ Load the model first!'); return; }
 
   const tone = document.getElementById('email-tone').value;
   const action = document.getElementById('email-action').value;
   const btn = document.getElementById('email-process-btn');
-  btn.disabled = true; btn.textContent = '⏳ Elaborazione...';
+  btn.disabled = true; btn.textContent = '⏳ Elaboration...';
 
-  const toneMap = { professional:'professionale', friendly:'amichevole', assertive:'diretto e assertivo', formal:'formale', concise:'breve e conciso' };
+  const toneMap = { professional:'professional', friendly:'friendly', assertive:'assertive', formal:'formal', concise:'concise' };
   const actionMap = {
-    improve: `Migliora questa email mantenendo il messaggio principale ma rendendola più ${toneMap[tone]}.`,
-    fix: `Correggi tutti gli errori grammaticali e ortografici di questa email.`,
-    shorten: `Riduci questa email alla metà mantenendo i punti essenziali, con tono ${toneMap[tone]}.`,
-    formal: `Rendi questa email più formale e professionale.`,
-    reply: `Scrivi una risposta appropriata a questa email, con tono ${toneMap[tone]}.`,
-    summary: `Riassumi in 3-5 punti bullet i punti chiave di questa email.`
+    improve: `Improve this email while keeping the main message but making it more ${toneMap[tone]}.`,
+    fix: `Fix all grammatical and spelling errors in this email.`,
+    shorten: `Shorten this email to half its length while keeping the essential points, with a ${toneMap[tone]} tone.`,
+    formal: `Make this email more formal and professional.`,
+    reply: `Write an appropriate response to this email, with a ${toneMap[tone]} tone.`,
+    summary: `Summarize the key points of this email in 3-5 bullet points.`
   };
 
   const prompt = buildPrompt(SYSTEM_EMAIL, `${actionMap[action]}\n\nEMAIL:\n${emailText}`);
@@ -1479,7 +1479,7 @@ async function processEmail() {
     resultEl.innerHTML = `<span style="color:var(--accent-rose)">❌ ${escapeHtml(e.message)}</span>`;
   }
 
-  btn.disabled = false; btn.textContent = '⚡ Elabora';
+  btn.disabled = false; btn.textContent = '⚡ Elaborate';
 }
 
 function copyEmailResult() {
@@ -1491,7 +1491,7 @@ function clearEmail() {
   document.getElementById('email-input').value = '';
   document.getElementById('email-result').innerHTML = `<div class="empty-state">
     <div class="empty-icon">✉️</div>
-    <div class="empty-text">Incolla un'email sopra, scegli il tono e l'azione, poi premi Elabora</div>
+    <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
   </div>`;
   document.getElementById('email-copy-btn').style.display = 'none';
 }
@@ -1500,14 +1500,14 @@ function clearEmail() {
 //  TAB 3: MEETING RECORDER
 // ════════════════════════════════════════════════════════
 
-const SYSTEM_MEETING = `Sei un assistente specializzato nell'analisi di meeting aziendali.
-Data una trascrizione di una riunione, produci:
-1. **PUNTI CHIAVE** (3-6 bullet point dei temi discussi)
-2. **DECISIONI PRESE** (cosa è stato deciso)
-3. **ACTION ITEMS** (chi deve fare cosa, se disponibile)
-4. **PROSSIMI PASSI**
+const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
+Given a transcript of a meeting, produce:
+1. **KEY POINTS** (3-6 bullet points of the topics discussed)
+2. **DECISIONS MADE** (what was decided)
+3. **ACTION ITEMS** (who must do what, if available)
+4. **NEXT STEPS**
 
-Sii conciso e usa la lingua della trascrizione. Formatta il risultato in modo chiaro.`;
+Be concise and use the language of the transcript. Format the result clearly.`;
 
 function toggleRecording() {
   if (recordingActive) stopRecording();
@@ -1516,7 +1516,7 @@ function toggleRecording() {
 
 function startRecording() {
   if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-    showToast('⚠️ Web Speech API non supportata in questo browser');
+    showToast('⚠️ Web Speech API not supported in this browser');
     return;
   }
 
@@ -1524,7 +1524,7 @@ function startRecording() {
   recognition = new SR();
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = navigator.language || 'it-IT';
+  recognition.lang = navigator.language || 'en-EN';
 
   recognition.onresult = (e) => {
     let interim = '';
@@ -1541,7 +1541,7 @@ function startRecording() {
   };
 
   recognition.onerror = (e) => {
-    if (e.error !== 'no-speech') showToast('⚠️ Errore microfono: ' + e.error);
+    if (e.error !== 'no-speech') showToast('⚠️ Error on microphone: ' + e.error);
   };
 
   recognition.onend = () => {
@@ -1553,7 +1553,7 @@ function startRecording() {
   recordSeconds = 0;
   const btn = document.getElementById('record-btn');
   btn.classList.add('recording');
-  document.getElementById('record-label').textContent = 'Ferma Registrazione';
+  document.getElementById('record-label').textContent = 'Stop Registration';
 
   recordTimer = setInterval(() => {
     recordSeconds++;
@@ -1568,7 +1568,7 @@ function stopRecording() {
   recordingActive = false;
   clearInterval(recordTimer);
   document.getElementById('record-btn').classList.remove('recording');
-  document.getElementById('record-label').textContent = 'Avvia Registrazione';
+  document.getElementById('record-label').textContent = 'Start Recording';
 
   if (fullTranscript.trim() && llmReady) {
     setTimeout(summarizeMeeting, 500);
@@ -1577,13 +1577,13 @@ function stopRecording() {
 
 async function summarizeMeeting() {
   const text = fullTranscript.trim() || document.getElementById('transcript-content').textContent.trim();
-  if (!text) { showToast('⚠️ Nessuna trascrizione disponibile'); return; }
-  if (!llmReady) { showToast('⚠️ Carica prima il modello!'); return; }
+  if (!text) { showToast('⚠️ No transcript available'); return; }
+  if (!llmReady) { showToast('⚠️ Load the model first!'); return; }
 
   const summaryEl = document.getElementById('summary-content');
   summaryEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
 
-  const prompt = buildPrompt(SYSTEM_MEETING, `TRASCRIZIONE MEETING:\n${text}`);
+  const prompt = buildPrompt(SYSTEM_MEETING, `TRANSCRIPT OF THE MEETING:\n${text}`);
 
   try {
     await generate(prompt, (partial, done, full) => {
@@ -1600,7 +1600,7 @@ function clearMeeting() {
   document.getElementById('transcript-content').textContent = '';
   document.getElementById('summary-content').innerHTML = `<div class="empty-state" style="height:100%">
     <div class="empty-icon">🤖</div>
-    <div class="empty-text">Il riassunto apparirà automaticamente dopo aver fermato la registrazione</div>
+    <div class="empty-text">The summary will appear automatically after stopping the recording</div>
   </div>`;
   document.getElementById('record-timer').textContent = '';
 }
@@ -1609,9 +1609,9 @@ function clearMeeting() {
 //  TAB 4: TRANSLATE
 // ════════════════════════════════════════════════════════
 
-const SYSTEM_TRANSLATE = `Sei un traduttore professionale.
-Traduci il testo dato ESATTAMENTE come richiesto, preservando stile, tono e formattazione.
-Rispondi SOLO con il testo tradotto, senza spiegazioni, senza indicare la lingua, senza aggiungere nulla.`;
+const SYSTEM_TRANSLATE = `You are a professional translator.
+Translate the given text EXACTLY as requested, preserving style, tone and formatting.
+Respond ONLY with the translated text, without explanations, without indicating the language, without adding anything else.`;
 
 let translateDebounce = null;
 
@@ -1626,13 +1626,13 @@ function autoTranslate() {
 async function doTranslate() {
   const text = document.getElementById('translate-input').value.trim();
   if (!text) return;
-  if (!llmReady) { showToast('⚠️ Carica prima il modello!'); return; }
+  if (!llmReady) { showToast('⚠️ Load the model first!'); return; }
 
   const fromLang = document.getElementById('lang-from').value;
   const toLang = document.getElementById('lang-to').value;
 
-  const sourceDesc = fromLang === 'auto' ? 'lingua rilevata automaticamente' : fromLang;
-  const instruction = `Traduci il seguente testo da ${sourceDesc} a ${toLang}:\n\n${text}`;
+  const sourceDesc = fromLang === 'auto' ? 'language detected automatically' : fromLang;
+  const instruction = `Translate the following text from ${sourceDesc} to ${toLang}:\n\n${text}`;
 
   const resultEl = document.getElementById('translate-result');
   resultEl.innerHTML = '<span class="cursor-blink" style="color:var(--text-2)"> </span>';
@@ -1665,7 +1665,7 @@ function swapLangs() {
   // Swap text
   const sourceText = document.getElementById('translate-input').value;
   document.getElementById('translate-input').value = resultText;
-  document.getElementById('translate-result').innerHTML = '<span style="color:var(--text-2)">La traduzione apparirà qui...</span>';
+  document.getElementById('translate-result').innerHTML = '<span style="color:var(--text-2)">The translation will appear here...</span>';
   if (resultText.length > 3) doTranslate();
 }
 
@@ -1673,19 +1673,19 @@ function swapLangs() {
 //  TAB 5: TODO
 // ════════════════════════════════════════════════════════
 
-const SYSTEM_TODO = `Sei un assistente per la pianificazione e produttività.
-Il tuo compito è generare una lista di task per la giornata basandoti su quello che l'utente descrive.
+const SYSTEM_TODO = `You are a productivity assistant for planning.
+Your task is to generate a list of tasks for the day based on what the user describes.
 
-Rispondi SOLO con un oggetto JSON (niente altro, niente markdown, niente backtick) in questo formato:
+Respond ONLY with a JSON object (nothing else, no markdown, no backticks) in this format:
 {
   "tasks": [
-    {"text": "Descrizione task", "priority": "normal"},
-    {"text": "Descrizione task urgente", "priority": "priority"}
+    {"text": "Task description", "priority": "normal"},
+    {"text": "Urgent task description", "priority": "priority"}
   ],
-  "message": "Breve messaggio motivazionale (1 frase)"
+  "message": "Brief motivational message (1 sentence)"
 }
 
-Genera da 4 a 8 task concreti, specifici e realistici. "priority" può essere "normal" o "priority".`;
+Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "normal" or "priority".`;
 
 renderTodos();
 
@@ -1750,8 +1750,8 @@ function saveTodos() {
 
 async function generateTodos() {
   const description = document.getElementById('todo-ai-input').value.trim();
-  if (!description) { showToast('⚠️ Descrivi cosa hai da fare oggi'); return; }
-  if (!llmReady) { showToast('⚠️ Carica prima il modello!'); return; }
+  if (!description) { showToast('⚠️ Describe what you have to do today'); return; }
+  if (!llmReady) { showToast('⚠️ Load the model first!'); return; }
 
   const aiChat = document.getElementById('todo-ai-chat');
   addMessageTo(aiChat, 'user', description);
@@ -1767,7 +1767,7 @@ async function generateTodos() {
 
   document.getElementById('todo-ai-input').value = '';
 
-  const prompt = buildPrompt(SYSTEM_TODO, `Oggi ho da fare: ${description}. Pianifica la mia giornata.`);
+  const prompt = buildPrompt(SYSTEM_TODO, `Today I have to do: ${description}. Plan my day.`);
 
   try {
     let fullText = '';

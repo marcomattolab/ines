@@ -183,7 +183,7 @@ Paste any email and apply AI-powered transformations in one click.
 | ↩️ Reply       | Drafts a contextually appropriate reply           |
 | 📋 Summarize   | Extracts 3–5 bullet-point key takeaways           |
 
-The output preserves the original email's language. Click 📋 Copia to copy the result to clipboard.
+The output preserves the original email's language. Click 📋 Copied to copy the result to clipboard.
 
 ---
 

@@ -43,7 +43,6 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-
 # Large AI models
 /llm-models/
 

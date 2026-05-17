@@ -7,8 +7,18 @@
   flex: 1; display: flex; flex-direction: column; overflow: hidden;
 }
 .todo-right {
-  width: 300px; border-left: 1px solid var(--border);
+  min-width: 280px;
   display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+}
+
+.resizer {
+  width: 4px; background: transparent; cursor: col-resize;
+  transition: background 0.2s; z-index: 10;
+  border-left: 1px solid var(--border);
+}
+.resizer:hover, .resizer:active {
+  background: var(--accent-blue);
+  box-shadow: 0 0 8px rgba(99,179,255,0.4);
 }
 
 .todo-list {
@@ -91,7 +101,8 @@
 .todo-ai-textarea {
   background: var(--bg-2); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-0);
-  font-family: var(--font-body); font-size: 12.5px; resize: none; height: 70px;
+  font-family: var(--font-body); font-size: 12.5px; 
+  resize: both; min-height: 70px; max-height: 70vh; min-width: 200px; max-width: 70vw;
   outline: none; transition: border-color 0.2s; line-height: 1.5;
 }
 .todo-ai-textarea:focus { border-color: var(--border-active); }

@@ -42,7 +42,9 @@
           </div>
         </div>
 
-        <div class="todo-right">
+        <div class="resizer" (mousedown)="startResize($event)"></div>
+
+        <div class="todo-right" [style.width.px]="rightPanelWidth()">
           <div class="todo-pane-label">🤖 GENERATE WITH AI</div>
           <div class="chat-area" #aiChat>
             @for (msg of aiMessages(); track msg.id) {

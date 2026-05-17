@@ -36,12 +36,35 @@ export class TodoTabComponent {
   aiMessages = signal<AiChat[]>([]);
   recording  = signal(false);
   timerText  = signal('');
+  rightPanelWidth = signal(320);
   
   private nextId = 0;
   private recognition: any = null;
   private seconds = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private baseText = '';
+  private isResizing = false;
+
+  startResize(e: MouseEvent) {
+    this.isResizing = true;
+    e.preventDefault();
+    document.addEventListener('mousemove', this.doResize);
+    document.addEventListener('mouseup', this.stopResize);
+  }
+
+  private doResize = (e: MouseEvent) => {
+    if (!this.isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 280 && newWidth <= window.innerWidth - 300) {
+      this.rightPanelWidth.set(newWidth);
+    }
+  };
+
+  private stopResize = () => {
+    this.isResizing = false;
+    document.removeEventListener('mousemove', this.doResize);
+    document.removeEventListener('mouseup', this.stopResize);
+  };
 
   addManual(input: HTMLInputElement, selEl?: HTMLSelectElement) {
     const text = input.value.trim();

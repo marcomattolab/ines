@@ -56,6 +56,10 @@ export class LlmService {
         console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
       }
 
+      try {
+        sessionStorage.setItem('model_loaded_previously', 'true');
+      } catch (e) {}
+
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
       this.modelName.set(file.name.replace(/\.(task|litertlm|bin)$/, ''));
@@ -136,6 +140,10 @@ export class LlmService {
         console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
       }
 
+      try {
+        sessionStorage.setItem('model_loaded_previously', 'true');
+      } catch (e) {}
+
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
       this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
@@ -199,6 +207,10 @@ export class LlmService {
         temperature: 0.8,
         randomSeed: 101,
       });
+
+      try {
+        sessionStorage.setItem('model_loaded_previously', 'true');
+      } catch (e) {}
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');

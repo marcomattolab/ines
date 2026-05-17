@@ -55,15 +55,37 @@ export class AppComponent implements OnInit {
         if (loadedFromCache) {
           this.overlayOpen.set(false);
         } else {
-          // No cached model. Reset status to 'idle' and wait for manual loading.
-          this.llm.modelStatus.set('idle');
-          this.llm.modelName.set('No model loaded');
+          // No cached model. Check if a model was loaded previously in this tab session (e.g. tab refresh in incognito)
+          this.checkSessionFallback();
         }
       })
       .catch(err => {
         console.error('Cache load error:', err);
-        this.llm.modelStatus.set('idle');
-        this.llm.modelName.set('No model loaded');
+        this.checkSessionFallback();
       });
+  }
+
+  private checkSessionFallback() {
+    try {
+      if (sessionStorage.getItem('model_loaded_previously') === 'true') {
+        // User had the model loaded in this tab session previously. Try to auto-fetch from local URL.
+        this.llm.initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
+          .then(() => {
+            this.overlayOpen.set(false);
+          })
+          .catch(err => {
+            console.log('Session fallback URL load failed (expected in production if no hosted model):', err);
+            this.llm.modelStatus.set('idle');
+            this.llm.modelName.set('No model loaded');
+          });
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to read from sessionStorage:', e);
+    }
+
+    // No session fallback, wait for manual upload
+    this.llm.modelStatus.set('idle');
+    this.llm.modelName.set('No model loaded');
   }
 }

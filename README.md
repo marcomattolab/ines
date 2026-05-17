@@ -73,16 +73,16 @@ A single `LlmInference` instance is initialized once and reused across all five 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **LLM Runtime** | [Google MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (`@mediapipe/tasks-genai`) |
-| **GPU Acceleration** | WebGPU (via browser) + WASM SIMD fallback |
-| **Model Format** | `.task` / `.litertlm` / `.bin` (MediaPipe-compatible) |
-| **Speech Transcription** | Web Speech API (native browser, no library) |
-| **Persistence** | `localStorage` (Todo list only) |
-| **Fonts** | Syne · IBM Plex Sans · DM Mono (Google Fonts) |
-| **Dependencies** | **Zero** — single HTML file, no build step |
-| **Distribution** | Static HTML file — open directly or serve from any web server |
+| Layer                    | Technology                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **LLM Runtime**          | [Google MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (`@mediapipe/tasks-genai`) |
+| **GPU Acceleration**     | WebGPU (via browser) + WASM SIMD fallback                                                                                            |
+| **Model Format**         | `.task` / `.litertlm` / `.bin` (MediaPipe-compatible)                                                                                |
+| **Speech Transcription** | Web Speech API (native browser, no library)                                                                                          |
+| **Persistence**          | `localStorage` (Todo list only)                                                                                                      |
+| **Fonts**                | Syne · IBM Plex Sans · DM Mono (Google Fonts)                                                                                        |
+| **Dependencies**         | **Zero** — single HTML file, no build step                                                                                           |
+| **Distribution**         | Static HTML file — open directly or serve from any web server                                                                        |
 
 ---
 
@@ -90,13 +90,13 @@ A single `LlmInference` instance is initialized once and reused across all five 
 
 INES works with any MediaPipe-compatible LLM. The following are recommended and tested:
 
-| Model | Size | Format | Notes |
-|---|---|---|---|
-| [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT) | ~1 GB | `.task` | ✅ Recommended for most hardware |
+| Model                                                                      | Size  | Format      | Notes                             |
+| -------------------------------------------------------------------------- | ----- | ----------- | --------------------------------- |
+| [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)      | ~1 GB | `.task`     | ✅ Recommended for most hardware  |
 | [Gemma-3n E2B IT](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm) | ~2 GB | `.litertlm` | Multimodal (text + image + audio) |
-| [Gemma-3n E4B IT](https://huggingface.co/google/gemma-3n-E4B-it-litert-lm) | ~4 GB | `.litertlm` | Higher quality, needs more VRAM |
-| [Gemma-2 2B IT](https://huggingface.co/litert-community/Gemma2-2B-IT) | ~2 GB | `.task` | Strong reasoning, all platforms |
-| [Gemma-3 4B IT](https://huggingface.co/litert-community/Gemma3-4B-IT) | ~4 GB | `.task` | Best quality for capable GPUs |
+| [Gemma-3n E4B IT](https://huggingface.co/google/gemma-3n-E4B-it-litert-lm) | ~4 GB | `.litertlm` | Higher quality, needs more VRAM   |
+| [Gemma-2 2B IT](https://huggingface.co/litert-community/Gemma2-2B-IT)      | ~2 GB | `.task`     | Strong reasoning, all platforms   |
+| [Gemma-3 4B IT](https://huggingface.co/litert-community/Gemma3-4B-IT)      | ~4 GB | `.task`     | Best quality for capable GPUs     |
 
 > **Note:** Only GPU-backend encoded models are currently supported by the MediaPipe Web API. Files with `-Web` in the name from the [litert-community HuggingFace page](https://huggingface.co/litert-community) are pre-converted and ready to use.
 
@@ -131,10 +131,10 @@ When INES opens, the model loader overlay appears. Drag and drop your `.task` or
 Loading time by model size:
 
 | Model Size | Approx. Load Time |
-|---|---|
-| 1 GB | 15 – 30 s |
-| 2 GB | 30 – 60 s |
-| 4 GB | 60 – 120 s |
+| ---------- | ----------------- |
+| 1 GB       | 15 – 30 s         |
+| 2 GB       | 30 – 60 s         |
+| 4 GB       | 60 – 120 s        |
 
 Once loaded, the status bar shows `✓ [model name]` in green. The model stays loaded for the entire session across all tabs.
 
@@ -148,12 +148,12 @@ A general-purpose conversational assistant with **multi-turn memory**. The last 
 
 **System prompt focus:** Helpful, concise, language-adaptive. Mirrors the user's language automatically.
 
-| Action | How |
-|---|---|
-| Send message | `Enter` or the send button |
-| New line | `Shift + Enter` |
-| Copy a reply | Hover over the bubble → 📋 |
-| Clear history | 🗑 button in the header |
+| Action        | How                        |
+| ------------- | -------------------------- |
+| Send message  | `Enter` or the send button |
+| New line      | `Shift + Enter`            |
+| Copy a reply  | Hover over the bubble → 📋 |
+| Clear history | 🗑 button in the header    |
 
 ---
 
@@ -163,24 +163,24 @@ Paste any email and apply AI-powered transformations in one click.
 
 **Tone selectors:**
 
-| Tone | Description |
-|---|---|
-| 🎩 Professionale | Business-appropriate, neutral register |
-| 😊 Amichevole | Warm and approachable |
-| 💪 Diretto/Assertivo | Confident, no-fluff |
-| 📜 Formale | Official correspondence style |
-| ⚡ Breve e Conciso | Maximum information density |
+| Tone            | Description                            |
+| --------------- | -------------------------------------- |
+| 🎩 Professional | Business-appropriate, neutral register |
+| 😊 Friendly     | Warm and approachable                  |
+| 💪 Assertive    | Confident, no-fluff                    |
+| 📜 Formal       | Official correspondence style          |
+| ⚡ Concise      | Maximum information density            |
 
 **Actions:**
 
-| Action | What it does |
-|---|---|
-| ✨ Migliora | Rewrites the email with better flow and clarity |
-| 🔧 Correggi grammatica | Grammar and spelling fix only, no content changes |
-| ✂️ Accorcia | Halves length while preserving key points |
-| 🎩 Rendi formale | Elevates register to formal correspondence |
-| ↩️ Scrivi risposta | Drafts a contextually appropriate reply |
-| 📋 Riassumi | Extracts 3–5 bullet-point key takeaways |
+| Action         | What it does                                      |
+| -------------- | ------------------------------------------------- |
+| ✨ Improve     | Rewrites the email with better flow and clarity   |
+| 🔧 Fix grammar | Grammar and spelling fix only, no content changes |
+| ✂️ Shorten     | Halves length while preserving key points         |
+| 🎩 Make formal | Elevates register to formal correspondence        |
+| ↩️ Reply       | Drafts a contextually appropriate reply           |
+| 📋 Summarize   | Extracts 3–5 bullet-point key takeaways           |
 
 The output preserves the original email's language. Click 📋 Copia to copy the result to clipboard.
 
@@ -230,6 +230,7 @@ Italian · English · French · German · Spanish · Portuguese · Chinese · Ja
 A smart task manager that combines manual entry with **AI-generated daily plans**.
 
 **Manual mode:**
+
 - Add tasks with optional 🔥 priority flag
 - Check off completed tasks
 - Remove individual items or bulk-clear all done tasks
@@ -249,7 +250,8 @@ The model generates a prioritized, realistic task breakdown and injects it direc
 
 ## Model Loading Internals
 
-INES uses `modelAssetBuffer` (not `modelAssetPath`) to pass the model to the WASM runtime. This is a deliberate technical choice:
+INES uses `modelAssetBuffer` (not `modelAssetPath`) to pass the model to the WASM runtime.
+This is a deliberate technical choice:
 
 ```javascript
 // ✅ Correct: pass ArrayBuffer directly
@@ -268,8 +270,10 @@ const modelUrl = URL.createObjectURL(file);  // causes "Failed to fetch"
 The MediaPipe library itself is loaded as an **ES module** via CDN:
 
 ```javascript
-import { FilesetResolver, LlmInference }
-  from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai';
+import {
+  FilesetResolver,
+  LlmInference,
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai";
 ```
 
 The `.cjs` bundle (historically documented in some Google guides) is served by jsDelivr with `Content-Type: application/node`, which browsers reject. The bare ESM import resolves correctly to the `.mjs` entry with the right MIME type.
@@ -294,13 +298,13 @@ Every tab uses the Gemma instruction-tuned prompt format:
 
 Each tab has a dedicated system prompt optimized for its task:
 
-| Tab | System Prompt Focus |
-|---|---|
-| Chat | General assistant, language-adaptive, multi-turn |
-| Email | Business writing expert, output-only (no preamble) |
-| Meeting | Structured output: key points, decisions, action items, next steps |
-| Translate | Exact translation, output-only, style-preserving |
-| Todo | JSON-structured output: `{tasks: [...], message: "..."}` |
+| Tab       | System Prompt Focus                                                |
+| --------- | ------------------------------------------------------------------ |
+| Chat      | General assistant, language-adaptive, multi-turn                   |
+| Email     | Business writing expert, output-only (no preamble)                 |
+| Meeting   | Structured output: key points, decisions, action items, next steps |
+| Translate | Exact translation, output-only, style-preserving                   |
+| Todo      | JSON-structured output: `{tasks: [...], message: "..."}`           |
 
 The Todo tab uses **structured JSON output** prompting — the model is instructed to return only a valid JSON object, which is then parsed to populate the task list programmatically.
 
@@ -308,13 +312,13 @@ The Todo tab uses **structured JSON output** prompting — the model is instruct
 
 ## Browser Requirements
 
-| Requirement | Details |
-|---|---|
-| **Browser** | Chrome 113+ or Edge 113+ (WebGPU required) |
-| **WebGPU** | Must be enabled (default in Chrome 113+) |
-| **RAM** | 4 GB minimum; 8 GB recommended for 2B+ models |
-| **GPU** | Any modern integrated or discrete GPU with WebGPU support |
-| **HTTPS** | Required only for the Meeting tab (Web Speech API) |
+| Requirement  | Details                                                                                |
+| ------------ | -------------------------------------------------------------------------------------- |
+| **Browser**  | Chrome 113+ or Edge 113+ (WebGPU required)                                             |
+| **WebGPU**   | Must be enabled (default in Chrome 113+)                                               |
+| **RAM**      | 4 GB minimum; 8 GB recommended for 2B+ models                                          |
+| **GPU**      | Any modern integrated or discrete GPU with WebGPU support                              |
+| **HTTPS**    | Required only for the Meeting tab (Web Speech API)                                     |
 | **Internet** | Only for the initial CDN load of `@mediapipe/tasks-genai` — inference is fully offline |
 
 Firefox does not support WebGPU by default as of the time of writing. Safari has partial WebGPU support; compatibility with MediaPipe is not guaranteed.
@@ -323,16 +327,16 @@ Firefox does not support WebGPU by default as of the time of writing. Safari has
 
 ## Privacy Guarantee
 
-| Data | Where it goes |
-|---|---|
-| Your prompts and messages | **Stays in browser memory** |
-| Email text | **Stays in browser memory** |
-| Meeting audio | **Processed by Web Speech API** (browser-native, OS-level) |
-| Meeting transcripts | **Stays in browser memory** |
-| Todo list | **Stored in `localStorage`** (your device only) |
-| The LLM model file | **Stays in browser memory** — never uploaded |
-| CDN requests | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load) |
-| Google Fonts | `fonts.googleapis.com` for UI fonts |
+| Data                      | Where it goes                                                         |
+| ------------------------- | --------------------------------------------------------------------- |
+| Your prompts and messages | **Stays in browser memory**                                           |
+| Email text                | **Stays in browser memory**                                           |
+| Meeting audio             | **Processed by Web Speech API** (browser-native, OS-level)            |
+| Meeting transcripts       | **Stays in browser memory**                                           |
+| Todo list                 | **Stored in `localStorage`** (your device only)                       |
+| The LLM model file        | **Stays in browser memory** — never uploaded                          |
+| CDN requests              | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load) |
+| Google Fonts              | `fonts.googleapis.com` for UI fonts                                   |
 
 No analytics. No telemetry. No accounts.
 
@@ -351,7 +355,8 @@ No analytics. No telemetry. No accounts.
 
 ## Roadmap
 
-- [ ] Angular app and add PWA and Web Worker
+- [x] First POC in a single-file HTML with vanilla JS
+- [x] Move this POC into a proper Angular 22 PWA with standalone components and Signals
 - [ ] Chat history persistence via `localStorage` or IndexedDB
 - [ ] Model switcher without page reload
 - [ ] Voice input on Chat and Translate tabs
@@ -366,8 +371,3 @@ No analytics. No telemetry. No accounts.
 This project is provided as-is for educational and personal productivity use.
 The MediaPipe library is licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 Gemma model weights are subject to the [Gemma Terms of Use](https://ai.google.dev/gemma/terms).
-
----
-
-*INES — Intelligent Neural Edge System*
-*Built on [Google AI Edge](https://ai.google.dev/edge) · Powered by [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference) · Running on your device*

@@ -1,0 +1,2 @@
+:host { display: flex; flex: 1; overflow: hidden; }
+.tab-panel-inner { display: flex; flex-direction: column; flex: 1; overflow: hidden; }

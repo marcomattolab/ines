@@ -357,8 +357,8 @@ No analytics. No telemetry. No accounts.
 
 - [x] First POC in a single-file HTML with vanilla JS
 - [x] Move this POC into a proper Angular 22 PWA with standalone components and Signals
-- [ ] UI improvemens and creation of icons and logo
-- [ ] Create branding page to introduce the project
+- [ ] UI improvemens and creation of icons, logo, footer and favicons
+- [ ] Create landing page to introduce the project
 - [ ] Chat history persistence via `localStorage` and IndexedDB
 - [ ] Model switcher without page reload
 - [ ] Voice input on Chat and Translate tabs

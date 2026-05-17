@@ -39,11 +39,6 @@ npm start                # → http://localhost:4200
 # Production build
 npm run build            # → dist/ines-ng/browser/
 
-# Serve production build (tests PWA + service worker)
-npx http-server dist/ines-ng/browser -p 8080
-
-# Run unit tests
-npx ng test
 ```
 
 ### Build Output
@@ -65,6 +60,7 @@ Total                | 265 kB    | 68 kB
 | 🎙️ Meeting   | ✅     | Record button, live transcript, AI summary          |
 | 🌍 Translate | ✅     | Auto-detect, swap, debounced auto-translate         |
 | ✅ Todo      | ✅     | Manual add, AI generation, localStorage persistence |
+| 👨‍💻 Coding    | 🚧     | Coming soon...                                      |
 
 > **To use the AI features**, you need a `.task` model file (e.g. [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)) and Chrome/Edge with **WebGPU enabled**. The app is fully functional without a model — all UI works.
 

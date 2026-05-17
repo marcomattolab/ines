@@ -19,6 +19,7 @@ INES is a single-file, zero-dependency web application that brings on-device AI 
   - [🎙️ Meeting Recorder](#️-meeting-recorder)
   - [🌍 Translator](#-translator)
   - [✅ Daily Planner](#-daily-planner)
+  - [👨‍💻 Coding Assistant](#-coding-assistant)
 - [Model Loading Internals](#model-loading-internals)
 - [Prompt Architecture](#prompt-architecture)
 - [Browser Requirements](#browser-requirements)
@@ -245,6 +246,12 @@ call col cliente e preparare slide per il tech talk di venerdì
 ```
 
 The model generates a prioritized, realistic task breakdown and injects it directly into your list.
+
+---
+
+## 👨‍💻 Coding Assistant
+
+Coming soon...
 
 ---
 

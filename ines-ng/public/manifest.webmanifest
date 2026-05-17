@@ -1,7 +1,7 @@
 {
-  "name": "INES — Intelligent Neural Edge System",
+  "name": "Intelligent Neural Edge System",
   "short_name": "INES",
-  "description": "INES- Intelligent Neural Edge System - Private, on-device AI powered by Google MediaPipe. Chat, email, meeting recorder, translator and daily planner. Zero cloud.",
+  "description": "INES -Intelligent Neural Edge System - Private, on-device AI powered by Google MediaPipe. Chat, email, meeting recorder, translator and daily planner. Zero cloud.",
   "theme_color": "#0a0b0f",
   "background_color": "#0a0b0f",
   "display": "standalone",

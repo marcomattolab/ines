@@ -1,0 +1,103 @@
+<div class="coding-workspace">
+  <!-- Left Side: Terminal Chat Interface -->
+  <div class="terminal-chat-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="panel-title-icon">💻</span>
+        <div>
+          <div class="title-text">Coding Assistant</div>
+          <div class="panel-desc">Client-Side Edge Web Developer</div>
+        </div>
+      </div>
+      <button class="pill-btn" (click)="clear()">🧹 Clear</button>
+    </div>
+
+    <!-- Message Stream -->
+    <div class="chat-area" #chatArea>
+      @for (msg of messages(); track msg.id) {
+        <app-message-bubble
+          [role]="msg.role"
+          [text]="msg.text"
+          [streaming]="msg.streaming ?? false" />
+      }
+      @if (typing()) {
+        <app-typing-indicator />
+      }
+    </div>
+
+    <!-- Input Box -->
+    <div class="token-info" [style.visibility]="tokenInfo() ? 'visible' : 'hidden'">
+      {{ tokenInfo() }}
+    </div>
+    <div class="input-zone">
+      <textarea #inputEl
+        class="input-field"
+        placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
+        rows="1"
+        (keydown)="onKey($event)"
+        (input)="autoResize($event)"></textarea>
+      <button class="send-btn" [disabled]="generating() || !llm.isReady()" (click)="send()">
+        ✈️
+      </button>
+    </div>
+  </div>
+
+  <!-- Right Side: Sandbox Code & Live Preview Workspace -->
+  <div class="sandbox-panel">
+    <!-- Header with tab selectors & actions -->
+    <div class="panel-header">
+      <div class="sandbox-tab-group">
+        <button class="pill-btn" 
+                [class.active]="playgroundTab() === 'preview'"
+                (click)="playgroundTab.set('preview')">
+          ⚡ Live Preview
+        </button>
+        <button class="pill-btn"
+                [class.active]="playgroundTab() === 'code'"
+                (click)="playgroundTab.set('code')">
+          ⚙️ Source Code
+        </button>
+      </div>
+
+      <div class="sandbox-actions" [style.display]="extractedCode() ? 'flex' : 'none'">
+        <button class="pill-btn" (click)="copyCode()">📋 Copy</button>
+        <button class="pill-btn" (click)="downloadCode()">💾 Download</button>
+      </div>
+    </div>
+
+    <!-- Sandbox Body -->
+    <div class="sandbox-body">
+      @if (!extractedCode()) {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-icon">✨</div>
+          <div class="empty-title">Waiting for Code Request</div>
+          <div class="empty-text">
+            Describe a user interface, dashboard, or widget you'd like me to build on the left. The live, interactive render and source code will appear here instantly!
+          </div>
+        </div>
+      } @else {
+        <!-- Live Preview IFrame -->
+        <div class="preview-viewport" [hidden]="playgroundTab() !== 'preview'">
+          <iframe 
+            [srcdoc]="getSafeHtml()"
+            sandbox="allow-scripts allow-popups allow-modals"
+            class="sandbox-iframe">
+          </iframe>
+        </div>
+
+        <!-- Code Viewer -->
+        <div class="code-viewport" [hidden]="playgroundTab() !== 'code'">
+          <div class="code-editor-layout">
+            <div class="line-numbers">
+              @for (line of codeLines; track $index) {
+                <span class="line-no">{{ $index + 1 }}</span>
+              }
+            </div>
+            <pre class="code-pre"><code>{{ extractedCode() }}</code></pre>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

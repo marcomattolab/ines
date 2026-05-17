@@ -6,10 +6,11 @@ import { EmailTabComponent } from './components/email-tab/email-tab.component';
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
+import { CodingTabComponent } from './components/coding-tab/coding-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 
-type Tab = 'chat' | 'email' | 'meeting' | 'translate' | 'todo';
+type Tab = 'chat' | 'email' | 'meeting' | 'translate' | 'todo' | 'coding';
 
 interface TabDef {
   id: Tab;
@@ -24,6 +25,7 @@ const TABS: TabDef[] = [
   { id: 'meeting',   icon: '🎙️', label: 'Meeting',   color: 'var(--tab-meeting)' },
   { id: 'translate', icon: '🌍', label: 'Translate', color: 'var(--tab-translate)' },
   { id: 'todo',      icon: '✅', label: 'Todo',      color: 'var(--tab-todo)' },
+  { id: 'coding',    icon: '👨‍💻', label: 'Code',      color: 'var(--tab-coding)' },
 ];
 
 @Component({
@@ -37,6 +39,7 @@ const TABS: TabDef[] = [
     MeetingTabComponent,
     TranslateTabComponent,
     TodoTabComponent,
+    CodingTabComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

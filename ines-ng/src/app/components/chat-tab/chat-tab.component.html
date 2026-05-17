@@ -1,0 +1,39 @@
+<div class="tab-panel-inner">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><span class="panel-title-icon">💬</span> General Assistant</div>
+          <div class="panel-desc">Gemma on-device · private · offline</div>
+        </div>
+        <button class="pill-btn" (click)="clear()">🗑 Clear</button>
+      </div>
+
+      <div class="chat-area" #chatArea>
+        @for (msg of messages(); track msg.id) {
+          @if (msg.role === 'ai' && msg.streaming) {
+            <div class="message ai">
+              <div class="msg-avatar">G</div>
+              <div class="msg-bubble cursor-blink" [innerHTML]="html(msg.text)"></div>
+            </div>
+          } @else {
+            <app-message-bubble [role]="msg.role" [text]="msg.text" [streaming]="!!msg.streaming" />
+          }
+        }
+        @if (typing()) {
+          <div class="message ai">
+            <div class="msg-avatar">G</div>
+            <div class="msg-bubble"><app-typing-indicator /></div>
+          </div>
+        }
+      </div>
+
+      <div class="token-info">{{ tokenInfo() }}</div>
+
+      <div class="input-zone">
+        <textarea class="input-field" #inputEl
+          placeholder="Write a message..."
+          rows="1"
+          (keydown)="onKey($event)"
+          (input)="autoResize($event)"></textarea>
+        <button class="send-btn" [disabled]="generating()" (click)="send()" title="Send (Enter)">➤</button>
+      </div>
+    </div>

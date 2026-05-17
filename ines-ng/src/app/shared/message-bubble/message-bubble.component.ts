@@ -4,17 +4,7 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-message-bubble',
   standalone: true,
-  template: `
-    <div class="message" [class.user]="role() === 'user'" [class.ai]="role() === 'ai'">
-      <div class="msg-avatar">{{ role() === 'user' ? '👤' : 'G' }}</div>
-      <div class="msg-bubble" [class.cursor-blink]="streaming()">
-        <span [innerHTML]="safeHtml()"></span>
-        @if (role() === 'ai' && text()) {
-          <button class="msg-copy" (click)="copy()">📋</button>
-        }
-      </div>
-    </div>
-  `,
+  templateUrl: './message-bubble.component.html',
   styleUrl: './message-bubble.css'
 })
 export class MessageBubbleComponent {

@@ -14,53 +14,7 @@ Be concise and use the language of the transcript. Format the result clearly.`;
 @Component({
   selector: 'app-meeting-tab',
   standalone: true,
-  template: `
-    <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title"><span class="panel-title-icon">🎙️</span> Meeting Recorder</div>
-          <div class="panel-desc">Vocal transcription + AI-generated summary</div>
-        </div>
-        <button class="pill-btn" (click)="clear()">🗑 Clear</button>
-      </div>
-
-      <div class="meeting-layout">
-        <div class="meeting-transcript">
-          <div class="meeting-pane-label">
-            <span>📝 TRANSCRIPTION</span>
-            <button class="pill-btn" style="font-size:10px" (click)="copy(transcript())">📋</button>
-          </div>
-          <div class="meeting-scroll">{{ transcript() }}</div>
-        </div>
-        <div class="meeting-summary">
-          <div class="meeting-pane-label">
-            <span>✨ AI SUMMARY</span>
-            <button class="pill-btn" style="font-size:10px" (click)="copy(summary())">📋</button>
-          </div>
-          <div class="meeting-scroll">
-            @if (summary()) {
-              {{ summary() }}
-            } @else {
-              <div class="empty-state" style="height:100%">
-                <div class="empty-icon">🤖</div>
-                <div class="empty-text">The summary will appear automatically after stopping the recording</div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="meeting-controls">
-        <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording()">
-          <div class="record-dot"></div>
-          <span>{{ recording() ? 'Stop Recording' : 'Start Recording' }}</span>
-        </button>
-        <span class="timer-text">{{ timerText() }}</span>
-        <div style="flex:1"></div>
-        <button class="pill-btn" (click)="summarize()">✨ Summarize Now</button>
-      </div>
-    </div>
-  `,
+  templateUrl: './meeting-tab.component.html',
   styleUrl: './meeting-tab.css'
 })
 export class MeetingTabComponent implements OnDestroy {

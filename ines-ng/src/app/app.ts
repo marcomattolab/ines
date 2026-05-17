@@ -37,43 +37,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
   ],
-  template: `
-    <app-status-bar (openLoader)="overlayOpen.set(true)" />
-
-    <app-loader-overlay
-      [visible]="overlayOpen()"
-      (closed)="overlayOpen.set(false)" />
-
-    <div id="app">
-      <!-- Sidebar -->
-      <nav id="sidebar">
-        @for (tab of tabs; track tab.id) {
-          <button class="tab-btn"
-            [class.active]="activeTab() === tab.id"
-            [style.--tab-color]="tab.color"
-            (click)="activeTab.set(tab.id)">
-            <span class="tab-icon">{{ tab.icon }}</span>
-            <span class="tab-label">{{ tab.label }}</span>
-          </button>
-        }
-        <div class="sidebar-spacer"></div>
-      </nav>
-
-      <!-- Main panels -->
-      <main id="main">
-        @if (activeTab() === 'chat')      { <app-chat-tab /> }
-        @if (activeTab() === 'email')     { <app-email-tab /> }
-        @if (activeTab() === 'meeting')   { <app-meeting-tab /> }
-        @if (activeTab() === 'translate') { <app-translate-tab /> }
-        @if (activeTab() === 'todo')      { <app-todo-tab /> }
-      </main>
-    </div>
-
-    <!-- Toast notifications -->
-    @for (t of toast.toasts(); track t.id) {
-      <div class="toast">{{ t.msg }}</div>
-    }
-  `,
+  templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class AppComponent {

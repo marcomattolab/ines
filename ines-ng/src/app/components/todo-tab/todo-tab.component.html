@@ -1,0 +1,67 @@
+<div class="tab-panel-inner">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><span class="panel-title-icon">✅</span> Daily Planner</div>
+          <div class="panel-desc">Organize your day with the help of the AI</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="counter-text">{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span>
+          <button class="pill-btn" (click)="todoSvc.clearDone()">🧹 Remove completed</button>
+        </div>
+      </div>
+
+      <div class="todo-layout">
+        <div class="todo-left">
+          <div class="todo-list">
+            @if (todoSvc.todos().length === 0) {
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
+              </div>
+            }
+            @for (todo of todoSvc.todos(); track $index) {
+              <div class="todo-item" [class.done]="todo.done">
+                <div class="todo-cb" [class.checked]="todo.done" (click)="todoSvc.toggle($index)"></div>
+                <div class="todo-text">{{ todo.text }}</div>
+                <span class="todo-tag" [class]="todo.priority">
+                  {{ todo.priority === 'priority' ? '🔥 priority' : '·' }}
+                </span>
+                <button class="todo-del" (click)="todoSvc.delete($index)" title="Remove">✕</button>
+              </div>
+            }
+          </div>
+          <div class="todo-add-row">
+            <input class="todo-input" #manualInput
+              placeholder="Add a task manually..."
+              (keydown.enter)="addManual(manualInput)">
+            <select class="pill-select" #prioritySel>
+              <option value="normal">normal</option>
+              <option value="priority">🔥 priority</option>
+            </select>
+            <button class="add-btn" (click)="addManual(manualInput, prioritySel)">+ Add</button>
+          </div>
+        </div>
+
+        <div class="todo-right">
+          <div class="todo-pane-label">🤖 GENERATE WITH AI</div>
+          <div class="chat-area" #aiChat>
+            @for (msg of aiMessages(); track msg.id) {
+              @if (msg.typing) {
+                <div class="message ai">
+                  <div class="msg-avatar">G</div>
+                  <div class="msg-bubble"><app-typing-indicator /></div>
+                </div>
+              } @else {
+                <app-message-bubble [role]="msg.role" [text]="msg.text" />
+              }
+            }
+          </div>
+          <div class="todo-ai-input-area">
+            <textarea class="todo-ai-textarea" #aiInput
+              placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
+              (keydown)="onAiKey($event, aiInput)"></textarea>
+            <button class="add-btn" style="align-self:flex-end" (click)="generate(aiInput)">✨ Generate Plan</button>
+          </div>
+        </div>
+      </div>
+    </div>

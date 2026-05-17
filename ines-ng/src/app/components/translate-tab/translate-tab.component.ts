@@ -24,58 +24,7 @@ const LANGUAGES = [
   selector: 'app-translate-tab',
   standalone: true,
   imports: [FormsModule],
-  template: `
-    <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title"><span class="panel-title-icon">🌍</span> Translator</div>
-          <div class="panel-desc">Translate text between any language — completely offline</div>
-        </div>
-      </div>
-
-      <div class="translate-pair">
-        <div class="translate-side">
-          <div class="translate-lang-bar">
-            <select class="pill-select" style="flex:1" [(ngModel)]="fromLang">
-              <option value="auto">🔍 Auto-detect language</option>
-              @for (lang of languages; track lang.value) {
-                <option [value]="lang.value">{{ lang.label }}</option>
-              }
-            </select>
-          </div>
-          <textarea class="translate-textarea"
-            placeholder="Text to translate..."
-            [(ngModel)]="inputText"
-            (input)="onInput()"></textarea>
-        </div>
-
-        <div class="translate-side">
-          <div class="translate-lang-bar">
-            <button class="swap-btn" title="Swap languages" (click)="swap()">⇄</button>
-            <select class="pill-select" style="flex:1" [(ngModel)]="toLang">
-              @for (lang of languages; track lang.value) {
-                <option [value]="lang.value">{{ lang.label }}</option>
-              }
-            </select>
-            <button class="pill-btn" style="font-size:10px" (click)="copy()">📋</button>
-          </div>
-          <div class="translate-result-area">
-            @if (result()) {
-              <span [class.cursor-blink]="translating()" [innerHTML]="resultHtml()"></span>
-            } @else {
-              <span style="color:var(--text-2)">The translation will appear here...</span>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="translate-bar">
-        <button class="send-btn" style="width:auto;padding:0 18px;border-radius:var(--radius-sm)"
-          (click)="translate()">🌍 Translate</button>
-        <button class="pill-btn" (click)="clear()">🗑 Clear</button>
-      </div>
-    </div>
-  `,
+  templateUrl: './translate-tab.component.html',
   styleUrl: './translate-tab.css'
 })
 export class TranslateTabComponent {

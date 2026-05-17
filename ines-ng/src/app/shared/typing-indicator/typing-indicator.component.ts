@@ -3,11 +3,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-typing-indicator',
   standalone: true,
-  template: `
-    <div class="typing-indicator">
-      <span></span><span></span><span></span>
-    </div>
-  `,
+  templateUrl: './typing-indicator.component.html',
   styles: [`
     .typing-indicator { display:flex; gap:5px; align-items:center; padding:4px 0; }
     .typing-indicator span {

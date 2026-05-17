@@ -14,6 +14,7 @@ ines-ng/src/app/
 │   ├── status-bar/             # Top bar: brand + model status dot
 │   ├── loader-overlay/         # File drop zone + progress bar
 │   ├── chat-tab/               # Multi-turn streaming chat
+│   ├── coding-tab/             # Code generation with live preview sandbox
 │   ├── email-tab/              # Email rewriter (tone + action)
 │   ├── meeting-tab/            # Speech → transcript → AI summary
 │   ├── translate-tab/          # Debounced offline translator
@@ -60,7 +61,7 @@ Total                | 265 kB    | 68 kB
 | 🎙️ Meeting   | ✅     | Record button, live transcript, AI summary          |
 | 🌍 Translate | ✅     | Auto-detect, swap, debounced auto-translate         |
 | ✅ Todo      | ✅     | Manual add, AI generation, localStorage persistence |
-| 👨‍💻 Coding    | 🚧     | Coming soon...                                      |
+| 👨‍💻 Coding    | 🚧     | Coding Assistant                                    |
 
 > **To use the AI features**, you need a `.task` model file (e.g. [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)) and Chrome/Edge with **WebGPU enabled**. The app is fully functional without a model — all UI works.
 

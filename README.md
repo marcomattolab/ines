@@ -251,7 +251,8 @@ The model generates a prioritized, realistic task breakdown and injects it direc
 
 ## 👨‍💻 Coding Assistant
 
-Coming soon...
+Coding Assistant is a tab for generating code snippets, web components, dashboards, and more.
+It support diverse langiages and use a specific LLM for code generation.
 
 ---
 
@@ -312,6 +313,7 @@ Each tab has a dedicated system prompt optimized for its task:
 | Meeting   | Structured output: key points, decisions, action items, next steps |
 | Translate | Exact translation, output-only, style-preserving                   |
 | Todo      | JSON-structured output: `{tasks: [...], message: "..."}`           |
+| Coding    | Code generation, sandbox preview, copy and download                |
 
 The Todo tab uses **structured JSON output** prompting — the model is instructed to return only a valid JSON object, which is then parsed to populate the task list programmatically.
 
@@ -364,16 +366,17 @@ No analytics. No telemetry. No accounts.
 
 - [x] First POC in a single-file HTML with vanilla JS
 - [x] Move this POC into a proper Angular 22 PWA with standalone components and Signals
-- [ ] UI improvemens and creation of icons, logo, footer and favicons
-- [ ] Create landing page to introduce the project
-- [ ] Chat history persistence via `localStorage` and IndexedDB
-- [ ] Model switcher without page reload
-- [ ] Voice input on Chat and Translate tabs
+- [x] UI improvemens and creation of icons, logo, footer and favicons
 - [ ] Export meeting summary as `.txt` / `.md`
-- [ ] Handle diverse model based on tasks
+- [ ] Handle diverse model based on tasks automatically
 - [ ] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
-- [ ] Setup CI/CD for deployment to GitHub Pages
+- [ ] Improve coding assistant with more features and sandbox improvement
 - [ ] Add unit and e2e tests for all the features and documentation
+- [ ] Add new tabs for new features (based on project/company)
+- [ ] Fine tuning Gemma 3 1B to make it a better assistant
+- [ ] Explore more LLM providers
+- [ ] Setup CI/CD for deployment to GitHub Pages
+- [ ] Create landing page to introduce the project
 
 ---
 

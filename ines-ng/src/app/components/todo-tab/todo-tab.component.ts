@@ -37,6 +37,7 @@ export class TodoTabComponent {
   recording  = signal(false);
   timerText  = signal('');
   rightPanelWidth = signal(320);
+  inputAreaHeight = signal(130);
   
   private nextId = 0;
   private recognition: any = null;
@@ -44,6 +45,7 @@ export class TodoTabComponent {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private baseText = '';
   private isResizing = false;
+  private isHResizing = false;
 
   startResize(e: MouseEvent) {
     this.isResizing = true;
@@ -64,6 +66,27 @@ export class TodoTabComponent {
     this.isResizing = false;
     document.removeEventListener('mousemove', this.doResize);
     document.removeEventListener('mouseup', this.stopResize);
+  };
+
+  startHResize(e: MouseEvent) {
+    this.isHResizing = true;
+    e.preventDefault();
+    document.addEventListener('mousemove', this.doHResize);
+    document.addEventListener('mouseup', this.stopHResize);
+  }
+
+  private doHResize = (e: MouseEvent) => {
+    if (!this.isHResizing) return;
+    const newHeight = window.innerHeight - e.clientY - 28; // Subtracting footer height approx
+    if (newHeight >= 100 && newHeight <= window.innerHeight - 200) {
+      this.inputAreaHeight.set(newHeight);
+    }
+  };
+
+  private stopHResize = () => {
+    this.isHResizing = false;
+    document.removeEventListener('mousemove', this.doHResize);
+    document.removeEventListener('mouseup', this.stopHResize);
   };
 
   addManual(input: HTMLInputElement, selEl?: HTMLSelectElement) {

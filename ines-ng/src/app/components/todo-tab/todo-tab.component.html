@@ -58,7 +58,10 @@
               }
             }
           </div>
-          <div class="todo-ai-input-area">
+          
+          <div class="h-resizer" (mousedown)="startHResize($event)"></div>
+
+          <div class="todo-ai-input-area" [style.height.px]="inputAreaHeight()">
             <textarea class="todo-ai-textarea" #aiInput
               placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
               (keydown)="onAiKey($event, aiInput)"></textarea>

@@ -357,12 +357,16 @@ No analytics. No telemetry. No accounts.
 
 - [x] First POC in a single-file HTML with vanilla JS
 - [x] Move this POC into a proper Angular 22 PWA with standalone components and Signals
-- [ ] Chat history persistence via `localStorage` or IndexedDB
+- [ ] UI improvemens and creation of icons and logo
+- [ ] Create branding page to introduce the project
+- [ ] Chat history persistence via `localStorage` and IndexedDB
 - [ ] Model switcher without page reload
 - [ ] Voice input on Chat and Translate tabs
 - [ ] Export meeting summary as `.txt` / `.md`
-- [ ] Handle diverse model based on task
+- [ ] Handle diverse model based on tasks
 - [ ] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
+- [ ] Setup CI/CD for deployment to GitHub Pages
+- [ ] Add unit and e2e tests for all the features and documentation
 
 ---
 

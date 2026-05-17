@@ -1,6 +1,6 @@
 # INES — Intelligent Neural Edge System
 
-Intelligent Neural Edge System (INES) is a client side application that runs a large language model entirely in your browser. No server. No API key. No data leaving your device. It uses Google's MediaPipe LLM Inference API. It is a Single Page Application (SPA) based on **Angular 22.0.0-rc.0** using Progressive Web App (PWA).
+Intelligent Neural Edge System (INES) is a client side application that runs a large language model entirely in your browser. No server. No API key. No data leaving your device. It uses Google's MediaPipe LLM Inference API. It is a Single Page Application (SPA) based on **Angular 22** using Progressive Web App (PWA).
 
 ### Project Structure
 

@@ -47,11 +47,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*",
-                "input": "../models",
-                "output": "/models"
               }
             ],
             "styles": ["src/styles.css"]

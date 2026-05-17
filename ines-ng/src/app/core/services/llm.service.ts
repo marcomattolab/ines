@@ -59,6 +59,79 @@ export class LlmService {
     }
   }
 
+  async initModelFromUrl(url: string, fileName: string): Promise<void> {
+    this.modelStatus.set('loading');
+    this.setProgress(5, 'Connecting to model stream...');
+
+    try {
+      // Dynamic CDN import at runtime — Function() bypasses TS static analysis
+      const mediapipe = await (new Function('url', 'return import(url)')(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'
+      ));
+      const { FilesetResolver, LlmInference } = mediapipe;
+
+      const genai = await FilesetResolver.forGenAiTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
+      );
+      this.setProgress(10, 'WASM ready. Fetching model file...');
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch model from ${url} (Status: ${response.status})`);
+      }
+
+      const contentLength = response.headers.get('content-length');
+      const total = parseInt(contentLength || '0', 10);
+      let loaded = 0;
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body reader is not available');
+      }
+
+      const chunks: Uint8Array[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          loaded += value.length;
+          if (total) {
+            const pct = Math.floor((loaded / total) * 50); // Download is 0-50%
+            this.setProgress(pct + 10, `Downloading model (${Math.round(loaded/1024/1024)}MB)...`);
+          } else {
+            this.setProgress(30, `Downloading model (${Math.round(loaded/1024/1024)}MB)...`);
+          }
+        }
+      }
+
+      this.setProgress(60, 'Loading model into GPU (30–90 s)...');
+
+      const modelBuffer = new Uint8Array(loaded);
+      let pos = 0;
+      for (const chunk of chunks) {
+        modelBuffer.set(chunk, pos);
+        pos += chunk.length;
+      }
+
+      this.llm = await LlmInference.createFromOptions(genai, {
+        baseOptions: { modelAssetBuffer: modelBuffer },
+        maxTokens: 1024,
+        topK: 40,
+        temperature: 0.8,
+        randomSeed: 101,
+      });
+
+      this.setProgress(100, 'Model ready!');
+      this.modelStatus.set('ready');
+      this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
+    } catch (err: any) {
+      this.modelStatus.set('error');
+      this.modelName.set('Error: ' + (err?.message ?? err));
+      throw err;
+    }
+  }
+
   generate(
     prompt: string,
     onToken: (partial: string, done: boolean, full: string) => void

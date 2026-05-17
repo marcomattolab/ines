@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
@@ -7,6 +7,7 @@ import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.compon
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { ToastService } from './core/services/toast.service';
+import { LlmService } from './core/services/llm.service';
 
 type Tab = 'chat' | 'email' | 'meeting' | 'translate' | 'todo';
 
@@ -40,9 +41,20 @@ const TABS: TabDef[] = [
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   tabs       = TABS;
   activeTab  = signal<Tab>('chat');
   overlayOpen = signal(true); // show on load
   toast      = inject(ToastService);
+  llm        = inject(LlmService);
+
+  ngOnInit() {
+    this.llm.initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
+      .then(() => {
+        this.overlayOpen.set(false);
+      })
+      .catch(err => {
+        this.toast.show('⚠️ Error loading model: ' + err.message);
+      });
+  }
 }

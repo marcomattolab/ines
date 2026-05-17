@@ -50,7 +50,11 @@ export class LlmService {
       });
 
       this.setProgress(80, 'Caching model in browser storage...');
-      await this.saveModelToCache(file.name, modelBuffer);
+      try {
+        await this.saveModelToCache(file.name, modelBuffer);
+      } catch (cacheErr) {
+        console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
+      }
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
@@ -126,7 +130,11 @@ export class LlmService {
       });
 
       this.setProgress(80, 'Caching model in browser storage...');
-      await this.saveModelToCache(fileName, modelBuffer.buffer);
+      try {
+        await this.saveModelToCache(fileName, modelBuffer.buffer);
+      } catch (cacheErr) {
+        console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
+      }
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
@@ -225,10 +233,11 @@ export class LlmService {
       store.put({ name, buffer }, 'cached_model');
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
+        tx.onerror = () => reject(tx.error || new Error('Transaction error'));
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       });
     } catch (e) {
-      console.error('Failed to cache model in IndexedDB:', e);
+      return Promise.reject(e);
     }
   }
 

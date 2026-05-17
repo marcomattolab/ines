@@ -1,4 +1,4 @@
-import { Component, inject, input, output, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, input, output, ElementRef, ViewChild, signal } from '@angular/core';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -15,6 +15,7 @@ export class LoaderOverlayComponent {
   llm   = inject(LlmService);
   toast = inject(ToastService);
 
+  showText = signal<boolean>(false);
   dragging = false;
   dropText = '📦 Drag and drop the model file here or click to select';
 

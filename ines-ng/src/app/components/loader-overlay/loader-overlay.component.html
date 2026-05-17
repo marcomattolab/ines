@@ -1,6 +1,9 @@
 @if (visible()) {
       <div id="loader-overlay">
+        <img src="logo.png" alt="INES Logo" class="loader-logo-img" />
+        @if ( showText() ) {
         <div class="loader-logo">Intelligent Neural Edge System</div>
+        }
         <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
 
         <div class="loader-box">

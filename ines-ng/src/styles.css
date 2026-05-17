@@ -44,6 +44,10 @@ html, body {
   overflow: hidden;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }

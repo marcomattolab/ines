@@ -21,11 +21,11 @@
 
       <!-- Main panels -->
       <main id="main">
-        @if (activeTab() === 'chat')      { <app-chat-tab /> }
-        @if (activeTab() === 'email')     { <app-email-tab /> }
-        @if (activeTab() === 'meeting')   { <app-meeting-tab /> }
-        @if (activeTab() === 'translate') { <app-translate-tab /> }
-        @if (activeTab() === 'todo')      { <app-todo-tab /> }
+        <app-chat-tab [hidden]="activeTab() !== 'chat'" />
+        <app-email-tab [hidden]="activeTab() !== 'email'" />
+        <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
+        <app-translate-tab [hidden]="activeTab() !== 'translate'" />
+        <app-todo-tab [hidden]="activeTab() !== 'todo'" />
       </main>
     </div>
 

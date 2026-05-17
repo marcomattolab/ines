@@ -21,6 +21,7 @@ export class SpeechService {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
+    console.log('langOrName: ', langOrName);
     if (langOrName) {
       const locale = this.getLanguageCode(langOrName);
       utterance.lang = locale;
@@ -56,7 +57,7 @@ export class SpeechService {
     if (this.speaking() && this.activeId() === id) {
       this.stop();
     } else {
-      this.speak(id, text, langOrName);
+      this.speak(id, text, langOrName ?? 'en-US');
     }
   }
 

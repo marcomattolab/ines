@@ -47,6 +47,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "llm-models",
+                "output": "/models"
               }
             ],
             "styles": ["src/styles.css"]

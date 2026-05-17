@@ -9,7 +9,7 @@
       <div class="translate-pair">
         <div class="translate-side">
           <div class="translate-lang-bar">
-            <select class="pill-select" style="flex:1" [(ngModel)]="fromLang">
+            <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="fromLang">
               <option value="auto">🔍 Auto-detect language</option>
               @for (lang of languages; track lang.value) {
                 <option [value]="lang.value">{{ lang.label }}</option>
@@ -28,7 +28,7 @@
         <div class="translate-side">
           <div class="translate-lang-bar">
             <button class="swap-btn" title="Swap languages" (click)="swap()">⇄</button>
-            <select class="pill-select" style="flex:1" [(ngModel)]="toLang">
+            <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="toLang">
               @for (lang of languages; track lang.value) {
                 <option [value]="lang.value">{{ lang.label }}</option>
               }

@@ -1,4 +1,4 @@
-:host { display: flex; flex: 1; overflow: hidden; }
+:host { display: flex; flex: 1; overflow: hidden; min-width: 0; }
 .tab-panel-inner { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 
 .translate-pair { flex: 1; display: flex; overflow: hidden; }

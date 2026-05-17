@@ -9,6 +9,14 @@
 }
 
 .brand {
+  display: flex; align-items: center; gap: 8px;
+}
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.brand-text {
   font-family: var(--font-ui);
   font-weight: 800;
   font-size: 15px;
@@ -17,18 +25,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  display: flex; align-items: center; gap: 8px;
-}
-.brand-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent-green);
-  animation: pulse 2.2s ease-in-out infinite;
-  flex-shrink: 0;
-  -webkit-text-fill-color: initial;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.5); }
-  50% { opacity: 0.7; transform: scale(1.2); box-shadow: 0 0 0 6px rgba(74,222,128,0); }
 }
 
 #model-status {

@@ -49,6 +49,9 @@ export class LlmService {
         randomSeed: 101,
       });
 
+      this.setProgress(80, 'Caching model in browser storage...');
+      await this.saveModelToCache(file.name, modelBuffer);
+
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
       this.modelName.set(file.name.replace(/\.(task|litertlm|bin)$/, ''));
@@ -122,6 +125,9 @@ export class LlmService {
         randomSeed: 101,
       });
 
+      this.setProgress(80, 'Caching model in browser storage...');
+      await this.saveModelToCache(fileName, modelBuffer.buffer);
+
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
       this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
@@ -158,5 +164,87 @@ export class LlmService {
 
   private setProgress(pct: number, label: string) {
     this.progress.set({ pct, label });
+  }
+
+  async initModelFromCache(): Promise<boolean> {
+    const cached = await this.getCachedModel();
+    if (!cached) return false;
+
+    this.modelStatus.set('loading');
+    this.setProgress(10, 'Found cached model. Initializing WASM...');
+
+    try {
+      const mediapipe = await (new Function('url', 'return import(url)')(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'
+      ));
+      const { FilesetResolver, LlmInference } = mediapipe;
+
+      const genai = await FilesetResolver.forGenAiTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
+      );
+      this.setProgress(40, 'WASM ready. Loading cached model into GPU...');
+
+      this.llm = await LlmInference.createFromOptions(genai, {
+        baseOptions: { modelAssetBuffer: new Uint8Array(cached.buffer) },
+        maxTokens: 1024,
+        topK: 40,
+        temperature: 0.8,
+        randomSeed: 101,
+      });
+
+      this.setProgress(100, 'Model ready!');
+      this.modelStatus.set('ready');
+      this.modelName.set(cached.name.replace(/\.(task|litertlm|bin)$/, ''));
+      return true;
+    } catch (err: any) {
+      this.modelStatus.set('error');
+      this.modelName.set('Error loading cached model: ' + (err?.message ?? err));
+      throw err;
+    }
+  }
+
+  private openDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('InesModelCacheDB', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('models')) {
+          db.createObjectStore('models');
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private async saveModelToCache(name: string, buffer: ArrayBuffer): Promise<void> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readwrite');
+      const store = tx.objectStore('models');
+      store.put({ name, buffer }, 'cached_model');
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (e) {
+      console.error('Failed to cache model in IndexedDB:', e);
+    }
+  }
+
+  private async getCachedModel(): Promise<{ name: string; buffer: ArrayBuffer } | null> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readonly');
+      const store = tx.objectStore('models');
+      const request = store.get('cached_model');
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.error('Failed to retrieve cached model from IndexedDB:', e);
+      return null;
+    }
   }
 }

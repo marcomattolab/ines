@@ -49,12 +49,33 @@ export class AppComponent implements OnInit {
   llm        = inject(LlmService);
 
   ngOnInit() {
+    // 1. Try to load from IndexedDB cache first
+    this.llm.initModelFromCache()
+      .then((loadedFromCache) => {
+        if (loadedFromCache) {
+          this.overlayOpen.set(false);
+        } else {
+          // 2. If not in cache, fallback to local URL
+          this.loadFromLocalUrl();
+        }
+      })
+      .catch(err => {
+        console.error('Cache load error, trying local URL:', err);
+        this.loadFromLocalUrl();
+      });
+  }
+
+  private loadFromLocalUrl() {
     this.llm.initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
       .then(() => {
         this.overlayOpen.set(false);
       })
       .catch(err => {
-        this.toast.show('⚠️ Error loading model: ' + err.message);
+        // If URL fetch fails (e.g. 404 in production first run), reset model status to 'idle'
+        // and do not show a scary error toast. Just leave the overlay open for manual file loading!
+        console.log('Local model URL not found or failed. Waiting for manual model upload.', err);
+        this.llm.modelStatus.set('idle');
+        this.llm.modelName.set('No model loaded');
       });
   }
 }

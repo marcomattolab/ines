@@ -6,7 +6,7 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="counter-text">{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span>
-          <button class="pill-btn" (click)="todoSvc.clearDone()">🧹 Remove completed</button>
+          <button class="btn-danger" (click)="todoSvc.clearDone()">🧹 Remove completed</button>
         </div>
       </div>
 
@@ -38,7 +38,7 @@
               <option value="normal">normal</option>
               <option value="priority">🔥 priority</option>
             </select>
-            <button class="add-btn" (click)="addManual(manualInput, prioritySel)">+ Add</button>
+            <button class="btn-primary" (click)="addManual(manualInput, prioritySel)">+ Add</button>
           </div>
         </div>
 
@@ -74,7 +74,7 @@
                 </button>
                 <span class="timer-text">{{ timerText() }}</span>
               </div>
-              <button class="add-btn" (click)="generate(aiInput)">✨ Generate Plan</button>
+              <button class="btn-primary" (click)="generate(aiInput)">✨ Generate Plan</button>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@
       </div>
       <div class="panel-desc">Client-Side Edge Web Developer & Sandbox Playground</div>
     </div>
-    <button class="pill-btn" (click)="clear()">🧹 Clear Conversation</button>
+    <button class="btn-danger" (click)="clear()">🧹 Clear Conversation</button>
   </div>
 
   <!-- Resizable split workspace -->
@@ -50,12 +50,12 @@
       <!-- Sandbox Header -->
       <div class="sandbox-header">
         <div class="sandbox-tab-group">
-          <button class="pill-btn" 
+          <button class="btn-secondary" 
                   [class.active]="playgroundTab() === 'preview'"
                   (click)="playgroundTab.set('preview')">
             ⚡ Live Preview
           </button>
-          <button class="pill-btn"
+          <button class="btn-secondary"
                   [class.active]="playgroundTab() === 'code'"
                   (click)="playgroundTab.set('code')">
             ⚙️ Source Code
@@ -63,8 +63,8 @@
         </div>
 
         <div class="sandbox-actions" [style.display]="extractedCode() ? 'flex' : 'none'">
-          <button class="pill-btn" (click)="copyCode()">📋 Copy</button>
-          <button class="pill-btn" (click)="downloadCode()">💾 Download</button>
+          <button class="btn-secondary" (click)="copyCode()">📋 Copy</button>
+          <button class="btn-secondary" (click)="downloadCode()">💾 Download</button>
         </div>
       </div>
 

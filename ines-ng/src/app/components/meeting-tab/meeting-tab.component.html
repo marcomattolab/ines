@@ -4,7 +4,7 @@
           <div class="panel-title"><span class="panel-title-icon">🎙️</span> Meeting Recorder</div>
           <div class="panel-desc">Vocal transcription + AI-generated summary</div>
         </div>
-        <button class="pill-btn" (click)="clear()">🗑 Clear</button>
+        <button class="btn-danger" (click)="clear()">🗑 Clear</button>
       </div>
 
       <div class="meeting-layout">
@@ -50,6 +50,6 @@
         </button>
         <span class="timer-text">{{ timerText() }}</span>
         <div style="flex:1"></div>
-        <button class="pill-btn" (click)="summarize()">✨ Summarize Now</button>
+        <button class="btn-primary" (click)="summarize()">✨ Summarize Now</button>
       </div>
     </div>

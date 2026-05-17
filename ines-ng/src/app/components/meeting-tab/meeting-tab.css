@@ -42,13 +42,13 @@
   display: flex; align-items: center; gap: 8px;
   padding: 9px 18px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   background: var(--bg-3);
   color: var(--text-0);
   font-family: var(--font-ui); font-size: 13px; font-weight: 600;
   cursor: pointer; transition: all 0.2s;
 }
-.record-btn:hover { border-color: var(--accent-rose); }
+.record-btn:hover { border-color: #ffffff; }
 .record-btn.recording {
   border-color: var(--accent-rose);
   background: rgba(251,113,133,0.1);

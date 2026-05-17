@@ -4,7 +4,7 @@
           <div class="panel-title"><span class="panel-title-icon">✉️</span> Email Assistant</div>
           <div class="panel-desc">Rewrite, improve and adapt the tone of your emails</div>
         </div>
-        <button class="pill-btn" (click)="clear()">🗑 Clear</button>
+        <button class="btn-danger" (click)="clear()">🗑 Clear</button>
       </div>
 
       <div class="controls-row">
@@ -23,7 +23,7 @@
           <option value="reply">↩️ Reply</option>
           <option value="summary">📋 Summary</option>
         </select>
-        <button class="pill-btn" [disabled]="processing()" (click)="process()">
+        <button class="btn-primary" [disabled]="processing()" (click)="process()">
           {{ processing() ? '⏳ Processing...' : '⚡ Process' }}
         </button>
       </div>
@@ -35,7 +35,7 @@
           <div class="email-result-label">
             <span>✦ RESULT</span>
             @if (result()) {
-              <button class="pill-btn" (click)="copy()">📋 Copy</button>
+              <button class="btn-secondary" (click)="copy()">📋 Copy</button>
             }
           </div>
           <div class="email-result-content">

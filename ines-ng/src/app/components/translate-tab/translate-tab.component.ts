@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SpeechService } from '../../core/services/speech.service';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
 Translate the given text EXACTLY as requested, preserving style, tone and formatting.
@@ -30,6 +31,7 @@ const LANGUAGES = [
 export class TranslateTabComponent {
   llm   = inject(LlmService);
   toast = inject(ToastService);
+  speech = inject(SpeechService);
 
   languages = LANGUAGES;
   fromLang  = 'auto';
@@ -37,6 +39,17 @@ export class TranslateTabComponent {
   inputText = '';
   result    = signal('');
   translating = signal(false);
+
+  readonly isSourceSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'trans-source');
+  readonly isResultSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'trans-result');
+
+  toggleSpeakSource() {
+    this.speech.toggle('trans-source', this.inputText, this.fromLang === 'auto' ? navigator.language : this.fromLang);
+  }
+
+  toggleSpeakResult() {
+    this.speech.toggle('trans-result', this.result(), this.toLang);
+  }
 
   private debounce: ReturnType<typeof setTimeout> | null = null;
 

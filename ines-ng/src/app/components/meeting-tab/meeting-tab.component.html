@@ -11,14 +11,24 @@
         <div class="meeting-transcript">
           <div class="meeting-pane-label">
             <span>📝 TRANSCRIPTION</span>
-            <button class="pill-btn" style="font-size:10px" (click)="copy(transcript())">📋</button>
+            <div style="display:flex; gap:6px">
+              <button class="pill-btn" style="font-size:10px" [disabled]="!transcript().trim()" [class.active]="isTranscriptSpeaking()" (click)="toggleSpeakTranscript()" [attr.title]="isTranscriptSpeaking() ? 'Stop Reading' : 'Listen to Transcript'">
+                {{ isTranscriptSpeaking() ? '🛑' : '🔊' }}
+              </button>
+              <button class="pill-btn" style="font-size:10px" [disabled]="!transcript().trim()" (click)="copy(transcript())" title="Copy to Clipboard">📋</button>
+            </div>
           </div>
           <div class="meeting-scroll">{{ transcript() }}</div>
         </div>
         <div class="meeting-summary">
           <div class="meeting-pane-label">
             <span>✨ AI SUMMARY</span>
-            <button class="pill-btn" style="font-size:10px" (click)="copy(summary())">📋</button>
+            <div style="display:flex; gap:6px">
+              <button class="pill-btn" style="font-size:10px" [disabled]="!summary().trim()" [class.active]="isSummarySpeaking()" (click)="toggleSpeakSummary()" [attr.title]="isSummarySpeaking() ? 'Stop Reading' : 'Listen to Summary'">
+                {{ isSummarySpeaking() ? '🛑' : '🔊' }}
+              </button>
+              <button class="pill-btn" style="font-size:10px" [disabled]="!summary().trim()" (click)="copy(summary())" title="Copy to Clipboard">📋</button>
+            </div>
           </div>
           <div class="meeting-scroll">
             @if (summary()) {

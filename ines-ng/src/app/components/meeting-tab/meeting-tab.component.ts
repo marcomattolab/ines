@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy, computed } from '@angular/core';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SpeechService } from '../../core/services/speech.service';
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
 Given a transcript of a meeting, produce:
@@ -20,11 +21,23 @@ Be concise and use the language of the transcript. Format the result clearly.`;
 export class MeetingTabComponent implements OnDestroy {
   llm   = inject(LlmService);
   toast = inject(ToastService);
+  speech = inject(SpeechService);
 
   transcript = signal('');
   summary    = signal('');
   recording  = signal(false);
   timerText  = signal('');
+
+  readonly isTranscriptSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'meet-trans');
+  readonly isSummarySpeaking    = computed(() => this.speech.speaking() && this.speech.activeId() === 'meet-sum');
+
+  toggleSpeakTranscript() {
+    this.speech.toggle('meet-trans', this.transcript());
+  }
+
+  toggleSpeakSummary() {
+    this.speech.toggle('meet-sum', this.summary());
+  }
 
   private recognition: any = null;
   private fullTranscript = '';

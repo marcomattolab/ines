@@ -3,7 +3,12 @@
       <div class="msg-bubble" [class.cursor-blink]="streaming()">
         <span [innerHTML]="safeHtml()"></span>
         @if (role() === 'ai' && text()) {
-          <button class="msg-copy" (click)="copy()">📋</button>
+          <div class="msg-actions" [class.visible]="isSpeaking()">
+            <button class="msg-action-btn" [class.speaking]="isSpeaking()" (click)="toggleSpeak()" [attr.title]="isSpeaking() ? 'Stop Reading' : 'Read Aloud'">
+              {{ isSpeaking() ? '🛑' : '🔊' }}
+            </button>
+            <button class="msg-action-btn" (click)="copy()" title="Copy to Clipboard">📋</button>
+          </div>
         }
       </div>
     </div>

@@ -1,5 +1,6 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, computed } from '@angular/core';
 import { ToastService } from '../../core/services/toast.service';
+import { SpeechService } from '../../core/services/speech.service';
 
 @Component({
   selector: 'app-message-bubble',
@@ -13,6 +14,10 @@ export class MessageBubbleComponent {
   streaming = input<boolean>(false);
 
   private toast = inject(ToastService);
+  private speech = inject(SpeechService);
+
+  readonly msgId = 'msg-' + Math.random().toString(36).substring(2, 9);
+  readonly isSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === this.msgId);
 
   safeHtml(): string {
     return String(this.text())
@@ -25,5 +30,9 @@ export class MessageBubbleComponent {
 
   copy() {
     navigator.clipboard.writeText(this.text()).then(() => this.toast.show('📋 Copied!'));
+  }
+
+  toggleSpeak() {
+    this.speech.toggle(this.msgId, this.text());
   }
 }

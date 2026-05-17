@@ -15,6 +15,9 @@
                 <option [value]="lang.value">{{ lang.label }}</option>
               }
             </select>
+            <button class="pill-btn" style="font-size:10px" [disabled]="!inputText.trim()" [class.active]="isSourceSpeaking()" (click)="toggleSpeakSource()" [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
+              {{ isSourceSpeaking() ? '🛑' : '🔊' }}
+            </button>
           </div>
           <textarea class="translate-textarea"
             placeholder="Text to translate..."
@@ -30,7 +33,10 @@
                 <option [value]="lang.value">{{ lang.label }}</option>
               }
             </select>
-            <button class="pill-btn" style="font-size:10px" (click)="copy()">📋</button>
+            <button class="pill-btn" style="font-size:10px" [disabled]="!result().trim()" [class.active]="isResultSpeaking()" (click)="toggleSpeakResult()" [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'">
+              {{ isResultSpeaking() ? '🛑' : '🔊' }}
+            </button>
+            <button class="pill-btn" style="font-size:10px" [disabled]="!result().trim()" (click)="copy()" title="Copy to Clipboard">📋</button>
           </div>
           <div class="translate-result-area">
             @if (result()) {

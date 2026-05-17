@@ -53,6 +53,22 @@
 .loader-box a { color: var(--accent-blue); text-decoration: none; }
 .loader-box a:hover { text-decoration: underline; }
 
+.close-overlay-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-size: 18px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px;
+}
+.close-overlay-btn:hover {
+  color: var(--text-0);
+}
+
 .model-steps { display: flex; flex-direction: column; gap: 8px; }
 .model-step {
   display: flex; align-items: flex-start; gap: 10px;

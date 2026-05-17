@@ -6,7 +6,8 @@
         }
         <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
 
-        <div class="loader-box">
+        <div class="loader-box" style="position: relative;">
+          <button class="close-overlay-btn" (click)="close()">✕</button>
           <h2>Load a local LLM model</h2>
           <p>
             This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models

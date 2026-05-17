@@ -19,6 +19,10 @@ export class LoaderOverlayComponent {
   dragging = false;
   dropText = '📦 Drag and drop the model file here or click to select';
 
+  close() {
+    this.closed.emit();
+  }
+
   onDrop(e: DragEvent) {
     e.preventDefault();
     this.dragging = false;

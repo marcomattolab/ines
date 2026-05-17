@@ -60,7 +60,17 @@
             <textarea class="todo-ai-textarea" #aiInput
               placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
               (keydown)="onAiKey($event, aiInput)"></textarea>
-            <button class="add-btn" style="align-self:flex-end" (click)="generate(aiInput)">✨ Generate Plan</button>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording(aiInput)">
+                  <div class="record-dot"></div>
+                  <span>{{ recording() ? 'Stop Recording' : 'Record' }}</span>
+                </button>
+                <span class="timer-text">{{ timerText() }}</span>
+              </div>
+              <button class="add-btn" (click)="generate(aiInput)">✨ Generate Plan</button>
+            </div>
           </div>
         </div>
       </div>

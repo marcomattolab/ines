@@ -34,7 +34,14 @@ export class TodoTabComponent {
   toast   = inject(ToastService);
 
   aiMessages = signal<AiChat[]>([]);
+  recording  = signal(false);
+  timerText  = signal('');
+  
   private nextId = 0;
+  private recognition: any = null;
+  private seconds = 0;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private baseText = '';
 
   addManual(input: HTMLInputElement, selEl?: HTMLSelectElement) {
     const text = input.value.trim();
@@ -48,7 +55,67 @@ export class TodoTabComponent {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.generate(el); }
   }
 
+  toggleRecording(textarea: HTMLTextAreaElement) {
+    this.recording() ? this.stopRecording() : this.startRecording(textarea);
+  }
+
+  startRecording(textarea: HTMLTextAreaElement) {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { this.toast.show('⚠️ Web Speech API not supported in this browser'); return; }
+
+    this.baseText = textarea.value.trim();
+    if (this.baseText) this.baseText += ' ';
+
+    this.recognition = new SR();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = navigator.language || 'en-US';
+
+    this.recognition.onresult = (e: any) => {
+      let interim = '', final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t + ' ';
+        else interim += t;
+      }
+      if (final) this.baseText += final;
+      textarea.value = this.baseText + (interim ? `[${interim}]` : '');
+    };
+
+    this.recognition.onerror = (e: any) => {
+      if (e.error !== 'no-speech') this.toast.show('⚠️ Mic error: ' + e.error);
+    };
+
+    this.recognition.onend = () => {
+      if (this.recording()) this.recognition.start();
+    };
+
+    this.recognition.start();
+    this.recording.set(true);
+    this.seconds = 0;
+
+    this.intervalId = setInterval(() => {
+      this.seconds++;
+      const m = Math.floor(this.seconds / 60).toString().padStart(2, '0');
+      const s = (this.seconds % 60).toString().padStart(2, '0');
+      this.timerText.set(`${m}:${s}`);
+    }, 1000);
+  }
+
+  stopRecording() {
+    if (this.recognition) { this.recognition.stop(); this.recognition = null; }
+    this.recording.set(false);
+    if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
+    this.timerText.set('');
+  }
+
+  ngOnDestroy() {
+    this.stopRecording();
+  }
+
   async generate(textarea: HTMLTextAreaElement) {
+    if (this.recording()) this.stopRecording();
+    
     const desc = textarea.value.trim();
     if (!desc) { this.toast.show('⚠️ Describe what you have to do today'); return; }
     if (!this.llm.isReady()) { this.toast.show('⚠️ Load the model first!'); return; }
@@ -61,6 +128,7 @@ export class TodoTabComponent {
       { id: typingId,  role: 'ai',   text: '',    typing: true },
     ]);
     textarea.value = '';
+    this.baseText = '';
 
     const prompt = this.llm.buildPrompt(SYSTEM_TODO, `Today I have to do: ${desc}. Plan my day.`);
 

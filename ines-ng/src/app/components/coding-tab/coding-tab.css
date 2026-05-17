@@ -14,11 +14,9 @@
 
 /* ── LEFT PANEL: TERMINAL CHAT ── */
 .terminal-chat-panel {
-  width: 42%;
+  flex: 1;
   min-width: 360px;
-  max-width: 500px;
   background: rgba(13, 16, 23, 0.45);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -59,11 +57,12 @@
 
 /* ── RIGHT PANEL: PLAYGROUND SANDBOX ── */
 .sandbox-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--bg-0);
   overflow: hidden;
+  flex-shrink: 0;
+  min-width: 300px;
 }
 
 .sandbox-panel .panel-header {
@@ -212,4 +211,91 @@
   .sandbox-panel {
     height: 50%;
   }
+}
+
+/* ── RESIZERS ── */
+.resizer {
+  width: 4px;
+  background: transparent;
+  cursor: col-resize;
+  transition: background 0.2s;
+  z-index: 10;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.resizer:hover, .resizer:active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+.h-resizer {
+  height: 4px;
+  background: transparent;
+  cursor: row-resize;
+  transition: background 0.2s;
+  z-index: 10;
+  margin-top: -4px;
+  flex-shrink: 0;
+}
+.h-resizer:hover, .h-resizer:active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+/* ── INPUT ZONE OVERRIDES ── */
+.terminal-chat-panel .input-zone {
+  display: flex !important;
+  gap: 10px;
+  align-items: stretch !important;
+  background: var(--bg-1);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+  padding: 12px 20px !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  max-height: none !important;
+}
+
+.terminal-chat-panel .input-field {
+  flex: 1;
+  height: 100% !important;
+  max-height: none !important;
+  resize: none !important;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--text-0);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.terminal-chat-panel .input-field:focus {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-glow);
+}
+
+.terminal-chat-panel .send-btn {
+  height: 100% !important;
+  width: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent-blue), #3b82f6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 179, 255, 0.2);
+}
+.terminal-chat-panel .send-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(99, 179, 255, 0.4);
 }

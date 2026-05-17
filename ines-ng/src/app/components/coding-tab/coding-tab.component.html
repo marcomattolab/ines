@@ -29,21 +29,22 @@
     <div class="token-info" [style.visibility]="tokenInfo() ? 'visible' : 'hidden'">
       {{ tokenInfo() }}
     </div>
-    <div class="input-zone">
+    <div class="h-resizer" (mousedown)="startHResize($event)"></div>
+    <div class="input-zone" [style.height.px]="inputAreaHeight()">
       <textarea #inputEl
         class="input-field"
         placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
-        rows="1"
-        (keydown)="onKey($event)"
-        (input)="autoResize($event)"></textarea>
+        (keydown)="onKey($event)"></textarea>
       <button class="send-btn" [disabled]="generating() || !llm.isReady()" (click)="send()">
         ✈️
       </button>
     </div>
   </div>
 
+  <div class="resizer" (mousedown)="startResize($event)"></div>
+
   <!-- Right Side: Sandbox Code & Live Preview Workspace -->
-  <div class="sandbox-panel">
+  <div class="sandbox-panel" [style.width.px]="rightPanelWidth()">
     <!-- Header with tab selectors & actions -->
     <div class="panel-header">
       <div class="sandbox-tab-group">

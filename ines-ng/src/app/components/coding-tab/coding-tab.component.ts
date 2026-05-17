@@ -62,6 +62,53 @@ export class CodingTabComponent implements AfterViewChecked {
   private nextId = 1;
   private shouldScroll = false;
 
+  rightPanelWidth = signal<number>(window.innerWidth * 0.58);
+  inputAreaHeight = signal<number>(85);
+  private isResizing = false;
+  private isHResizing = false;
+
+  startResize(e: MouseEvent) {
+    this.isResizing = true;
+    e.preventDefault();
+    document.addEventListener('mousemove', this.doResize);
+    document.addEventListener('mouseup', this.stopResize);
+  }
+
+  private doResize = (e: MouseEvent) => {
+    if (!this.isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 300 && newWidth <= window.innerWidth - 380) {
+      this.rightPanelWidth.set(newWidth);
+    }
+  };
+
+  private stopResize = () => {
+    this.isResizing = false;
+    document.removeEventListener('mousemove', this.doResize);
+    document.removeEventListener('mouseup', this.stopResize);
+  };
+
+  startHResize(e: MouseEvent) {
+    this.isHResizing = true;
+    e.preventDefault();
+    document.addEventListener('mousemove', this.doHResize);
+    document.addEventListener('mouseup', this.stopHResize);
+  }
+
+  private doHResize = (e: MouseEvent) => {
+    if (!this.isHResizing) return;
+    const newHeight = window.innerHeight - e.clientY - 32; // Subtract footer height
+    if (newHeight >= 60 && newHeight <= window.innerHeight - 150) {
+      this.inputAreaHeight.set(newHeight);
+    }
+  };
+
+  private stopHResize = () => {
+    this.isHResizing = false;
+    document.removeEventListener('mousemove', this.doHResize);
+    document.removeEventListener('mouseup', this.stopHResize);
+  };
+
   ngAfterViewChecked() {
     if (this.shouldScroll) {
       const el = this.chatArea?.nativeElement;

@@ -4,6 +4,13 @@
   overflow: hidden;
 }
 
+.tab-panel-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 .coding-workspace {
   display: flex;
   flex: 1;
@@ -23,26 +30,7 @@
   box-shadow: 4px 0 20px rgba(0,0,0,0.15);
 }
 
-.terminal-chat-panel .panel-header {
-  border-bottom: 1px solid var(--border);
-}
 
-.terminal-chat-panel .panel-title .title-text {
-  font-family: var(--font-ui);
-  font-weight: 800;
-  font-size: 15px;
-  color: var(--text-0);
-  text-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
-}
-
-.terminal-chat-panel .panel-desc {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--tab-coding);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-top: 1px;
-}
 
 .chat-area {
   flex: 1;
@@ -65,9 +53,14 @@
   min-width: 300px;
 }
 
-.sandbox-panel .panel-header {
+.sandbox-header {
+  padding: 10px 16px;
   background: rgba(13, 16, 23, 0.35);
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .sandbox-tab-group {

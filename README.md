@@ -1,4 +1,4 @@
-# INES — Intelligent Neural Edge System
+# INES - Intelligent Neural Edge System
 
 > **Run a large language model entirely in your browser. No server. No API key. No data leaving your device.**
 

@@ -15,9 +15,9 @@ export interface ChatMessage {
 @Injectable({ providedIn: 'root' })
 export class LlmService {
   readonly modelStatus = signal<ModelStatus>('idle');
-  readonly modelName   = signal<string>('No model loaded');
-  readonly progress    = signal<ProgressState>({ pct: 0, label: '' });
-  readonly isReady     = computed(() => this.modelStatus() === 'ready');
+  readonly modelName = signal<string>('No model loaded');
+  readonly progress = signal<ProgressState>({ pct: 0, label: '' });
+  readonly isReady = computed(() => this.modelStatus() === 'ready');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private llm: any = null;
@@ -58,7 +58,9 @@ export class LlmService {
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+      }
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
@@ -109,9 +111,9 @@ export class LlmService {
           loaded += value.length;
           if (total) {
             const pct = Math.floor((loaded / total) * 50); // Download is 0-50%
-            this.setProgress(pct + 10, `Downloading model (${Math.round(loaded/1024/1024)}MB)...`);
+            this.setProgress(pct + 10, `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`);
           } else {
-            this.setProgress(30, `Downloading model (${Math.round(loaded/1024/1024)}MB)...`);
+            this.setProgress(30, `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`);
           }
         }
       }
@@ -142,7 +144,10 @@ export class LlmService {
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+      }
+
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
@@ -210,7 +215,9 @@ export class LlmService {
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+      }
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');

@@ -10,9 +10,9 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class LoaderOverlayComponent {
   visible = input<boolean>(true);
-  closed  = output<void>();
+  closed = output<void>();
 
-  llm   = inject(LlmService);
+  llm = inject(LlmService);
   toast = inject(ToastService);
 
   showText = signal<boolean>(false);

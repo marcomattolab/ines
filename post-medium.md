@@ -1,14 +1,14 @@
-# 🚀 Edge AI is no longer a research idea — it’s running in your browser today
+# 🚀 Edge AI is no longer a research idea - it’s running in your browser today
 
 We’ve been trained to think of SLMs as “cloud-only” systems: APIs, servers, tokens, latency, privacy trade-offs.
 
 But what if none of that was necessary?
 
-I built **INES — Intelligent Neural Edge System**, a full SLM-powered application that runs entirely inside the browser.
+I built **INES - Intelligent Neural Edge System**, a full SLM-powered application that runs entirely inside the browser.
 
-No server.  
-No API key.  
-No data leaving your device.
+- No server.  
+- No API key.  
+- No data leaving your device.
 
 ---
 
@@ -95,6 +95,6 @@ Built with:
 
 ---
 
-💡 A new phase where “AI apps” won’t necessarily mean “cloud services”:
+💡 A new phase where “AI apps” won’t necessarily mean “cloud services”
 
- **software that runs locally — and thinks locally.**
+🔐 **software that runs locally — and thinks locally**

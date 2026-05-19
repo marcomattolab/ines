@@ -4,6 +4,8 @@
 
 INES is a single-file, zero-dependency web application that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use five specialized AI-powered tools — all completely offline after the initial CDN load.
 
+<video src="video-poc-ines.webm" controls="controls" width="100%"></video>
+
 ---
 
 ## Table of Contents

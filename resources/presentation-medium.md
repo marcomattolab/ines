@@ -97,7 +97,7 @@ Built with:
 
 ## POC Video
 
-<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/video-poc-ines.html" target="_blank">video-ines</a>
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
 
 ## Final thoughts
 

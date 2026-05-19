@@ -370,6 +370,14 @@ Watch the POC demonstration below
 
 ---
 
+# Presentation
+
+Watch the presentation below
+
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">presentation-poc-ines</a>
+
+---
+
 ## Roadmap
 
 ## Phase 1 — Foundation (Completed)

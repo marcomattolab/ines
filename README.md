@@ -4,8 +4,6 @@
 
 INES is a single-file, zero-dependency web application that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use five specialized AI-powered tools — all completely offline after the initial CDN load.
 
-POC Video: <a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/video-poc-ines.html" target="_blank">video-ines</a>
-
 ---
 
 ## Table of Contents
@@ -364,26 +362,65 @@ No analytics. No telemetry. No accounts.
 
 ---
 
+## POC Video
+
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/video-poc-ines.html" target="_blank">video-ines</a>
+
+---
+
 ## Roadmap
+
+## Phase 1 — Foundation (Completed)
 
 - [x] First POC in a single-file HTML with vanilla JS
 - [x] Move this POC into a proper Angular 22 PWA with standalone components and Signals
-- [x] UI improvemens and creation of icons, logo, footer and favicons
+- [x] UI improvements and creation of icons, logo, footer and favicons
+
+## Phase 2 — Core Product Features (In Progress)
+
 - [ ] Export meeting summary as `.txt` / `.md`
+- [ ] Improve coding assistant with more features and sandbox improvement
+- [ ] Add new tabs for new features (based on project/company)
+
+## Phase 3 — AI Intelligence Layer
+
 - [ ] Handle diverse model based on tasks automatically
 - [ ] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
-- [ ] Improve coding assistant with more features and sandbox improvement
-- [ ] Add unit and e2e tests for all the features and documentation
-- [ ] Add new tabs for new features (based on project/company)
-- [ ] Fine tuning Gemma 3 1B to make it a better assistant
 - [ ] Explore more LLM providers
+
+## Phase 4 — Platform & Reliability
+
+- [ ] Add unit and e2e tests for all the features and documentation
 - [ ] Setup CI/CD for deployment to GitHub Pages
 - [ ] Create landing page to introduce the project
+
+## Phase 5 — Advanced / Experimental AI
+
+- [ ] Fine tuning Gemma 3 1B to make it a better assistant
 
 ---
 
 ## License
 
-This project is provided as-is for educational and personal productivity use.
-The MediaPipe library is licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-Gemma model weights are subject to the [Gemma Terms of Use](https://ai.google.dev/gemma/terms).
+© 2026 All rights reserved.
+
+This project and its source code are proprietary and are provided for **personal, non-commercial use only**.  
+You may view and use this software for individual productivity and evaluation purposes, but you may not:
+
+- Use this project for any commercial purpose
+- Copy, modify, distribute, sublicense, or sell any part of this software
+- Publish or host derived versions of this project
+- Reverse engineer or extract components for reuse in other projects
+
+This software is provided "as is", without warranty of any kind.
+
+---
+
+### Third-party components
+
+This project includes or depends on third-party components subject to their own licenses:
+
+- MediaPipe is licensed under the Apache License 2.0: <https://www.apache.org/licenses/LICENSE-2.0>  
+- Gemma model weights are subject to the Gemma Terms of Use: <https://ai.google.dev/gemma/terms>  
+
+Use of those components must comply with their respective licenses, which remain unaffected by this project's licensing terms.

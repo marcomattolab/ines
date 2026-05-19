@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, signal, ElementRef, AfterViewChecked, viewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -40,21 +40,27 @@ Keep explanations extremely brief and let your premium code speak for itself. Al
   standalone: true,
   imports: [MessageBubbleComponent, TypingIndicatorComponent],
   templateUrl: './coding-tab.component.html',
-  styleUrl: './coding-tab.css'
+  styleUrl: './coding-tab.css',
 })
 export class CodingTabComponent implements AfterViewChecked {
-  @ViewChild('chatArea') chatArea!: ElementRef<HTMLDivElement>;
-  @ViewChild('inputEl')  inputEl!: ElementRef<HTMLTextAreaElement>;
+  readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
+  readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
-  llm   = inject(LlmService);
+  llm = inject(LlmService);
   toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
 
-  messages  = signal<UiMessage[]>([{ id: 0, role: 'ai', text: "Hey developer! I'm Gemma, your client-side Coding Assistant. I can write premium, fully styled, and interactive web widgets. Describe what you want me to build, and you will see the live preview on the right!" }]);
-  typing    = signal(false);
+  messages = signal<UiMessage[]>([
+    {
+      id: 0,
+      role: 'ai',
+      text: "Hey developer! I'm INES, your client-side Coding Assistant. I can write premium, fully styled, and interactive web widgets. Describe what you want me to build, and you will see the live preview on the right!",
+    },
+  ]);
+  typing = signal(false);
   generating = signal(false);
   tokenInfo = signal('');
-  
+
   extractedCode = signal<string>('');
   playgroundTab = signal<'code' | 'preview'>('preview');
 
@@ -111,14 +117,17 @@ export class CodingTabComponent implements AfterViewChecked {
 
   ngAfterViewChecked() {
     if (this.shouldScroll) {
-      const el = this.chatArea?.nativeElement;
+      const el = this.chatArea()?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
       this.shouldScroll = false;
     }
   }
 
   onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.send();
+    }
   }
 
   autoResize(e: Event) {
@@ -129,7 +138,7 @@ export class CodingTabComponent implements AfterViewChecked {
 
   async send() {
     if (this.generating()) return;
-    const text = this.inputEl.nativeElement.value.trim();
+    const text = this.inputEl().nativeElement.value.trim();
     if (!text) return;
     if (!this.llm.isReady()) {
       this.toast.show('⚠️ Load the model first!');
@@ -137,11 +146,11 @@ export class CodingTabComponent implements AfterViewChecked {
     }
 
     this.generating.set(true);
-    this.inputEl.nativeElement.value = '';
-    this.inputEl.nativeElement.style.height = '';
+    this.inputEl().nativeElement.value = '';
+    this.inputEl().nativeElement.style.height = '';
 
     this.history.push({ role: 'user', content: text });
-    this.messages.update(m => [...m, { id: this.nextId++, role: 'user', text }]);
+    this.messages.update((m) => [...m, { id: this.nextId++, role: 'user', text }]);
     this.typing.set(true);
     this.shouldScroll = true;
 
@@ -153,14 +162,17 @@ export class CodingTabComponent implements AfterViewChecked {
       await this.llm.generate(prompt, (_, done, fullText) => {
         full = fullText;
         this.updateExtractedCode(fullText);
-        
+
         if (this.typing()) {
           this.typing.set(false);
-          this.messages.update(m => [...m, { id: aiId, role: 'ai', text: fullText, streaming: true }]);
+          this.messages.update((m) => [
+            ...m,
+            { id: aiId, role: 'ai', text: fullText, streaming: true },
+          ]);
         } else {
-          this.messages.update(m => m.map(msg =>
-            msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg
-          ));
+          this.messages.update((m) =>
+            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
+          );
         }
         this.shouldScroll = true;
       });
@@ -168,7 +180,10 @@ export class CodingTabComponent implements AfterViewChecked {
       this.tokenInfo.set(`${this.history.length} messages in history`);
     } catch (e: any) {
       this.typing.set(false);
-      this.messages.update(m => [...m, { id: this.nextId++, role: 'ai', text: '❌ ' + e.message }]);
+      this.messages.update((m) => [
+        ...m,
+        { id: this.nextId++, role: 'ai', text: '❌ ' + e.message },
+      ]);
     }
 
     this.generating.set(false);
@@ -215,7 +230,9 @@ export class CodingTabComponent implements AfterViewChecked {
 
   clear() {
     this.history = [];
-    this.messages.set([{ id: this.nextId++, role: 'ai', text: 'Cleaned. Let\'s build something else!' }]);
+    this.messages.set([
+      { id: this.nextId++, role: 'ai', text: "Cleaned. Let's build something else!" },
+    ]);
     this.tokenInfo.set('');
     this.extractedCode.set('');
   }

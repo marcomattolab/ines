@@ -241,8 +241,8 @@ A smart task manager that combines manual entry with **AI-generated daily plans*
 Describe your day in natural language in the right panel. The AI returns a structured JSON plan with 4–8 concrete, specific tasks tagged as `normal` or `priority`. Example input:
 
 ```
-Ho una demo alle 15, revisione PR del team Angular,
-call col cliente e preparare slide per il tech talk di venerdì
+I have a demo at 3 PM, PR review of the Angular team,
+call the client and prepare slides for the tech talk on Friday.
 ```
 
 The model generates a prioritized, realistic task breakdown and injects it directly into your list.

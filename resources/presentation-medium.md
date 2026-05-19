@@ -101,6 +101,14 @@ Watch the POC demonstration below
 
 <a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
 
+# Presentation
+
+Watch the presentation below
+
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">presentation-poc-ines</a>
+
+---
+
 ## Final thoughts
 
 💡A new phase where “AI apps” won’t necessarily mean “cloud services”

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INES - Video POC</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .video-container {
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        video {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin-top: 20px;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        p {
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="video-container">
+        <h1>INES - Intelligent Neural Edge System</h1>
+        <p>Proof of Concept</p>
+
+        <video controls autoplay>
+            <source src="https://github.com/marcomattolab/ines/raw/main/video-poc-ines.webm" type="video/webm">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+</body>
+
+</html>

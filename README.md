@@ -362,7 +362,9 @@ No analytics. No telemetry. No accounts.
 
 ---
 
-## POC Video
+## Proof of Concept Video
+
+Watch the POC demonstration below
 
 <a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
 

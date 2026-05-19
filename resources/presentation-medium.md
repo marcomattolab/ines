@@ -95,12 +95,14 @@ Built with:
 
 ---
 
-## POC Video
+## Proof of Concept Video
+
+Watch the POC demonstration below
 
 <a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
 
 ## Final thoughts
 
-💡 A new phase where “AI apps” won’t necessarily mean “cloud services”
+💡A new phase where “AI apps” won’t necessarily mean “cloud services”
 
-🔐 **software that runs locally — and thinks locally**
+- 🔐 **software that runs locally — and thinks locally**

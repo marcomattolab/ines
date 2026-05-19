@@ -4,8 +4,6 @@ We’ve been trained to think of SLMs as “cloud-only” systems: APIs, servers
 
 But what if none of that was necessary?
 
-POC Video: [video-ines](https://github.com/marcomattolab/ines/raw/main/video-poc-ines.webm)
-
 I built **INES - Intelligent Neural Edge System**, a full SLM-powered application that runs entirely inside the browser.
 
 - No server.  
@@ -96,6 +94,12 @@ Built with:
 - Zero backend infrastructure
 
 ---
+
+## POC Video
+
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/video-poc-ines.html" target="_blank">video-ines</a>
+
+## Final thoughts
 
 💡 A new phase where “AI apps” won’t necessarily mean “cloud services”
 

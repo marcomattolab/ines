@@ -4,7 +4,7 @@ We’ve been trained to think of SLMs as “cloud-only” systems: APIs, servers
 
 But what if none of that was necessary?
 
-<video src="video-poc-ines.webm" controls="controls" width="100%"></video>
+<video src="[video-poc-ines.webm](https://github.com/marcomattolab/ines/blob/main/video-poc-ines.webm)" controls="controls" width="100%"></video>
 
 I built **INES - Intelligent Neural Edge System**, a full SLM-powered application that runs entirely inside the browser.
 

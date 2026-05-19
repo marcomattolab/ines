@@ -1,4 +1,6 @@
-# 🚀 Edge AI is no longer a research idea - it’s running in your browser today
+# 🚀 Edge AI is no longer a research idea
+
+## But it's running in your browser today
 
 We’ve been trained to think of SLMs as “cloud-only” systems: APIs, servers, tokens, latency, privacy trade-offs.
 
@@ -62,7 +64,7 @@ This architecture enables use cases that cloud AI struggles with:
 - 🧪 Educational and demo environments  
 - 🧍 Privacy-first personal tools  
 
-Edge AI isn’t just about performance — it’s about **control shifting back to the user**.
+Edge AI isn’t just about performance - it’s about **control shifting back to the user**.
 
 ---
 

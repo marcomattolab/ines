@@ -396,16 +396,18 @@ Watch the presentation on ppt below
 
 ## Phase 2 — Core Product Features (In Progress)
 
-- [ ] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
+- [x] RAG pipeline integration via `@mediapipe/tasks-genai-experimental`
+- [x] Add new tabs for new features for learning
 - [ ] Improve coding assistant with more features and sandbox improvement
-- [ ] Add new tabs for new features (based on project/company)
+
 
 ## Phase 3 — AI Intelligence Layer
 
-- [ ] Handle diverse model based on tasks automatically
-- [ ] Explore more LLM providers
-- [ ] Fine tuning Gemma 3 1B to make it a better assistant
 - [ ] Export meeting summary as `.txt` / `.md`
+- [ ] Explore more LLM providers
+- [ ] Handle diverse model based on tasks automatically
+- [ ] Fine tuning Gemma 3 1B to make it a better assistant
+
 
 ## Phase 4 — Platform & Reliability
 

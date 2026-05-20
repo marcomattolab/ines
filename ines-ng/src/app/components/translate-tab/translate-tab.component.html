@@ -19,7 +19,7 @@
           }
         </select>
         <app-button variant="ghost" size="sm" [disabled]="!inputText.trim()" (onClick)="toggleSpeakSource()" className="!w-8 !h-8 !p-0" [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
-          <mat-icon [fontIcon]="isSourceSpeaking() ? 'close' : 'mic'" 
+          <mat-icon [fontIcon]="isSourceSpeaking() ? 'close' : 'volume_up'" 
                     class="text-sm w-3.5 h-3.5" 
                     [class.text-accent-amber]="isSourceSpeaking()"></mat-icon>
         </app-button>

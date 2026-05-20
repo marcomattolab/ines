@@ -113,14 +113,23 @@ Go to HuggingFace and download a compatible model file (`.task` or `.litertlm`).
 https://huggingface.co/litert-community/Gemma3-1B-IT
 ```
 
-### 2. Open INES
+### 2. Run INES
 
-Open `ines.html` directly in Chrome or Edge (no server needed for most use cases).
+INES is built with Angular. You can run it locally for development or build it for production.
 
 ```bash
-# Or serve locally if you need HTTPS for microphone access:
-npx serve .
-# then open http://localhost:3000/ines.html
+cd ines-ng
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+# Then open http://localhost:4200
+
+# Build for production
+npm run build
+```
 ```
 
 > **HTTPS note:** The Meeting tab uses the Web Speech API, which requires a secure context (`https://` or `localhost`). All other tabs work fine on `file://`.

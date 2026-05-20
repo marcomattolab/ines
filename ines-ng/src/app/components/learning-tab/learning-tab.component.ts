@@ -44,12 +44,33 @@ export class LearningTabComponent implements AfterViewInit {
 
   activeSubTab = signal<'chat' | 'mindmap' | 'quiz'>('chat');
   isMindMapPlaceholder = true;
+  showMindMapOnRight = signal(false);
+  zoomLevel = signal(1.0);
 
   selectSubTab(tab: 'chat' | 'mindmap' | 'quiz') {
     this.activeSubTab.set(tab);
     if (tab === 'mindmap' && this.isMindMapPlaceholder && this.rag.hasContext() && !this.isGenerating()) {
       this.generateMindMap();
     }
+  }
+
+  toggleDockMindMap() {
+    this.showMindMapOnRight.update(d => !d);
+    if (this.showMindMapOnRight() && this.isMindMapPlaceholder && this.rag.hasContext() && !this.isGenerating()) {
+      this.generateMindMap();
+    }
+  }
+
+  zoomIn() {
+    this.zoomLevel.update(z => Math.min(2.5, z + 0.15));
+  }
+
+  zoomOut() {
+    this.zoomLevel.update(z => Math.max(0.4, z - 0.15));
+  }
+
+  zoomReset() {
+    this.zoomLevel.set(1.0);
   }
 
   ngAfterViewInit() {

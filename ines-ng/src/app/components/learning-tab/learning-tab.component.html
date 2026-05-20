@@ -77,9 +77,9 @@
     <main class="flex-1 flex flex-col bg-transparent relative">
       <!-- Sub-tab Navigation -->
       <nav class="flex px-6" style="border-bottom: 1px solid var(--border);">
-        <button (click)="activeSubTab.set('chat')" [class.border-blue-500]="activeSubTab() === 'chat'" [class.text-blue-400]="activeSubTab() === 'chat'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Chat Analysis</button>
-        <button (click)="activeSubTab.set('mindmap')" [class.border-blue-500]="activeSubTab() === 'mindmap'" [class.text-blue-400]="activeSubTab() === 'mindmap'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Visual Map</button>
-        <button (click)="activeSubTab.set('quiz')" [class.border-blue-500]="activeSubTab() === 'quiz'" [class.text-blue-400]="activeSubTab() === 'quiz'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Quiz</button>
+        <button (click)="selectSubTab('chat')" [class.border-blue-500]="activeSubTab() === 'chat'" [class.text-blue-400]="activeSubTab() === 'chat'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Chat Analysis</button>
+        <button (click)="selectSubTab('mindmap')" [class.border-blue-500]="activeSubTab() === 'mindmap'" [class.text-blue-400]="activeSubTab() === 'mindmap'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Visual Map</button>
+        <button (click)="selectSubTab('quiz')" [class.border-blue-500]="activeSubTab() === 'quiz'" [class.text-blue-400]="activeSubTab() === 'quiz'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Quiz</button>
       </nav>
 
       <!-- Content Views -->

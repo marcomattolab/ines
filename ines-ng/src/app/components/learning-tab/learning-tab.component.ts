@@ -43,6 +43,14 @@ export class LearningTabComponent implements AfterViewInit {
   numQuizQuestions = signal(5);
 
   activeSubTab = signal<'chat' | 'mindmap' | 'quiz'>('chat');
+  isMindMapPlaceholder = true;
+
+  selectSubTab(tab: 'chat' | 'mindmap' | 'quiz') {
+    this.activeSubTab.set(tab);
+    if (tab === 'mindmap' && this.isMindMapPlaceholder && this.rag.hasContext() && !this.isGenerating()) {
+      this.generateMindMap();
+    }
+  }
 
   ngAfterViewInit() {
     this.renderMindMap('mindmap\n  root((Learning Context))\n    (Topic 1)\n    (Topic 2)');
@@ -62,6 +70,7 @@ export class LearningTabComponent implements AfterViewInit {
         await this.rag.processFile(file);
         this.files.update(f => [...f, file]);
       }
+      this.isMindMapPlaceholder = true;
       this.toast.success('Documents processed and added to context.');
     } catch (err: any) {
       this.toast.error('Error processing files: ' + err.message);
@@ -218,6 +227,7 @@ export class LearningTabComponent implements AfterViewInit {
       console.log('Cleaned Mermaid code for rendering:\n', code);
       
       await this.renderMindMap(code);
+      this.isMindMapPlaceholder = false;
     } catch (err: any) {
       console.error('Error generating mind map:', err);
       this.toast.error('Error generating mind map: ' + err.message);
@@ -296,7 +306,8 @@ export class LearningTabComponent implements AfterViewInit {
     this.messages.set([]);
     this.files.set([]);
     this.rag.clearContext();
-    this.mermaidContainer.nativeElement.innerHTML = '';
     this.quizQuestions.set([]);
+    this.isMindMapPlaceholder = true;
+    this.renderMindMap('mindmap\n  root((Learning Context))\n    (Topic 1)\n    (Topic 2)');
   }
 }

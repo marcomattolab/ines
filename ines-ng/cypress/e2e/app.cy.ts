@@ -14,7 +14,12 @@ describe('INES Application', () => {
   });
 
   it('should switch between tabs', () => {
-    // Wait for overlay to be visible and close it if possible or just check sidebar
+    // Dismiss the loader overlay first so it doesn't cover elements
+    cy.get('app-loader-overlay app-button button').first().click({ force: true });
+    
+    // Wait for the overlay to disappear from DOM
+    cy.get('#loader-overlay').should('not.exist');
+
     cy.get('.tab-btn').contains('Email').click();
     cy.get('app-email-tab').should('be.visible');
 

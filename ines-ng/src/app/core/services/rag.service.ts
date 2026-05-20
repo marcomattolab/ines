@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up worker for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Use local worker instead of CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export interface DocumentChunk {
   text: string;
@@ -31,16 +31,27 @@ export class RagService {
   }
 
   private async extractTextFromPdf(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items.map((item: any) => item.str);
-      fullText += strings.join(' ') + '\n';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        // Add these options to help with worker loading
+        useSystemFonts: true,
+        disableFontFace: false
+      }).promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const strings = content.items.map((item: any) => item.str);
+        fullText += strings.join(' ') + '\n';
+      }
+      return fullText;
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      throw new Error('Failed to extract text from PDF. Please ensure the file is not corrupted.');
     }
-    return fullText;
   }
 
   private async extractTextFromHtml(file: File): Promise<string> {
@@ -82,11 +93,13 @@ export class RagService {
       return { chunk, score };
     });
 
-    return scoredChunks
+    const relevantChunks = scoredChunks
       .sort((a, b) => b.score - a.score)
       .slice(0, topK)
       .map(item => item.chunk.text)
       .join('\n\n---\n\n');
+    
+    return relevantChunks || '';
   }
 
   clearContext(): void {

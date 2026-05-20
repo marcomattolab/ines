@@ -45,7 +45,10 @@ export class LearningTabComponent implements AfterViewInit {
   activeSubTab = signal<'chat' | 'mindmap' | 'quiz'>('chat');
 
   ngAfterViewInit() {
-    this.renderMindMap('mindmap\n  root((Learning Context))\n    Topic1\n    Topic2');
+    this.renderMindMap('mindmap\n  root((Learning Context))\n    (Topic 1)\n    (Topic 2)');
+    window.addEventListener('regenerate-mindmap', () => {
+      this.generateMindMap();
+    });
   }
 
   async onFileSelected(event: any) {
@@ -102,6 +105,80 @@ export class LearningTabComponent implements AfterViewInit {
     }
   }
 
+  cleanMermaidCode(rawText: string): string {
+    // 1. Try to extract content inside ```mermaid ... ``` or ``` ... ```
+    const codeBlockMatch = rawText.match(/```(?:mermaid)?([\s\S]*?)```/i);
+    let cleaned = codeBlockMatch ? codeBlockMatch[1] : rawText;
+
+    // 2. Find where the "mindmap" keyword starts
+    const mindmapIndex = cleaned.toLowerCase().indexOf('mindmap');
+    if (mindmapIndex !== -1) {
+      cleaned = cleaned.substring(mindmapIndex).trim();
+    } else {
+      cleaned = 'mindmap\n' + cleaned.trim();
+    }
+
+    const lines = cleaned.split('\n');
+    const processedLines: string[] = [];
+    let foundMindmap = false;
+    let rootNodeParsed = false;
+
+    for (let line of lines) {
+      const indentMatch = line.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1] : '';
+      let content = line.trim();
+
+      if (!content) continue;
+
+      // Handle mindmap header
+      if (content.toLowerCase() === 'mindmap') {
+        processedLines.push('mindmap');
+        foundMindmap = true;
+        continue;
+      }
+
+      if (!foundMindmap) continue;
+
+      // If we encounter a completely unindented line after parsing the root node,
+      // it is likely conversational suffix text, so we stop parsing.
+      if (indent.length === 0 && rootNodeParsed) {
+        break;
+      }
+
+      // Remove leading bullet points (like -, *, +, or numbers like 1.)
+      content = content.replace(/^[-*+]\s+/, '');
+      content = content.replace(/^\d+\.\s+/, '');
+      content = content.trim();
+
+      if (!content) continue;
+
+      // Check if the node is already wrapped in shapes or quotes
+      const isWrapped = 
+        (content.startsWith('(') && content.endsWith(')')) ||
+        (content.startsWith('[') && content.endsWith(']')) ||
+        (content.startsWith('{') && content.endsWith('}')) ||
+        (content.startsWith('"') && content.endsWith('"')) ||
+        /^[a-zA-Z0-9_-]+\s*\(.*\)$/.test(content) ||
+        /^[a-zA-Z0-9_-]+\s*\[.*\]$/.test(content) ||
+        /^[a-zA-Z0-9_-]+\s*\{.*\}$/.test(content);
+
+      if (!isWrapped) {
+        // Wrap content in parenthesis to handle spaces/special characters
+        content = `(${content})`;
+      }
+
+      processedLines.push(indent + content);
+      rootNodeParsed = true;
+    }
+
+    // Ensure it starts with mindmap
+    if (processedLines.length > 0 && processedLines[0] !== 'mindmap') {
+      processedLines.unshift('mindmap');
+    }
+
+    return processedLines.join('\n');
+  }
+
   async generateMindMap() {
     if (!this.rag.hasContext()) {
       this.toast.error('Please upload documents first.');
@@ -111,26 +188,38 @@ export class LearningTabComponent implements AfterViewInit {
     this.isGenerating.set(true);
     this.activeSubTab.set('mindmap');
 
-    const systemPrompt = `Generate a Mermaid.js mindmap syntax based on the provided context. 
-    Start with "mindmap". Use proper indentation. 
-    Return ONLY the mermaid code, no explanation or markdown blocks.
+    const systemPrompt = `You are a mindmap generator. Based on the context provided, generate a Mermaid.js mindmap outlining the key concepts and their sub-topics.
     
-    CONTEXT:
-    ${this.rag.getRelevantChunks('main topics', 10)}
+    CRITICAL RULES:
+    1. Start directly with the word "mindmap" on the first line.
+    2. Use spaces for indentation to define hierarchy.
+    3. Every node text containing spaces or special characters MUST be wrapped in parentheses, e.g. (My Node Title).
+    4. Do NOT output any bullet points (like -, *, +), numbered lists (like 1., 2.), or explanations. Output ONLY valid Mermaid.js mindmap syntax.
+    
+    Example format:
+    mindmap
+      root((Main Topic))
+        (Sub-topic A)
+          (Detail A1)
+          (Detail A2)
+        (Sub-topic B)
+          (Detail B1)
+
+    Context:
+    ${this.rag.getRelevantChunks('main topics and key concepts', 10)}
     `;
 
     try {
       const fullPrompt = this.llm.buildPrompt(systemPrompt, 'Generate a mindmap of the main concepts.');
       const result = await this.llm.generate(fullPrompt, () => {});
+      console.log('Raw model mindmap response:', result);
       
-      // Clean up result if it contains markdown blocks
-      let code = result.replace(/```mermaid/g, '').replace(/```/g, '').trim();
-      if (!code.startsWith('mindmap')) {
-          code = 'mindmap\n' + code;
-      }
+      const code = this.cleanMermaidCode(result);
+      console.log('Cleaned Mermaid code for rendering:\n', code);
       
-      this.renderMindMap(code);
+      await this.renderMindMap(code);
     } catch (err: any) {
+      console.error('Error generating mind map:', err);
       this.toast.error('Error generating mind map: ' + err.message);
     } finally {
       this.isGenerating.set(false);
@@ -143,8 +232,15 @@ export class LearningTabComponent implements AfterViewInit {
       this.mermaidContainer.nativeElement.innerHTML = svg;
     } catch (err) {
       console.error('Mermaid rendering error:', err);
+      console.error('Offending Mermaid code was:\n', code);
       // Fallback to a simple message if rendering fails
-      this.mermaidContainer.nativeElement.innerHTML = '<p class="text-red-500">Failed to render mind map. Please try again.</p>';
+      this.mermaidContainer.nativeElement.innerHTML = `
+        <div class="text-center p-6 space-y-4">
+          <p class="text-red-400 font-semibold">Failed to render mind map due to syntax constraints.</p>
+          <div class="text-left bg-black/40 border border-white/10 rounded-xl p-4 overflow-x-auto max-w-lg mx-auto font-mono text-xs text-zinc-300 whitespace-pre">${code}</div>
+          <button onclick="window.dispatchEvent(new CustomEvent('regenerate-mindmap'))" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs transition-colors">Try Regenerating</button>
+        </div>
+      `;
     }
   }
 

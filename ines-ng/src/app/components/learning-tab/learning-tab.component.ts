@@ -564,6 +564,51 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     this.stopQuizTimer();
   }
 
+  decrementQuestions() {
+    this.numQuizQuestions.update(n => Math.max(1, n - 1));
+  }
+
+  incrementQuestions() {
+    this.numQuizQuestions.update(n => Math.min(15, n + 1));
+  }
+
+  setQuestions(val: any) {
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      this.numQuizQuestions.set(Math.max(1, Math.min(15, num)));
+    }
+  }
+
+  decrementTimer() {
+    this.quizTimerDuration.update(t => Math.max(1, t - 1));
+  }
+
+  incrementTimer() {
+    this.quizTimerDuration.update(t => Math.min(60, t + 1));
+  }
+
+  setTimer(val: any) {
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      this.quizTimerDuration.set(Math.max(1, Math.min(60, num)));
+    }
+  }
+
+  decrementOptions() {
+    this.numQuizOptions.update(o => Math.max(2, o - 1));
+  }
+
+  incrementOptions() {
+    this.numQuizOptions.update(o => Math.min(6, o + 1));
+  }
+
+  setOptions(val: any) {
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      this.numQuizOptions.set(Math.max(2, Math.min(6, num)));
+    }
+  }
+
   clearAll() {
     this.messages.set([]);
     this.files.set([]);

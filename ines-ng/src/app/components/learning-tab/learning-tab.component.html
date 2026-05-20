@@ -66,16 +66,91 @@
             </div>
           </button>
           <div class="flex items-center justify-between px-2">
-            <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Questions:</span>
-            <input type="number" [ngModel]="numQuizQuestions()" (ngModelChange)="numQuizQuestions.set($event)" min="1" max="15" class="w-18 bg-zinc-950/60 border border-white/10 rounded-lg px-2 text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-medium" />
+            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Questions:</span>
+            <div class="flex items-center gap-1">
+              <button 
+                type="button" 
+                (click)="decrementQuestions()" 
+                [disabled]="numQuizQuestions() <= 1"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">remove</mat-icon>
+              </button>
+              <input 
+                type="number" 
+                [ngModel]="numQuizQuestions()" 
+                (ngModelChange)="setQuestions($event)" 
+                min="1" 
+                max="15"
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+              />
+              <button 
+                type="button" 
+                (click)="incrementQuestions()" 
+                [disabled]="numQuizQuestions() >= 15"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">add</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="flex items-center justify-between px-2">
-            <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Timer (min):</span>
-            <input type="number" [ngModel]="quizTimerDuration()" (ngModelChange)="quizTimerDuration.set($event)" min="1" max="60" class="w-18 bg-zinc-950/60 border border-white/10 rounded-lg px-2 text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-medium" />
+            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Timer (min):</span>
+            <div class="flex items-center gap-1">
+              <button 
+                type="button" 
+                (click)="decrementTimer()" 
+                [disabled]="quizTimerDuration() <= 1"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">remove</mat-icon>
+              </button>
+              <input 
+                type="number" 
+                [ngModel]="quizTimerDuration()" 
+                (ngModelChange)="setTimer($event)" 
+                min="1" 
+                max="60" 
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+              />
+              <button 
+                type="button" 
+                (click)="incrementTimer()" 
+                [disabled]="quizTimerDuration() >= 60"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">add</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="flex items-center justify-between px-2">
-            <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Options:</span>
-            <input type="number" [ngModel]="numQuizOptions()" (ngModelChange)="numQuizOptions.set($event)" min="2" max="6" class="w-18 bg-zinc-950/60 border border-white/10 rounded-lg px-2 text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-medium" />
+            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Options:</span>
+            <div class="flex items-center gap-1">
+              <button 
+                type="button" 
+                (click)="decrementOptions()" 
+                [disabled]="numQuizOptions() <= 2"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">remove</mat-icon>
+              </button>
+              <input 
+                type="number" 
+                [ngModel]="numQuizOptions()" 
+                (ngModelChange)="setOptions($event)" 
+                min="2" 
+                max="6" 
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+              />
+              <button 
+                type="button" 
+                (click)="incrementOptions()" 
+                [disabled]="numQuizOptions() >= 6"
+                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <mat-icon class="scale-75">add</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       </section>

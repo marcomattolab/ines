@@ -5,14 +5,17 @@
       </div>
       <div id="model-status">
         <div class="status-dot" [class]="llm.modelStatus()"></div>
-        <span>
+        <span class="flex items-center gap-1">
           @switch (llm.modelStatus()) {
             @case ('idle')    { No model loaded }
-            @case ('loading') { Loading... }
-            @case ('ready')   { ✓ {{ llm.modelName() }} }
-            @case ('error')   { ✗ Error }
+            @case ('loading') { <lucide-angular name="loader-2" [size]="14" class="animate-spin"></lucide-angular> Loading... }
+            @case ('ready')   { <lucide-angular name="check-circle-2" [size]="14" class="text-accent-green"></lucide-angular> {{ llm.modelName() }} }
+            @case ('error')   { <lucide-angular name="alert-circle" [size]="14" class="text-accent-rose"></lucide-angular> Error }
           }
         </span>
-        <button class="btn-secondary" style="margin-left:8px" (click)="openLoader.emit()">⚡ Load Model</button>
+        <app-button variant="secondary" size="sm" className="ml-2" (onClick)="openLoader.emit()">
+          <lucide-angular name="refresh-cw" [size]="14"></lucide-angular>
+          Load Model
+        </app-button>
       </div>
     </div>

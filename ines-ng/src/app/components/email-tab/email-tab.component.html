@@ -1,10 +1,16 @@
 <div class="tab-panel-inner">
       <div class="panel-header">
         <div>
-          <div class="panel-title"><span class="panel-title-icon">✉️</span> Email Assistant</div>
+          <div class="panel-title">
+            <lucide-angular name="mail" [size]="18" class="text-accent-green"></lucide-angular>
+            Email Assistant
+          </div>
           <div class="panel-desc">Rewrite, improve and adapt the tone of your emails</div>
         </div>
-        <button class="btn-danger" (click)="clear()">🗑 Clear</button>
+        <app-button variant="danger" size="sm" (onClick)="clear()">
+          <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+          Clear
+        </app-button>
       </div>
 
       <div class="controls-row">
@@ -23,9 +29,10 @@
           <option value="reply">↩️ Reply</option>
           <option value="summary">📋 Summary</option>
         </select>
-        <button class="btn-primary" [disabled]="processing()" (click)="process()">
-          {{ processing() ? '⏳ Processing...' : '⚡ Process' }}
-        </button>
+        <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
+          <lucide-angular [name]="processing() ? 'loader-2' : 'send'" [size]="14" [class.animate-spin]="processing()"></lucide-angular>
+          {{ processing() ? 'Processing...' : 'Process' }}
+        </app-button>
       </div>
 
       <div class="email-input-area">
@@ -35,7 +42,10 @@
           <div class="email-result-label">
             <span>✦ RESULT</span>
             @if (result()) {
-              <button class="btn-secondary" (click)="copy()">📋 Copy</button>
+              <app-button variant="secondary" size="sm" (onClick)="copy()">
+                <lucide-angular name="copy" [size]="14"></lucide-angular>
+                Copy
+              </app-button>
             }
           </div>
           <div class="email-result-content">
@@ -43,7 +53,9 @@
               <span [class.cursor-blink]="processing()" [innerHTML]="resultHtml()"></span>
             } @else {
               <div class="empty-state">
-                <div class="empty-icon">✉️</div>
+                <div class="empty-icon">
+                  <lucide-angular name="mail" [size]="36"></lucide-angular>
+                </div>
                 <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
               </div>
             }

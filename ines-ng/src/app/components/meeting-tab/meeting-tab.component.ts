@@ -1,7 +1,9 @@
 import { Component, inject, signal, OnDestroy, computed } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
 Given a transcript of a meeting, produce:
@@ -15,6 +17,7 @@ Be concise and use the language of the transcript. Format the result clearly.`;
 @Component({
   selector: 'app-meeting-tab',
   standalone: true,
+  imports: [LucideAngularModule, ButtonComponent],
   templateUrl: './meeting-tab.component.html',
   styleUrl: './meeting-tab.css'
 })

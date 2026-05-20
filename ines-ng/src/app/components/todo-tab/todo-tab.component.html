@@ -1,12 +1,18 @@
 <div class="tab-panel-inner">
       <div class="panel-header">
         <div>
-          <div class="panel-title"><span class="panel-title-icon">✅</span> Daily Planner</div>
+          <div class="panel-title">
+            <lucide-angular name="check-square" [size]="18" class="text-accent-purple"></lucide-angular>
+            Daily Planner
+          </div>
           <div class="panel-desc">Organize your day with the help of the AI</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="counter-text">{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span>
-          <button class="btn-danger" (click)="todoSvc.clearDone()">🧹 Remove completed</button>
+          <app-button variant="danger" size="sm" (onClick)="todoSvc.clearDone()">
+            <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+            Remove completed
+          </app-button>
         </div>
       </div>
 
@@ -15,7 +21,9 @@
           <div class="todo-list">
             @if (todoSvc.todos().length === 0) {
               <div class="empty-state">
-                <div class="empty-icon">📋</div>
+                <div class="empty-icon">
+                  <lucide-angular name="check-square" [size]="36"></lucide-angular>
+                </div>
                 <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
               </div>
             }
@@ -26,7 +34,9 @@
                 <span class="todo-tag" [class]="todo.priority">
                   {{ todo.priority === 'priority' ? '🔥 priority' : '·' }}
                 </span>
-                <button class="todo-del" (click)="todoSvc.delete($index)" title="Remove">✕</button>
+                <app-button variant="ghost" size="sm" (onClick)="todoSvc.delete($index)" className="!w-6 !h-6 !p-0 !text-text-2 hover:!text-accent-rose" title="Remove">
+                  <lucide-angular name="x" [size]="12"></lucide-angular>
+                </app-button>
               </div>
             }
           </div>
@@ -38,7 +48,10 @@
               <option value="normal">normal</option>
               <option value="priority">🔥 priority</option>
             </select>
-            <button class="btn-primary" (click)="addManual(manualInput, prioritySel)">+ Add</button>
+            <app-button variant="primary" size="sm" (onClick)="addManual(manualInput, prioritySel)">
+              <lucide-angular name="plus" [size]="14"></lucide-angular>
+              Add
+            </app-button>
           </div>
         </div>
 
@@ -74,7 +87,10 @@
                 </button>
                 <span class="timer-text">{{ timerText() }}</span>
               </div>
-              <button class="btn-primary" (click)="generate(aiInput)">✨ Generate Plan</button>
+              <app-button variant="primary" (onClick)="generate(aiInput)">
+                <lucide-angular name="refresh-cw" [size]="14"></lucide-angular>
+                Generate Plan
+              </app-button>
             </div>
           </div>
         </div>

@@ -18,7 +18,7 @@
 
   <div class="todo-layout">
     <div class="todo-left">
-      <div class="todo-list">
+      <div class="todo-list" cdkDropList (cdkDropListDropped)="drop($event)">
         @if (todoSvc.todos().length === 0) {
           <div class="empty-state">
             <div class="empty-icon">
@@ -28,7 +28,8 @@
           </div>
         }
         @for (todo of todoSvc.todos(); track $index) {
-          <div class="todo-item" [class.done]="todo.done">
+          <div class="todo-item" [class.done]="todo.done" cdkDrag>
+            <mat-icon cdkDragHandle fontIcon="drag_indicator" class="drag-indicator-icon"></mat-icon>
             <div class="todo-cb" [class.checked]="todo.done" (click)="todoSvc.toggle($index)"></div>
             <div class="todo-text">{{ todo.text }}</div>
             <span class="todo-tag" [class]="todo.priority">

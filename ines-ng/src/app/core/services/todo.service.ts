@@ -39,6 +39,15 @@ export class TodoService {
     this.todos.update(list => list.filter(t => !t.done));
   }
 
+  reorder(fromIndex: number, toIndex: number): void {
+    this.todos.update(list => {
+      const newList = [...list];
+      const [moved] = newList.splice(fromIndex, 1);
+      newList.splice(toIndex, 0, moved);
+      return newList;
+    });
+  }
+
   addMany(items: { text: string; priority: string }[]): void {
     const mapped: Todo[] = items.map(i => ({
       text: i.text,

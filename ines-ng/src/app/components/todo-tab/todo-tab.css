@@ -154,3 +154,48 @@
   font-family: var(--font-mono); font-size: 11px; color: var(--accent-rose);
   font-variant-numeric: tabular-nums;
 }
+
+/* Drag and Drop Styling */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-active);
+  background: var(--bg-3) !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 179, 255, 0.1);
+  opacity: 0.95;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  color: var(--text-0);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.15;
+  border: 1px dashed var(--accent-blue);
+  background: transparent;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .todo-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.drag-indicator-icon {
+  margin-top: 2px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-2);
+  cursor: grab;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.drag-indicator-icon:active {
+  cursor: grabbing;
+}

@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TodoService } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -26,7 +27,7 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
 @Component({
   selector: 'app-todo-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
+  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent, DragDropModule],
   templateUrl: './todo-tab.component.html',
   styleUrl: './todo-tab.css'
 })
@@ -39,7 +40,7 @@ export class TodoTabComponent {
   recording  = signal(false);
   timerText  = signal('');
   rightPanelWidth = signal(320);
-  inputAreaHeight = signal(130);
+  inputAreaHeight = signal(200);
   
   private nextId = 0;
   private recognition: any = null;
@@ -90,6 +91,10 @@ export class TodoTabComponent {
     document.removeEventListener('mousemove', this.doHResize);
     document.removeEventListener('mouseup', this.stopHResize);
   };
+
+  drop(event: CdkDragDrop<string[]>) {
+    this.todoSvc.reorder(event.previousIndex, event.currentIndex);
+  }
 
   addManual(input: HTMLInputElement, selEl?: HTMLSelectElement) {
     const text = input.value.trim();

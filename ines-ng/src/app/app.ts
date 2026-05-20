@@ -1,4 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
@@ -20,12 +21,12 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: 'chat',      icon: '💬', label: 'Chat',      color: 'var(--tab-chat)' },
-  { id: 'email',     icon: '✉️', label: 'Email',     color: 'var(--tab-email)' },
-  { id: 'meeting',   icon: '🎙️', label: 'Meeting',   color: 'var(--tab-meeting)' },
-  { id: 'translate', icon: '🌍', label: 'Translate', color: 'var(--tab-translate)' },
-  { id: 'todo',      icon: '✅', label: 'Todo',      color: 'var(--tab-todo)' },
-  { id: 'coding',    icon: '👨‍💻', label: 'Code',      color: 'var(--tab-coding)' },
+  { id: 'chat',      icon: 'message-square', label: 'Chat',      color: 'var(--tab-chat)' },
+  { id: 'email',     icon: 'mail',           label: 'Email',     color: 'var(--tab-email)' },
+  { id: 'meeting',   icon: 'mic',            label: 'Meeting',   color: 'var(--tab-meeting)' },
+  { id: 'translate', icon: 'languages',      label: 'Translate', color: 'var(--tab-translate)' },
+  { id: 'todo',      icon: 'check-square',   label: 'Todo',      color: 'var(--tab-todo)' },
+  { id: 'coding',    icon: 'code',           label: 'Code',      color: 'var(--tab-coding)' },
 ];
 
 @Component({
@@ -40,6 +41,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
+    LucideAngularModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

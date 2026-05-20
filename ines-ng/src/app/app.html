@@ -12,7 +12,9 @@
             [class.active]="activeTab() === tab.id"
             [style.--tab-color]="tab.color"
             (click)="activeTab.set(tab.id)">
-            <span class="tab-icon">{{ tab.icon }}</span>
+            <span class="tab-icon">
+               <lucide-angular [name]="tab.icon" [size]="20"></lucide-angular>
+            </span>
             <span class="tab-label">{{ tab.label }}</span>
           </button>
         }

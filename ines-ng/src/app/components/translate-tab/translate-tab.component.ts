@@ -1,8 +1,10 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
 Translate the given text EXACTLY as requested, preserving style, tone and formatting.
@@ -24,7 +26,7 @@ const LANGUAGES = [
 @Component({
   selector: 'app-translate-tab',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LucideAngularModule, ButtonComponent],
   templateUrl: './translate-tab.component.html',
   styleUrl: './translate-tab.css'
 })

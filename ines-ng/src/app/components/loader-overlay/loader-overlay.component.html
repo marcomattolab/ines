@@ -7,7 +7,9 @@
         <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
 
         <div class="loader-box" style="position: relative;">
-          <button class="close-overlay-btn" (click)="close()">✕</button>
+          <app-button variant="ghost" size="sm" (onClick)="close()" className="!absolute top-4 right-4 !w-8 !h-8 !p-0">
+            <lucide-angular name="x" [size]="18"></lucide-angular>
+          </app-button>
           <h2>Load a local LLM model</h2>
           <p>
             This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models
@@ -40,7 +42,10 @@
                (drop)="onDrop($event)">
             <input #fileInput type="file" accept=".task,.litertlm,.bin"
                    style="display:none" (change)="onFileChange($event)">
-            <div>{{ dropText }}</div>
+            <div class="flex flex-col items-center gap-2">
+              <lucide-angular name="plus" [size]="24" class="text-accent-blue"></lucide-angular>
+              <div>{{ dropText }}</div>
+            </div>
           </div>
 
           @if (llm.modelStatus() === 'loading' || llm.progress().pct > 0) {

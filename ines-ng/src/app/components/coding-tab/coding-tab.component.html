@@ -3,11 +3,15 @@
   <div class="panel-header">
     <div>
       <div class="panel-title">
-        <span class="panel-title-icon">👨‍💻</span> Coding Assistant
+        <lucide-angular name="code" [size]="18" class="text-accent-cyan"></lucide-angular>
+        Coding Assistant
       </div>
       <div class="panel-desc">Client-Side Edge Web Developer & Sandbox Playground</div>
     </div>
-    <button class="btn-danger" (click)="clear()">🧹 Clear Conversation</button>
+    <app-button variant="danger" size="sm" (onClick)="clear()">
+      <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+      Clear Conversation
+    </app-button>
   </div>
 
   <!-- Resizable split workspace -->
@@ -37,9 +41,9 @@
           class="input-field"
           placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
           (keydown)="onKey($event)"></textarea>
-        <button class="send-btn" [disabled]="generating() || !llm.isReady()" (click)="send()">
-          ✈️
-        </button>
+        <app-button variant="primary" [disabled]="generating() || !llm.isReady()" (onClick)="send()" className="!rounded-full !w-11 !h-11 !p-0">
+          <lucide-angular name="send" [size]="18"></lucide-angular>
+        </app-button>
       </div>
     </div>
 
@@ -50,21 +54,29 @@
       <!-- Sandbox Header -->
       <div class="sandbox-header">
         <div class="sandbox-tab-group">
-          <button class="btn-secondary" 
-                  [class.active]="playgroundTab() === 'preview'"
-                  (click)="playgroundTab.set('preview')">
-            ⚡ Live Preview
-          </button>
-          <button class="btn-secondary"
-                  [class.active]="playgroundTab() === 'code'"
-                  (click)="playgroundTab.set('code')">
-            ⚙️ Source Code
-          </button>
+          <app-button variant="secondary" size="sm"
+                  [className]="playgroundTab() === 'preview' ? 'active' : ''"
+                  (onClick)="playgroundTab.set('preview')">
+            <lucide-angular name="send" [size]="14" class="text-accent-blue"></lucide-angular>
+            Live Preview
+          </app-button>
+          <app-button variant="secondary" size="sm"
+                  [className]="playgroundTab() === 'code' ? 'active' : ''"
+                  (onClick)="playgroundTab.set('code')">
+            <lucide-angular name="code" [size]="14" class="text-accent-cyan"></lucide-angular>
+            Source Code
+          </app-button>
         </div>
 
         <div class="sandbox-actions" [style.display]="extractedCode() ? 'flex' : 'none'">
-          <button class="btn-secondary" (click)="copyCode()">📋 Copy</button>
-          <button class="btn-secondary" (click)="downloadCode()">💾 Download</button>
+          <app-button variant="secondary" size="sm" (onClick)="copyCode()">
+            <lucide-angular name="copy" [size]="14"></lucide-angular>
+            Copy
+          </app-button>
+          <app-button variant="secondary" size="sm" (onClick)="downloadCode()">
+            <lucide-angular name="download" [size]="14"></lucide-angular>
+            Download
+          </app-button>
         </div>
       </div>
 
@@ -73,7 +85,9 @@
         @if (!extractedCode()) {
           <!-- Empty State -->
           <div class="empty-state">
-            <div class="empty-icon">✨</div>
+            <div class="empty-icon">
+              <lucide-angular name="code" [size]="36"></lucide-angular>
+            </div>
             <div class="empty-title">Waiting for Code Request</div>
             <div class="empty-text">
               Describe a user interface, dashboard, or widget you'd like me to build on the left. The live, interactive render and source code will appear here instantly!

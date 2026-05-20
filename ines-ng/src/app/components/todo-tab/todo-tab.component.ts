@@ -1,9 +1,11 @@
 import { Component, inject, signal, computed } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 import { TodoService } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 
 interface AiChat { id: number; role: 'user'|'ai'; text: string; typing?: boolean; }
 
@@ -24,7 +26,7 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
 @Component({
   selector: 'app-todo-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent],
+  imports: [MessageBubbleComponent, TypingIndicatorComponent, LucideAngularModule, ButtonComponent],
   templateUrl: './todo-tab.component.html',
   styleUrl: './todo-tab.css'
 })

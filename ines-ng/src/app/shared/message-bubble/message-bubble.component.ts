@@ -1,10 +1,13 @@
 import { Component, inject, input, computed } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { ButtonComponent } from '../components/button/button.component';
 
 @Component({
   selector: 'app-message-bubble',
   standalone: true,
+  imports: [LucideAngularModule, ButtonComponent],
   templateUrl: './message-bubble.component.html',
   styleUrl: './message-bubble.css'
 })

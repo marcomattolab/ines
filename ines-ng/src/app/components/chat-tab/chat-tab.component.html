@@ -1,10 +1,16 @@
 <div class="tab-panel-inner">
   <div class="panel-header">
     <div>
-      <div class="panel-title"><span class="panel-title-icon">💬</span> General Assistant</div>
+      <div class="panel-title">
+        <lucide-angular name="message-square" [size]="18" class="text-accent-blue"></lucide-angular>
+        General Assistant
+      </div>
       <div class="panel-desc">AI on-device · private · offline</div>
     </div>
-    <button class="btn-danger" (click)="clear()">🗑 Clear</button>
+    <app-button variant="danger" size="sm" (onClick)="clear()">
+      <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+      Clear
+    </app-button>
   </div>
 
   <div class="chat-area" #chatArea>
@@ -31,6 +37,8 @@
   <div class="input-zone">
     <textarea class="input-field" #inputEl placeholder="Write a message..." rows="1" (keydown)="onKey($event)"
       (input)="autoResize($event)"></textarea>
-    <button class="send-btn" [disabled]="generating()" (click)="send()" title="Send (Enter)">➤</button>
+    <app-button variant="primary" [disabled]="generating()" (onClick)="send()" title="Send (Enter)" className="!rounded-full !w-11 !h-11 !p-0">
+      <lucide-angular name="send" [size]="18"></lucide-angular>
+    </app-button>
   </div>
 </div>

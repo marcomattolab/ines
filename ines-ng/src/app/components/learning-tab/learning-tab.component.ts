@@ -1,4 +1,4 @@
-import { Component, signal, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, signal, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +22,7 @@ mermaid.initialize({
   templateUrl: './learning-tab.component.html',
   styleUrl: './learning-tab.css'
 })
-export class LearningTabComponent implements AfterViewInit {
+export class LearningTabComponent implements AfterViewInit, OnDestroy {
   llm = inject(LlmService);
   rag = inject(RagService);
   toast = inject(ToastService);
@@ -37,10 +37,15 @@ export class LearningTabComponent implements AfterViewInit {
   isProcessing = signal(false);
 
   quizQuestions = signal<any[]>([]);
+  selectedAnswers = signal<number[]>([]);
   currentQuizIndex = signal(0);
   quizScore = signal(0);
   showQuizResults = signal(false);
   numQuizQuestions = signal(5);
+  quizTimerDuration = signal(5);
+  numQuizOptions = signal(4);
+  quizSecondsLeft = signal(0);
+  private timerIntervalId: any = null;
 
   activeSubTab = signal<'chat' | 'mindmap' | 'quiz'>('chat');
   isMindMapPlaceholder = true;
@@ -124,7 +129,7 @@ export class LearningTabComponent implements AfterViewInit {
       await this.llm.generate(fullPrompt, (partial, done, full) => {
         this.messages.update(msgs => {
           const newMsgs = [...msgs];
-          newMsgs[newMsgs.length - 1].content = full;
+          newMsgs[newMsgs?.length - 1].content = full;
           return newMsgs;
         });
         if (done) this.isGenerating.set(false);
@@ -345,24 +350,25 @@ export class LearningTabComponent implements AfterViewInit {
     this.currentQuizIndex.set(0);
 
     const numQuestions = Math.max(1, Math.min(15, Number(this.numQuizQuestions()) || 5));
+    const numOpts = Math.max(2, Math.min(6, Number(this.numQuizOptions()) || 4));
     const context = this.rag.getRelevantChunks('important facts', 5, 400);
 
     const systemPrompt = `You are a strict learning assistant. Generate a multiple-choice quiz with exactly ${numQuestions} questions based on the following context.
     
     CRITICAL REQUIREMENTS:
-    1. Each question MUST have exactly 4 options.
+    1. Each question MUST have exactly ${numOpts} options.
     2. Exactly one option MUST be correct.
-    3. The options list must never have fewer or more than 4 items.
+    3. The options list must never have fewer or more than ${numOpts} items.
     
     Return ONLY a valid JSON array of objects with the following structure:
     [
       {
         "question": "Question text?",
-        "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+        "options": [${Array.from({ length: numOpts }, (_, idx) => `"Choice ${String.fromCharCode(65 + idx)}"`).join(', ')}],
         "answer": 0
       }
     ]
-    where "answer" is the index (0, 1, 2, or 3) of the correct option.
+    where "answer" is the correct option index (0 to ${numOpts - 1}).
     
     CONTEXT:
     ${context}
@@ -377,28 +383,30 @@ export class LearningTabComponent implements AfterViewInit {
         throw new Error('No questions could be parsed from the response.');
       }
 
-      // Enforce exactly 4 options and exactly 1 correct answer (index 0-3) for all questions
+      // Enforce exactly numOpts options and exactly 1 correct answer (index 0 to numOpts-1) for all questions
       const normalizedQuestions = parsedQuestions.map((q: any) => {
         const question = q.question || 'No question text provided';
         
         let options = Array.isArray(q.options) ? q.options.filter(Boolean) : [];
-        if (options.length < 4) {
-          while (options.length < 4) {
-            options.push(`Option ${['A', 'B', 'C', 'D'][options.length]}`);
+        if (options.length < numOpts) {
+          while (options.length < numOpts) {
+            options.push(`Option ${String.fromCharCode(65 + options.length)}`);
           }
-        } else if (options.length > 4) {
-          options = options.slice(0, 4);
+        } else if (options.length > numOpts) {
+          options = options.slice(0, numOpts);
         }
         
         let answer = typeof q.answer === 'number' ? q.answer : parseInt(q.answer, 10);
-        if (isNaN(answer) || answer < 0 || answer > 3) {
+        if (isNaN(answer) || answer < 0 || answer >= numOpts) {
           answer = 0;
         }
         
         return { question, options, answer };
       });
 
+      this.selectedAnswers.set(new Array(normalizedQuestions.length).fill(-1));
       this.quizQuestions.set(normalizedQuestions);
+      this.startQuizTimer();
     } catch (err: any) {
       console.error('Quiz generation error:', err);
       this.toast.error('Error generating quiz: ' + err.message);
@@ -482,16 +490,78 @@ export class LearningTabComponent implements AfterViewInit {
     return textQuestions;
   }
 
-  submitQuizAnswer(index: number) {
-    if (index === this.quizQuestions()[this.currentQuizIndex()].answer) {
-      this.quizScore.update(s => s + 1);
-    }
+  selectAnswer(index: number) {
+    this.selectedAnswers.update(arr => {
+      const copy = [...arr];
+      copy[this.currentQuizIndex()] = index;
+      return copy;
+    });
+  }
 
+  submitEntireQuiz() {
+    this.stopQuizTimer();
+    
+    // Calculate score
+    let score = 0;
+    const questions = this.quizQuestions();
+    const selections = this.selectedAnswers();
+    
+    for (let i = 0; i < questions.length; i++) {
+      if (selections[i] === questions[i].answer) {
+        score++;
+      }
+    }
+    
+    this.quizScore.set(score);
+    this.showQuizResults.set(true);
+  }
+
+  prevQuestion() {
+    if (this.currentQuizIndex() > 0) {
+      this.currentQuizIndex.update(i => i - 1);
+    }
+  }
+
+  nextQuestion() {
     if (this.currentQuizIndex() < this.quizQuestions().length - 1) {
       this.currentQuizIndex.update(i => i + 1);
-    } else {
-      this.showQuizResults.set(true);
     }
+  }
+
+  formatTime(totalSeconds: number): string {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  startQuizTimer() {
+    this.stopQuizTimer();
+    
+    const minutes = Math.max(1, Math.min(60, Number(this.quizTimerDuration()) || 5));
+    this.quizSecondsLeft.set(minutes * 60);
+    
+    this.timerIntervalId = setInterval(() => {
+      this.quizSecondsLeft.update(sec => {
+        if (sec <= 1) {
+          this.stopQuizTimer();
+          this.submitEntireQuiz();
+          this.toast.show("⏰ Time's up! Your quiz has been auto-submitted.", 4000);
+          return 0;
+        }
+        return sec - 1;
+      });
+    }, 1000);
+  }
+
+  stopQuizTimer() {
+    if (this.timerIntervalId) {
+      clearInterval(this.timerIntervalId);
+      this.timerIntervalId = null;
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopQuizTimer();
   }
 
   clearAll() {
@@ -499,6 +569,8 @@ export class LearningTabComponent implements AfterViewInit {
     this.files.set([]);
     this.rag.clearContext();
     this.quizQuestions.set([]);
+    this.selectedAnswers.set([]);
+    this.stopQuizTimer();
     this.isMindMapPlaceholder = true;
     this.renderMindMap('mindmap\n  root((Learning Context))\n    (Topic 1)\n    (Topic 2)');
   }

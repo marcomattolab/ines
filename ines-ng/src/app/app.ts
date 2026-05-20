@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
+import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
 import { EmailTabComponent } from './components/email-tab/email-tab.component';
@@ -11,7 +12,7 @@ import { CodingTabComponent } from './components/coding-tab/coding-tab.component
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 
-type Tab = 'chat' | 'email' | 'meeting' | 'translate' | 'todo' | 'coding';
+type Tab = 'chat' | 'email' | 'meeting' | 'translate' | 'todo' | 'coding' | 'learning';
 
 interface TabDef {
   id: Tab;
@@ -27,6 +28,7 @@ const TABS: TabDef[] = [
   { id: 'translate', icon: 'languages',      label: 'Translate', color: 'var(--tab-translate)' },
   { id: 'todo',      icon: 'check-square',   label: 'Todo',      color: 'var(--tab-todo)' },
   { id: 'coding',    icon: 'code',           label: 'Code',      color: 'var(--tab-coding)' },
+  { id: 'learning',  icon: 'school',         label: 'Learning',  color: 'var(--tab-learning)' },
 ];
 
 @Component({
@@ -41,6 +43,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
+    LearningTabComponent,
     MatIconModule
   ],
   templateUrl: './app.html',

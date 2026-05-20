@@ -1,0 +1,188 @@
+<div class="flex flex-col h-full overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+  <!-- Header -->
+  <header class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+    <div class="flex items-center gap-3">
+      <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Learning Center</h2>
+        <p class="text-xs text-zinc-500">RAG-powered analysis, Mind Maps & Quizzes</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="clearAll()" class="p-2 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Clear all">
+        <mat-icon>delete_outline</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Sidebar: Document Management & Controls -->
+    <aside class="w-80 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex flex-col gap-6 overflow-y-auto">
+      <!-- Upload Section -->
+      <section>
+        <h3 class="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
+          <mat-icon class="text-blue-500 scale-75">upload_file</mat-icon> Documents
+        </h3>
+        <div class="relative group">
+          <input type="file" (change)="onFileSelected($event)" multiple accept=".pdf,.html,.txt" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <div class="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-6 text-center group-hover:border-blue-400 transition-colors">
+            <mat-icon class="text-zinc-400 mb-2">add_circle_outline</mat-icon>
+            <p class="text-xs text-zinc-500">Upload PDF, HTML or TXT</p>
+          </div>
+        </div>
+
+        <!-- File List -->
+        <div class="mt-4 space-y-2">
+          <div *ngFor="let file of files()" class="flex items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700">
+            <mat-icon class="text-zinc-400 scale-75">description</mat-icon>
+            <span class="text-xs truncate flex-1">{{ file.name }}</span>
+            <mat-icon class="text-green-500 scale-50">check_circle</mat-icon>
+          </div>
+          <div *ngIf="isProcessing()" class="flex items-center gap-2 p-2">
+            <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <span class="text-xs text-zinc-500">Processing...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Learning Tools -->
+      <section class="space-y-3">
+        <h3 class="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <mat-icon class="text-purple-500 scale-75">auto_awesome</mat-icon> Tools
+        </h3>
+        <button (click)="generateMindMap()" [disabled]="!rag.hasContext() || isGenerating()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors disabled:opacity-50 disabled:grayscale">
+          <mat-icon>account_tree</mat-icon>
+          <div class="text-left">
+            <div class="text-sm font-semibold">Mind Map</div>
+            <div class="text-[10px] opacity-70">Visualize connections</div>
+          </div>
+        </button>
+
+        <div class="space-y-2">
+          <button (click)="generateQuiz()" [disabled]="!rag.hasContext() || isGenerating()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50 disabled:grayscale">
+            <mat-icon>quiz</mat-icon>
+            <div class="text-left">
+              <div class="text-sm font-semibold">Test Knowledge</div>
+              <div class="text-[10px] opacity-70">Generate random quiz</div>
+            </div>
+          </button>
+          <div class="flex items-center justify-between px-2">
+            <span class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Questions:</span>
+            <input type="number" [(ngModel)]="numQuizQuestions" min="1" max="10" class="w-12 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1 text-xs py-0.5 text-center" />
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col bg-white dark:bg-zinc-900 relative">
+      <!-- Sub-tab Navigation -->
+      <nav class="flex border-b border-zinc-200 dark:border-zinc-800 px-6">
+        <button (click)="activeSubTab.set('chat')" [class.border-blue-500]="activeSubTab() === 'chat'" [class.text-blue-600]="activeSubTab() === 'chat'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-colors">Chat Analysis</button>
+        <button (click)="activeSubTab.set('mindmap')" [class.border-blue-500]="activeSubTab() === 'mindmap'" [class.text-blue-600]="activeSubTab() === 'mindmap'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-colors">Visual Map</button>
+        <button (click)="activeSubTab.set('quiz')" [class.border-blue-500]="activeSubTab() === 'quiz'" [class.text-blue-600]="activeSubTab() === 'quiz'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-colors">Quiz</button>
+      </nav>
+
+      <!-- Content Views -->
+      <div class="flex-1 overflow-hidden relative">
+        <!-- Chat View -->
+        <div [hidden]="activeSubTab() !== 'chat'" class="h-full flex flex-col">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div *ngIf="messages().length === 0" class="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-4">
+              <div class="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500">
+                <mat-icon class="scale-150">auto_stories</mat-icon>
+              </div>
+              <h3 class="text-lg font-semibold dark:text-white">Ask your documents anything</h3>
+              <p class="text-sm text-zinc-500">Upload documents on the left and I'll answer questions based specifically on their content.</p>
+            </div>
+
+            <div *ngFor="let msg of messages()" [class.flex-row-reverse]="msg.role === 'user'" class="flex gap-4">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center" [class]="msg.role === 'user' ? 'bg-zinc-200 dark:bg-zinc-700' : 'bg-blue-600 text-white'">
+                <mat-icon class="scale-75">{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+              </div>
+              <div class="max-w-[80%] rounded-2xl p-4 shadow-sm" [class]="msg.role === 'user' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-none' : 'bg-blue-50 dark:bg-blue-900/20 text-zinc-900 dark:text-zinc-100 border border-blue-100 dark:border-blue-800 rounded-tl-none'">
+                <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ msg.content }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+            <div class="relative flex items-center">
+              <input type="text" [(ngModel)]="userInput" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50" />
+              <button (click)="sendMessage()" [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()" class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
+                <mat-icon>send</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mind Map View -->
+        <div [hidden]="activeSubTab() !== 'mindmap'" class="h-full overflow-auto p-6 flex flex-col">
+          <div #mermaidContainer class="flex-1 flex items-center justify-center min-h-[400px]">
+             <!-- Mermaid SVG will be injected here -->
+          </div>
+          <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700 text-center">
+            <p class="text-xs text-zinc-500">Mind maps are generated using MediaPipe LLM and rendered with Mermaid.js</p>
+          </div>
+        </div>
+
+        <!-- Quiz View -->
+        <div [hidden]="activeSubTab() !== 'quiz'" class="h-full overflow-y-auto p-6">
+          <div *ngIf="quizQuestions().length > 0 && !showQuizResults()" class="max-w-2xl mx-auto space-y-8">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Question {{ currentQuizIndex() + 1 }} of {{ quizQuestions().length }}</span>
+              <div class="h-1.5 w-32 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-600 transition-all duration-300" [style.width.%]="((currentQuizIndex() + 1) / quizQuestions().length) * 100"></div>
+              </div>
+            </div>
+            
+            <h2 class="text-xl font-bold text-zinc-900 dark:text-zinc-100">{{ quizQuestions()[currentQuizIndex()].question }}</h2>
+            
+            <div class="grid gap-3">
+              <button *ngFor="let option of quizQuestions()[currentQuizIndex()].options; let i = index" (click)="submitQuizAnswer(i)" class="w-full text-left px-6 py-4 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group">
+                <div class="flex items-center gap-4">
+                  <span class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center font-bold text-zinc-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">{{ ['A','B','C','D'][i] }}</span>
+                  <span class="text-zinc-700 dark:text-zinc-300 font-medium">{{ option }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="showQuizResults()" class="max-w-md mx-auto text-center py-12 space-y-6">
+            <div class="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 mx-auto">
+              <mat-icon class="scale-[2]">emoji_events</mat-icon>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-zinc-900 dark:text-zinc-100">Quiz Completed!</h2>
+              <p class="text-zinc-500 mt-2">You scored {{ quizScore() }} out of {{ quizQuestions().length }}</p>
+            </div>
+            <div class="text-4xl font-black text-blue-600">
+              {{ (quizScore() / quizQuestions().length) * 100 | number:'1.0-0' }}%
+            </div>
+            <button (click)="generateQuiz()" class="px-8 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-bold hover:scale-105 transition-transform">Retake Quiz</button>
+          </div>
+
+          <div *ngIf="quizQuestions().length === 0 && !isGenerating()" class="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto space-y-4">
+            <mat-icon class="scale-[2] text-zinc-300">lightbulb_outline</mat-icon>
+            <p class="text-sm text-zinc-500">Ready to test your knowledge? Click "Test Knowledge" on the left to generate a custom quiz from your documents.</p>
+          </div>
+        </div>
+
+        <!-- Loading Overlay for generation -->
+        <div *ngIf="isGenerating()" class="absolute inset-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
+          <div class="relative w-16 h-16">
+            <div class="absolute inset-0 border-4 border-blue-100 dark:border-blue-900/30 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-zinc-900 dark:text-zinc-100">AI is thinking...</p>
+            <p class="text-xs text-zinc-500 mt-1">Generating response using on-device LLM</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

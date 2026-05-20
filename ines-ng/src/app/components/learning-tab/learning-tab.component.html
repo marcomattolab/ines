@@ -70,7 +70,7 @@
           </button>
           <div class="flex items-center justify-between px-2">
             <span class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Questions:</span>
-            <input type="number" [(ngModel)]="numQuizQuestions" min="1" max="10" class="w-12 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1 text-xs py-0.5 text-center" />
+            <input type="number" [ngModel]="numQuizQuestions()" (ngModelChange)="numQuizQuestions.set($event)" min="1" max="10" class="w-12 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1 text-xs py-0.5 text-center" />
           </div>
         </div>
       </section>
@@ -111,7 +111,7 @@
           <!-- Input Area -->
           <div class="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
             <div class="relative flex items-center">
-              <input type="text" [(ngModel)]="userInput" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50" />
+              <input type="text" [ngModel]="userInput()" (ngModelChange)="userInput.set($event)" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50" />
               <button (click)="sendMessage()" [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()" class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
                 <mat-icon>send</mat-icon>
               </button>

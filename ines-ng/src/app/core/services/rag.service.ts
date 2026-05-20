@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Set up worker for PDF.js - Use local worker for better offline support and to avoid CDN fetch issues
-pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export interface DocumentChunk {
   text: string;

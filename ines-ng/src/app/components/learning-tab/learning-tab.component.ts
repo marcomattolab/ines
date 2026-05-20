@@ -149,64 +149,121 @@ export class LearningTabComponent implements AfterViewInit {
     }
 
     const lines = cleaned.split('\n');
-    const processedLines: string[] = [];
+    const tempLines: { indentSize: number; content: string }[] = [];
     let foundMindmap = false;
-    let rootNodeParsed = false;
 
     for (let line of lines) {
-      const indentMatch = line.match(/^(\s*)/);
-      const indent = indentMatch ? indentMatch[1] : '';
-      let content = line.trim();
-
+      const content = line.trim();
       if (!content) continue;
 
-      // Handle mindmap header
       if (content.toLowerCase() === 'mindmap') {
-        processedLines.push('mindmap');
         foundMindmap = true;
         continue;
       }
 
       if (!foundMindmap) continue;
 
-      // If we encounter a completely unindented line after parsing the root node,
-      // it is likely conversational suffix text, so we stop parsing.
-      if (indent.length === 0 && rootNodeParsed) {
+      // Convert tabs to spaces for indent sizing
+      const indentMatch = line.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1] : '';
+      const spaceIndent = indent.replace(/\t/g, '  ');
+
+      // Strip bullet points or numbering from content
+      let cleanedContent = content.replace(/^[-*+]\s+/, '');
+      cleanedContent = cleanedContent.replace(/^\d+\.\s+/, '');
+      cleanedContent = cleanedContent.trim();
+
+      if (cleanedContent) {
+        tempLines.push({
+          indentSize: spaceIndent.length,
+          content: cleanedContent
+        });
+      }
+    }
+
+    if (tempLines.length === 0) {
+      return 'mindmap\n  root((Learning Context))\n    (No concepts extracted)';
+    }
+
+    // Get unique indentation sizes sorted ascending
+    const uniqueSizes = Array.from(new Set(tempLines.map(l => l.indentSize))).sort((a, b) => a - b);
+
+    const processedLines: string[] = ['mindmap'];
+    let rootNodeParsed = false;
+
+    for (const line of tempLines) {
+      const level = uniqueSizes.indexOf(line.indentSize);
+
+      // If we've already parsed the root node and hit a line that maps back to level 0,
+      // it is conversational text or an invalid second root. We stop parsing here.
+      if (rootNodeParsed && level === 0) {
         break;
       }
 
-      // Remove leading bullet points (like -, *, +, or numbers like 1.)
-      content = content.replace(/^[-*+]\s+/, '');
-      content = content.replace(/^\d+\.\s+/, '');
-      content = content.trim();
+      // Sanitize and format the node text
+      const formattedContent = this.cleanNodeText(line.content);
+      if (!formattedContent) continue;
 
-      if (!content) continue;
-
-      // Check if the node is already wrapped in shapes or quotes
-      const isWrapped = 
-        (content.startsWith('(') && content.endsWith(')')) ||
-        (content.startsWith('[') && content.endsWith(']')) ||
-        (content.startsWith('{') && content.endsWith('}')) ||
-        (content.startsWith('"') && content.endsWith('"')) ||
-        /^[a-zA-Z0-9_-]+\s*\(.*\)$/.test(content) ||
-        /^[a-zA-Z0-9_-]+\s*\[.*\]$/.test(content) ||
-        /^[a-zA-Z0-9_-]+\s*\{.*\}$/.test(content);
-
-      if (!isWrapped) {
-        // Wrap content in parenthesis to handle spaces/special characters
-        content = `(${content})`;
-      }
-
-      processedLines.push(indent + content);
+      const normalizedIndent = ' '.repeat(level * 2);
+      processedLines.push(normalizedIndent + formattedContent);
       rootNodeParsed = true;
     }
 
-    // Ensure it starts with mindmap
-    if (processedLines.length > 0 && processedLines[0] !== 'mindmap') {
-      processedLines.unshift('mindmap');
+    return processedLines.join('\n');
+  }
+
+  private cleanNodeText(content: string): string {
+    content = content.trim();
+    if (!content) return '';
+
+    const sanitizeText = (text: string) => {
+      return text
+        .replace(/[()\[\]{}"]/g, '') // Remove parentheses, brackets, curly braces, and quotes
+        .replace(/\\/g, '')          // Remove backslashes
+        .trim();
+    };
+
+    // Patterns for shapes
+    // 1. root((text)) or id((text))
+    const rootDoubleParenMatch = content.match(/^([a-zA-Z0-9_-]+)\(\((.*)\)\)$/);
+    if (rootDoubleParenMatch) {
+      const id = rootDoubleParenMatch[1];
+      const text = sanitizeText(rootDoubleParenMatch[2]);
+      return `${id}((${text}))`;
     }
 
-    return processedLines.join('\n');
+    // 2. ((text))
+    const doubleParenMatch = content.match(/^\(\((.*)\)\)$/);
+    if (doubleParenMatch) {
+      return `((${sanitizeText(doubleParenMatch[1])}))`;
+    }
+
+    // 3. (text)
+    const singleParenMatch = content.match(/^\((.*)\)$/);
+    if (singleParenMatch) {
+      return `(${sanitizeText(singleParenMatch[1])})`;
+    }
+
+    // 4. [text]
+    const bracketMatch = content.match(/^\[(.*)\]$/);
+    if (bracketMatch) {
+      return `[${sanitizeText(bracketMatch[1])}]`;
+    }
+
+    // 5. {text}
+    const braceMatch = content.match(/^\{(.*)\}$/);
+    if (braceMatch) {
+      return `{${sanitizeText(braceMatch[1])}}`;
+    }
+
+    // 6. "text"
+    const quoteMatch = content.match(/^"(.*)"$/);
+    if (quoteMatch) {
+      return `"${sanitizeText(quoteMatch[1])}"`;
+    }
+
+    // If not matched, wrap in parenthesis to handle spaces/special characters
+    return `(${sanitizeText(content)})`;
   }
 
   async generateMindMap() {

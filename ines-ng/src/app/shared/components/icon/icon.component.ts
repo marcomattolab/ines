@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -8,24 +8,24 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [CommonModule, MatIconModule],
   template: `
     <mat-icon 
-      [fontIcon]="iconName" 
-      [style.width.px]="sizeNumber"
-      [style.height.px]="sizeNumber"
-      [style.font-size.px]="sizeNumber"
-      [style.color]="color"
-      [class]="className">
+      [fontIcon]="iconName()" 
+      [style.width.px]="sizeNumber()"
+      [style.height.px]="sizeNumber()"
+      [style.font-size.px]="sizeNumber()"
+      [style.color]="color()"
+      [class]="className()">
     </mat-icon>
   `
 })
 export class IconComponent {
-  @Input() name: string = 'home';
-  @Input() size: number | string = 20;
-  @Input() color: string = 'currentColor';
-  @Input() strokeWidth: number = 2; // Not used in Material Icons, kept for compatibility
-  @Input() className: string = '';
+  readonly name = input<string>('home');
+  readonly size = input<number | string>(20);
+  readonly color = input<string>('currentColor');
+  readonly strokeWidth = input<number>(2); // Not used in Material Icons, kept for compatibility
+  readonly className = input<string>('');
 
   // Map icon names from your original Lucide icons to Material icons
-  get iconName(): string {
+  readonly iconName = computed(() => {
     const iconMap: Record<string, string> = {
       'house': 'home',
       'message-square': 'chat',
@@ -47,10 +47,11 @@ export class IconComponent {
       'x': 'close'
     };
     
-    return iconMap[this.name] || this.name;
-  }
+    return iconMap[this.name()] || this.name();
+  });
 
-  get sizeNumber(): number {
-    return typeof this.size === 'string' ? parseInt(this.size, 10) : this.size;
-  }
+  readonly sizeNumber = computed(() => {
+    const sz = this.size();
+    return typeof sz === 'string' ? parseInt(sz, 10) : sz;
+  });
 }

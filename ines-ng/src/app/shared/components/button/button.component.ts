@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -7,9 +7,9 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <button
-      [type]="type"
-      [disabled]="disabled"
-      [class]="buttonClasses"
+      [type]="type()"
+      [disabled]="disabled()"
+      [class]="buttonClasses()"
       (click)="onClick.emit($event)"
     >
       <ng-content></ng-content>
@@ -18,14 +18,14 @@ import { CommonModule } from '@angular/common';
   styles: []
 })
 export class ButtonComponent {
-  @Input() type: 'button' | 'submit' | 'reset' = 'button';
-  @Input() variant: 'primary' | 'secondary' | 'danger' | 'ghost' = 'primary';
-  @Input() size: 'sm' | 'md' | 'lg' = 'md';
-  @Input() disabled = false;
-  @Input() className = '';
-  @Output() onClick = new EventEmitter<MouseEvent>();
+  readonly type = input<'button' | 'submit' | 'reset'>('button');
+  readonly variant = input<'primary' | 'secondary' | 'danger' | 'ghost'>('primary');
+  readonly size = input<'sm' | 'md' | 'lg'>('md');
+  readonly disabled = input<boolean>(false);
+  readonly className = input<string>('');
+  readonly onClick = output<MouseEvent>();
 
-  get buttonClasses(): string {
+  readonly buttonClasses = computed(() => {
     const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg';
 
     const variantClasses = {
@@ -41,6 +41,6 @@ export class ButtonComponent {
       lg: 'px-6 py-3 text-base'
     };
 
-    return `${baseClasses} ${variantClasses[this.variant]} ${sizeClasses[this.size]} ${this.className}`;
-  }
+    return `${baseClasses} ${variantClasses[this.variant()]} ${sizeClasses[this.size()]} ${this.className()}`;
+  });
 }

@@ -1,4 +1,4 @@
-import { Component, signal, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, viewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,7 +27,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   rag = inject(RagService);
   toast = inject(ToastService);
 
-  @ViewChild('mermaidContainer') mermaidContainer!: ElementRef;
+  readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 
   userInput = signal('');
   messages = signal<ChatMessage[]>([]);
@@ -320,14 +320,16 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   async renderMindMap(code: string) {
+    const container = this.mermaidContainer();
+    if (!container) return;
     try {
       const { svg } = await mermaid.render('mermaid-svg-' + Date.now(), code);
-      this.mermaidContainer.nativeElement.innerHTML = svg;
+      container.nativeElement.innerHTML = svg;
     } catch (err) {
       console.error('Mermaid rendering error:', err);
       console.error('Offending Mermaid code was:\n', code);
       // Fallback to a simple message if rendering fails
-      this.mermaidContainer.nativeElement.innerHTML = `
+      container.nativeElement.innerHTML = `
         <div class="text-center p-6 space-y-4">
           <p class="text-red-400 font-semibold">Failed to render mind map due to syntax constraints.</p>
           <div class="text-left bg-black/40 border border-white/10 rounded-xl p-4 overflow-x-auto max-w-lg mx-auto font-mono text-xs text-zinc-300 whitespace-pre">${code}</div>

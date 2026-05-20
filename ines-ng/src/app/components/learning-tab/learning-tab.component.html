@@ -78,8 +78,8 @@
               </button>
               <input 
                 type="number" 
-                [ngModel]="numQuizQuestions()" 
-                (ngModelChange)="setQuestions($event)" 
+                [value]="numQuizQuestions()" 
+                (input)="setQuestions($any($event.target).value)" 
                 min="1" 
                 max="15"
                 class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
@@ -107,8 +107,8 @@
               </button>
               <input 
                 type="number" 
-                [ngModel]="quizTimerDuration()" 
-                (ngModelChange)="setTimer($event)" 
+                [value]="quizTimerDuration()" 
+                (input)="setTimer($any($event.target).value)" 
                 min="1" 
                 max="60" 
                 class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
@@ -136,8 +136,8 @@
               </button>
               <input 
                 type="number" 
-                [ngModel]="numQuizOptions()" 
-                (ngModelChange)="setOptions($event)" 
+                [value]="numQuizOptions()" 
+                (input)="setOptions($any($event.target).value)" 
                 min="2" 
                 max="6" 
                 class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
@@ -203,7 +203,7 @@
             <!-- Input Area -->
             <div class="p-6 border-t border-white/5" style="background: var(--bg-1); backdrop-filter: blur(28px); border-top: 1px solid var(--border);">
               <div class="relative flex items-center">
-                <input type="text" [ngModel]="userInput()" (ngModelChange)="userInput.set($event)" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-zinc-950/40 text-white border border-white/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all disabled:opacity-50" />
+                <input type="text" [value]="userInput()" (input)="userInput.set($any($event.target).value)" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-zinc-950/40 text-white border border-white/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all disabled:opacity-50" />
                 <button (click)="sendMessage()" [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()" class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
                   <mat-icon>send</mat-icon>
                 </button>

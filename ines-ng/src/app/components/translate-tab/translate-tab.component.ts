@@ -36,9 +36,9 @@ export class TranslateTabComponent {
   speech = inject(SpeechService);
 
   languages = LANGUAGES;
-  fromLang  = 'auto';
-  toLang    = 'English';
-  inputText = '';
+  fromLang  = signal('auto');
+  toLang    = signal('English');
+  inputText = signal('');
   result    = signal('');
   translating = signal(false);
 
@@ -46,28 +46,29 @@ export class TranslateTabComponent {
   readonly isResultSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'trans-result');
 
   toggleSpeakSource() {
-    this.speech.toggle('trans-source', this.inputText, this.fromLang === 'auto' ? navigator.language : this.fromLang);
+    this.speech.toggle('trans-source', this.inputText(), this.fromLang() === 'auto' ? navigator.language : this.fromLang());
   }
 
   toggleSpeakResult() {
-    this.speech.toggle('trans-result', this.result(), this.toLang);
+    this.speech.toggle('trans-result', this.result(), this.toLang());
   }
 
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
-  onInput() {
+  onInput(val: string) {
+    this.inputText.set(val);
     if (this.debounce) clearTimeout(this.debounce);
     this.debounce = setTimeout(() => {
-      if (this.inputText.length > 10 && this.llm.isReady()) this.translate();
+      if (this.inputText().length > 10 && this.llm.isReady()) this.translate();
     }, 1200);
   }
 
   async translate() {
-    if (!this.inputText.trim()) return;
+    if (!this.inputText().trim()) return;
     if (!this.llm.isReady()) { this.toast.show('⚠️ Load the model first!'); return; }
 
-    const srcDesc = this.fromLang === 'auto' ? 'detected language' : this.fromLang;
-    const instruction = `Translate the following text from ${srcDesc} to ${this.toLang}:\n\n${this.inputText}`;
+    const srcDesc = this.fromLang() === 'auto' ? 'detected language' : this.fromLang();
+    const instruction = `Translate the following text from ${srcDesc} to ${this.toLang()}:\n\n${this.inputText()}`;
     const prompt = this.llm.buildPrompt(SYSTEM_TRANSLATE, instruction);
 
     this.translating.set(true);
@@ -84,13 +85,13 @@ export class TranslateTabComponent {
   }
 
   swap() {
-    if (this.fromLang !== 'auto') {
-      const tmp = this.fromLang;
-      this.fromLang = this.toLang;
-      this.toLang = tmp;
+    if (this.fromLang() !== 'auto') {
+      const tmp = this.fromLang();
+      this.fromLang.set(this.toLang());
+      this.toLang.set(tmp);
     }
     const prevResult = this.result();
-    this.inputText = prevResult;
+    this.inputText.set(prevResult);
     this.result.set('');
     if (prevResult.length > 3) this.translate();
   }
@@ -100,7 +101,7 @@ export class TranslateTabComponent {
   }
 
   clear() {
-    this.inputText = '';
+    this.inputText.set('');
     this.result.set('');
   }
 

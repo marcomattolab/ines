@@ -23,8 +23,8 @@ export class EmailTabComponent {
   llm = inject(LlmService);
   toast = inject(ToastService);
 
-  tone = 'professional';
-  action = 'improve';
+  tone = signal('professional');
+  action = signal('improve');
   result = signal('');
   processing = signal(false);
 
@@ -48,17 +48,17 @@ export class EmailTabComponent {
     }
 
     const actionMap: Record<string, string> = {
-      improve: `Improve this email while keeping the main message but making it more ${this.tone}.`,
+      improve: `Improve this email while keeping the main message but making it more ${this.tone()}.`,
       fix: `Fix all grammatical and spelling errors in this email.`,
-      shorten: `Shorten this email to half its length while keeping the essential points, with a ${this.tone} tone.`,
+      shorten: `Shorten this email to half its length while keeping the essential points, with a ${this.tone()} tone.`,
       formal: `Make this email more formal and professional.`,
-      reply: `Write an appropriate response to this email, with a ${this.tone} tone.`,
+      reply: `Write an appropriate response to this email, with a ${this.tone()} tone.`,
       summary: `Summarize the key points of this email in 3-5 bullet points.`,
     };
 
     const prompt = this.llm.buildPrompt(
       SYSTEM_EMAIL,
-      `${actionMap[this.action]}\n\nEMAIL:\n${emailText}`,
+      `${actionMap[this.action()]}\n\nEMAIL:\n${emailText}`,
     );
     this.processing.set(true);
     this.result.set(' ');

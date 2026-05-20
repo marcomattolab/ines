@@ -14,14 +14,14 @@
   </div>
 
   <div class="controls-row">
-    <select class="pill-select" [(ngModel)]="tone">
+    <select class="pill-select" [value]="tone()" (change)="tone.set($any($event.target).value)">
       <option value="professional">🎩 Professional</option>
       <option value="friendly">😊 Friendly</option>
       <option value="assertive">💪 Assertive</option>
       <option value="formal">📜 Formal</option>
       <option value="concise">⚡ Short and Concise</option>
     </select>
-    <select class="pill-select" [(ngModel)]="action">
+    <select class="pill-select" [value]="action()" (change)="action.set($any($event.target).value)">
       <option value="improve">✨ Improve</option>
       <option value="fix">🔧 Fix grammar</option>
       <option value="shorten">✂️ Shorten</option>

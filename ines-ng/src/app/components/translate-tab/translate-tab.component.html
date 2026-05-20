@@ -12,13 +12,18 @@
   <div class="translate-pair">
     <div class="translate-side">
       <div class="translate-lang-bar">
-        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="fromLang">
+        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [value]="fromLang()" (change)="fromLang.set($any($event.target).value)">
           <option value="auto">🔍 Auto-detect language</option>
           @for (lang of languages; track lang.value) {
             <option [value]="lang.value">{{ lang.label }}</option>
           }
         </select>
-        <app-button variant="ghost" size="sm" [disabled]="!inputText.trim()" (onClick)="toggleSpeakSource()" className="!w-8 !h-8 !p-0" [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
+        <app-button 
+          variant="ghost" 
+          size="sm" [disabled]="!inputText().trim()" 
+          (onClick)="toggleSpeakSource()" 
+          className="!w-8 !h-8 !p-0" 
+          [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
           <mat-icon [fontIcon]="isSourceSpeaking() ? 'close' : 'volume_up'" 
                     class="text-sm w-3.5 h-3.5" 
                     [class.text-accent-amber]="isSourceSpeaking()"></mat-icon>
@@ -26,8 +31,8 @@
       </div>
       <textarea class="translate-textarea"
         placeholder="Text to translate..."
-        [(ngModel)]="inputText"
-        (input)="onInput()"></textarea>
+        [value]="inputText()"
+        (input)="onInput($any($event.target).value)"></textarea>
     </div>
 
     <div class="translate-side">
@@ -35,7 +40,7 @@
         <app-button variant="ghost" size="sm" (onClick)="swap()" className="!w-8 !h-8 !p-0" title="Swap languages">
           <mat-icon fontIcon="swap_horiz" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
-        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="toLang">
+        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [value]="toLang()" (change)="toLang.set($any($event.target).value)">
           @for (lang of languages; track lang.value) {
             <option [value]="lang.value">{{ lang.label }}</option>
           }

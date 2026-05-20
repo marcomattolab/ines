@@ -34,6 +34,7 @@ export class IconComponent {
       'languages': 'translate',
       'check-square': 'check_box',
       'code': 'code',
+      'school': 'school',
       'settings': 'settings',
       'loader-2': 'hourglass_empty',
       'alert-circle': 'error',

@@ -15,4 +15,12 @@ export class ToastService {
     this.toasts.update(t => [...t, { id, msg }]);
     setTimeout(() => this.toasts.update(t => t.filter(x => x.id !== id)), durationMs);
   }
+
+  success(msg: string, durationMs = 2800): void {
+    this.show(`✅ ${msg}`, durationMs);
+  }
+
+  error(msg: string, durationMs = 4000): void {
+    this.show(`❌ ${msg}`, durationMs);
+  }
 }

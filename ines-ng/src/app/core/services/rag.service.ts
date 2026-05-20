@@ -16,11 +16,12 @@ export class RagService {
 
   async processFile(file: File): Promise<void> {
     let text = '';
-    if (file.type === 'application/pdf') {
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    if (file.type === 'application/pdf' || extension === 'pdf') {
       text = await this.extractTextFromPdf(file);
-    } else if (file.type === 'text/html') {
+    } else if (file.type === 'text/html' || extension === 'html' || extension === 'htm') {
       text = await this.extractTextFromHtml(file);
-    } else if (file.type === 'text/plain') {
+    } else if (file.type === 'text/plain' || extension === 'txt') {
       text = await file.text();
     } else {
       throw new Error('Unsupported file type');

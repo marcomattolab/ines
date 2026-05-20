@@ -344,28 +344,108 @@ export class LearningTabComponent implements AfterViewInit {
     this.quizScore.set(0);
     this.currentQuizIndex.set(0);
 
-    const systemPrompt = `Generate a quiz with ${this.numQuizQuestions()} multiple-choice questions based on the context.
+    const numQuestions = Math.max(1, Math.min(15, Number(this.numQuizQuestions()) || 5));
+    const context = this.rag.getRelevantChunks('important facts', 5, 400);
+
+    const systemPrompt = `You are a learning assistant. Generate a quiz with exactly ${numQuestions} multiple-choice questions based on the following context.
     Return ONLY a valid JSON array of objects with the following structure:
-    [{"question": "...", "options": ["A", "B", "C", "D"], "answer": 0}]
-    where "answer" is the index of the correct option.
+    [{"question": "Question text?", "options": ["Choice A", "Choice B", "Choice C", "Choice D"], "answer": 0}]
+    where "answer" is the index (0, 1, 2, or 3) of the correct option.
     
     CONTEXT:
-    ${this.rag.getRelevantChunks('important facts', 10)}
+    ${context}
     `;
 
     try {
-      const fullPrompt = this.llm.buildPrompt(systemPrompt, `Generate ${this.numQuizQuestions()} quiz questions.`);
+      const fullPrompt = this.llm.buildPrompt(systemPrompt, `Generate ${numQuestions} quiz questions.`);
       const result = await this.llm.generate(fullPrompt, () => {});
       
-      // Clean up JSON
-      const jsonStr = result.substring(result.indexOf('['), result.lastIndexOf(']') + 1);
-      this.quizQuestions.set(JSON.parse(jsonStr));
+      const parsedQuestions = this.parseQuizJson(result);
+      if (!parsedQuestions || parsedQuestions.length === 0) {
+        throw new Error('No questions could be parsed from the response.');
+      }
+      this.quizQuestions.set(parsedQuestions);
     } catch (err: any) {
+      console.error('Quiz generation error:', err);
       this.toast.error('Error generating quiz: ' + err.message);
-      this.activeSubTab.set('chat');
+      this.activeSubTab.set('quiz');
     } finally {
       this.isGenerating.set(false);
     }
+  }
+
+  private parseQuizJson(text: string): any[] {
+    text = text.trim();
+    
+    // 1. Remove markdown code blocks if present
+    const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
+    let cleaned = codeBlockMatch ? codeBlockMatch[1] : text;
+    cleaned = cleaned.trim();
+    
+    // 2. Find the outermost [ and ]
+    const startIdx = cleaned.indexOf('[');
+    const endIdx = cleaned.lastIndexOf(']');
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    }
+    
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Standard JSON parse failed, attempting regex/loose repair', e);
+    }
+
+    // 3. Fallback: Parse using regex to extract object fields if JSON is slightly malformed
+    const questions: any[] = [];
+    const objectRegex = /\{\s*"question"\s*:\s*"([\s\S]*?)"\s*,\s*"options"\s*:\s*\[\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*\]\s*,\s*"answer"\s*:\s*(\d)\s*\}/gi;
+    let match;
+    while ((match = objectRegex.exec(cleaned)) !== null) {
+      questions.push({
+        question: match[1].trim(),
+        options: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()],
+        answer: parseInt(match[6], 10)
+      });
+    }
+
+    if (questions.length > 0) {
+      return questions;
+    }
+
+    // 4. Second Fallback: Parse text questions line-by-line (e.g. if model output bullet points)
+    const textQuestions: any[] = [];
+    const blocks = text.split(/\n\s*\n/);
+    for (const block of blocks) {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length >= 5) {
+        let questionText = '';
+        const options: string[] = [];
+        let answerIndex = 0;
+        
+        for (const line of lines) {
+          if (/^\d+\.?\s*(.*)/.test(line)) {
+            questionText = line.replace(/^\d+\.?\s*/, '');
+          } else if (/^[a-dA-D]\)?\s*(.*)/i.test(line)) {
+            options.push(line.replace(/^[a-dA-D]\)?\s*/i, ''));
+          } else if (/answer:\s*([a-d])/i.test(line)) {
+            const ansChar = line.match(/answer:\s*([a-d])/i)?.[1].toUpperCase();
+            answerIndex = ['A', 'B', 'C', 'D'].indexOf(ansChar || 'A');
+          }
+        }
+        
+        if (questionText && options.length >= 4) {
+          textQuestions.push({
+            question: questionText,
+            options: options.slice(0, 4),
+            answer: answerIndex >= 0 ? answerIndex : 0
+          });
+        }
+      }
+    }
+
+    return textQuestions;
   }
 
   submitQuizAnswer(index: number) {

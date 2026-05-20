@@ -62,7 +62,7 @@ export class RagService {
     return doc.body.innerText || '';
   }
 
-  private chunkText(text: string, source: string, chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+  private chunkText(text: string, source: string, chunkSize: number = 256, overlap: number = 32): DocumentChunk[] {
     const words = text.split(/\s+/);
     const chunks: DocumentChunk[] = [];
     
@@ -78,7 +78,7 @@ export class RagService {
     return chunks;
   }
 
-  getRelevantChunks(query: string, topK: number = 3): string {
+  getRelevantChunks(query: string, topK: number = 3, maxWords: number = 800): string {
     const allChunks = this.chunks();
     if (allChunks.length === 0) return '';
 
@@ -94,13 +94,21 @@ export class RagService {
       return { chunk, score };
     });
 
-    const relevantChunks = scoredChunks
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK)
-      .map(item => item.chunk.text)
-      .join('\n\n---\n\n');
+    const sorted = scoredChunks.sort((a, b) => b.score - a.score);
+    const resultChunks: string[] = [];
+    let wordCount = 0;
+
+    for (const item of sorted) {
+      if (resultChunks.length >= topK) break;
+      const chunkWords = item.chunk.text.split(/\s+/).length;
+      if (resultChunks.length > 0 && wordCount + chunkWords > maxWords) {
+        break;
+      }
+      resultChunks.push(item.chunk.text);
+      wordCount += chunkWords;
+    }
     
-    return relevantChunks || '';
+    return resultChunks.join('\n\n---\n\n');
   }
 
   clearContext(): void {

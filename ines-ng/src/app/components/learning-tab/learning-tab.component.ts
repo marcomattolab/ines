@@ -347,9 +347,21 @@ export class LearningTabComponent implements AfterViewInit {
     const numQuestions = Math.max(1, Math.min(15, Number(this.numQuizQuestions()) || 5));
     const context = this.rag.getRelevantChunks('important facts', 5, 400);
 
-    const systemPrompt = `You are a learning assistant. Generate a quiz with exactly ${numQuestions} multiple-choice questions based on the following context.
+    const systemPrompt = `You are a strict learning assistant. Generate a multiple-choice quiz with exactly ${numQuestions} questions based on the following context.
+    
+    CRITICAL REQUIREMENTS:
+    1. Each question MUST have exactly 4 options.
+    2. Exactly one option MUST be correct.
+    3. The options list must never have fewer or more than 4 items.
+    
     Return ONLY a valid JSON array of objects with the following structure:
-    [{"question": "Question text?", "options": ["Choice A", "Choice B", "Choice C", "Choice D"], "answer": 0}]
+    [
+      {
+        "question": "Question text?",
+        "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+        "answer": 0
+      }
+    ]
     where "answer" is the index (0, 1, 2, or 3) of the correct option.
     
     CONTEXT:
@@ -364,7 +376,29 @@ export class LearningTabComponent implements AfterViewInit {
       if (!parsedQuestions || parsedQuestions.length === 0) {
         throw new Error('No questions could be parsed from the response.');
       }
-      this.quizQuestions.set(parsedQuestions);
+
+      // Enforce exactly 4 options and exactly 1 correct answer (index 0-3) for all questions
+      const normalizedQuestions = parsedQuestions.map((q: any) => {
+        const question = q.question || 'No question text provided';
+        
+        let options = Array.isArray(q.options) ? q.options.filter(Boolean) : [];
+        if (options.length < 4) {
+          while (options.length < 4) {
+            options.push(`Option ${['A', 'B', 'C', 'D'][options.length]}`);
+          }
+        } else if (options.length > 4) {
+          options = options.slice(0, 4);
+        }
+        
+        let answer = typeof q.answer === 'number' ? q.answer : parseInt(q.answer, 10);
+        if (isNaN(answer) || answer < 0 || answer > 3) {
+          answer = 0;
+        }
+        
+        return { question, options, answer };
+      });
+
+      this.quizQuestions.set(normalizedQuestions);
     } catch (err: any) {
       console.error('Quiz generation error:', err);
       this.toast.error('Error generating quiz: ' + err.message);

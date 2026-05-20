@@ -1,68 +1,72 @@
 <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">
-            <lucide-angular name="languages" [size]="18" class="text-accent-amber"></lucide-angular>
-            Translator
-          </div>
-          <div class="panel-desc">Translate text between any language — completely offline</div>
-        </div>
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon fontIcon="translate" class="text-accent-amber text-lg w-[18px] h-[18px]"></mat-icon>
+        Translator
       </div>
+      <div class="panel-desc">Translate text between any language — completely offline</div>
+    </div>
+  </div>
 
-      <div class="translate-pair">
-        <div class="translate-side">
-          <div class="translate-lang-bar">
-            <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="fromLang">
-              <option value="auto">🔍 Auto-detect language</option>
-              @for (lang of languages; track lang.value) {
-                <option [value]="lang.value">{{ lang.label }}</option>
-              }
-            </select>
-            <app-button variant="ghost" size="sm" [disabled]="!inputText.trim()" (onClick)="toggleSpeakSource()" className="!w-8 !h-8 !p-0" [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
-              <lucide-angular [name]="isSourceSpeaking() ? 'x' : 'mic'" [size]="14" [class.text-accent-amber]="isSourceSpeaking()"></lucide-angular>
-            </app-button>
-          </div>
-          <textarea class="translate-textarea"
-            placeholder="Text to translate..."
-            [(ngModel)]="inputText"
-            (input)="onInput()"></textarea>
-        </div>
-
-        <div class="translate-side">
-          <div class="translate-lang-bar">
-            <app-button variant="ghost" size="sm" (onClick)="swap()" className="!w-8 !h-8 !p-0" title="Swap languages">
-              <lucide-angular name="refresh-cw" [size]="14"></lucide-angular>
-            </app-button>
-            <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="toLang">
-              @for (lang of languages; track lang.value) {
-                <option [value]="lang.value">{{ lang.label }}</option>
-              }
-            </select>
-            <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="toggleSpeakResult()" className="!w-8 !h-8 !p-0" [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'">
-              <lucide-angular [name]="isResultSpeaking() ? 'x' : 'mic'" [size]="14" [class.text-accent-amber]="isResultSpeaking()"></lucide-angular>
-            </app-button>
-            <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="copy()" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
-              <lucide-angular name="copy" [size]="14"></lucide-angular>
-            </app-button>
-          </div>
-          <div class="translate-result-area">
-            @if (result()) {
-              <span [class.cursor-blink]="translating()" [innerHTML]="resultHtml()"></span>
-            } @else {
-              <span style="color:var(--text-2)">The translation will appear here...</span>
-            }
-          </div>
-        </div>
+  <div class="translate-pair">
+    <div class="translate-side">
+      <div class="translate-lang-bar">
+        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="fromLang">
+          <option value="auto">🔍 Auto-detect language</option>
+          @for (lang of languages; track lang.value) {
+            <option [value]="lang.value">{{ lang.label }}</option>
+          }
+        </select>
+        <app-button variant="ghost" size="sm" [disabled]="!inputText.trim()" (onClick)="toggleSpeakSource()" className="!w-8 !h-8 !p-0" [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
+          <mat-icon [fontIcon]="isSourceSpeaking() ? 'close' : 'mic'" 
+                    class="text-sm w-3.5 h-3.5" 
+                    [class.text-accent-amber]="isSourceSpeaking()"></mat-icon>
+        </app-button>
       </div>
+      <textarea class="translate-textarea"
+        placeholder="Text to translate..."
+        [(ngModel)]="inputText"
+        (input)="onInput()"></textarea>
+    </div>
 
-      <div class="translate-bar">
-        <app-button variant="primary" (onClick)="translate()">
-          <lucide-angular name="languages" [size]="14"></lucide-angular>
-          Translate
+    <div class="translate-side">
+      <div class="translate-lang-bar">
+        <app-button variant="ghost" size="sm" (onClick)="swap()" className="!w-8 !h-8 !p-0" title="Swap languages">
+          <mat-icon fontIcon="swap_horiz" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
-        <app-button variant="danger" (onClick)="clear()">
-          <lucide-angular name="trash-2" [size]="14"></lucide-angular>
-          Clear
+        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [(ngModel)]="toLang">
+          @for (lang of languages; track lang.value) {
+            <option [value]="lang.value">{{ lang.label }}</option>
+          }
+        </select>
+        <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="toggleSpeakResult()" className="!w-8 !h-8 !p-0" [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'">
+          <mat-icon [fontIcon]="isResultSpeaking() ? 'close' : 'mic'" 
+                    class="text-sm w-3.5 h-3.5" 
+                    [class.text-accent-amber]="isResultSpeaking()"></mat-icon>
         </app-button>
+        <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="copy()" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+          <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+      </div>
+      <div class="translate-result-area">
+        @if (result()) {
+          <span [class.cursor-blink]="translating()" [innerHTML]="resultHtml()"></span>
+        } @else {
+          <span style="color:var(--text-2)">The translation will appear here...</span>
+        }
       </div>
     </div>
+  </div>
+
+  <div class="translate-bar">
+    <app-button variant="primary" (onClick)="translate()">
+      <mat-icon fontIcon="translate" class="text-sm w-3.5 h-3.5"></mat-icon>
+      Translate
+    </app-button>
+    <app-button variant="danger" (onClick)="clear()">
+      <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+      Clear
+    </app-button>
+  </div>
+</div>

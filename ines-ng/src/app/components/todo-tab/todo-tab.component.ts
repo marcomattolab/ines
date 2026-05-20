@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { Component, inject, signal } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { TodoService } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -26,7 +26,7 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
 @Component({
   selector: 'app-todo-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, LucideAngularModule, ButtonComponent],
+  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
   templateUrl: './todo-tab.component.html',
   styleUrl: './todo-tab.css'
 })

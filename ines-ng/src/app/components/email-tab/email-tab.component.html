@@ -1,65 +1,67 @@
 <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">
-            <lucide-angular name="mail" [size]="18" class="text-accent-green"></lucide-angular>
-            Email Assistant
-          </div>
-          <div class="panel-desc">Rewrite, improve and adapt the tone of your emails</div>
-        </div>
-        <app-button variant="danger" size="sm" (onClick)="clear()">
-          <lucide-angular name="trash-2" [size]="14"></lucide-angular>
-          Clear
-        </app-button>
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon fontIcon="email" class="text-accent-green text-lg w-[18px] h-[18px]"></mat-icon>
+        Email Assistant
       </div>
+      <div class="panel-desc">Rewrite, improve and adapt the tone of your emails</div>
+    </div>
+    <app-button variant="danger" size="sm" (onClick)="clear()">
+      <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+      Clear
+    </app-button>
+  </div>
 
-      <div class="controls-row">
-        <select class="pill-select" [(ngModel)]="tone">
-          <option value="professional">🎩 Professional</option>
-          <option value="friendly">😊 Friendly</option>
-          <option value="assertive">💪 Assertive</option>
-          <option value="formal">📜 Formal</option>
-          <option value="concise">⚡ Short and Concise</option>
-        </select>
-        <select class="pill-select" [(ngModel)]="action">
-          <option value="improve">✨ Improve</option>
-          <option value="fix">🔧 Fix grammar</option>
-          <option value="shorten">✂️ Shorten</option>
-          <option value="formal">🎩 Formal</option>
-          <option value="reply">↩️ Reply</option>
-          <option value="summary">📋 Summary</option>
-        </select>
-        <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
-          <lucide-angular [name]="processing() ? 'loader-2' : 'send'" [size]="14" [class.animate-spin]="processing()"></lucide-angular>
-          {{ processing() ? 'Processing...' : 'Process' }}
-        </app-button>
+  <div class="controls-row">
+    <select class="pill-select" [(ngModel)]="tone">
+      <option value="professional">🎩 Professional</option>
+      <option value="friendly">😊 Friendly</option>
+      <option value="assertive">💪 Assertive</option>
+      <option value="formal">📜 Formal</option>
+      <option value="concise">⚡ Short and Concise</option>
+    </select>
+    <select class="pill-select" [(ngModel)]="action">
+      <option value="improve">✨ Improve</option>
+      <option value="fix">🔧 Fix grammar</option>
+      <option value="shorten">✂️ Shorten</option>
+      <option value="formal">🎩 Formal</option>
+      <option value="reply">↩️ Reply</option>
+      <option value="summary">📋 Summary</option>
+    </select>
+    <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
+      <mat-icon [fontIcon]="processing() ? 'hourglass_empty' : 'send'" 
+                [class.animate-spin]="processing()" 
+                class="text-sm w-3.5 h-3.5"></mat-icon>
+      {{ processing() ? 'Processing...' : 'Process' }}
+    </app-button>
+  </div>
+
+  <div class="email-input-area">
+    <textarea class="email-original" #emailInput
+      placeholder="Paste the email to improve or process here..."></textarea>
+    <div class="email-result-wrap">
+      <div class="email-result-label">
+        <span>✦ RESULT</span>
+        @if (result()) {
+          <app-button variant="secondary" size="sm" (onClick)="copy()">
+            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+            Copy
+          </app-button>
+        }
       </div>
-
-      <div class="email-input-area">
-        <textarea class="email-original" #emailInput
-          placeholder="Paste the email to improve or process here..."></textarea>
-        <div class="email-result-wrap">
-          <div class="email-result-label">
-            <span>✦ RESULT</span>
-            @if (result()) {
-              <app-button variant="secondary" size="sm" (onClick)="copy()">
-                <lucide-angular name="copy" [size]="14"></lucide-angular>
-                Copy
-              </app-button>
-            }
+      <div class="email-result-content">
+        @if (result()) {
+          <span [class.cursor-blink]="processing()" [innerHTML]="resultHtml()"></span>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon">
+              <mat-icon fontIcon="email" class="text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+            </div>
+            <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
           </div>
-          <div class="email-result-content">
-            @if (result()) {
-              <span [class.cursor-blink]="processing()" [innerHTML]="resultHtml()"></span>
-            } @else {
-              <div class="empty-state">
-                <div class="empty-icon">
-                  <lucide-angular name="mail" [size]="36"></lucide-angular>
-                </div>
-                <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
-              </div>
-            }
-          </div>
-        </div>
+        }
       </div>
     </div>
+  </div>
+</div>

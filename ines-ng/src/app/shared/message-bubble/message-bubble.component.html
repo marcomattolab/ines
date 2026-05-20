@@ -1,9 +1,9 @@
 <div class="message" [class.user]="role() === 'user'" [class.ai]="role() === 'ai'">
   <div class="msg-avatar">
     @if (role() === 'user') {
-      <lucide-angular name="message-square" [size]="14"></lucide-angular>
+      <mat-icon fontIcon="chat" class="text-sm w-3.5 h-3.5"></mat-icon>
     } @else {
-      In
+      <span class="font-bold text-sm">In</span>
     }
   </div>
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
@@ -12,10 +12,10 @@
     <div class="msg-actions" [class.visible]="isSpeaking()">
       <app-button variant="ghost" size="sm" (onClick)="toggleSpeak()" className="!w-8 !h-8 !p-0"
         [attr.title]="isSpeaking() ? 'Stop Reading' : 'Read Aloud'">
-        <lucide-angular [name]="isSpeaking() ? 'x' : 'mic'" [size]="14"></lucide-angular>
+        <mat-icon [fontIcon]="isSpeaking() ? 'close' : 'mic'" class="text-sm w-3.5 h-3.5"></mat-icon>
       </app-button>
       <app-button variant="ghost" size="sm" (onClick)="copy()" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
-        <lucide-angular name="copy" [size]="14"></lucide-angular>
+        <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
       </app-button>
     </div>
     }

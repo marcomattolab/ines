@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -26,7 +26,7 @@ const LANGUAGES = [
 @Component({
   selector: 'app-translate-tab',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule, ButtonComponent],
+  imports: [FormsModule, MatIconModule, ButtonComponent],
   templateUrl: './translate-tab.component.html',
   styleUrl: './translate-tab.css'
 })

@@ -1,6 +1,6 @@
 import { Component, inject, signal, ElementRef, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -13,7 +13,7 @@ Use the language of the original text.`;
 @Component({
   selector: 'app-email-tab',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule, ButtonComponent],
+  imports: [FormsModule, MatIconModule, ButtonComponent],
   templateUrl: './email-tab.component.html',
   styleUrl: './email-tab.css',
 })

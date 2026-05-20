@@ -13,7 +13,7 @@
             [style.--tab-color]="tab.color"
             (click)="activeTab.set(tab.id)">
             <span class="tab-icon">
-               <lucide-angular [name]="tab.icon" [size]="20"></lucide-angular>
+               <mat-icon [fontIcon]="tab.icon" style="width: 20px; height: 20px; font-size: 20px;"></mat-icon>
             </span>
             <span class="tab-label">{{ tab.label }}</span>
           </button>

@@ -1,13 +1,13 @@
 import { Component, inject, input, computed } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { ButtonComponent } from '../components/button/button.component';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-message-bubble',
   standalone: true,
-  imports: [LucideAngularModule, ButtonComponent],
+  imports: [MatIconModule, ButtonComponent],
   templateUrl: './message-bubble.component.html',
   styleUrl: './message-bubble.css'
 })
@@ -16,8 +16,8 @@ export class MessageBubbleComponent {
   text      = input<string>('');
   streaming = input<boolean>(false);
 
-  private toast = inject(ToastService);
-  private speech = inject(SpeechService);
+  private readonly toast = inject(ToastService);
+  private readonly speech = inject(SpeechService);
 
   readonly msgId = 'msg-' + Math.random().toString(36).substring(2, 9);
   readonly isSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === this.msgId);

@@ -3,13 +3,13 @@
   <div class="panel-header">
     <div>
       <div class="panel-title">
-        <lucide-angular name="code" [size]="18" class="text-accent-cyan"></lucide-angular>
+        <mat-icon fontIcon="code" class="text-accent-cyan text-lg w-[18px] h-[18px]"></mat-icon>
         Coding Assistant
       </div>
       <div class="panel-desc">Client-Side Edge Web Developer & Sandbox Playground</div>
     </div>
     <app-button variant="danger" size="sm" (onClick)="clear()">
-      <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+      <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
       Clear Conversation
     </app-button>
   </div>
@@ -42,7 +42,7 @@
           placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
           (keydown)="onKey($event)"></textarea>
         <app-button variant="primary" [disabled]="generating() || !llm.isReady()" (onClick)="send()" className="!rounded-full !w-11 !h-11 !p-0">
-          <lucide-angular name="send" [size]="18"></lucide-angular>
+          <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
         </app-button>
       </div>
     </div>
@@ -57,24 +57,24 @@
           <app-button variant="secondary" size="sm"
                   [className]="playgroundTab() === 'preview' ? 'active' : ''"
                   (onClick)="playgroundTab.set('preview')">
-            <lucide-angular name="send" [size]="14" class="text-accent-blue"></lucide-angular>
+            <mat-icon fontIcon="preview" class="text-accent-blue text-sm w-3.5 h-3.5"></mat-icon>
             Live Preview
           </app-button>
           <app-button variant="secondary" size="sm"
                   [className]="playgroundTab() === 'code' ? 'active' : ''"
                   (onClick)="playgroundTab.set('code')">
-            <lucide-angular name="code" [size]="14" class="text-accent-cyan"></lucide-angular>
+            <mat-icon fontIcon="code" class="text-accent-cyan text-sm w-3.5 h-3.5"></mat-icon>
             Source Code
           </app-button>
         </div>
 
         <div class="sandbox-actions" [style.display]="extractedCode() ? 'flex' : 'none'">
           <app-button variant="secondary" size="sm" (onClick)="copyCode()">
-            <lucide-angular name="copy" [size]="14"></lucide-angular>
+            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
             Copy
           </app-button>
           <app-button variant="secondary" size="sm" (onClick)="downloadCode()">
-            <lucide-angular name="download" [size]="14"></lucide-angular>
+            <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
             Download
           </app-button>
         </div>
@@ -86,7 +86,7 @@
           <!-- Empty State -->
           <div class="empty-state">
             <div class="empty-icon">
-              <lucide-angular name="code" [size]="36"></lucide-angular>
+              <mat-icon fontIcon="code" class="text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
             </div>
             <div class="empty-title">Waiting for Code Request</div>
             <div class="empty-text">

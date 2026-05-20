@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnDestroy, computed } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -17,7 +17,7 @@ Be concise and use the language of the transcript. Format the result clearly.`;
 @Component({
   selector: 'app-meeting-tab',
   standalone: true,
-  imports: [LucideAngularModule, ButtonComponent],
+  imports: [MatIconModule, ButtonComponent],
   templateUrl: './meeting-tab.component.html',
   styleUrl: './meeting-tab.css'
 })

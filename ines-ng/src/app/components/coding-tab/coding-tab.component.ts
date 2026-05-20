@@ -1,6 +1,6 @@
 import { Component, inject, signal, ElementRef, AfterViewChecked, viewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
@@ -40,7 +40,7 @@ Keep explanations extremely brief and let your premium code speak for itself. Al
 @Component({
   selector: 'app-coding-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, LucideAngularModule, ButtonComponent],
+  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
   templateUrl: './coding-tab.component.html',
   styleUrl: './coding-tab.css',
 })

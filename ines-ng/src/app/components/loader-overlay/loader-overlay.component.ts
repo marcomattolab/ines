@@ -1,5 +1,5 @@
-import { Component, inject, input, output, ElementRef, ViewChild, signal } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -7,7 +7,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 @Component({
   selector: 'app-loader-overlay',
   standalone: true,
-  imports: [LucideAngularModule, ButtonComponent],
+  imports: [MatIconModule, ButtonComponent],
   templateUrl: './loader-overlay.component.html',
   styleUrl: './loader-overlay.css'
 })

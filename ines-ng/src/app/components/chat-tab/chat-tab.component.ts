@@ -1,5 +1,5 @@
 import { Component, inject, signal, ElementRef, AfterViewChecked, viewChild } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
@@ -20,7 +20,7 @@ Don't mention that you're an open-source AI model unless asked.`;
 @Component({
   selector: 'app-chat-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, LucideAngularModule, ButtonComponent],
+  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
   templateUrl: './chat-tab.component.html',
   styleUrl: './chat-tab.css',
 })

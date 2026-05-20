@@ -2,13 +2,13 @@
   <div class="panel-header">
     <div>
       <div class="panel-title">
-        <lucide-angular name="message-square" [size]="18" class="text-accent-blue"></lucide-angular>
+        <mat-icon fontIcon="chat" class="text-accent-blue w-[18px] h-[18px] text-[18px]"></mat-icon>
         General Assistant
       </div>
       <div class="panel-desc">AI on-device · private · offline</div>
     </div>
     <app-button variant="danger" size="sm" (onClick)="clear()">
-      <lucide-angular name="trash-2" [size]="14"></lucide-angular>
+      <mat-icon fontIcon="delete" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
       Clear
     </app-button>
   </div>
@@ -38,7 +38,7 @@
     <textarea class="input-field" #inputEl placeholder="Write a message..." rows="1" (keydown)="onKey($event)"
       (input)="autoResize($event)"></textarea>
     <app-button variant="primary" [disabled]="generating()" (onClick)="send()" title="Send (Enter)" className="!rounded-full !w-11 !h-11 !p-0">
-      <lucide-angular name="send" [size]="18"></lucide-angular>
+     <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
     </app-button>
   </div>
 </div>

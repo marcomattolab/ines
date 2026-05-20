@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
+import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
@@ -41,7 +41,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
-    LucideAngularModule
+    MatIconModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

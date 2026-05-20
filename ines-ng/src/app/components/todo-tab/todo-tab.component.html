@@ -1,98 +1,98 @@
 <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">
-            <lucide-angular name="check-square" [size]="18" class="text-accent-purple"></lucide-angular>
-            Daily Planner
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon fontIcon="check_box" class="text-accent-purple text-lg w-[18px] h-[18px]"></mat-icon>
+        Daily Planner
+      </div>
+      <div class="panel-desc">Organize your day with the help of the AI</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="counter-text">{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span>
+      <app-button variant="danger" size="sm" (onClick)="todoSvc.clearDone()">
+        <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Remove completed
+      </app-button>
+    </div>
+  </div>
+
+  <div class="todo-layout">
+    <div class="todo-left">
+      <div class="todo-list">
+        @if (todoSvc.todos().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">
+              <mat-icon fontIcon="check_box" class="text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+            </div>
+            <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
           </div>
-          <div class="panel-desc">Organize your day with the help of the AI</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="counter-text">{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span>
-          <app-button variant="danger" size="sm" (onClick)="todoSvc.clearDone()">
-            <lucide-angular name="trash-2" [size]="14"></lucide-angular>
-            Remove completed
+        }
+        @for (todo of todoSvc.todos(); track $index) {
+          <div class="todo-item" [class.done]="todo.done">
+            <div class="todo-cb" [class.checked]="todo.done" (click)="todoSvc.toggle($index)"></div>
+            <div class="todo-text">{{ todo.text }}</div>
+            <span class="todo-tag" [class]="todo.priority">
+              {{ todo.priority === 'priority' ? '🔥 priority' : '·' }}
+            </span>
+            <app-button variant="ghost" size="sm" (onClick)="todoSvc.delete($index)" className="!w-6 !h-6 !p-0 !text-text-2 hover:!text-accent-rose" title="Remove">
+              <mat-icon fontIcon="close" class="text-xs w-3 h-3" style="font-size: 12px; width: 12px; height: 12px;"></mat-icon>
+            </app-button>
+          </div>
+        }
+      </div>
+      <div class="todo-add-row">
+        <input class="todo-input" #manualInput
+          placeholder="Add a task manually..."
+          (keydown.enter)="addManual(manualInput)">
+        <select class="pill-select" #prioritySel>
+          <option value="normal">normal</option>
+          <option value="priority">🔥 priority</option>
+        </select>
+        <app-button variant="primary" size="sm" (onClick)="addManual(manualInput, prioritySel)">
+          <mat-icon fontIcon="add" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Add
+        </app-button>
+      </div>
+    </div>
+
+    <div class="resizer" (mousedown)="startResize($event)"></div>
+
+    <div class="todo-right" [style.width.px]="rightPanelWidth()">
+      <div class="todo-pane-label">🤖 GENERATE WITH AI</div>
+      <div class="chat-area" #aiChat>
+        @for (msg of aiMessages(); track msg.id) {
+          @if (msg.typing) {
+            <div class="message ai">
+              <div class="msg-avatar">G</div>
+              <div class="msg-bubble"><app-typing-indicator /></div>
+            </div>
+          } @else {
+            <app-message-bubble [role]="msg.role" [text]="msg.text" />
+          }
+        }
+      </div>
+      
+      <div class="h-resizer" (mousedown)="startHResize($event)"></div>
+
+      <div class="todo-ai-input-area" [style.height.px]="inputAreaHeight()">
+        <textarea class="todo-ai-textarea" #aiInput
+          placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
+          (keydown)="onAiKey($event, aiInput)"></textarea>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording(aiInput)">
+              <div class="record-dot"></div>
+              <span>{{ recording() ? 'Stop Recording' : 'Record' }}</span>
+            </button>
+            <span class="timer-text">{{ timerText() }}</span>
+          </div>
+          <app-button variant="primary" (onClick)="generate(aiInput)">
+            <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
+            Generate Plan
           </app-button>
         </div>
       </div>
-
-      <div class="todo-layout">
-        <div class="todo-left">
-          <div class="todo-list">
-            @if (todoSvc.todos().length === 0) {
-              <div class="empty-state">
-                <div class="empty-icon">
-                  <lucide-angular name="check-square" [size]="36"></lucide-angular>
-                </div>
-                <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
-              </div>
-            }
-            @for (todo of todoSvc.todos(); track $index) {
-              <div class="todo-item" [class.done]="todo.done">
-                <div class="todo-cb" [class.checked]="todo.done" (click)="todoSvc.toggle($index)"></div>
-                <div class="todo-text">{{ todo.text }}</div>
-                <span class="todo-tag" [class]="todo.priority">
-                  {{ todo.priority === 'priority' ? '🔥 priority' : '·' }}
-                </span>
-                <app-button variant="ghost" size="sm" (onClick)="todoSvc.delete($index)" className="!w-6 !h-6 !p-0 !text-text-2 hover:!text-accent-rose" title="Remove">
-                  <lucide-angular name="x" [size]="12"></lucide-angular>
-                </app-button>
-              </div>
-            }
-          </div>
-          <div class="todo-add-row">
-            <input class="todo-input" #manualInput
-              placeholder="Add a task manually..."
-              (keydown.enter)="addManual(manualInput)">
-            <select class="pill-select" #prioritySel>
-              <option value="normal">normal</option>
-              <option value="priority">🔥 priority</option>
-            </select>
-            <app-button variant="primary" size="sm" (onClick)="addManual(manualInput, prioritySel)">
-              <lucide-angular name="plus" [size]="14"></lucide-angular>
-              Add
-            </app-button>
-          </div>
-        </div>
-
-        <div class="resizer" (mousedown)="startResize($event)"></div>
-
-        <div class="todo-right" [style.width.px]="rightPanelWidth()">
-          <div class="todo-pane-label">🤖 GENERATE WITH AI</div>
-          <div class="chat-area" #aiChat>
-            @for (msg of aiMessages(); track msg.id) {
-              @if (msg.typing) {
-                <div class="message ai">
-                  <div class="msg-avatar">G</div>
-                  <div class="msg-bubble"><app-typing-indicator /></div>
-                </div>
-              } @else {
-                <app-message-bubble [role]="msg.role" [text]="msg.text" />
-              }
-            }
-          </div>
-          
-          <div class="h-resizer" (mousedown)="startHResize($event)"></div>
-
-          <div class="todo-ai-input-area" [style.height.px]="inputAreaHeight()">
-            <textarea class="todo-ai-textarea" #aiInput
-              placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
-              (keydown)="onAiKey($event, aiInput)"></textarea>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording(aiInput)">
-                  <div class="record-dot"></div>
-                  <span>{{ recording() ? 'Stop Recording' : 'Record' }}</span>
-                </button>
-                <span class="timer-text">{{ timerText() }}</span>
-              </div>
-              <app-button variant="primary" (onClick)="generate(aiInput)">
-                <lucide-angular name="refresh-cw" [size]="14"></lucide-angular>
-                Generate Plan
-              </app-button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
+  </div>
+</div>

@@ -1,70 +1,74 @@
 <div class="tab-panel-inner">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">
-            <lucide-angular name="mic" [size]="18" class="text-accent-rose"></lucide-angular>
-            Meeting Recorder
-          </div>
-          <div class="panel-desc">Vocal transcription + AI-generated summary</div>
-        </div>
-        <app-button variant="danger" size="sm" (onClick)="clear()">
-          <lucide-angular name="trash-2" [size]="14"></lucide-angular>
-          Clear
-        </app-button>
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon fontIcon="mic" class="text-accent-rose text-lg w-[18px] h-[18px]"></mat-icon>
+        Meeting Recorder
       </div>
+      <div class="panel-desc">Vocal transcription + AI-generated summary</div>
+    </div>
+    <app-button variant="danger" size="sm" (onClick)="clear()">
+      <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+      Clear
+    </app-button>
+  </div>
 
-      <div class="meeting-layout">
-        <div class="meeting-transcript">
-          <div class="meeting-pane-label">
-            <span>📝 TRANSCRIPTION</span>
-            <div style="display:flex; gap:6px">
-              <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="toggleSpeakTranscript()" className="!w-8 !h-8 !p-0" [attr.title]="isTranscriptSpeaking() ? 'Stop Reading' : 'Listen to Transcript'">
-                <lucide-angular [name]="isTranscriptSpeaking() ? 'x' : 'mic'" [size]="14" [class.text-accent-rose]="isTranscriptSpeaking()"></lucide-angular>
-              </app-button>
-              <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="copy(transcript())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
-                <lucide-angular name="copy" [size]="14"></lucide-angular>
-              </app-button>
-            </div>
-          </div>
-          <div class="meeting-scroll">{{ transcript() }}</div>
-        </div>
-        <div class="meeting-summary">
-          <div class="meeting-pane-label">
-            <span>✨ AI SUMMARY</span>
-            <div style="display:flex; gap:6px">
-              <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="toggleSpeakSummary()" className="!w-8 !h-8 !p-0" [attr.title]="isSummarySpeaking() ? 'Stop Reading' : 'Listen to Summary'">
-                <lucide-angular [name]="isSummarySpeaking() ? 'x' : 'mic'" [size]="14" [class.text-accent-rose]="isSummarySpeaking()"></lucide-angular>
-              </app-button>
-              <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="copy(summary())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
-                <lucide-angular name="copy" [size]="14"></lucide-angular>
-              </app-button>
-            </div>
-          </div>
-          <div class="meeting-scroll">
-            @if (summary()) {
-              {{ summary() }}
-            } @else {
-              <div class="empty-state" style="height:100%">
-                <div class="empty-icon">
-                  <lucide-angular name="loader-2" [size]="36" class="animate-spin opacity-20"></lucide-angular>
-                </div>
-                <div class="empty-text">The summary will appear automatically after stopping the recording</div>
-              </div>
-            }
-          </div>
+  <div class="meeting-layout">
+    <div class="meeting-transcript">
+      <div class="meeting-pane-label">
+        <span>📝 TRANSCRIPTION</span>
+        <div style="display:flex; gap:6px">
+          <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="toggleSpeakTranscript()" className="!w-8 !h-8 !p-0" [attr.title]="isTranscriptSpeaking() ? 'Stop Reading' : 'Listen to Transcript'">
+            <mat-icon [fontIcon]="isTranscriptSpeaking() ? 'close' : 'mic'" 
+                      class="text-sm w-3.5 h-3.5" 
+                      [class.text-accent-rose]="isTranscriptSpeaking()"></mat-icon>
+          </app-button>
+          <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="copy(transcript())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+          </app-button>
         </div>
       </div>
-
-      <div class="meeting-controls">
-        <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording()">
-          <div class="record-dot"></div>
-          <span>{{ recording() ? 'Stop Recording' : 'Start Recording' }}</span>
-        </button>
-        <span class="timer-text">{{ timerText() }}</span>
-        <div style="flex:1"></div>
-        <app-button variant="primary" (onClick)="summarize()">
-          <lucide-angular name="refresh-cw" [size]="14"></lucide-angular>
-          Summarize Now
-        </app-button>
+      <div class="meeting-scroll">{{ transcript() }}</div>
+    </div>
+    <div class="meeting-summary">
+      <div class="meeting-pane-label">
+        <span>✨ AI SUMMARY</span>
+        <div style="display:flex; gap:6px">
+          <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="toggleSpeakSummary()" className="!w-8 !h-8 !p-0" [attr.title]="isSummarySpeaking() ? 'Stop Reading' : 'Listen to Summary'">
+            <mat-icon [fontIcon]="isSummarySpeaking() ? 'close' : 'mic'" 
+                      class="text-sm w-3.5 h-3.5" 
+                      [class.text-accent-rose]="isSummarySpeaking()"></mat-icon>
+          </app-button>
+          <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="copy(summary())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+          </app-button>
+        </div>
+      </div>
+      <div class="meeting-scroll">
+        @if (summary()) {
+          {{ summary() }}
+        } @else {
+          <div class="empty-state" style="height:100%">
+            <div class="empty-icon">
+              <mat-icon fontIcon="hourglass_empty" class="animate-spin opacity-20 text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+            </div>
+            <div class="empty-text">The summary will appear automatically after stopping the recording</div>
+          </div>
+        }
       </div>
     </div>
+  </div>
+
+  <div class="meeting-controls">
+    <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording()">
+      <div class="record-dot"></div>
+      <span>{{ recording() ? 'Stop Recording' : 'Start Recording' }}</span>
+    </button>
+    <span class="timer-text">{{ timerText() }}</span>
+    <div style="flex:1"></div>
+    <app-button variant="primary" (onClick)="summarize()">
+      <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
+      Summarize Now
+    </app-button>
+  </div>
+</div>

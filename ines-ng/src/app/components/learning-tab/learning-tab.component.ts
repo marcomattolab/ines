@@ -5,6 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { RagService } from '../../core/services/rag.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ButtonComponent } from '../../shared/components/button/button.component';
+import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import mermaid from 'mermaid';
 
 mermaid.initialize({
@@ -16,7 +18,7 @@ mermaid.initialize({
 @Component({
   selector: 'app-learning-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, ButtonComponent, MessageBubbleComponent],
   templateUrl: './learning-tab.component.html',
   styleUrl: './learning-tab.css'
 })

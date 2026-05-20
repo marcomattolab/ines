@@ -1,6 +1,6 @@
 # INES - Intelligent Neural Edge System
 
-> **Run a large language model entirely in your browser. No server. No API key. No data leaving your device.**
+> **Run a (small) language model entirely in your browser. No server. No API key. No data leaving your device.**
 
 INES is a single-file, zero-dependency web application that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use five specialized AI-powered tools — all completely offline after the initial CDN load.
 
@@ -371,19 +371,17 @@ No analytics. No telemetry. No accounts.
 
 ---
 
-## Proof of Concept Video
+## Proof of Concept
 
-Watch the POC demonstration below
+Watch the POC demonstration on video below
 
-<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
-
----
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">play-video-ines</a>
 
 # Presentation
 
-Watch the presentation below
+Watch the presentation on ppt below
 
-<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">presentation-poc-ines</a>
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">play-presentation-ines</a>
 
 ---
 

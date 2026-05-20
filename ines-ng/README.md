@@ -7,12 +7,14 @@ Intelligent Neural Edge System (INES) is a client side application that runs a l
 ```
 ines-ng/src/app/
 ├── core/services/
-│   ├── llm.service.ts          # MediaPipe LLM wrapper (Angular Signals)
+│   ├── llm.service.ts          # MediaPipe LLM wrapper
+│   ├── rag.service.ts          # Rag Service
 │   ├── toast.service.ts        # Signal-based toast notification queue
 │   └── todo.service.ts         # Todo CRUD + localStorage via effect()
 ├── components/
 │   ├── status-bar/             # Top bar: brand + model status dot
 │   ├── loader-overlay/         # File drop zone + progress bar
+│   ├── learning-tab/           # Learning path
 │   ├── chat-tab/               # Multi-turn streaming chat
 │   ├── coding-tab/             # Code generation with live preview sandbox
 │   ├── email-tab/              # Email rewriter (tone + action)
@@ -62,6 +64,7 @@ Total                | 265 kB    | 68 kB
 | 🌍 Translate | ✅     | Auto-detect, swap, debounced auto-translate         |
 | ✅ Todo      | ✅     | Manual add, AI generation, localStorage persistence |
 | 👨‍💻 Coding    | 🚧     | Coding Assistant                                    |
+| 💬 Learning  | 🚧     | Learning Assistant                                  |
 
 > **To use the AI features**, you need a `.task` model file (e.g. [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)) and Chrome/Edge with **WebGPU enabled**. The app is fully functional without a model — all UI works.
 

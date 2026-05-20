@@ -1,6 +1,6 @@
 # 🚀 Edge AI running in your browser
 
-We’ve been trained to think of SLMs as “cloud-only” systems: APIs, servers, tokens, latency, privacy trade-offs.
+Think of SLMs as “cloud-only” systems: APIs, servers, tokens, latency, privacy trade-offs.
 
 But what if none of that was necessary?
 
@@ -14,7 +14,7 @@ I built **INES - Intelligent Neural Edge System**, a full SLM-powered applicatio
 
 ## 🧠 What makes INES different?
 
-INES runs a SML like **Gemma model directly on-device** using:
+INES runs a SML like **Gemma model** directly on-device using:
 
 - Google’s **MediaPipe LLM Inference API**
 - **WebGPU acceleration**
@@ -36,6 +36,7 @@ A single `LlmInference` instance powers five specialized tools:
 - 🌍 **Translator** → offline, auto-detect, 10 languages  
 - ✅ **Planner** → AI-generated daily task system  
 - 👨‍💻 **Coding** → code generation + preview sandbox  
+- 💬 **Learning** → Learning
 
 Each tab injects its own system prompt — effectively turning one model into multiple agents.
 
@@ -95,17 +96,17 @@ Built with:
 
 ---
 
-## Proof of Concept Video
+## Proof of Concept
 
-Watch the POC demonstration below
+Watch the POC demonstration on video below
 
-<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">video-ines</a>
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/video-poc-ines.html" target="_blank">play-video-ines</a>
 
 # Presentation
 
-Watch the presentation below
+Watch the presentation on ppt below
 
-<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">presentation-poc-ines</a>
+<a href="https://htmlpreview.github.io/?https://github.com/marcomattolab/ines/blob/main/resources/presentation-poc-ines.html" target="_blank">play-presentation-ines</a>
 
 ---
 

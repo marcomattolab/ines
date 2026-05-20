@@ -66,7 +66,7 @@ html, body {
   position: relative;
 }
 
-/* 🌌 GPU-Accelerated Dynamic Aurora Gradients */
+/* GPU-Accelerated Dynamic Aurora Gradients */
 html::before, html::after {
   content: '';
   position: absolute;
@@ -105,7 +105,7 @@ html::after {
   display: none !important;
 }
 
-/* ── SCROLLBAR ── */
+/* Custom Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { 
@@ -119,7 +119,7 @@ html::after {
   box-shadow: 0 0 10px var(--border-active);
 }
 
-/* ── TOAST ── */
+/* Toast Notifications */
 .toast {
   position: fixed;
   bottom: 24px; right: 24px;
@@ -141,7 +141,7 @@ html::after {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* LIVE cursor blink */
+/* Live Cursor Blink */
 .cursor-blink::after {
   content: '▋';
   animation: curBlink 0.7s step-end infinite;
@@ -150,7 +150,7 @@ html::after {
 }
 @keyframes curBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-/* ── SHARED PILLS ── */
+/* Shared Pills */
 .pill-select {
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
@@ -175,7 +175,7 @@ html::after {
 }
 .pill-select option { background: var(--bg-0); }
 
-/* ── BUTTON DESIGN SYSTEM ── */
+/* Button Design System */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-blue), #2563eb);
   color: #ffffff;
@@ -297,7 +297,7 @@ html::after {
   transform: translateY(0) scale(0.98);
 }
 
-/* ── SEND BUTTON ── */
+/* Send Button */
 .send-btn {
   width: 44px; height: 44px;
   border-radius: 50%;
@@ -325,7 +325,7 @@ html::after {
   box-shadow: none;
 }
 
-/* ── EMPTY STATE ── */
+/* Empty State */
 .empty-state {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -337,7 +337,7 @@ html::after {
 .empty-icon { font-size: 36px; opacity: 0.4; }
 .empty-text { font-size: 13px; max-width: 280px; line-height: 1.6; }
 
-/* ── PANEL HEADER ── */
+/* Panel Header */
 .panel-header {
   padding: 18px 22px;
   border-bottom: 1px solid var(--border);
@@ -362,7 +362,7 @@ html::after {
   margin-top: 2px;
 }
 
-/* ── CHAT MESSAGES ── */
+/* Chat Messages */
 .chat-area {
   flex: 1;
   overflow-y: auto;
@@ -374,7 +374,7 @@ html::after {
   scrollbar-color: var(--bg-3) transparent;
 }
 
-/* ── INPUT ZONE ── */
+/* Input Zone */
 .input-zone {
   padding: 16px 22px 18px;
   border-top: 1px solid var(--border);
@@ -412,7 +412,7 @@ html::after {
 }
 .input-field::placeholder { color: var(--text-2); }
 
-/* ── TOKEN INFO ── */
+/* Token Info */
 .token-info {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -421,7 +421,7 @@ html::after {
   flex-shrink: 0;
 }
 
-/* ── Material Icons ── */
+/* Material Icons */
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;

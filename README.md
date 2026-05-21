@@ -20,6 +20,7 @@ INES is a single-file, zero-dependency web application that brings on-device AI 
   - [🌍 Translator](#-translator)
   - [✅ Daily Planner](#-daily-planner)
   - [👨‍💻 Coding Assistant](#-coding-assistant)
+  - [💬 Learning Assistant](#-learning-assistant)
 - [Model Loading Internals](#model-loading-internals)
 - [Prompt Architecture](#prompt-architecture)
 - [Browser Requirements](#browser-requirements)
@@ -265,6 +266,13 @@ It support diverse langiages and use a specific LLM for code generation.
 
 ---
 
+## 👨‍🏫 Learning Assistant
+
+Learning Assistant is a feature that allows users to upload documents in various formats (such as PDF and TXT) and interact with them using retrieval-augmented generation (RAG). It enables users to generate mind maps, create quizzes, and ask questions about the uploaded content through a chat interface.
+
+---
+
+
 ## Model Loading Internals
 
 INES uses `modelAssetBuffer` (not `modelAssetPath`) to pass the model to the WASM runtime.
@@ -323,7 +331,7 @@ Each tab has a dedicated system prompt optimized for its task:
 | Translate | Exact translation, output-only, style-preserving                   |
 | Todo      | JSON-structured output: `{tasks: [...], message: "..."}`           |
 | Coding    | Code generation, sandbox preview, copy and download                |
-| Learning  | Learning section, quiz, mind map                                   |
+| Learning  | Learning assistant with chat, quiz, mind map                       |
 
 The Todo tab uses **structured JSON output** prompting — the model is instructed to return only a valid JSON object, which is then parsed to populate the task list programmatically.
 

@@ -43,7 +43,7 @@ export class LlmService {
 
       this.llm = await LlmInference.createFromOptions(genai, {
         baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
-        maxTokens: 2048,
+        maxTokens: 8192,
         topK: 40,
         temperature: 0.8,
         randomSeed: 101,
@@ -129,7 +129,7 @@ export class LlmService {
 
       this.llm = await LlmInference.createFromOptions(genai, {
         baseOptions: { modelAssetBuffer: modelBuffer },
-        maxTokens: 2048,
+        maxTokens: 8192,
         topK: 40,
         temperature: 0.8,
         randomSeed: 101,
@@ -207,7 +207,7 @@ export class LlmService {
 
       this.llm = await LlmInference.createFromOptions(genai, {
         baseOptions: { modelAssetBuffer: new Uint8Array(cached.buffer) },
-        maxTokens: 2048,
+        maxTokens: 8192,
         topK: 40,
         temperature: 0.8,
         randomSeed: 101,

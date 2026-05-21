@@ -1,25 +1,78 @@
 #loader-overlay {
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg-0);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 72px;
   padding: 40px;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.25s ease-out;
+  overflow-y: auto;
 }
+
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loader-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 380px;
+  animation: slideInLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .loader-logo-img {
-  width: 220px;
-  height: 220px;
+  width: 280px;
+  max-width: 100%;
+  height: auto;
   object-fit: contain;
-  margin-bottom: -16px;
+  filter: drop-shadow(0 0 35px rgba(99, 179, 255, 0.18));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loader-logo-img:hover {
+  transform: scale(1.03);
 }
 
 .loader-logo {
   font-family: var(--font-ui);
   font-weight: 800;
-  font-size: 36px;
+  font-size: 32px;
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-green) 60%, var(--accent-purple) 100%);
   -webkit-background-clip: text;
@@ -27,31 +80,75 @@
   background-clip: text;
   text-align: center;
 }
+
 .loader-subtitle {
   color: var(--text-2);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0.8;
 }
 
 .loader-box {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px 36px;
+  padding: 32px 40px;
   width: 100%;
   max-width: 520px;
-  display: flex; flex-direction: column; gap: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: slideInRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
 .loader-box h2 {
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-0);
 }
-.loader-box p { color: var(--text-1); font-size: 13px; line-height: 1.7; }
-.loader-box a { color: var(--accent-blue); text-decoration: none; }
-.loader-box a:hover { text-decoration: underline; }
+
+.loader-box p {
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.loader-box a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.loader-box a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  #loader-overlay {
+    flex-direction: column;
+    gap: 32px;
+    padding: 32px 24px;
+    justify-content: flex-start;
+  }
+
+  .loader-left {
+    animation: slideInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    max-width: 100%;
+  }
+
+  .loader-logo-img {
+    width: 200px;
+  }
+
+  .loader-box {
+    animation: slideInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    max-width: 100%;
+    padding: 24px 28px;
+  }
+}
 
 .close-overlay-btn {
   position: absolute;

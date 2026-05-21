@@ -1,10 +1,12 @@
 @if (visible()) {
   <div id="loader-overlay">
-    <img src="logo.png" alt="INES Logo" class="loader-logo-img" />
-    @if ( showText() ) {
-      <div class="loader-logo">Intelligent Neural Edge System</div>
-    }
-    <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
+    <div class="loader-left">
+      <img src="logo.png" alt="INES Logo" class="loader-logo-img" />
+      @if ( showText() ) {
+        <div class="loader-logo">Intelligent Neural Edge System</div>
+      }
+      <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
+    </div>
 
     <div class="loader-box" style="position: relative;">
       <app-button variant="ghost" size="sm" (onClick)="close()" className="!absolute top-4 right-4 !w-8 !h-8 !p-0">

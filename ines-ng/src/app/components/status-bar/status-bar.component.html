@@ -22,9 +22,12 @@
         }
       }
     </span>
-    <app-button variant="secondary" size="sm" className="ml-2" (onClick)="openLoader.emit()">
+    <app-button variant="secondary" size="sm" (onClick)="openLoader.emit()">
       <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
       Load Model
+    </app-button>
+    <app-button variant="secondary" size="sm" (onClick)="openInfo.emit()" title="About INES">
+      <mat-icon fontIcon="info" class="text-sm w-3.5 h-3.5"></mat-icon>
     </app-button>
   </div>
 </div>

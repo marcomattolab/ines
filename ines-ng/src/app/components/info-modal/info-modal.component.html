@@ -1,0 +1,58 @@
+@if (visible()) {
+  <div class="info-modal-backdrop" (click)="close()">
+    <div class="info-modal-container" (click)="$event.stopPropagation()">
+      <app-button variant="ghost" size="sm" (onClick)="close()" className="info-close-btn">
+        <mat-icon fontIcon="close" class="close-icon"></mat-icon>
+      </app-button>
+      
+      <div class="info-header">
+        <img src="logo.png" alt="INES Logo" class="info-logo-img" />
+        <div>
+          <h2>INES</h2>
+          <div class="info-subtitle">Intelligent Neural Edge System</div>
+        </div>
+      </div>
+
+      <div class="info-content scrollbar-custom">
+        <p class="highlight-text">
+          Run a (small) language model entirely in your browser. No server. No API key. No data leaving your device.
+        </p>
+
+        <p>
+          INES is a zero-dependency web application that brings on-device AI to the browser using Google's 
+          <strong>MediaPipe LLM Inference API</strong> and <strong>WebGPU acceleration</strong>. 
+          Load a Gemma model once, and use specialized AI-powered tools — all completely offline after the initial CDN load.
+        </p>
+
+        <h3>Why INES?</h3>
+        <p>
+          Most AI tools require a cloud API, an account, and send your data to a remote server. INES takes the opposite approach: 
+          the entire neural network runs inside your browser tab via WebAssembly and WebGPU. 
+          Your prompts, emails, meeting transcripts, and todo lists never leave your machine.
+        </p>
+
+        <div class="use-cases">
+          <h4>Suitable for:</h4>
+          <ul>
+            <li>
+              <mat-icon fontIcon="security" class="use-case-icon"></mat-icon>
+              <span>Sensitive corporate communication that cannot be sent to third-party APIs</span>
+            </li>
+            <li>
+              <mat-icon fontIcon="wifi_off" class="use-case-icon"></mat-icon>
+              <span>Air-gapped or offline environments</span>
+            </li>
+            <li>
+              <mat-icon fontIcon="visibility_off" class="use-case-icon"></mat-icon>
+              <span>Privacy-conscious personal productivity</span>
+            </li>
+            <li>
+              <mat-icon fontIcon="school" class="use-case-icon"></mat-icon>
+              <span>Demos and educational use of on-device AI</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+}

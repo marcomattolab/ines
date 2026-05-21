@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
+import { InfoModalComponent } from './components/info-modal/info-modal.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
 import { EmailTabComponent } from './components/email-tab/email-tab.component';
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
@@ -37,6 +38,7 @@ const TABS: TabDef[] = [
   imports: [
     StatusBarComponent,
     LoaderOverlayComponent,
+    InfoModalComponent,
     ChatTabComponent,
     EmailTabComponent,
     MeetingTabComponent,
@@ -53,6 +55,7 @@ export class AppComponent implements OnInit {
   tabs       = TABS;
   activeTab  = signal<Tab>('chat');
   overlayOpen = signal(true); // show on load
+  infoOpen   = signal(false);
   toast      = inject(ToastService);
   llm        = inject(LlmService);
 

@@ -13,4 +13,5 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 export class StatusBarComponent {
   llm = inject(LlmService);
   openLoader = output<void>();
+  openInfo = output<void>();
 }

@@ -46,7 +46,7 @@
           }
         </select>
         <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="toggleSpeakResult()" className="!w-8 !h-8 !p-0" [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'">
-          <mat-icon [fontIcon]="isResultSpeaking() ? 'close' : 'mic'" 
+          <mat-icon [fontIcon]="isResultSpeaking() ? 'close' : 'volume_up'" 
                     class="text-sm w-3.5 h-3.5" 
                     [class.text-accent-amber]="isResultSpeaking()"></mat-icon>
         </app-button>

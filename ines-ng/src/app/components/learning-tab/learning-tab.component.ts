@@ -67,6 +67,13 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   isMindMapPlaceholder = true;
   showMindMapOnRight = signal(false);
   zoomLevel = signal(1.0);
+  panX = signal(0);
+  panY = signal(0);
+  isDragging = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private dragStartPanX = 0;
+  private dragStartPanY = 0;
 
   selectSubTab(tab: 'chat' | 'mindmap' | 'quiz') {
     this.activeSubTab.set(tab);
@@ -102,6 +109,34 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   zoomReset() {
     this.zoomLevel.set(1.0);
+    this.panX.set(0);
+    this.panY.set(0);
+  }
+
+  onMindMapPointerDown(event: PointerEvent) {
+    this.isDragging = true;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+    this.dragStartPanX = this.panX();
+    this.dragStartPanY = this.panY();
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  onMindMapPointerMove(event: PointerEvent) {
+    if (!this.isDragging) return;
+    this.panX.set(this.dragStartPanX + (event.clientX - this.dragStartX));
+    this.panY.set(this.dragStartPanY + (event.clientY - this.dragStartY));
+  }
+
+  onMindMapPointerUp() {
+    this.isDragging = false;
+  }
+
+  onMindMapWheel(event: WheelEvent) {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    this.zoomLevel.update((z) => Math.max(0.4, Math.min(2.5, z + delta)));
   }
 
   ngAfterViewInit() {

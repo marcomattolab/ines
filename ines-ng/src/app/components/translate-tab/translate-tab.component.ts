@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
@@ -41,6 +41,24 @@ export class TranslateTabComponent {
   inputText = signal('');
   result = signal('');
   translating = signal(false);
+
+  fromLangOpen = signal(false);
+  toLangOpen = signal(false);
+
+  getFromLangLabel(): string {
+    if (this.fromLang() === 'auto') return 'Auto-detect';
+    return this.languages.find((l) => l.value === this.fromLang())?.label ?? '';
+  }
+
+  getToLangLabel(): string {
+    return this.languages.find((l) => l.value === this.toLang())?.label ?? '';
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.fromLangOpen.set(false);
+    this.toLangOpen.set(false);
+  }
 
   readonly isSourceSpeaking = computed(
     () => this.speech.speaking() && this.speech.activeId() === 'trans-source',
@@ -96,11 +114,10 @@ export class TranslateTabComponent {
   }
 
   swap() {
-    if (this.fromLang() !== 'auto') {
-      const tmp = this.fromLang();
-      this.fromLang.set(this.toLang());
-      this.toLang.set(tmp);
-    }
+    if (this.fromLang() === 'auto') return;
+    const tmp = this.fromLang();
+    this.fromLang.set(this.toLang());
+    this.toLang.set(tmp);
     const prevResult = this.result();
     this.inputText.set(prevResult);
     this.result.set('');

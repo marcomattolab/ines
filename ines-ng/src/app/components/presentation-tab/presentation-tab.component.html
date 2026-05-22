@@ -1,0 +1,180 @@
+<div class="presentation-workspace">
+  <!-- Left Panel: Prompt + Branding -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">
+          <mat-icon
+            fontIcon="description"
+            class="text-accent-amber text-lg w-[18px] h-[18px]"
+          ></mat-icon>
+          Presentation Generator
+        </div>
+        <div class="panel-desc">AI-powered slide deck builder</div>
+      </div>
+    </div>
+
+    <div class="left-content">
+      <textarea
+        class="prompt-input"
+        placeholder="Describe the presentation you want... e.g. 'Create a presentation about the future of quantum computing with 10 slides'"
+        [value]="prompt()"
+        (input)="prompt.set($any($event.target).value)"
+        (keydown)="onIframeKeydown($event)"
+      ></textarea>
+
+      <app-button
+        variant="primary"
+        [disabled]="generating() || !llm.isReady() || !prompt().trim()"
+        (onClick)="generate()"
+        className="w-full justify-center"
+      >
+        @if (generating()) {
+          <mat-icon fontIcon="hourglass_empty" class="text-sm w-3.5 h-3.5 animate-spin"></mat-icon>
+          Generating...
+        } @else {
+          <mat-icon fontIcon="auto_awesome" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Generate Presentation
+        }
+      </app-button>
+
+      <!-- Branding Section -->
+      <div class="branding-section">
+        <button class="branding-toggle" (click)="brandingOpen.set(!brandingOpen())">
+          <mat-icon
+            [fontIcon]="brandingOpen() ? 'expand_less' : 'expand_more'"
+            class="text-sm w-3.5 h-3.5"
+          ></mat-icon>
+          Branding & Colors
+        </button>
+
+        @if (brandingOpen()) {
+          <div class="branding-body">
+            <label class="branding-label">
+              Logo
+              <input
+                class="branding-input"
+                [value]="logo()"
+                (input)="logo.set($any($event.target).value)"
+                placeholder="✦ INES"
+              />
+            </label>
+            <label class="branding-label">
+              Author
+              <input
+                class="branding-input"
+                [value]="author()"
+                (input)="author.set($any($event.target).value)"
+                placeholder="Your name"
+              />
+            </label>
+            <label class="branding-label">
+              Contact
+              <input
+                class="branding-input"
+                [value]="contact()"
+                (input)="contact.set($any($event.target).value)"
+                placeholder="email · website"
+              />
+            </label>
+
+            <div class="color-section">
+              <span class="branding-label">Color Theme</span>
+              <div class="theme-grid">
+                @for (theme of themes; track theme) {
+                  <button
+                    class="theme-chip"
+                    [class.active]="colorTheme() === theme"
+                    (click)="setColorTheme(theme)"
+                  >
+                    <span class="theme-swatch" [style.--swatch]="themeColors[theme].primary"></span>
+                    {{ theme }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (colorTheme() === 'professional') {
+              <label class="branding-label">
+                Custom Primary
+                <input
+                  type="color"
+                  class="color-picker"
+                  [value]="customPrimary()"
+                  (input)="customPrimary.set($any($event.target).value)"
+                />
+              </label>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Resizer -->
+  <div class="resizer" (mousedown)="startResize($event)"></div>
+
+  <!-- Right Panel: Preview + Navigation -->
+  <div class="right-panel">
+    <div class="preview-header">
+      <div class="flex items-center gap-2">
+        <span class="text-[var(--text-2)] font-[var(--font-mono)] text-[11px]">
+          Slide {{ currentSlide() }} / {{ slideCount() || '—' }}
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="currentSlide() <= 1"
+          (onClick)="prevSlide()"
+          className="!w-7 !h-7 !p-0"
+        >
+          <mat-icon fontIcon="chevron_left" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="currentSlide() >= slideCount()"
+          (onClick)="nextSlide()"
+          className="!w-7 !h-7 !p-0"
+        >
+          <mat-icon fontIcon="chevron_right" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!generatedHtml()"
+          (onClick)="downloadHtml()"
+          className="!w-7 !h-7 !p-0"
+          title="Download HTML"
+        >
+          <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+      </div>
+    </div>
+
+    <div class="preview-area">
+      @if (!generatedHtml()) {
+        <div class="empty-state">
+          <mat-icon
+            fontIcon="auto_stories"
+            class="text-5xl w-12 h-12 text-[var(--text-2)]"
+            style="font-size: 48px"
+          ></mat-icon>
+          <div class="text-[var(--text-1)] font-bold text-lg">No Presentation Yet</div>
+          <div class="text-[var(--text-2)] text-sm max-w-[350px] text-center">
+            Describe the topic, customize your branding, and click Generate to create a slide deck.
+          </div>
+        </div>
+      } @else {
+        <iframe
+          #previewFrame
+          class="preview-iframe"
+          [srcdoc]="getPreviewHtml()"
+          sandbox="allow-scripts"
+        ></iframe>
+      }
+    </div>
+  </div>
+</div>

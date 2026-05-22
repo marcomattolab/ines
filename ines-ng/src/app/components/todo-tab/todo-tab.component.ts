@@ -8,7 +8,12 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
-interface AiChat { id: number; role: 'user'|'ai'; text: string; typing?: boolean; }
+interface AiChat {
+  id: number;
+  role: 'user' | 'ai';
+  text: string;
+  typing?: boolean;
+}
 
 const SYSTEM_TODO = `You are a productivity assistant for planning.
 Your task is to generate a list of tasks for the day based on what the user describes.
@@ -27,21 +32,28 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
 @Component({
   selector: 'app-todo-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent, DragDropModule],
+  imports: [
+    MessageBubbleComponent,
+    TypingIndicatorComponent,
+    MatIconModule,
+    ButtonComponent,
+    DragDropModule,
+  ],
   templateUrl: './todo-tab.component.html',
-  styleUrl: './todo-tab.css'
+  host: { class: 'flex flex-1 overflow-hidden min-w-0' },
+  styleUrl: './todo-tab.css',
 })
 export class TodoTabComponent {
   todoSvc = inject(TodoService);
-  llm     = inject(LlmService);
-  toast   = inject(ToastService);
+  llm = inject(LlmService);
+  toast = inject(ToastService);
 
   aiMessages = signal<AiChat[]>([]);
-  recording  = signal(false);
-  timerText  = signal('');
+  recording = signal(false);
+  timerText = signal('');
   rightPanelWidth = signal(320);
   inputAreaHeight = signal(200);
-  
+
   private nextId = 0;
   private recognition: any = null;
   private seconds = 0;
@@ -105,7 +117,10 @@ export class TodoTabComponent {
   }
 
   onAiKey(e: KeyboardEvent, el: HTMLTextAreaElement) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.generate(el); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.generate(el);
+    }
   }
 
   toggleRecording(textarea: HTMLTextAreaElement) {
@@ -114,7 +129,10 @@ export class TodoTabComponent {
 
   startRecording(textarea: HTMLTextAreaElement) {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { this.toast.show('⚠️ Web Speech API not supported in this browser'); return; }
+    if (!SR) {
+      this.toast.show('⚠️ Web Speech API not supported in this browser');
+      return;
+    }
 
     this.baseText = textarea.value.trim();
     if (this.baseText) this.baseText += ' ';
@@ -125,7 +143,8 @@ export class TodoTabComponent {
     this.recognition.lang = navigator.language || 'en-US';
 
     this.recognition.onresult = (e: any) => {
-      let interim = '', final = '';
+      let interim = '',
+        final = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript;
         if (e.results[i].isFinal) final += t + ' ';
@@ -149,16 +168,24 @@ export class TodoTabComponent {
 
     this.intervalId = setInterval(() => {
       this.seconds++;
-      const m = Math.floor(this.seconds / 60).toString().padStart(2, '0');
+      const m = Math.floor(this.seconds / 60)
+        .toString()
+        .padStart(2, '0');
       const s = (this.seconds % 60).toString().padStart(2, '0');
       this.timerText.set(`${m}:${s}`);
     }, 1000);
   }
 
   stopRecording() {
-    if (this.recognition) { this.recognition.stop(); this.recognition = null; }
+    if (this.recognition) {
+      this.recognition.stop();
+      this.recognition = null;
+    }
     this.recording.set(false);
-    if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
     this.timerText.set('');
   }
 
@@ -168,17 +195,23 @@ export class TodoTabComponent {
 
   async generate(textarea: HTMLTextAreaElement) {
     if (this.recording()) this.stopRecording();
-    
+
     const desc = textarea.value.trim();
-    if (!desc) { this.toast.show('⚠️ Describe what you have to do today'); return; }
-    if (!this.llm.isReady()) { this.toast.show('⚠️ Load the model first!'); return; }
+    if (!desc) {
+      this.toast.show('⚠️ Describe what you have to do today');
+      return;
+    }
+    if (!this.llm.isReady()) {
+      this.toast.show('⚠️ Load the model first!');
+      return;
+    }
 
     const userMsgId = this.nextId++;
-    const typingId  = this.nextId++;
-    this.aiMessages.update(m => [
+    const typingId = this.nextId++;
+    this.aiMessages.update((m) => [
       ...m,
       { id: userMsgId, role: 'user', text: desc },
-      { id: typingId,  role: 'ai',   text: '',    typing: true },
+      { id: typingId, role: 'ai', text: '', typing: true },
     ]);
     textarea.value = '';
     this.baseText = '';
@@ -189,27 +222,39 @@ export class TodoTabComponent {
       let fullText = '';
       await this.llm.generate(prompt, (_, done, full) => {
         fullText = full;
-        this.aiMessages.update(m => m.map(msg =>
-          msg.id === typingId ? { ...msg, typing: false, text: done ? 'Parsing tasks...' : full.substring(0, 80) + '...' } : msg
-        ));
+        this.aiMessages.update((m) =>
+          m.map((msg) =>
+            msg.id === typingId
+              ? {
+                  ...msg,
+                  typing: false,
+                  text: done ? 'Parsing tasks...' : full.substring(0, 80) + '...',
+                }
+              : msg,
+          ),
+        );
       });
 
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const data = JSON.parse(jsonMatch[0]);
         this.todoSvc.addMany(data.tasks);
-        this.aiMessages.update(m => m.map(msg =>
-          msg.id === typingId
-            ? { ...msg, text: `✅ Added ${data.tasks.length} tasks! ${data.message || ''}` }
-            : msg
-        ));
+        this.aiMessages.update((m) =>
+          m.map((msg) =>
+            msg.id === typingId
+              ? { ...msg, text: `✅ Added ${data.tasks.length} tasks! ${data.message || ''}` }
+              : msg,
+          ),
+        );
       } else {
         throw new Error('Invalid JSON in response');
       }
-    } catch(e: any) {
-      this.aiMessages.update(m => m.map(msg =>
-        msg.id === typingId ? { ...msg, typing: false, text: '❌ ' + e.message } : msg
-      ));
+    } catch (e: any) {
+      this.aiMessages.update((m) =>
+        m.map((msg) =>
+          msg.id === typingId ? { ...msg, typing: false, text: '❌ ' + e.message } : msg,
+        ),
+      );
     }
   }
 }

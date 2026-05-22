@@ -1,53 +1,103 @@
 @if (visible()) {
-  <div class="info-modal-backdrop" (click)="close()">
-    <div class="info-modal-container" (click)="$event.stopPropagation()">
-      <app-button variant="ghost" size="sm" (onClick)="close()" className="info-close-btn">
-        <mat-icon fontIcon="close" class="close-icon"></mat-icon>
+  <div
+    class="modal-bg fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] flex items-center justify-center p-6"
+    (click)="close()"
+  >
+    <div
+      class="modal-box bg-[var(--bg-2)] border border-white/10 rounded-[var(--radius)] w-full max-w-[580px] max-h-[85vh] p-8 relative shadow-[0_24px_64px_rgba(0,0,0,0.5),0_0_40px_rgba(99,179,255,0.05)] flex flex-col gap-5"
+      (click)="$event.stopPropagation()"
+    >
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="close()"
+        className="!absolute !top-4 !right-4 !w-8 !h-8 !p-0"
+      >
+        <mat-icon fontIcon="close" class="text-lg w-[18px] h-[18px]"></mat-icon>
       </app-button>
-      
-      <div class="info-header">
-        <img src="logo.png" alt="INES Logo" class="info-logo-img" />
+
+      <div class="flex items-center gap-4 border-b border-[var(--border)] pb-4">
+        <img
+          src="logo.png"
+          alt="INES Logo"
+          class="w-[54px] h-[54px] object-contain"
+          style="filter: drop-shadow(0 0 10px rgba(99, 179, 255, 0.3))"
+        />
         <div>
-          <h2>INES</h2>
-          <div class="info-subtitle">Intelligent Neural Edge System</div>
+          <h2
+            class="font-[var(--font-ui)] text-2xl font-extrabold m-0 bg-gradient-to-r from-[var(--accent-blue)] via-[var(--accent-green)] to-[var(--accent-purple)] bg-clip-text text-transparent"
+          >
+            INES
+          </h2>
+          <div
+            class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)] tracking-[0.05em] uppercase"
+          >
+            Intelligent Neural Edge System
+          </div>
         </div>
       </div>
 
-      <div class="info-content scrollbar-custom">
-        <p class="highlight-text">
-          Run a (small) language model entirely in your browser. No server. No API key. No data leaving your device.
+      <div
+        class="overflow-y-auto flex-1 pr-2 flex flex-col gap-4 text-[13.5px] leading-[1.6] text-[var(--text-1)]"
+      >
+        <p
+          class="text-[15px] text-[var(--text-0)] font-medium leading-[1.5] border-l-[3px] border-[var(--accent-blue)] pl-3"
+        >
+          Run a (small) language model entirely in your browser. No server. No API key. No data
+          leaving your device.
         </p>
 
         <p>
-          INES is a zero-dependency web application that brings on-device AI to the browser using Google's 
-          <strong>MediaPipe LLM Inference API</strong> and <strong>WebGPU acceleration</strong>. 
-          Load a Gemma model once, and use specialized AI-powered tools — all completely offline after the initial CDN load.
+          INES is a zero-dependency web application that brings on-device AI to the browser using
+          Google's
+          <strong>MediaPipe LLM Inference API</strong> and <strong>WebGPU acceleration</strong>.
+          Load a Gemma model once, and use specialized AI-powered tools — all completely offline
+          after the initial CDN load.
         </p>
 
-        <h3>Why INES?</h3>
+        <h3 class="font-[var(--font-ui)] text-base font-semibold text-[var(--text-0)] mt-2 -mb-1">
+          Why INES?
+        </h3>
         <p>
-          Most AI tools require a cloud API, an account, and send your data to a remote server. INES takes the opposite approach: 
-          the entire neural network runs inside your browser tab via WebAssembly and WebGPU. 
-          Your prompts, emails, meeting transcripts, and todo lists never leave your machine.
+          Most AI tools require a cloud API, an account, and send your data to a remote server. INES
+          takes the opposite approach: the entire neural network runs inside your browser tab via
+          WebAssembly and WebGPU. Your prompts, emails, meeting transcripts, and todo lists never
+          leave your machine.
         </p>
 
-        <div class="use-cases">
-          <h4>Suitable for:</h4>
-          <ul>
-            <li>
-              <mat-icon fontIcon="security" class="use-case-icon"></mat-icon>
+        <div
+          class="bg-white/[0.02] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mt-2"
+        >
+          <h4 class="font-[var(--font-ui)] text-[13px] font-semibold text-[var(--text-0)] m-0 mb-3">
+            Suitable for:
+          </h4>
+          <ul class="list-none p-0 m-0 flex flex-col gap-2.5">
+            <li class="flex items-start gap-2 text-[12.5px] text-[var(--text-1)]">
+              <mat-icon
+                fontIcon="security"
+                class="text-base w-4 h-4 text-[var(--accent-blue)] shrink-0 mt-0.5"
+              ></mat-icon>
               <span>Sensitive corporate communication that cannot be sent to third-party APIs</span>
             </li>
-            <li>
-              <mat-icon fontIcon="wifi_off" class="use-case-icon"></mat-icon>
+            <li class="flex items-start gap-2 text-[12.5px] text-[var(--text-1)]">
+              <mat-icon
+                fontIcon="wifi_off"
+                class="text-base w-4 h-4 text-[var(--accent-blue)] shrink-0 mt-0.5"
+              ></mat-icon>
               <span>Air-gapped or offline environments</span>
             </li>
-            <li>
-              <mat-icon fontIcon="visibility_off" class="use-case-icon"></mat-icon>
+            <li class="flex items-start gap-2 text-[12.5px] text-[var(--text-1)]">
+              <mat-icon
+                fontIcon="visibility_off"
+                class="text-base w-4 h-4 text-[var(--accent-blue)] shrink-0 mt-0.5"
+              ></mat-icon>
               <span>Privacy-conscious personal productivity</span>
             </li>
-            <li>
-              <mat-icon fontIcon="school" class="use-case-icon"></mat-icon>
+            <li class="flex items-start gap-2 text-[12.5px] text-[var(--text-1)]">
+              <mat-icon
+                fontIcon="school"
+                class="text-base w-4 h-4 text-[var(--accent-blue)] shrink-0 mt-0.5"
+              ></mat-icon>
               <span>Demos and educational use of on-device AI</span>
             </li>
           </ul>

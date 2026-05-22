@@ -9,15 +9,29 @@
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
     <span [innerHTML]="safeHtml()"></span>
     @if (role() === 'ai' && text()) {
-    <div class="msg-actions" [class.visible]="isSpeaking()">
-      <app-button variant="ghost" size="sm" (onClick)="toggleSpeak()" className="!w-8 !h-8 !p-0"
-        [attr.title]="isSpeaking() ? 'Stop Reading' : 'Read Aloud'">
-        <mat-icon [fontIcon]="isSpeaking() ? 'close' : 'mic'" class="text-sm w-3.5 h-3.5"></mat-icon>
-      </app-button>
-      <app-button variant="ghost" size="sm" (onClick)="copy()" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
-        <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
-      </app-button>
-    </div>
+      <div class="msg-actions" [class.visible]="isSpeaking()">
+        <app-button
+          variant="ghost"
+          size="sm"
+          (onClick)="toggleSpeak()"
+          className="!w-8 !h-8 !p-0"
+          [attr.title]="isSpeaking() ? 'Stop Reading' : 'Read Aloud'"
+        >
+          <mat-icon
+            [fontIcon]="isSpeaking() ? 'close' : 'mic'"
+            class="text-sm w-3.5 h-3.5"
+          ></mat-icon>
+        </app-button>
+        <app-button
+          variant="ghost"
+          size="sm"
+          (onClick)="copy()"
+          className="!w-8 !h-8 !p-0"
+          title="Copy to Clipboard"
+        >
+          <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+      </div>
     }
   </div>
 </div>

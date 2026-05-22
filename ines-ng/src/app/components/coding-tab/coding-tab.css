@@ -1,10 +1,3 @@
-:host {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  min-width: 0;
-}
-
 .tab-panel-inner {
   display: flex;
   flex-direction: column;
@@ -20,194 +13,6 @@
   overflow: hidden;
 }
 
-/* ── LEFT PANEL: TERMINAL CHAT ── */
-.terminal-chat-panel {
-  flex: 1;
-  min-width: 360px;
-  background: rgba(13, 16, 23, 0.45);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-}
-
-
-
-.chat-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--bg-3) transparent;
-}
-
-/* ── RIGHT PANEL: PLAYGROUND SANDBOX ── */
-.sandbox-panel {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-0);
-  overflow: hidden;
-  flex-shrink: 0;
-  min-width: 300px;
-}
-
-.sandbox-header {
-  padding: 10px 16px;
-  background: rgba(13, 16, 23, 0.35);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.sandbox-tab-group {
-  display: flex;
-  gap: 8px;
-}
-
-.sandbox-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.sandbox-body {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: #08090c;
-}
-
-/* ── IFRAME PREVIEW VIEWPORT ── */
-.preview-viewport {
-  width: 100%;
-  height: 100%;
-  background: #ffffff;
-  display: flex;
-}
-
-.sandbox-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-}
-
-/* ── CODE EDITOR VIEWPORT ── */
-.code-viewport {
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background: #0c0e14;
-  padding: 16px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.code-editor-layout {
-  display: flex;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.5;
-  min-height: 100%;
-}
-
-.line-numbers {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  padding-right: 12px;
-  margin-right: 12px;
-  border-right: 1px solid rgba(255,255,255,0.06);
-  color: var(--text-2);
-  user-select: none;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.line-no {
-  min-height: 19.5px;
-}
-
-.code-pre {
-  flex: 1;
-  margin: 0;
-  overflow: visible;
-  color: #94a3b8;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: var(--font-mono);
-}
-
-/* ── EMPTY STATE ── */
-.sandbox-body .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 16px;
-  color: var(--text-2);
-  padding: 40px;
-  text-align: center;
-  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
-}
-
-.sandbox-body .empty-icon {
-  font-size: 48px;
-  animation: glowPulse 2s infinite ease-in-out;
-  color: var(--tab-coding);
-  text-shadow: 0 0 20px var(--tab-coding);
-}
-
-.sandbox-body .empty-title {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--text-1);
-}
-
-.sandbox-body .empty-text {
-  font-size: 13.5px;
-  max-width: 380px;
-  line-height: 1.6;
-}
-
-@keyframes glowPulse {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 5px rgba(6,182,212,0.4));
-  }
-  50% {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 15px rgba(6,182,212,0.8));
-  }
-}
-
-/* ── RESPONSIVENESS ── */
-@media (max-width: 800px) {
-  .coding-workspace {
-    flex-direction: column;
-  }
-  
-  .terminal-chat-panel {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    height: 50%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .sandbox-panel {
-    height: 50%;
-  }
-}
-
-/* ── RESIZERS ── */
 .resizer {
   width: 4px;
   background: transparent;
@@ -217,7 +22,9 @@
   border-left: 1px solid var(--border);
   flex-shrink: 0;
 }
-.resizer:hover, .resizer:active {
+
+.resizer:hover,
+.resizer:active {
   background: var(--accent-cyan);
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
 }
@@ -231,65 +38,34 @@
   margin-top: -4px;
   flex-shrink: 0;
 }
-.h-resizer:hover, .h-resizer:active {
+
+.h-resizer:hover,
+.h-resizer:active {
   background: var(--accent-cyan);
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
 }
 
-/* ── INPUT ZONE OVERRIDES ── */
-.terminal-chat-panel .input-zone {
-  display: flex !important;
-  gap: 10px;
-  align-items: stretch !important;
-  background: var(--bg-1);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-  padding: 12px 20px !important;
-  box-sizing: border-box;
-  overflow: hidden;
-  max-height: none !important;
-}
-
-.terminal-chat-panel .input-field {
-  flex: 1;
-  height: 100% !important;
-  max-height: none !important;
-  resize: none !important;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 12px;
-  color: var(--text-0);
-  font-family: var(--font-body);
-  font-size: 13.5px;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.5;
-  box-sizing: border-box;
-}
-.terminal-chat-panel .input-field:focus {
-  border-color: var(--border-active);
-  box-shadow: var(--shadow-glow);
-}
-
-.terminal-chat-panel .send-btn {
-  height: 100% !important;
-  width: 44px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--accent-blue), #3b82f6);
-  color: #fff;
+.sandbox-iframe {
+  width: 100%;
+  height: 100%;
   border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(99, 179, 255, 0.2);
+  background: transparent;
 }
-.terminal-chat-panel .send-btn:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 4px 12px rgba(99, 179, 255, 0.4);
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.4));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.8));
+  }
+}
+
+@media (max-width: 800px) {
+  .coding-workspace {
+    flex-direction: column;
+  }
 }

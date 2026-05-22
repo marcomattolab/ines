@@ -11,16 +11,16 @@ Translate the given text EXACTLY as requested, preserving style, tone and format
 Respond ONLY with the translated text, without explanations, without indicating the language, without adding anything else.`;
 
 const LANGUAGES = [
-  { value: 'Italian',    label: '🇮🇹 Italiano' },
-  { value: 'English',    label: '🇬🇧 English' },
-  { value: 'French',     label: '🇫🇷 Français' },
-  { value: 'German',     label: '🇩🇪 Deutsch' },
-  { value: 'Spanish',    label: '🇪🇸 Español' },
+  { value: 'Italian', label: '🇮🇹 Italiano' },
+  { value: 'English', label: '🇬🇧 English' },
+  { value: 'French', label: '🇫🇷 Français' },
+  { value: 'German', label: '🇩🇪 Deutsch' },
+  { value: 'Spanish', label: '🇪🇸 Español' },
   { value: 'Portuguese', label: '🇵🇹 Português' },
-  { value: 'Chinese',    label: '🇨🇳 中文' },
-  { value: 'Japanese',   label: '🇯🇵 日本語' },
-  { value: 'Arabic',     label: '🇸🇦 العربية' },
-  { value: 'Russian',    label: '🇷🇺 Русский' },
+  { value: 'Chinese', label: '🇨🇳 中文' },
+  { value: 'Japanese', label: '🇯🇵 日本語' },
+  { value: 'Arabic', label: '🇸🇦 العربية' },
+  { value: 'Russian', label: '🇷🇺 Русский' },
 ];
 
 @Component({
@@ -28,25 +28,33 @@ const LANGUAGES = [
   standalone: true,
   imports: [FormsModule, MatIconModule, ButtonComponent],
   templateUrl: './translate-tab.component.html',
-  styleUrl: './translate-tab.css'
+  host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class TranslateTabComponent {
-  llm   = inject(LlmService);
+  llm = inject(LlmService);
   toast = inject(ToastService);
   speech = inject(SpeechService);
 
   languages = LANGUAGES;
-  fromLang  = signal('auto');
-  toLang    = signal('English');
+  fromLang = signal('auto');
+  toLang = signal('English');
   inputText = signal('');
-  result    = signal('');
+  result = signal('');
   translating = signal(false);
 
-  readonly isSourceSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'trans-source');
-  readonly isResultSpeaking = computed(() => this.speech.speaking() && this.speech.activeId() === 'trans-result');
+  readonly isSourceSpeaking = computed(
+    () => this.speech.speaking() && this.speech.activeId() === 'trans-source',
+  );
+  readonly isResultSpeaking = computed(
+    () => this.speech.speaking() && this.speech.activeId() === 'trans-result',
+  );
 
   toggleSpeakSource() {
-    this.speech.toggle('trans-source', this.inputText(), this.fromLang() === 'auto' ? navigator.language : this.fromLang());
+    this.speech.toggle(
+      'trans-source',
+      this.inputText(),
+      this.fromLang() === 'auto' ? navigator.language : this.fromLang(),
+    );
   }
 
   toggleSpeakResult() {
@@ -65,7 +73,10 @@ export class TranslateTabComponent {
 
   async translate() {
     if (!this.inputText().trim()) return;
-    if (!this.llm.isReady()) { this.toast.show('⚠️ Load the model first!'); return; }
+    if (!this.llm.isReady()) {
+      this.toast.show('⚠️ Load the model first!');
+      return;
+    }
 
     const srcDesc = this.fromLang() === 'auto' ? 'detected language' : this.fromLang();
     const instruction = `Translate the following text from ${srcDesc} to ${this.toLang()}:\n\n${this.inputText()}`;
@@ -78,7 +89,7 @@ export class TranslateTabComponent {
         this.result.set(full);
         this.translating.set(!done);
       });
-    } catch(e: any) {
+    } catch (e: any) {
       this.result.set('❌ ' + e.message);
       this.translating.set(false);
     }
@@ -107,6 +118,9 @@ export class TranslateTabComponent {
 
   resultHtml() {
     return this.result()
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
   }
 }

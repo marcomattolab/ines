@@ -23,13 +23,13 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: 'chat',      icon: 'message-square', label: 'Chat',      color: 'var(--tab-chat)' },
-  { id: 'email',     icon: 'mail',           label: 'Email',     color: 'var(--tab-email)' },
-  { id: 'meeting',   icon: 'mic',            label: 'Meeting',   color: 'var(--tab-meeting)' },
-  { id: 'translate', icon: 'languages',      label: 'Translate', color: 'var(--tab-translate)' },
-  { id: 'todo',      icon: 'check-square',   label: 'Todo',      color: 'var(--tab-todo)' },
-  { id: 'coding',    icon: 'code',           label: 'Code',      color: 'var(--tab-coding)' },
-  { id: 'learning',  icon: 'school',         label: 'Learning',  color: 'var(--tab-learning)' },
+  { id: 'chat', icon: 'message-square', label: 'Chat', color: 'var(--tab-chat)' },
+  { id: 'email', icon: 'mail', label: 'Email', color: 'var(--tab-email)' },
+  { id: 'meeting', icon: 'mic', label: 'Meeting', color: 'var(--tab-meeting)' },
+  { id: 'translate', icon: 'languages', label: 'Translate', color: 'var(--tab-translate)' },
+  { id: 'todo', icon: 'check-square', label: 'Todo', color: 'var(--tab-todo)' },
+  { id: 'coding', icon: 'code', label: 'Code', color: 'var(--tab-coding)' },
+  { id: 'learning', icon: 'school', label: 'Learning', color: 'var(--tab-learning)' },
 ];
 
 @Component({
@@ -46,22 +46,23 @@ const TABS: TabDef[] = [
     TodoTabComponent,
     CodingTabComponent,
     LearningTabComponent,
-    MatIconModule
+    MatIconModule,
   ],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class AppComponent implements OnInit {
-  tabs       = TABS;
-  activeTab  = signal<Tab>('chat');
+  tabs = TABS;
+  activeTab = signal<Tab>('chat');
   overlayOpen = signal(true); // show on load
-  infoOpen   = signal(false);
-  toast      = inject(ToastService);
-  llm        = inject(LlmService);
+  infoOpen = signal(false);
+  toast = inject(ToastService);
+  llm = inject(LlmService);
 
   ngOnInit() {
     // 1. Try to load from IndexedDB cache first
-    this.llm.initModelFromCache()
+    this.llm
+      .initModelFromCache()
       .then((loadedFromCache) => {
         if (loadedFromCache) {
           this.overlayOpen.set(false);
@@ -70,7 +71,7 @@ export class AppComponent implements OnInit {
           this.checkSessionFallback();
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Cache load error:', err);
         this.checkSessionFallback();
       });
@@ -80,12 +81,16 @@ export class AppComponent implements OnInit {
     try {
       if (sessionStorage.getItem('model_loaded_previously') === 'true') {
         // User had the model loaded in this tab session previously. Try to auto-fetch from local URL.
-        this.llm.initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
+        this.llm
+          .initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
           .then(() => {
             this.overlayOpen.set(false);
           })
-          .catch(err => {
-            console.log('Session fallback URL load failed (expected in production if no hosted model):', err);
+          .catch((err) => {
+            console.log(
+              'Session fallback URL load failed (expected in production if no hosted model):',
+              err,
+            );
             this.llm.modelStatus.set('idle');
             this.llm.modelName.set('No model loaded');
           });

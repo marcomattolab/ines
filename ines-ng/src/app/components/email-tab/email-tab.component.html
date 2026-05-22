@@ -1,4 +1,4 @@
-<div class="tab-panel-inner">
+<div class="flex flex-col flex-1 overflow-hidden">
   <div class="panel-header">
     <div>
       <div class="panel-title">
@@ -13,7 +13,7 @@
     </app-button>
   </div>
 
-  <div class="controls-row">
+  <div class="flex gap-2 items-center flex-wrap px-[22px] py-3 shrink-0">
     <select class="pill-select" [value]="tone()" (change)="tone.set($any($event.target).value)">
       <option value="professional">🎩 Professional</option>
       <option value="friendly">😊 Friendly</option>
@@ -30,18 +30,25 @@
       <option value="summary">📋 Summary</option>
     </select>
     <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
-      <mat-icon [fontIcon]="processing() ? 'hourglass_empty' : 'send'" 
-                [class.animate-spin]="processing()" 
-                class="text-sm w-3.5 h-3.5"></mat-icon>
+      <mat-icon
+        [fontIcon]="processing() ? 'hourglass_empty' : 'send'"
+        [class.animate-spin]="processing()"
+        class="text-sm w-3.5 h-3.5"
+      ></mat-icon>
       {{ processing() ? 'Processing...' : 'Process' }}
     </app-button>
   </div>
 
-  <div class="email-input-area">
-    <textarea class="email-original" #emailInput
-      placeholder="Paste the email to improve or process here..."></textarea>
-    <div class="email-result-wrap">
-      <div class="email-result-label">
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <textarea
+      class="flex-1 bg-[var(--bg-2)] border-none border-b border-[var(--border)] p-4 px-[22px] text-[var(--text-0)] font-[var(--font-body)] text-[13.5px] resize-none outline-none leading-[1.7] overflow-y-auto scrollbar-thin placeholder:text-[var(--text-2)]"
+      #emailInput
+      placeholder="Paste the email to improve or process here..."
+    ></textarea>
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div
+        class="font-[var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--text-2)] px-[22px] py-[10px] uppercase flex items-center justify-between shrink-0 border-b border-[var(--border)]"
+      >
         <span>✦ RESULT</span>
         @if (result()) {
           <app-button variant="secondary" size="sm" (onClick)="copy()">
@@ -50,15 +57,23 @@
           </app-button>
         }
       </div>
-      <div class="email-result-content">
+      <div
+        class="flex-1 overflow-y-auto p-4 px-[22px] text-[13.5px] leading-[1.75] text-[var(--text-0)] whitespace-pre-wrap font-[var(--font-body)] scrollbar-thin"
+      >
         @if (result()) {
           <span [class.cursor-blink]="processing()" [innerHTML]="resultHtml()"></span>
         } @else {
           <div class="empty-state">
             <div class="empty-icon">
-              <mat-icon fontIcon="email" class="text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+              <mat-icon
+                fontIcon="email"
+                class="text-4xl w-9 h-9"
+                style="font-size: 36px; width: 36px; height: 36px"
+              ></mat-icon>
             </div>
-            <div class="empty-text">Paste an email above, choose the tone and action, then click Process</div>
+            <div class="empty-text">
+              Paste an email above, choose the tone and action, then click Process
+            </div>
           </div>
         }
       </div>

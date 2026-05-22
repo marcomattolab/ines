@@ -1,4 +1,4 @@
-<div class="tab-panel-inner">
+<div class="flex flex-col flex-1 overflow-hidden">
   <div class="panel-header">
     <div>
       <div class="panel-title">
@@ -13,59 +13,113 @@
     </app-button>
   </div>
 
-  <div class="meeting-layout">
-    <div class="meeting-transcript">
-      <div class="meeting-pane-label">
-        <span>📝 TRANSCRIPTION</span>
-        <div style="display:flex; gap:6px">
-          <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="toggleSpeakTranscript()" className="!w-8 !h-8 !p-0" [attr.title]="isTranscriptSpeaking() ? 'Stop Reading' : 'Listen to Transcript'">
-            <mat-icon [fontIcon]="isTranscriptSpeaking() ? 'close' : 'mic'" 
-                      class="text-sm w-3.5 h-3.5" 
-                      [class.text-accent-rose]="isTranscriptSpeaking()"></mat-icon>
+  <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-col flex-1 overflow-hidden border-r border-[var(--border)]">
+      <div
+        class="flex items-center justify-between gap-2.5 px-4 py-[10px] font-[var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--text-2)] uppercase shrink-0 border-b border-[var(--border)] min-w-0"
+      >
+        <span class="overflow-hidden text-ellipsis whitespace-nowrap shrink min-w-0"
+          >📝 TRANSCRIPTION</span
+        >
+        <div class="flex gap-1.5 shrink-0">
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!transcript().trim()"
+            (onClick)="toggleSpeakTranscript()"
+            className="!w-8 !h-8 !p-0"
+            [attr.title]="isTranscriptSpeaking() ? 'Stop Reading' : 'Listen to Transcript'"
+          >
+            <mat-icon
+              [fontIcon]="isTranscriptSpeaking() ? 'close' : 'mic'"
+              class="text-sm w-3.5 h-3.5"
+              [class.text-accent-rose]="isTranscriptSpeaking()"
+            ></mat-icon>
           </app-button>
-          <app-button variant="ghost" size="sm" [disabled]="!transcript().trim()" (onClick)="copy(transcript())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!transcript().trim()"
+            (onClick)="copy(transcript())"
+            className="!w-8 !h-8 !p-0"
+            title="Copy to Clipboard"
+          >
             <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
           </app-button>
         </div>
       </div>
-      <div class="meeting-scroll">{{ transcript() }}</div>
+      <div
+        class="flex-1 overflow-y-auto p-[14px] px-4 text-[13px] leading-[1.7] text-[var(--text-1)] whitespace-pre-wrap scrollbar-thin"
+      >
+        {{ transcript() }}
+      </div>
     </div>
-    <div class="meeting-summary">
-      <div class="meeting-pane-label">
-        <span>✨ AI SUMMARY</span>
-        <div style="display:flex; gap:6px">
-          <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="toggleSpeakSummary()" className="!w-8 !h-8 !p-0" [attr.title]="isSummarySpeaking() ? 'Stop Reading' : 'Listen to Summary'">
-            <mat-icon [fontIcon]="isSummarySpeaking() ? 'close' : 'mic'" 
-                      class="text-sm w-3.5 h-3.5" 
-                      [class.text-accent-rose]="isSummarySpeaking()"></mat-icon>
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div
+        class="flex items-center justify-between gap-2.5 px-4 py-[10px] font-[var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--text-2)] uppercase shrink-0 border-b border-[var(--border)] min-w-0"
+      >
+        <span class="overflow-hidden text-ellipsis whitespace-nowrap shrink min-w-0"
+          >✨ AI SUMMARY</span
+        >
+        <div class="flex gap-1.5 shrink-0">
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!summary().trim()"
+            (onClick)="toggleSpeakSummary()"
+            className="!w-8 !h-8 !p-0"
+            [attr.title]="isSummarySpeaking() ? 'Stop Reading' : 'Listen to Summary'"
+          >
+            <mat-icon
+              [fontIcon]="isSummarySpeaking() ? 'close' : 'mic'"
+              class="text-sm w-3.5 h-3.5"
+              [class.text-accent-rose]="isSummarySpeaking()"
+            ></mat-icon>
           </app-button>
-          <app-button variant="ghost" size="sm" [disabled]="!summary().trim()" (onClick)="copy(summary())" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!summary().trim()"
+            (onClick)="copy(summary())"
+            className="!w-8 !h-8 !p-0"
+            title="Copy to Clipboard"
+          >
             <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
           </app-button>
         </div>
       </div>
-      <div class="meeting-scroll">
+      <div
+        class="flex-1 overflow-y-auto p-[14px] px-4 text-[13px] leading-[1.7] text-[var(--text-1)] whitespace-pre-wrap scrollbar-thin"
+      >
         @if (summary()) {
           {{ summary() }}
         } @else {
-          <div class="empty-state" style="height:100%">
+          <div class="empty-state h-full">
             <div class="empty-icon">
-              <mat-icon fontIcon="hourglass_empty" class="animate-spin opacity-20 text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+              <mat-icon
+                fontIcon="hourglass_empty"
+                class="animate-spin opacity-20 text-4xl w-9 h-9"
+                style="font-size: 36px; width: 36px; height: 36px"
+              ></mat-icon>
             </div>
-            <div class="empty-text">The summary will appear automatically after stopping the recording</div>
+            <div class="empty-text">
+              The summary will appear automatically after stopping the recording
+            </div>
           </div>
         }
       </div>
     </div>
   </div>
 
-  <div class="meeting-controls">
+  <div
+    class="flex gap-2.5 items-center px-[22px] py-[14px] border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0"
+  >
     <button class="record-btn" [class.recording]="recording()" (click)="toggleRecording()">
       <div class="record-dot"></div>
       <span>{{ recording() ? 'Stop Recording' : 'Start Recording' }}</span>
     </button>
-    <span class="timer-text">{{ timerText() }}</span>
-    <div style="flex:1"></div>
+    <span class="font-[var(--font-mono)] text-xs text-[var(--text-2)]">{{ timerText() }}</span>
+    <div class="flex-1"></div>
     <app-button variant="primary" (onClick)="summarize()">
       <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
       Summarize Now

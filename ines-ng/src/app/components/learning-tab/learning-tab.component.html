@@ -16,15 +16,30 @@
 
   <div class="flex flex-1 overflow-hidden">
     <!-- Left Sidebar: Document Management & Controls -->
-    <aside class="w-64 border-r border-zinc-200/10 dark:border-zinc-800/30 p-4 flex flex-col gap-6 overflow-y-auto" style="background: var(--bg-1); backdrop-filter: blur(28px); border-right: 1px solid var(--border);">
+    <aside
+      class="w-64 border-r border-zinc-200/10 dark:border-zinc-800/30 p-4 flex flex-col gap-6 overflow-y-auto"
+      style="
+        background: var(--bg-1);
+        backdrop-filter: blur(28px);
+        border-right: 1px solid var(--border);
+      "
+    >
       <!-- Upload Section -->
       <section>
         <h3 class="text-sm font-medium text-zinc-200 mb-3 flex items-center gap-2">
           <mat-icon class="text-blue-400 scale-75">upload_file</mat-icon> Documents
         </h3>
         <div class="relative group">
-          <input type="file" (change)="onFileSelected($event)" multiple accept=".pdf,.html,.txt" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div class="border-2 border-dashed border-white/10 rounded-xl p-6 text-center group-hover:border-blue-400/50 transition-colors bg-white/5">
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            multiple
+            accept=".pdf,.html,.txt"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+          <div
+            class="border-2 border-dashed border-white/10 rounded-xl p-6 text-center group-hover:border-blue-400/50 transition-colors bg-white/5"
+          >
             <mat-icon class="text-zinc-400 mb-2">add_circle_outline</mat-icon>
             <p class="text-xs text-zinc-400">Upload PDF, HTML or TXT</p>
           </div>
@@ -32,13 +47,18 @@
 
         <!-- File List -->
         <div class="mt-4 space-y-2">
-          <div *ngFor="let file of files()" class="flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5">
+          <div
+            *ngFor="let file of files()"
+            class="flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5"
+          >
             <mat-icon class="text-zinc-400 scale-75">description</mat-icon>
             <span class="text-xs text-zinc-200 truncate flex-1">{{ file.name }}</span>
             <mat-icon class="text-green-500 scale-50">check_circle</mat-icon>
           </div>
           <div *ngIf="isProcessing()" class="flex items-center gap-2 p-2">
-            <div class="animate-spin h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+            <div
+              class="animate-spin h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full"
+            ></div>
             <span class="text-xs text-zinc-400">Processing...</span>
           </div>
         </div>
@@ -49,7 +69,11 @@
         <h3 class="text-sm font-medium text-zinc-200 flex items-center gap-2">
           <mat-icon class="text-purple-400 scale-75">auto_awesome</mat-icon> Tools
         </h3>
-        <button (click)="generateMindMap()" [disabled]="!rag.hasContext() || isGenerating()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20 transition-colors disabled:opacity-30 disabled:grayscale">
+        <button
+          (click)="generateMindMap()"
+          [disabled]="!rag.hasContext() || isGenerating()"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20 transition-colors disabled:opacity-30 disabled:grayscale"
+        >
           <mat-icon>account_tree</mat-icon>
           <div class="text-left">
             <div class="text-sm font-semibold">Mind Map</div>
@@ -58,7 +82,11 @@
         </button>
 
         <div class="space-y-2">
-          <button (click)="generateQuiz()" [disabled]="!rag.hasContext() || isGenerating()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-colors disabled:opacity-30 disabled:grayscale">
+          <button
+            (click)="generateQuiz()"
+            [disabled]="!rag.hasContext() || isGenerating()"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-colors disabled:opacity-30 disabled:grayscale"
+          >
             <mat-icon>quiz</mat-icon>
             <div class="text-left">
               <div class="text-sm font-semibold">Test Knowledge</div>
@@ -68,25 +96,25 @@
           <div class="flex items-center justify-between px-2">
             <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Questions:</span>
             <div class="flex items-center gap-1">
-              <button 
-                type="button" 
-                (click)="decrementQuestions()" 
+              <button
+                type="button"
+                (click)="decrementQuestions()"
                 [disabled]="numQuizQuestions() <= 1"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
                 <mat-icon class="scale-75">remove</mat-icon>
               </button>
-              <input 
-                type="number" 
-                [value]="numQuizQuestions()" 
-                (input)="setQuestions($any($event.target).value)" 
-                min="1" 
+              <input
+                type="number"
+                [value]="numQuizQuestions()"
+                (input)="setQuestions($any($event.target).value)"
+                min="1"
                 max="15"
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
               />
-              <button 
-                type="button" 
-                (click)="incrementQuestions()" 
+              <button
+                type="button"
+                (click)="incrementQuestions()"
                 [disabled]="numQuizQuestions() >= 15"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
@@ -95,27 +123,29 @@
             </div>
           </div>
           <div class="flex items-center justify-between px-2">
-            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Timer (min):</span>
+            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold"
+              >Timer (min):</span
+            >
             <div class="flex items-center gap-1">
-              <button 
-                type="button" 
-                (click)="decrementTimer()" 
+              <button
+                type="button"
+                (click)="decrementTimer()"
                 [disabled]="quizTimerDuration() <= 1"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
                 <mat-icon class="scale-75">remove</mat-icon>
               </button>
-              <input 
-                type="number" 
-                [value]="quizTimerDuration()" 
-                (input)="setTimer($any($event.target).value)" 
-                min="1" 
-                max="60" 
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+              <input
+                type="number"
+                [value]="quizTimerDuration()"
+                (input)="setTimer($any($event.target).value)"
+                min="1"
+                max="60"
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
               />
-              <button 
-                type="button" 
-                (click)="incrementTimer()" 
+              <button
+                type="button"
+                (click)="incrementTimer()"
                 [disabled]="quizTimerDuration() >= 60"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
@@ -126,25 +156,25 @@
           <div class="flex items-center justify-between px-2">
             <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Options:</span>
             <div class="flex items-center gap-1">
-              <button 
-                type="button" 
-                (click)="decrementOptions()" 
+              <button
+                type="button"
+                (click)="decrementOptions()"
                 [disabled]="numQuizOptions() <= 2"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
                 <mat-icon class="scale-75">remove</mat-icon>
               </button>
-              <input 
-                type="number" 
-                [value]="numQuizOptions()" 
-                (input)="setOptions($any($event.target).value)" 
-                min="2" 
-                max="6" 
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono" 
+              <input
+                type="number"
+                [value]="numQuizOptions()"
+                (input)="setOptions($any($event.target).value)"
+                min="2"
+                max="6"
+                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
               />
-              <button 
-                type="button" 
-                (click)="incrementOptions()" 
+              <button
+                type="button"
+                (click)="incrementOptions()"
                 [disabled]="numQuizOptions() >= 6"
                 class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
@@ -159,17 +189,41 @@
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col bg-transparent relative">
       <!-- Sub-tab Navigation -->
-      <nav class="flex items-center justify-between px-6" style="border-bottom: 1px solid var(--border);">
+      <nav
+        class="flex items-center justify-between px-6"
+        style="border-bottom: 1px solid var(--border)"
+      >
         <div class="flex">
-          <button (click)="selectSubTab('chat')" [class.border-blue-500]="activeSubTab() === 'chat'" [class.text-blue-400]="activeSubTab() === 'chat'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Chat Analysis</button>
-          <button (click)="selectSubTab('mindmap')" [class.border-blue-500]="activeSubTab() === 'mindmap'" [class.text-blue-400]="activeSubTab() === 'mindmap'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Visual Map</button>
-          <button (click)="selectSubTab('quiz')" [class.border-blue-500]="activeSubTab() === 'quiz'" [class.text-blue-400]="activeSubTab() === 'quiz'" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors">Quiz</button>
+          <button
+            (click)="selectSubTab('chat')"
+            [class.border-blue-500]="activeSubTab() === 'chat'"
+            [class.text-blue-400]="activeSubTab() === 'chat'"
+            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            Chat Analysis
+          </button>
+          <button
+            (click)="selectSubTab('mindmap')"
+            [class.border-blue-500]="activeSubTab() === 'mindmap'"
+            [class.text-blue-400]="activeSubTab() === 'mindmap'"
+            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            Visual Map
+          </button>
+          <button
+            (click)="selectSubTab('quiz')"
+            [class.border-blue-500]="activeSubTab() === 'quiz'"
+            [class.text-blue-400]="activeSubTab() === 'quiz'"
+            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            Quiz
+          </button>
         </div>
 
         <!-- Split View Toggle Button -->
-        <button 
-          *ngIf="rag.hasContext()" 
-          (click)="toggleDockMindMap()" 
+        <button
+          *ngIf="rag.hasContext()"
+          (click)="toggleDockMindMap()"
           [class.text-purple-400]="showMindMapOnRight()"
           [class.border-purple-500]="showMindMapOnRight()"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/10 transition-colors"
@@ -183,28 +237,62 @@
       <!-- Content Views -->
       <div class="flex-1 flex overflow-hidden relative">
         <!-- Left Side: Chat or Quiz -->
-        <div class="flex-1 h-full flex flex-col min-w-0" [class.hidden]="activeSubTab() === 'mindmap'">
+        <div
+          class="flex-1 h-full flex flex-col min-w-0"
+          [class.hidden]="activeSubTab() === 'mindmap'"
+        >
           <!-- Chat View -->
           <div [hidden]="activeSubTab() !== 'chat'" class="h-full flex flex-col">
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
-              <div *ngIf="messages().length === 0" class="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-4">
-                <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-blue-400">
+              <div
+                *ngIf="messages().length === 0"
+                class="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-4"
+              >
+                <div
+                  class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-blue-400"
+                >
                   <mat-icon class="scale-150">auto_stories</mat-icon>
                 </div>
                 <h3 class="text-lg font-semibold text-white">Ask your documents anything</h3>
-                <p class="text-sm text-zinc-400">Upload documents on the left and I'll answer questions based specifically on their content.</p>
+                <p class="text-sm text-zinc-400">
+                  Upload documents on the left and I'll answer questions based specifically on their
+                  content.
+                </p>
               </div>
 
               <div class="space-y-4">
-                <app-message-bubble *ngFor="let msg of messages()" [role]="msg.role === 'assistant' ? 'ai' : 'user'" [text]="msg.content" />
+                <app-message-bubble
+                  *ngFor="let msg of messages()"
+                  [role]="msg.role === 'assistant' ? 'ai' : 'user'"
+                  [text]="msg.content"
+                />
               </div>
             </div>
 
             <!-- Input Area -->
-            <div class="p-6 border-t border-white/5" style="background: var(--bg-1); backdrop-filter: blur(28px); border-top: 1px solid var(--border);">
+            <div
+              class="p-6 border-t border-white/5"
+              style="
+                background: var(--bg-1);
+                backdrop-filter: blur(28px);
+                border-top: 1px solid var(--border);
+              "
+            >
               <div class="relative flex items-center">
-                <input type="text" [value]="userInput()" (input)="userInput.set($any($event.target).value)" (keyup.enter)="sendMessage()" placeholder="Ask about the content..." [disabled]="!llm.isReady() || isGenerating()" class="w-full bg-zinc-950/40 text-white border border-white/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all disabled:opacity-50" />
-                <button (click)="sendMessage()" [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()" class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
+                <input
+                  type="text"
+                  [value]="userInput()"
+                  (input)="userInput.set($any($event.target).value)"
+                  (keyup.enter)="sendMessage()"
+                  placeholder="Ask about the content..."
+                  [disabled]="!llm.isReady() || isGenerating()"
+                  class="w-full bg-zinc-950/40 text-white border border-white/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all disabled:opacity-50"
+                />
+                <button
+                  (click)="sendMessage()"
+                  [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()"
+                  class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
                   <mat-icon>send</mat-icon>
                 </button>
               </div>
@@ -213,27 +301,39 @@
 
           <!-- Quiz View -->
           <div [hidden]="activeSubTab() !== 'quiz'" class="h-full overflow-y-auto p-6">
-            <div *ngIf="quizQuestions().length > 0 && !showQuizResults()" class="max-w-5xl mx-auto space-y-8">
+            <div
+              *ngIf="quizQuestions().length > 0 && !showQuizResults()"
+              class="max-w-5xl mx-auto space-y-8"
+            >
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">Question {{ currentQuizIndex() + 1 }} of {{ quizQuestions().length }}</span>
-                
+                <span class="text-xs font-bold text-blue-400 uppercase tracking-widest"
+                  >Question {{ currentQuizIndex() + 1 }} of {{ quizQuestions().length }}</span
+                >
+
                 <!-- Countdown Timer -->
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-sm font-semibold">
+                <div
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-sm font-semibold"
+                >
                   <mat-icon class="scale-75 text-red-400">timer</mat-icon>
                   <span>{{ formatTime(quizSecondsLeft()) }}</span>
                 </div>
 
                 <div class="h-1.5 w-32 bg-white/10 rounded-full overflow-hidden">
-                  <div class="h-full bg-blue-600 transition-all duration-300" [style.width.%]="((currentQuizIndex() + 1) / quizQuestions().length) * 100"></div>
+                  <div
+                    class="h-full bg-blue-600 transition-all duration-300"
+                    [style.width.%]="((currentQuizIndex() + 1) / quizQuestions().length) * 100"
+                  ></div>
                 </div>
               </div>
-              
-              <h2 class="text-xl font-bold text-white">{{ quizQuestions()[currentQuizIndex()].question }}</h2>
-              
+
+              <h2 class="text-xl font-bold text-white">
+                {{ quizQuestions()[currentQuizIndex()].question }}
+              </h2>
+
               <div class="grid gap-3">
-                 <button 
-                  *ngFor="let option of quizQuestions()[currentQuizIndex()].options; let i = index" 
-                  (click)="selectAnswer(i)" 
+                <button
+                  *ngFor="let option of quizQuestions()[currentQuizIndex()].options; let i = index"
+                  (click)="selectAnswer(i)"
                   [class.border-blue-500]="selectedAnswers()[currentQuizIndex()] === i"
                   [class.bg-blue-500/10]="selectedAnswers()[currentQuizIndex()] === i"
                   [class.border-white/5]="selectedAnswers()[currentQuizIndex()] !== i"
@@ -241,41 +341,43 @@
                   class="w-full text-left px-6 py-4 rounded-xl border-2 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group"
                 >
                   <div class="flex items-center gap-4">
-                    <span 
+                    <span
                       [class.bg-blue-600]="selectedAnswers()[currentQuizIndex()] === i"
                       [class.bg-white/10]="selectedAnswers()[currentQuizIndex()] !== i"
                       [class.text-white]="selectedAnswers()[currentQuizIndex()] === i"
                       [class.text-zinc-400]="selectedAnswers()[currentQuizIndex()] !== i"
                       class="w-8 h-8 rounded-lg flex items-center justify-center font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
                     >
-                      {{ ['A','B','C','D','E','F'][i] }}
+                      {{ ['A', 'B', 'C', 'D', 'E', 'F'][i] }}
                     </span>
-                    <span class="text-zinc-200 group-hover:text-white font-medium">{{ option }}</span>
+                    <span class="text-zinc-200 group-hover:text-white font-medium">{{
+                      option
+                    }}</span>
                   </div>
                 </button>
               </div>
 
               <!-- Navigation and Submit Controls -->
               <div class="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
-                <button 
-                  (click)="prevQuestion()" 
-                  [disabled]="currentQuizIndex() === 0" 
+                <button
+                  (click)="prevQuestion()"
+                  [disabled]="currentQuizIndex() === 0"
                   class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-300 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                 >
                   <mat-icon class="scale-90">arrow_back</mat-icon>
                   <span>Previous</span>
                 </button>
-                
-                <button 
-                  (click)="submitEntireQuiz()" 
+
+                <button
+                  (click)="submitEntireQuiz()"
                   class="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all shadow-lg shadow-green-900/20"
                 >
                   Submit Quiz
                 </button>
 
-                <button 
-                  (click)="nextQuestion()" 
-                  [disabled]="currentQuizIndex() === quizQuestions().length - 1" 
+                <button
+                  (click)="nextQuestion()"
+                  [disabled]="currentQuizIndex() === quizQuestions().length - 1"
                   class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-300 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
                 >
                   <span>Next</span>
@@ -285,70 +387,105 @@
             </div>
 
             <div *ngIf="showQuizResults()" class="max-w-2xl mx-auto text-center py-12 space-y-6">
-              <div class="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 mx-auto">
+              <div
+                class="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 mx-auto"
+              >
                 <mat-icon class="scale-[2]">emoji_events</mat-icon>
               </div>
               <div>
                 <h2 class="text-2xl font-black text-white">Quiz Completed!</h2>
-                <p class="text-zinc-400 mt-2">You scored {{ quizScore() }} out of {{ quizQuestions().length }}</p>
+                <p class="text-zinc-400 mt-2">
+                  You scored {{ quizScore() }} out of {{ quizQuestions().length }}
+                </p>
               </div>
               <div class="text-4xl font-black text-blue-400">
-                {{ (quizScore() / quizQuestions().length) * 100 | number:'1.0-0' }}%
+                {{ (quizScore() / quizQuestions().length) * 100 | number: '1.0-0' }}%
               </div>
               <app-button variant="primary" (onClick)="generateQuiz()">Retake Quiz</app-button>
             </div>
 
-            <div *ngIf="quizQuestions().length === 0 && !isGenerating()" class="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
+            <div
+              *ngIf="quizQuestions().length === 0 && !isGenerating()"
+              class="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4"
+            >
               <mat-icon class="scale-[2] text-zinc-500">lightbulb_outline</mat-icon>
-              <p class="text-sm text-zinc-400">Ready to test your knowledge? Click "Test Knowledge" on the left to generate a custom quiz from your documents.</p>
+              <p class="text-sm text-zinc-400">
+                Ready to test your knowledge? Click "Test Knowledge" on the left to generate a
+                custom quiz from your documents.
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Right Side / Mind Map Panel: full width OR 50% split view -->
-        <div 
-          [class.hidden]="activeSubTab() !== 'mindmap' && !showMindMapOnRight()" 
-          [class.w-full]="activeSubTab() === 'mindmap'" 
+        <div
+          [class.hidden]="activeSubTab() !== 'mindmap' && !showMindMapOnRight()"
+          [class.w-full]="activeSubTab() === 'mindmap'"
           [class.w-[50%]]="activeSubTab() !== 'mindmap' && showMindMapOnRight()"
           [class.border-l]="activeSubTab() !== 'mindmap' && showMindMapOnRight()"
           class="h-full flex flex-col border-white/5 relative bg-zinc-950/20 backdrop-blur-md"
         >
           <!-- Mind Map Container (with scroll and scaling) -->
-          <div class="flex-1 overflow-auto p-6 flex items-center justify-center min-h-0 relative select-none">
-            <div 
-              #mermaidContainer 
-              [style.transform]="'scale(' + zoomLevel() + ')'" 
+          <div
+            class="flex-1 overflow-auto p-6 flex items-center justify-center min-h-0 relative select-none"
+          >
+            <div
+              #mermaidContainer
+              [style.transform]="'scale(' + zoomLevel() + ')'"
               class="origin-center transition-transform duration-200 flex items-center justify-center min-h-[400px] w-full"
             >
-               <!-- Mermaid SVG will be injected here -->
+              <!-- Mermaid SVG will be injected here -->
             </div>
           </div>
-          
+
           <!-- Floating Zoom Controls -->
-          <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-zinc-900/90 border border-white/10 rounded-xl p-1.5 shadow-lg backdrop-blur-sm z-10">
-            <button (click)="zoomOut()" class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors" title="Zoom Out">
+          <div
+            class="absolute bottom-4 right-4 flex items-center gap-1 bg-zinc-900/90 border border-white/10 rounded-xl p-1.5 shadow-lg backdrop-blur-sm z-10"
+          >
+            <button
+              (click)="zoomOut()"
+              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+              title="Zoom Out"
+            >
               <mat-icon class="scale-90">remove</mat-icon>
             </button>
-            <span class="text-[10px] font-mono text-zinc-400 min-w-[40px] text-center">{{ zoomLevel() * 100 | number:'1.0-0' }}%</span>
-            <button (click)="zoomIn()" class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors" title="Zoom In">
+            <span class="text-[10px] font-mono text-zinc-400 min-w-[40px] text-center"
+              >{{ zoomLevel() * 100 | number: '1.0-0' }}%</span
+            >
+            <button
+              (click)="zoomIn()"
+              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+              title="Zoom In"
+            >
               <mat-icon class="scale-90">add</mat-icon>
             </button>
             <div class="h-4 w-px bg-white/10 mx-1"></div>
-            <button (click)="zoomReset()" class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors" title="Reset Zoom">
+            <button
+              (click)="zoomReset()"
+              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+              title="Reset Zoom"
+            >
               <mat-icon class="scale-90">restart_alt</mat-icon>
             </button>
           </div>
 
           <div class="p-4 bg-white/5 border-t border-white/5 text-center">
-            <p class="text-xs text-zinc-400">Mind maps are generated using MediaPipe LLM and rendered with Mermaid.js</p>
+            <p class="text-xs text-zinc-400">
+              Mind maps are generated using MediaPipe LLM and rendered with Mermaid.js
+            </p>
           </div>
         </div>
 
         <!-- Loading Overlay for generation -->
-        <div *ngIf="isGenerating()" class="absolute inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4">
+        <div
+          *ngIf="isGenerating()"
+          class="absolute inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4"
+        >
           <div class="relative w-16 h-16">
             <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            <div
+              class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"
+            ></div>
           </div>
           <div class="text-center">
             <p class="font-bold text-white">AI is thinking...</p>

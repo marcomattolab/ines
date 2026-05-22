@@ -1,4 +1,4 @@
-<div class="tab-panel-inner">
+<div class="flex flex-col flex-1 overflow-hidden">
   <div class="panel-header">
     <div>
       <div class="panel-title">
@@ -15,30 +15,42 @@
 
   <div class="chat-area" #chatArea>
     @for (msg of messages(); track msg.id) {
-    @if (msg.role === 'ai' && msg.streaming) {
-    <div class="message ai">
-      <div class="msg-avatar">Ines</div>
-      <div class="msg-bubble cursor-blink" [innerHTML]="html(msg.text)"></div>
-    </div>
-    } @else {
-    <app-message-bubble [role]="msg.role" [text]="msg.text" [streaming]="!!msg.streaming" />
-    }
+      @if (msg.role === 'ai' && msg.streaming) {
+        <div class="message ai">
+          <div class="msg-avatar">Ines</div>
+          <div class="msg-bubble cursor-blink" [innerHTML]="html(msg.text)"></div>
+        </div>
+      } @else {
+        <app-message-bubble [role]="msg.role" [text]="msg.text" [streaming]="!!msg.streaming" />
+      }
     }
     @if (typing()) {
-    <div class="message ai">
-      <div class="msg-avatar">Ines</div>
-      <div class="msg-bubble"><app-typing-indicator /></div>
-    </div>
+      <div class="message ai">
+        <div class="msg-avatar">Ines</div>
+        <div class="msg-bubble"><app-typing-indicator /></div>
+      </div>
     }
   </div>
 
   <div class="token-info">{{ tokenInfo() }}</div>
 
   <div class="input-zone">
-    <textarea class="input-field" #inputEl placeholder="Write a message..." rows="1" (keydown)="onKey($event)"
-      (input)="autoResize($event)"></textarea>
-    <app-button variant="primary" [disabled]="generating()" (onClick)="send()" title="Send (Enter)" className="!rounded-full !w-11 !h-11 !p-0">
-     <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
+    <textarea
+      class="input-field"
+      #inputEl
+      placeholder="Write a message..."
+      rows="1"
+      (keydown)="onKey($event)"
+      (input)="autoResize($event)"
+    ></textarea>
+    <app-button
+      variant="primary"
+      [disabled]="generating()"
+      (onClick)="send()"
+      title="Send (Enter)"
+      className="!rounded-full !w-11 !h-11 !p-0"
+    >
+      <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
     </app-button>
   </div>
 </div>

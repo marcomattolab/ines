@@ -9,7 +9,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   standalone: true,
   imports: [MatIconModule, ButtonComponent],
   templateUrl: './loader-overlay.component.html',
-  styleUrl: './loader-overlay.css'
+  styleUrl: './loader-overlay.css',
 })
 export class LoaderOverlayComponent {
   visible = input<boolean>(true);

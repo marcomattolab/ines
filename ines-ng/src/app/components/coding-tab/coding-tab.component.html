@@ -17,14 +17,17 @@
   <!-- Resizable split workspace -->
   <div class="coding-workspace">
     <!-- Left Side: Terminal Chat Interface -->
-    <div class="terminal-chat-panel">
+    <div
+      class="flex-1 min-w-[360px] bg-[rgba(13,16,23,0.45)] flex flex-col overflow-hidden shadow-[4px_0_20px_rgba(0,0,0,0.15)]"
+    >
       <!-- Message Stream -->
       <div class="chat-area" #chatArea>
         @for (msg of messages(); track msg.id) {
           <app-message-bubble
             [role]="msg.role"
             [text]="msg.text"
-            [streaming]="msg.streaming ?? false" />
+            [streaming]="msg.streaming ?? false"
+          />
         }
         @if (typing()) {
           <app-typing-indicator />
@@ -37,11 +40,18 @@
       </div>
       <div class="h-resizer" (mousedown)="startHResize($event)"></div>
       <div class="input-zone" [style.height.px]="inputAreaHeight()">
-        <textarea #inputEl
+        <textarea
+          #inputEl
           class="input-field"
           placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
-          (keydown)="onKey($event)"></textarea>
-        <app-button variant="primary" [disabled]="generating() || !llm.isReady()" (onClick)="send()" className="!rounded-full !w-11 !h-11 !p-0">
+          (keydown)="onKey($event)"
+        ></textarea>
+        <app-button
+          variant="primary"
+          [disabled]="generating() || !llm.isReady()"
+          (onClick)="send()"
+          className="!rounded-full !w-11 !h-11 !p-0"
+        >
           <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
         </app-button>
       </div>
@@ -50,25 +60,36 @@
     <div class="resizer" (mousedown)="startResize($event)"></div>
 
     <!-- Right Side: Sandbox Code & Live Preview Workspace -->
-    <div class="sandbox-panel" [style.width.px]="rightPanelWidth()">
+    <div
+      class="flex flex-col bg-[var(--bg-0)] overflow-hidden shrink-0 min-w-[300px]"
+      [style.width.px]="rightPanelWidth()"
+    >
       <!-- Sandbox Header -->
-      <div class="sandbox-header">
-        <div class="sandbox-tab-group">
-          <app-button variant="secondary" size="sm"
-                  [className]="playgroundTab() === 'preview' ? 'active' : ''"
-                  (onClick)="playgroundTab.set('preview')">
+      <div
+        class="flex items-center justify-between shrink-0 p-[10px] px-4 bg-[rgba(13,16,23,0.35)] border-b border-[var(--border)]"
+      >
+        <div class="flex gap-2">
+          <app-button
+            variant="secondary"
+            size="sm"
+            [className]="playgroundTab() === 'preview' ? 'active' : ''"
+            (onClick)="playgroundTab.set('preview')"
+          >
             <mat-icon fontIcon="preview" class="text-accent-blue text-sm w-3.5 h-3.5"></mat-icon>
             Live Preview
           </app-button>
-          <app-button variant="secondary" size="sm"
-                  [className]="playgroundTab() === 'code' ? 'active' : ''"
-                  (onClick)="playgroundTab.set('code')">
+          <app-button
+            variant="secondary"
+            size="sm"
+            [className]="playgroundTab() === 'code' ? 'active' : ''"
+            (onClick)="playgroundTab.set('code')"
+          >
             <mat-icon fontIcon="code" class="text-accent-cyan text-sm w-3.5 h-3.5"></mat-icon>
             Source Code
           </app-button>
         </div>
 
-        <div class="sandbox-actions" [style.display]="extractedCode() ? 'flex' : 'none'">
+        <div class="flex gap-2" [style.display]="extractedCode() ? 'flex' : 'none'">
           <app-button variant="secondary" size="sm" (onClick)="copyCode()">
             <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
             Copy
@@ -81,37 +102,67 @@
       </div>
 
       <!-- Sandbox Body -->
-      <div class="sandbox-body">
+      <div class="flex-1 relative overflow-hidden bg-[#08090c]">
         @if (!extractedCode()) {
           <!-- Empty State -->
-          <div class="empty-state">
-            <div class="empty-icon">
-              <mat-icon fontIcon="code" class="text-4xl w-9 h-9" style="font-size: 36px; width: 36px; height: 36px;"></mat-icon>
+          <div
+            class="flex flex-col items-center justify-center h-full gap-4 text-[var(--text-2)] p-10 text-center"
+            style="
+              background: radial-gradient(
+                circle at 50% 50%,
+                rgba(6, 182, 212, 0.05) 0%,
+                transparent 60%
+              );
+            "
+          >
+            <div
+              class="text-4xl text-[var(--tab-coding)]"
+              style="
+                animation: glowPulse 2s infinite ease-in-out;
+                text-shadow: 0 0 20px var(--tab-coding);
+              "
+            >
+              <mat-icon
+                fontIcon="code"
+                class="text-4xl w-9 h-9"
+                style="font-size: 36px; width: 36px; height: 36px"
+              ></mat-icon>
             </div>
-            <div class="empty-title">Waiting for Code Request</div>
-            <div class="empty-text">
-              Describe a user interface, dashboard, or widget you'd like me to build on the left. The live, interactive render and source code will appear here instantly!
+            <div class="font-[var(--font-ui)] font-bold text-lg text-[var(--text-1)]">
+              Waiting for Code Request
+            </div>
+            <div class="text-[13.5px] max-w-[380px] leading-[1.6]">
+              Describe a user interface, dashboard, or widget you'd like me to build on the left.
+              The live, interactive render and source code will appear here instantly!
             </div>
           </div>
         } @else {
           <!-- Live Preview IFrame -->
-          <div class="preview-viewport" [hidden]="playgroundTab() !== 'preview'">
-            <iframe 
-              [srcdoc]="getSafeHtml()"
+          <div class="w-full h-full bg-white flex" [hidden]="playgroundTab() !== 'preview'">
+            <iframe
+              [srcdoc]="safeHtml()"
               sandbox="allow-scripts allow-popups allow-modals"
-              class="sandbox-iframe">
+              class="sandbox-iframe"
+            >
             </iframe>
           </div>
 
           <!-- Code Viewer -->
-          <div class="code-viewport" [hidden]="playgroundTab() !== 'code'">
-            <div class="code-editor-layout">
-              <div class="line-numbers">
-                @for (line of codeLines; track $index) {
-                  <span class="line-no">{{ $index + 1 }}</span>
+          <div
+            class="w-full h-full overflow-auto bg-[#0c0e14] p-4 scrollbar-thin"
+            [hidden]="playgroundTab() !== 'code'"
+          >
+            <div class="flex font-[var(--font-mono)] text-[13px] leading-[1.5] min-h-full">
+              <div
+                class="flex flex-col text-right pr-3 mr-3 border-r border-white/[0.06] text-[var(--text-2)] select-none text-xs leading-[1.5]"
+              >
+                @for (line of codeLines(); track $index) {
+                  <span class="min-h-[19.5px]">{{ $index + 1 }}</span>
                 }
               </div>
-              <pre class="code-pre"><code>{{ extractedCode() }}</code></pre>
+              <pre
+                class="flex-1 m-0 overflow-visible text-[#94a3b8] whitespace-pre-wrap break-all font-[var(--font-mono)]"
+              ><code>{{ extractedCode() }}</code></pre>
             </div>
           </div>
         }

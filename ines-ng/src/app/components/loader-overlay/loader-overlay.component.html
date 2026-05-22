@@ -1,49 +1,114 @@
 @if (visible()) {
-  <div id="loader-overlay">
-    <div class="loader-left">
-      <img src="logo.png" alt="INES Logo" class="loader-logo-img" />
-      @if ( showText() ) {
-        <div class="loader-logo">Intelligent Neural Edge System</div>
+  <div
+    id="loader-overlay"
+    class="fixed inset-0 z-[200] bg-[var(--bg-0)] flex flex-row items-center justify-center gap-[72px] p-10 overflow-y-auto max-lg:flex-col max-lg:gap-8 max-lg:p-8 max-lg:justify-start"
+  >
+    <div
+      class="flex flex-col items-center justify-center gap-5 max-w-[380px] ani-left max-lg:max-w-full max-lg:ani-up"
+    >
+      <img
+        src="logo.png"
+        alt="INES Logo"
+        class="w-[280px] max-w-full h-auto object-contain max-lg:w-[200px]"
+        style="
+          filter: drop-shadow(0 0 35px rgba(99, 179, 255, 0.18));
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        "
+      />
+      @if (showText()) {
+        <div
+          class="font-[var(--font-ui)] font-extrabold text-[32px] -tracking-[0.03em] bg-gradient-to-r from-[var(--accent-blue)] via-[var(--accent-green)] to-[var(--accent-purple)] bg-clip-text text-transparent text-center"
+        >
+          Intelligent Neural Edge System
+        </div>
       }
-      <div class="loader-subtitle">ON-DEVICE · PRIVATE · ZERO CLOUD</div>
+      <div
+        class="text-[var(--text-2)] font-[var(--font-mono)] text-[11px] tracking-[0.08em] text-center opacity-80"
+      >
+        ON-DEVICE · PRIVATE · ZERO CLOUD
+      </div>
     </div>
 
-    <div class="loader-box" style="position: relative;">
-      <app-button variant="ghost" size="sm" (onClick)="close()" className="!absolute top-4 right-4 !w-8 !h-8 !p-0">
+    <div
+      class="bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius)] p-8 px-10 w-full max-w-[520px] flex flex-col gap-[18px] ani-right max-lg:max-w-full max-lg:p-6 max-lg:px-7 max-lg:ani-up relative"
+    >
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="close()"
+        className="!absolute top-4 right-4 !w-8 !h-8 !p-0"
+      >
         <mat-icon fontIcon="close" class="text-lg w-[18px] h-[18px]"></mat-icon>
       </app-button>
-      <h2>Load a local LLM model</h2>
-      <p>
-        This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models
-        completely in the browser via WebGPU — no data sent to external servers.
+      <h2 class="font-[var(--font-ui)] text-[17px] font-semibold text-[var(--text-0)]">
+        Load a local LLM model
+      </h2>
+      <p class="text-[var(--text-1)] text-[13.5px] leading-[1.7]">
+        This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models completely
+        in the browser via WebGPU — no data sent to external servers.
       </p>
 
-      <div class="model-steps">
-        <div class="model-step">
-          <div class="step-num">1</div>
-          <div>Download a compatible model from HuggingFace:
-            <br><a href="https://huggingface.co/litert-community/Gemma3-1B-IT" target="_blank">Gemma-3 1B IT (.task, ~1GB, recommended)</a>
-            <br><a href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm" target="_blank">Gemma-3n E2B (.litertlm, ~2GB, multimodal)</a>
+      <div class="flex flex-col gap-2">
+        <div
+          class="flex items-start gap-2.5 text-[12.5px] text-[var(--text-1)] font-[var(--font-mono)] leading-[1.5]"
+        >
+          <div
+            class="w-5 h-5 border border-[var(--border-active)] rounded-full flex items-center justify-center text-[10px] text-[var(--accent-blue)] shrink-0 mt-px"
+          >
+            1
+          </div>
+          <div>
+            Download a compatible model from HuggingFace: <br /><a
+              href="https://huggingface.co/litert-community/Gemma3-1B-IT"
+              target="_blank"
+              class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
+              >Gemma-3 1B IT (.task, ~1GB, recommended)</a
+            >
+            <br /><a
+              href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm"
+              target="_blank"
+              class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
+              >Gemma-3n E2B (.litertlm, ~2GB, multimodal)</a
+            >
           </div>
         </div>
-        <div class="model-step">
-          <div class="step-num">2</div>
+        <div
+          class="flex items-start gap-2.5 text-[12.5px] text-[var(--text-1)] font-[var(--font-mono)] leading-[1.5]"
+        >
+          <div
+            class="w-5 h-5 border border-[var(--border-active)] rounded-full flex items-center justify-center text-[10px] text-[var(--accent-blue)] shrink-0 mt-px"
+          >
+            2
+          </div>
           <div>Drag and drop the .task or .litertlm file here (stays 100% local)</div>
         </div>
-        <div class="model-step">
-          <div class="step-num">3</div>
+        <div
+          class="flex items-start gap-2.5 text-[12.5px] text-[var(--text-1)] font-[var(--font-mono)] leading-[1.5]"
+        >
+          <div
+            class="w-5 h-5 border border-[var(--border-active)] rounded-full flex items-center justify-center text-[10px] text-[var(--accent-blue)] shrink-0 mt-px"
+          >
+            3
+          </div>
           <div>Requires Chrome/Edge with <strong>WebGPU enabled</strong></div>
         </div>
       </div>
 
-      <div class="file-drop-zone"
-           [class.drag-over]="dragging"
-           (click)="fileInput.click()"
-           (dragover)="$event.preventDefault(); dragging = true"
-           (dragleave)="dragging = false"
-           (drop)="onDrop($event)">
-        <input #fileInput type="file" accept=".task,.litertlm,.bin"
-               style="display:none" (change)="onFileChange($event)">
+      <div
+        class="file-drop-zone p-5 text-center cursor-pointer bg-transparent text-[var(--text-1)] text-[13px]"
+        [class.drag-over]="dragging"
+        (click)="fileInput.click()"
+        (dragover)="$event.preventDefault(); dragging = true"
+        (dragleave)="dragging = false"
+        (drop)="onDrop($event)"
+      >
+        <input
+          #fileInput
+          type="file"
+          accept=".task,.litertlm,.bin"
+          class="hidden"
+          (change)="onFileChange($event)"
+        />
         <div class="flex flex-col items-center gap-2">
           <mat-icon fontIcon="add" class="text-accent-blue text-2xl w-6 h-6"></mat-icon>
           <div>{{ dropText }}</div>
@@ -51,11 +116,13 @@
       </div>
 
       @if (llm.modelStatus() === 'loading' || llm.progress().pct > 0) {
-        <div class="progress-wrap">
+        <div class="flex flex-col gap-2">
           <div class="progress-track">
             <div class="progress-fill" [style.width.%]="llm.progress().pct"></div>
           </div>
-          <div class="progress-text">
+          <div
+            class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)] flex justify-between"
+          >
             <span>{{ llm.progress().label }}</span>
             <span>{{ llm.progress().pct }}%</span>
           </div>

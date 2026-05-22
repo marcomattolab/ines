@@ -1,4 +1,12 @@
-import { Component, signal, inject, viewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +28,15 @@ mermaid.initialize({
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule, ButtonComponent, MessageBubbleComponent],
   templateUrl: './learning-tab.component.html',
-  styleUrl: './learning-tab.css'
+  host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },
+  styles: [
+    `
+      #mermaidContainer svg {
+        max-width: 100%;
+        height: auto;
+      }
+    `,
+  ],
 })
 export class LearningTabComponent implements AfterViewInit, OnDestroy {
   llm = inject(LlmService);
@@ -32,7 +48,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   userInput = signal('');
   messages = signal<ChatMessage[]>([]);
   isGenerating = signal(false);
-  
+
   files = signal<File[]>([]);
   isProcessing = signal(false);
 
@@ -54,24 +70,34 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   selectSubTab(tab: 'chat' | 'mindmap' | 'quiz') {
     this.activeSubTab.set(tab);
-    if (tab === 'mindmap' && this.isMindMapPlaceholder && this.rag.hasContext() && !this.isGenerating()) {
+    if (
+      tab === 'mindmap' &&
+      this.isMindMapPlaceholder &&
+      this.rag.hasContext() &&
+      !this.isGenerating()
+    ) {
       this.generateMindMap();
     }
   }
 
   toggleDockMindMap() {
-    this.showMindMapOnRight.update(d => !d);
-    if (this.showMindMapOnRight() && this.isMindMapPlaceholder && this.rag.hasContext() && !this.isGenerating()) {
+    this.showMindMapOnRight.update((d) => !d);
+    if (
+      this.showMindMapOnRight() &&
+      this.isMindMapPlaceholder &&
+      this.rag.hasContext() &&
+      !this.isGenerating()
+    ) {
       this.generateMindMap();
     }
   }
 
   zoomIn() {
-    this.zoomLevel.update(z => Math.min(2.5, z + 0.15));
+    this.zoomLevel.update((z) => Math.min(2.5, z + 0.15));
   }
 
   zoomOut() {
-    this.zoomLevel.update(z => Math.max(0.4, z - 0.15));
+    this.zoomLevel.update((z) => Math.max(0.4, z - 0.15));
   }
 
   zoomReset() {
@@ -94,7 +120,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         await this.rag.processFile(file);
-        this.files.update(f => [...f, file]);
+        this.files.update((f) => [...f, file]);
       }
       this.isMindMapPlaceholder = true;
       this.toast.success('Documents processed and added to context.');
@@ -117,17 +143,17 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     `;
 
     const userMsg: ChatMessage = { role: 'user', content: text };
-    this.messages.update(m => [...m, userMsg]);
+    this.messages.update((m) => [...m, userMsg]);
     this.userInput.set('');
     this.isGenerating.set(true);
 
     const assistantMsg: ChatMessage = { role: 'assistant', content: '' };
-    this.messages.update(m => [...m, assistantMsg]);
+    this.messages.update((m) => [...m, assistantMsg]);
 
     try {
       const fullPrompt = this.llm.buildPrompt(systemPrompt, text, this.messages().slice(-6, -1));
       await this.llm.generate(fullPrompt, (partial, done, full) => {
-        this.messages.update(msgs => {
+        this.messages.update((msgs) => {
           const newMsgs = [...msgs];
           newMsgs[newMsgs?.length - 1].content = full;
           return newMsgs;
@@ -181,7 +207,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
       if (cleanedContent) {
         tempLines.push({
           indentSize: spaceIndent.length,
-          content: cleanedContent
+          content: cleanedContent,
         });
       }
     }
@@ -191,7 +217,9 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     }
 
     // Get unique indentation sizes sorted ascending
-    const uniqueSizes = Array.from(new Set(tempLines.map(l => l.indentSize))).sort((a, b) => a - b);
+    const uniqueSizes = Array.from(new Set(tempLines.map((l) => l.indentSize))).sort(
+      (a, b) => a - b,
+    );
 
     const processedLines: string[] = ['mindmap'];
     let rootNodeParsed = false;
@@ -224,7 +252,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     const sanitizeText = (text: string) => {
       return text
         .replace(/[()\[\]{}"]/g, '') // Remove parentheses, brackets, curly braces, and quotes
-        .replace(/\\/g, '')          // Remove backslashes
+        .replace(/\\/g, '') // Remove backslashes
         .trim();
     };
 
@@ -302,13 +330,16 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     `;
 
     try {
-      const fullPrompt = this.llm.buildPrompt(systemPrompt, 'Generate a mindmap of the main concepts.');
+      const fullPrompt = this.llm.buildPrompt(
+        systemPrompt,
+        'Generate a mindmap of the main concepts.',
+      );
       const result = await this.llm.generate(fullPrompt, () => {});
       console.log('Raw model mindmap response:', result);
-      
+
       const code = this.cleanMermaidCode(result);
       console.log('Cleaned Mermaid code for rendering:\n', code);
-      
+
       await this.renderMindMap(code);
       this.isMindMapPlaceholder = false;
     } catch (err: any) {
@@ -377,9 +408,12 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     `;
 
     try {
-      const fullPrompt = this.llm.buildPrompt(systemPrompt, `Generate ${numQuestions} quiz questions.`);
+      const fullPrompt = this.llm.buildPrompt(
+        systemPrompt,
+        `Generate ${numQuestions} quiz questions.`,
+      );
       const result = await this.llm.generate(fullPrompt, () => {});
-      
+
       const parsedQuestions = this.parseQuizJson(result);
       if (!parsedQuestions || parsedQuestions.length === 0) {
         throw new Error('No questions could be parsed from the response.');
@@ -388,7 +422,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
       // Enforce exactly numOpts options and exactly 1 correct answer (index 0 to numOpts-1) for all questions
       const normalizedQuestions = parsedQuestions.map((q: any) => {
         const question = q.question || 'No question text provided';
-        
+
         let options = Array.isArray(q.options) ? q.options.filter(Boolean) : [];
         if (options.length < numOpts) {
           while (options.length < numOpts) {
@@ -397,12 +431,12 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
         } else if (options.length > numOpts) {
           options = options.slice(0, numOpts);
         }
-        
+
         let answer = typeof q.answer === 'number' ? q.answer : parseInt(q.answer, 10);
         if (isNaN(answer) || answer < 0 || answer >= numOpts) {
           answer = 0;
         }
-        
+
         return { question, options, answer };
       });
 
@@ -420,19 +454,19 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   private parseQuizJson(text: string): any[] {
     text = text.trim();
-    
+
     // 1. Remove markdown code blocks if present
     const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
     let cleaned = codeBlockMatch ? codeBlockMatch[1] : text;
     cleaned = cleaned.trim();
-    
+
     // 2. Find the outermost [ and ]
     const startIdx = cleaned.indexOf('[');
     const endIdx = cleaned.lastIndexOf(']');
     if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
       cleaned = cleaned.substring(startIdx, endIdx + 1);
     }
-    
+
     try {
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
@@ -444,13 +478,14 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
     // 3. Fallback: Parse using regex to extract object fields if JSON is slightly malformed
     const questions: any[] = [];
-    const objectRegex = /\{\s*"question"\s*:\s*"([\s\S]*?)"\s*,\s*"options"\s*:\s*\[\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*\]\s*,\s*"answer"\s*:\s*(\d)\s*\}/gi;
+    const objectRegex =
+      /\{\s*"question"\s*:\s*"([\s\S]*?)"\s*,\s*"options"\s*:\s*\[\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*\]\s*,\s*"answer"\s*:\s*(\d)\s*\}/gi;
     let match;
     while ((match = objectRegex.exec(cleaned)) !== null) {
       questions.push({
         question: match[1].trim(),
         options: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()],
-        answer: parseInt(match[6], 10)
+        answer: parseInt(match[6], 10),
       });
     }
 
@@ -462,12 +497,15 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     const textQuestions: any[] = [];
     const blocks = text.split(/\n\s*\n/);
     for (const block of blocks) {
-      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = block
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
       if (lines.length >= 5) {
         let questionText = '';
         const options: string[] = [];
         let answerIndex = 0;
-        
+
         for (const line of lines) {
           if (/^\d+\.?\s*(.*)/.test(line)) {
             questionText = line.replace(/^\d+\.?\s*/, '');
@@ -478,12 +516,12 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
             answerIndex = ['A', 'B', 'C', 'D'].indexOf(ansChar || 'A');
           }
         }
-        
+
         if (questionText && options.length >= 4) {
           textQuestions.push({
             question: questionText,
             options: options.slice(0, 4),
-            answer: answerIndex >= 0 ? answerIndex : 0
+            answer: answerIndex >= 0 ? answerIndex : 0,
           });
         }
       }
@@ -493,7 +531,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   selectAnswer(index: number) {
-    this.selectedAnswers.update(arr => {
+    this.selectedAnswers.update((arr) => {
       const copy = [...arr];
       copy[this.currentQuizIndex()] = index;
       return copy;
@@ -502,31 +540,31 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   submitEntireQuiz() {
     this.stopQuizTimer();
-    
+
     // Calculate score
     let score = 0;
     const questions = this.quizQuestions();
     const selections = this.selectedAnswers();
-    
+
     for (let i = 0; i < questions.length; i++) {
       if (selections[i] === questions[i].answer) {
         score++;
       }
     }
-    
+
     this.quizScore.set(score);
     this.showQuizResults.set(true);
   }
 
   prevQuestion() {
     if (this.currentQuizIndex() > 0) {
-      this.currentQuizIndex.update(i => i - 1);
+      this.currentQuizIndex.update((i) => i - 1);
     }
   }
 
   nextQuestion() {
     if (this.currentQuizIndex() < this.quizQuestions().length - 1) {
-      this.currentQuizIndex.update(i => i + 1);
+      this.currentQuizIndex.update((i) => i + 1);
     }
   }
 
@@ -538,12 +576,12 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   startQuizTimer() {
     this.stopQuizTimer();
-    
+
     const minutes = Math.max(1, Math.min(60, Number(this.quizTimerDuration()) || 5));
     this.quizSecondsLeft.set(minutes * 60);
-    
+
     this.timerIntervalId = setInterval(() => {
-      this.quizSecondsLeft.update(sec => {
+      this.quizSecondsLeft.update((sec) => {
         if (sec <= 1) {
           this.stopQuizTimer();
           this.submitEntireQuiz();
@@ -567,11 +605,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   decrementQuestions() {
-    this.numQuizQuestions.update(n => Math.max(1, n - 1));
+    this.numQuizQuestions.update((n) => Math.max(1, n - 1));
   }
 
   incrementQuestions() {
-    this.numQuizQuestions.update(n => Math.min(15, n + 1));
+    this.numQuizQuestions.update((n) => Math.min(15, n + 1));
   }
 
   setQuestions(val: any) {
@@ -582,11 +620,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   decrementTimer() {
-    this.quizTimerDuration.update(t => Math.max(1, t - 1));
+    this.quizTimerDuration.update((t) => Math.max(1, t - 1));
   }
 
   incrementTimer() {
-    this.quizTimerDuration.update(t => Math.min(60, t + 1));
+    this.quizTimerDuration.update((t) => Math.min(60, t + 1));
   }
 
   setTimer(val: any) {
@@ -597,11 +635,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   decrementOptions() {
-    this.numQuizOptions.update(o => Math.max(2, o - 1));
+    this.numQuizOptions.update((o) => Math.max(2, o - 1));
   }
 
   incrementOptions() {
-    this.numQuizOptions.update(o => Math.min(6, o + 1));
+    this.numQuizOptions.update((o) => Math.min(6, o + 1));
   }
 
   setOptions(val: any) {

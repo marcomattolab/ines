@@ -28,19 +28,19 @@ export class RagService {
     }
 
     const newChunks = this.chunkText(text, file.name);
-    this.chunks.update(prev => [...prev, ...newChunks]);
+    this.chunks.update((prev) => [...prev, ...newChunks]);
   }
 
   private async extractTextFromPdf(file: File): Promise<string> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ 
+      const pdf = await pdfjsLib.getDocument({
         data: arrayBuffer,
         // Add these options to help with worker loading
         useSystemFonts: true,
-        disableFontFace: false
+        disableFontFace: false,
       }).promise;
-      
+
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -62,19 +62,24 @@ export class RagService {
     return doc.body.innerText || '';
   }
 
-  private chunkText(text: string, source: string, chunkSize: number = 256, overlap: number = 32): DocumentChunk[] {
+  private chunkText(
+    text: string,
+    source: string,
+    chunkSize: number = 256,
+    overlap: number = 32,
+  ): DocumentChunk[] {
     const words = text.split(/\s+/);
     const chunks: DocumentChunk[] = [];
-    
-    for (let i = 0; i < words.length; i += (chunkSize - overlap)) {
+
+    for (let i = 0; i < words.length; i += chunkSize - overlap) {
       const chunkWords = words.slice(i, i + chunkSize);
       chunks.push({
         text: chunkWords.join(' '),
-        source: source
+        source: source,
       });
       if (i + chunkSize >= words.length) break;
     }
-    
+
     return chunks;
   }
 
@@ -83,12 +88,15 @@ export class RagService {
     if (allChunks.length === 0) return '';
 
     // Simple keyword-based ranking for now
-    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    
-    const scoredChunks = allChunks.map(chunk => {
+    const queryWords = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+
+    const scoredChunks = allChunks.map((chunk) => {
       let score = 0;
       const chunkTextLower = chunk.text.toLowerCase();
-      queryWords.forEach(word => {
+      queryWords.forEach((word) => {
         if (chunkTextLower.includes(word)) score++;
       });
       return { chunk, score };
@@ -107,7 +115,7 @@ export class RagService {
       resultChunks.push(item.chunk.text);
       wordCount += chunkWords;
     }
-    
+
     return resultChunks.join('\n\n---\n\n');
   }
 

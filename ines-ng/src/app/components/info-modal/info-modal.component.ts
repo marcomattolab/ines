@@ -7,7 +7,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   standalone: true,
   imports: [MatIcon, ButtonComponent],
   templateUrl: './info-modal.component.html',
-  styleUrl: './info-modal.css'
+  styleUrl: './info-modal.css',
 })
 export class InfoModalComponent {
   visible = input<boolean>(false);

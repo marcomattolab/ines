@@ -20,7 +20,7 @@ export class SpeechService {
     const cleanText = this.stripMarkdownAndHtml(text);
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    
+
     console.log('langOrName: ', langOrName);
     if (langOrName) {
       const locale = this.getLanguageCode(langOrName);
@@ -28,10 +28,22 @@ export class SpeechService {
 
       // Try to find a premium native voice for this locale
       const voices = this.synth.getVoices();
-      const matchedVoice = voices.find(v => 
-        (v.lang.toLowerCase() === locale.toLowerCase() || v.lang.toLowerCase().startsWith(locale.split('-')[0].toLowerCase())) &&
-        (v.name.toLowerCase().includes('natural') || v.name.toLowerCase().includes('premium') || v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('siri') || v.name.toLowerCase().includes('microsoft'))
-      ) || voices.find(v => v.lang.toLowerCase() === locale.toLowerCase() || v.lang.toLowerCase().startsWith(locale.split('-')[0].toLowerCase()));
+      const matchedVoice =
+        voices.find(
+          (v) =>
+            (v.lang.toLowerCase() === locale.toLowerCase() ||
+              v.lang.toLowerCase().startsWith(locale.split('-')[0].toLowerCase())) &&
+            (v.name.toLowerCase().includes('natural') ||
+              v.name.toLowerCase().includes('premium') ||
+              v.name.toLowerCase().includes('google') ||
+              v.name.toLowerCase().includes('siri') ||
+              v.name.toLowerCase().includes('microsoft')),
+        ) ||
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase() === locale.toLowerCase() ||
+            v.lang.toLowerCase().startsWith(locale.split('-')[0].toLowerCase()),
+        );
 
       if (matchedVoice) {
         utterance.voice = matchedVoice;
@@ -40,7 +52,7 @@ export class SpeechService {
 
     utterance.onend = () => this.handleSpeechEnd(id);
     utterance.onerror = () => this.handleSpeechEnd(id);
-    
+
     this.currentUtterance = utterance;
     this.synth.speak(utterance);
   }
@@ -71,44 +83,44 @@ export class SpeechService {
 
   private getLanguageCode(lang: string): string {
     const maps: Record<string, string> = {
-      'italian': 'it-IT',
+      italian: 'it-IT',
       'it-it': 'it-IT',
-      'english': 'en-US',
+      english: 'en-US',
       'en-us': 'en-US',
-      'french': 'fr-FR',
+      french: 'fr-FR',
       'fr-fr': 'fr-FR',
-      'german': 'de-DE',
+      german: 'de-DE',
       'de-de': 'de-DE',
-      'spanish': 'es-ES',
+      spanish: 'es-ES',
       'es-es': 'es-ES',
-      'portuguese': 'pt-PT',
+      portuguese: 'pt-PT',
       'pt-pt': 'pt-PT',
-      'chinese': 'zh-CN',
+      chinese: 'zh-CN',
       'zh-cn': 'zh-CN',
-      'japanese': 'ja-JP',
+      japanese: 'ja-JP',
       'ja-jp': 'ja-JP',
-      'arabic': 'ar-SA',
+      arabic: 'ar-SA',
       'ar-sa': 'ar-SA',
-      'russian': 'ru-RU',
+      russian: 'ru-RU',
       'ru-ru': 'ru-RU',
     };
-    
+
     return maps[lang.toLowerCase()] || lang;
   }
 
   private stripMarkdownAndHtml(text: string): string {
     if (!text) return '';
     // Strip HTML elements
-    let result = text.replace(/<\/?[^>]+(>|$)/g, "");
-    
+    let result = text.replace(/<\/?[^>]+(>|$)/g, '');
+
     // Strip common code blocks
-    result = result.replace(/```[\s\S]*?```/g, "[Code block omitted]");
-    
+    result = result.replace(/```[\s\S]*?```/g, '[Code block omitted]');
+
     // Strip other markdown syntaxes like **bold** or *italic*
-    result = result.replace(/\*\*([^*]+)\*\*/g, "$1");
-    result = result.replace(/\*([^*]+)\*/g, "$1");
-    result = result.replace(/`([^`]+)`/g, "$1");
-    
+    result = result.replace(/\*\*([^*]+)\*\*/g, '$1');
+    result = result.replace(/\*([^*]+)\*/g, '$1');
+    result = result.replace(/`([^`]+)`/g, '$1');
+
     return result;
   }
 }

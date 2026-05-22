@@ -1,56 +1,74 @@
 <app-status-bar (openLoader)="overlayOpen.set(true)" (openInfo)="infoOpen.set(true)" />
 
-    <app-loader-overlay
-      [visible]="overlayOpen()"
-      (closed)="overlayOpen.set(false)" />
+<app-loader-overlay [visible]="overlayOpen()" (closed)="overlayOpen.set(false)" />
 
-    <app-info-modal
-      [visible]="infoOpen()"
-      (closed)="infoOpen.set(false)" />
+<app-info-modal [visible]="infoOpen()" (closed)="infoOpen.set(false)" />
 
-    <div id="app">
-      <!-- Sidebar -->
-      <nav id="sidebar">
-        @for (tab of tabs; track tab.id) {
-          <button class="tab-btn"
-            [class.active]="activeTab() === tab.id"
-            [style.--tab-color]="tab.color"
-            (click)="activeTab.set(tab.id)">
-            <span class="tab-icon">
-               <mat-icon [fontIcon]="tab.icon" style="width: 20px; height: 20px; font-size: 20px;"></mat-icon>
-            </span>
-            <span class="tab-label">{{ tab.label }}</span>
-          </button>
-        }
-        <div class="sidebar-spacer"></div>
-      </nav>
-
-      <!-- Main panels -->
-      <main id="main">
-        <app-chat-tab [hidden]="activeTab() !== 'chat'" />
-        <app-email-tab [hidden]="activeTab() !== 'email'" />
-        <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
-        <app-translate-tab [hidden]="activeTab() !== 'translate'" />
-        <app-todo-tab [hidden]="activeTab() !== 'todo'" />
-        <app-coding-tab [hidden]="activeTab() !== 'coding'" />
-        <app-learning-tab [hidden]="activeTab() !== 'learning'" />
-      </main>
-    </div>
-
-    <!-- App Footer -->
-    <footer id="app-footer">
-      <div class="footer-left">
-        <span class="status-indicator">
-          <span class="status-dot"></span>
+<div id="app">
+  <!-- Sidebar -->
+  <nav id="sidebar" class="flex flex-col items-center py-4 gap-2 shrink-0 z-10">
+    @for (tab of tabs; track tab.id) {
+      <button
+        class="tab-btn cursor-pointer text-[var(--text-2)] flex flex-col items-center justify-center gap-1 relative shrink-0"
+        [class.active]="activeTab() === tab.id"
+        [style.--tab-color]="tab.color"
+        (click)="activeTab.set(tab.id)"
+      >
+        <span class="tab-icon inline-flex items-center justify-center">
+          <mat-icon
+            [fontIcon]="tab.icon"
+            style="width: 20px; height: 20px; font-size: 20px"
+          ></mat-icon>
         </span>
-        <span>INES · Intelligent Neural Edge System</span>
-      </div>
-      <div class="footer-right">
-        <span>Powered by <a href="https://marcomartorana.it/about/" target="_blank">Marco Martorana</a> © 2026</span>
-      </div>
-    </footer>
-
-    <!-- Toast notifications -->
-    @for (t of toast.toasts(); track t.id) {
-      <div class="toast">{{ t.msg }}</div>
+        <span
+          class="font-[var(--font-ui)] text-[8.5px] font-bold tracking-[0.04em] uppercase leading-none"
+          >{{ tab.label }}</span
+        >
+      </button>
     }
+    <div class="flex-1"></div>
+  </nav>
+
+  <!-- Main panels -->
+  <main id="main">
+    <app-chat-tab [hidden]="activeTab() !== 'chat'" />
+    <app-email-tab [hidden]="activeTab() !== 'email'" />
+    <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
+    <app-translate-tab [hidden]="activeTab() !== 'translate'" />
+    <app-todo-tab [hidden]="activeTab() !== 'todo'" />
+    <app-coding-tab [hidden]="activeTab() !== 'coding'" />
+    <app-learning-tab [hidden]="activeTab() !== 'learning'" />
+  </main>
+</div>
+
+<!-- App Footer -->
+<footer
+  id="app-footer"
+  class="flex items-center justify-between px-6 font-[var(--font-mono)] text-[11px] text-[var(--text-2)] tracking-[0.04em]"
+>
+  <div class="flex items-center gap-2">
+    <span
+      class="flex items-center justify-center w-[7px] h-[7px] bg-[var(--accent-green)] rounded-full relative"
+    >
+      <span class="status-dot"></span>
+    </span>
+    <span>INES · Intelligent Neural Edge System</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span
+      >Powered by
+      <a
+        href="https://marcomartorana.it/about/"
+        target="_blank"
+        class="text-[var(--text-1)] no-underline hover:text-[var(--accent-blue)] hover:underline hover:shadow-[0_0_5px_rgba(99,179,255,0.4)]"
+        >Marco Martorana</a
+      >
+      © 2026</span
+    >
+  </div>
+</footer>
+
+<!-- Toast notifications -->
+@for (t of toast.toasts(); track t.id) {
+  <div class="toast">{{ t.msg }}</div>
+}

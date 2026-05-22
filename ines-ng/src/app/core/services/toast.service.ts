@@ -12,8 +12,8 @@ export class ToastService {
 
   show(msg: string, durationMs = 2800): void {
     const id = ++this.next;
-    this.toasts.update(t => [...t, { id, msg }]);
-    setTimeout(() => this.toasts.update(t => t.filter(x => x.id !== id)), durationMs);
+    this.toasts.update((t) => [...t, { id, msg }]);
+    setTimeout(() => this.toasts.update((t) => t.filter((x) => x.id !== id)), durationMs);
   }
 
   success(msg: string, durationMs = 2800): void {

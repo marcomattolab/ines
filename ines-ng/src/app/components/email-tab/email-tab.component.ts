@@ -15,7 +15,7 @@ Use the language of the original text.`;
   standalone: true,
   imports: [FormsModule, MatIconModule, ButtonComponent],
   templateUrl: './email-tab.component.html',
-  styleUrl: './email-tab.css',
+  host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class EmailTabComponent {
   readonly emailInputRef = viewChild.required<ElementRef<HTMLTextAreaElement>>('emailInput');

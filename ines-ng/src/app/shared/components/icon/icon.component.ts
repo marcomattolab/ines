@@ -7,15 +7,16 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <mat-icon 
-      [fontIcon]="iconName()" 
+    <mat-icon
+      [fontIcon]="iconName()"
       [style.width.px]="sizeNumber()"
       [style.height.px]="sizeNumber()"
       [style.font-size.px]="sizeNumber()"
       [style.color]="color()"
-      [class]="className()">
+      [class]="className()"
+    >
     </mat-icon>
-  `
+  `,
 })
 export class IconComponent {
   readonly name = input<string>('home');
@@ -27,26 +28,26 @@ export class IconComponent {
   // Map icon names from your original Lucide icons to Material icons
   readonly iconName = computed(() => {
     const iconMap: Record<string, string> = {
-      'house': 'home',
+      house: 'home',
       'message-square': 'chat',
-      'mail': 'email',
-      'mic': 'mic',
-      'languages': 'translate',
+      mail: 'email',
+      mic: 'mic',
+      languages: 'translate',
       'check-square': 'check_box',
-      'code': 'code',
-      'school': 'school',
-      'settings': 'settings',
+      code: 'code',
+      school: 'school',
+      settings: 'settings',
       'loader-2': 'hourglass_empty',
       'alert-circle': 'error',
       'check-circle-2': 'check_circle',
-      'send': 'send',
+      send: 'send',
       'trash-2': 'delete',
-      'copy': 'content_copy',
-      'plus': 'add',
+      copy: 'content_copy',
+      plus: 'add',
       'refresh-cw': 'refresh',
-      'x': 'close'
+      x: 'close',
     };
-    
+
     return iconMap[this.name()] || this.name();
   });
 

@@ -1,4 +1,12 @@
-import { Component, inject, signal, ElementRef, AfterViewChecked, viewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  ElementRef,
+  AfterViewChecked,
+  viewChild,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
@@ -42,6 +50,7 @@ Keep explanations extremely brief and let your premium code speak for itself. Al
   standalone: true,
   imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
   templateUrl: './coding-tab.component.html',
+  host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './coding-tab.css',
 })
 export class CodingTabComponent implements AfterViewChecked {
@@ -72,6 +81,8 @@ export class CodingTabComponent implements AfterViewChecked {
 
   rightPanelWidth = signal<number>(window.innerWidth * 0.58);
   inputAreaHeight = signal<number>(85);
+  readonly codeLines = computed(() => this.extractedCode().split('\n'));
+  readonly safeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.extractedCode()));
   private isResizing = false;
   private isHResizing = false;
 
@@ -201,14 +212,6 @@ export class CodingTabComponent implements AfterViewChecked {
     if (streamMatch) {
       this.extractedCode.set(streamMatch[1].trim());
     }
-  }
-
-  getSafeHtml(): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.extractedCode());
-  }
-
-  get codeLines(): string[] {
-    return this.extractedCode().split('\n');
   }
 
   copyCode() {

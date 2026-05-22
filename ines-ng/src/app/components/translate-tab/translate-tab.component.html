@@ -1,70 +1,117 @@
-<div class="tab-panel-inner">
+<div class="flex flex-col flex-1 overflow-hidden">
   <div class="panel-header">
     <div>
       <div class="panel-title">
-        <mat-icon fontIcon="translate" class="text-accent-amber text-lg w-[18px] h-[18px]"></mat-icon>
+        <mat-icon
+          fontIcon="translate"
+          class="text-accent-amber text-lg w-[18px] h-[18px]"
+        ></mat-icon>
         Translator
       </div>
       <div class="panel-desc">Translate text between any language — completely offline</div>
     </div>
   </div>
 
-  <div class="translate-pair">
-    <div class="translate-side">
-      <div class="translate-lang-bar">
-        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [value]="fromLang()" (change)="fromLang.set($any($event.target).value)">
+  <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div
+        class="flex items-center gap-2.5 px-4 py-[10px] shrink-0 border-b border-[var(--border)]"
+      >
+        <select
+          class="pill-select flex-1 min-w-0 w-0"
+          [value]="fromLang()"
+          (change)="fromLang.set($any($event.target).value)"
+        >
           <option value="auto">🔍 Auto-detect language</option>
           @for (lang of languages; track lang.value) {
             <option [value]="lang.value">{{ lang.label }}</option>
           }
         </select>
-        <app-button 
-          variant="ghost" 
-          size="sm" [disabled]="!inputText().trim()" 
-          (onClick)="toggleSpeakSource()" 
-          className="!w-8 !h-8 !p-0" 
-          [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'">
-          <mat-icon [fontIcon]="isSourceSpeaking() ? 'close' : 'volume_up'" 
-                    class="text-sm w-3.5 h-3.5" 
-                    [class.text-accent-amber]="isSourceSpeaking()"></mat-icon>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!inputText().trim()"
+          (onClick)="toggleSpeakSource()"
+          className="!w-8 !h-8 !p-0"
+          [attr.title]="isSourceSpeaking() ? 'Stop Reading' : 'Listen to Source Text'"
+        >
+          <mat-icon
+            [fontIcon]="isSourceSpeaking() ? 'close' : 'volume_up'"
+            class="text-sm w-3.5 h-3.5"
+            [class.text-accent-amber]="isSourceSpeaking()"
+          ></mat-icon>
         </app-button>
       </div>
-      <textarea class="translate-textarea"
+      <textarea
+        class="flex-1 bg-transparent border-none p-4 text-[var(--text-0)] font-[var(--font-body)] text-[15px] leading-[1.7] resize-none outline-none scrollbar-thin placeholder:text-[var(--text-2)]"
         placeholder="Text to translate..."
         [value]="inputText()"
-        (input)="onInput($any($event.target).value)"></textarea>
+        (input)="onInput($any($event.target).value)"
+      ></textarea>
     </div>
 
-    <div class="translate-side">
-      <div class="translate-lang-bar">
-        <app-button variant="ghost" size="sm" (onClick)="swap()" className="!w-8 !h-8 !p-0" title="Swap languages">
+    <div class="flex flex-col flex-1 overflow-hidden border-l border-[var(--border)]">
+      <div
+        class="flex items-center gap-2.5 px-4 py-[10px] shrink-0 border-b border-[var(--border)]"
+      >
+        <app-button
+          variant="ghost"
+          size="sm"
+          (onClick)="swap()"
+          className="!w-8 !h-8 !p-0"
+          title="Swap languages"
+        >
           <mat-icon fontIcon="swap_horiz" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
-        <select class="pill-select" style="flex: 1; min-width: 0; width: 0;" [value]="toLang()" (change)="toLang.set($any($event.target).value)">
+        <select
+          class="pill-select flex-1 min-w-0 w-0"
+          [value]="toLang()"
+          (change)="toLang.set($any($event.target).value)"
+        >
           @for (lang of languages; track lang.value) {
             <option [value]="lang.value">{{ lang.label }}</option>
           }
         </select>
-        <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="toggleSpeakResult()" className="!w-8 !h-8 !p-0" [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'">
-          <mat-icon [fontIcon]="isResultSpeaking() ? 'close' : 'volume_up'" 
-                    class="text-sm w-3.5 h-3.5" 
-                    [class.text-accent-amber]="isResultSpeaking()"></mat-icon>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!result().trim()"
+          (onClick)="toggleSpeakResult()"
+          className="!w-8 !h-8 !p-0"
+          [attr.title]="isResultSpeaking() ? 'Stop Reading' : 'Listen to Translation'"
+        >
+          <mat-icon
+            [fontIcon]="isResultSpeaking() ? 'close' : 'volume_up'"
+            class="text-sm w-3.5 h-3.5"
+            [class.text-accent-amber]="isResultSpeaking()"
+          ></mat-icon>
         </app-button>
-        <app-button variant="ghost" size="sm" [disabled]="!result().trim()" (onClick)="copy()" className="!w-8 !h-8 !p-0" title="Copy to Clipboard">
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!result().trim()"
+          (onClick)="copy()"
+          className="!w-8 !h-8 !p-0"
+          title="Copy to Clipboard"
+        >
           <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
       </div>
-      <div class="translate-result-area">
+      <div
+        class="flex-1 overflow-y-auto p-4 text-[15px] leading-[1.7] text-[var(--text-0)] whitespace-pre-wrap font-[var(--font-body)] scrollbar-thin"
+      >
         @if (result()) {
           <span [class.cursor-blink]="translating()" [innerHTML]="resultHtml()"></span>
         } @else {
-          <span style="color:var(--text-2)">The translation will appear here...</span>
+          <span style="color: var(--text-2)">The translation will appear here...</span>
         }
       </div>
     </div>
   </div>
 
-  <div class="translate-bar">
+  <div
+    class="flex gap-2.5 items-center px-[22px] py-3 border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0"
+  >
     <app-button variant="primary" (onClick)="translate()">
       <mat-icon fontIcon="translate" class="text-sm w-3.5 h-3.5"></mat-icon>
       Translate

@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
         <ng-content></ng-content>
       </div>
     </div>
-  `
+  `,
 })
 export class CardComponent {
   readonly title = input<string | undefined>(undefined);

@@ -28,13 +28,13 @@ export class LlmService {
 
     try {
       // Dynamic CDN import at runtime — Function() bypasses TS static analysis
-      const mediapipe = await (new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'
-      ));
+      const mediapipe = await new Function('url', 'return import(url)')(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
+      );
       const { FilesetResolver, LlmInference } = mediapipe;
 
       const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
       );
       this.setProgress(40, 'WASM ready. Reading file into memory...');
 
@@ -53,13 +53,19 @@ export class LlmService {
       try {
         await this.saveModelToCache(file.name, modelBuffer);
       } catch (cacheErr) {
-        console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
+        console.warn(
+          'Failed to cache model in IndexedDB (likely quota limit in incognito):',
+          cacheErr,
+        );
       }
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
       } catch (e) {
-        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+        console.warn(
+          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
+          e,
+        );
       }
 
       this.setProgress(100, 'Model ready!');
@@ -78,13 +84,13 @@ export class LlmService {
 
     try {
       // Dynamic CDN import at runtime — Function() bypasses TS static analysis
-      const mediapipe = await (new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'
-      ));
+      const mediapipe = await new Function('url', 'return import(url)')(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
+      );
       const { FilesetResolver, LlmInference } = mediapipe;
 
       const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
       );
       this.setProgress(10, 'WASM ready. Fetching model file...');
 
@@ -111,7 +117,10 @@ export class LlmService {
           loaded += value.length;
           if (total) {
             const pct = Math.floor((loaded / total) * 50); // Download is 0-50%
-            this.setProgress(pct + 10, `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`);
+            this.setProgress(
+              pct + 10,
+              `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`,
+            );
           } else {
             this.setProgress(30, `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`);
           }
@@ -139,15 +148,20 @@ export class LlmService {
       try {
         await this.saveModelToCache(fileName, modelBuffer.buffer);
       } catch (cacheErr) {
-        console.warn('Failed to cache model in IndexedDB (likely quota limit in incognito):', cacheErr);
+        console.warn(
+          'Failed to cache model in IndexedDB (likely quota limit in incognito):',
+          cacheErr,
+        );
       }
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
       } catch (e) {
-        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+        console.warn(
+          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
+          e,
+        );
       }
-
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
@@ -161,7 +175,7 @@ export class LlmService {
 
   generate(
     prompt: string,
-    onToken: (partial: string, done: boolean, full: string) => void
+    onToken: (partial: string, done: boolean, full: string) => void,
   ): Promise<string> {
     if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
     return new Promise((resolve) => {
@@ -195,13 +209,13 @@ export class LlmService {
     this.setProgress(10, 'Found cached model. Initializing WASM...');
 
     try {
-      const mediapipe = await (new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'
-      ));
+      const mediapipe = await new Function('url', 'return import(url)')(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
+      );
       const { FilesetResolver, LlmInference } = mediapipe;
 
       const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm'
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
       );
       this.setProgress(40, 'WASM ready. Loading cached model into GPU...');
 
@@ -216,7 +230,10 @@ export class LlmService {
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
       } catch (e) {
-        console.warn('Failed to cache model in sessionStorage (likely quota limit in incognito):', e);
+        console.warn(
+          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
+          e,
+        );
       }
 
       this.setProgress(100, 'Model ready!');

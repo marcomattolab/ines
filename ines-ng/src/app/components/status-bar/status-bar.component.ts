@@ -8,7 +8,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   standalone: true,
   imports: [MatIcon, ButtonComponent],
   templateUrl: './status-bar.component.html',
-  styleUrl: './status-bar.css'
+  styleUrl: './status-bar.css',
 })
 export class StatusBarComponent {
   llm = inject(LlmService);

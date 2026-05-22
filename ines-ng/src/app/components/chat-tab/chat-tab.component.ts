@@ -22,7 +22,7 @@ Don't mention that you're an open-source AI model unless asked.`;
   standalone: true,
   imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
   templateUrl: './chat-tab.component.html',
-  styleUrl: './chat-tab.css',
+  host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class ChatTabComponent implements AfterViewChecked {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');

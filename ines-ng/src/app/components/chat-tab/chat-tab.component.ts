@@ -45,12 +45,27 @@ export class ChatTabComponent implements AfterViewChecked {
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
+  showScrollBtn = signal(false);
 
   ngAfterViewChecked() {
     if (this.shouldScroll) {
       const el = this.chatArea()?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
       this.shouldScroll = false;
+    }
+  }
+
+  onScroll() {
+    const el = this.chatArea()?.nativeElement;
+    if (!el) return;
+    this.showScrollBtn.set(el.scrollHeight - el.scrollTop - el.clientHeight > 100);
+  }
+
+  scrollToBottom() {
+    const el = this.chatArea()?.nativeElement;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+      this.showScrollBtn.set(false);
     }
   }
 

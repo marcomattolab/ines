@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TodoService } from '../../core/services/todo.service';
@@ -43,7 +43,7 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './todo-tab.css',
 })
-export class TodoTabComponent {
+export class TodoTabComponent implements OnDestroy {
   todoSvc = inject(TodoService);
   llm = inject(LlmService);
   toast = inject(ToastService);
@@ -159,7 +159,7 @@ export class TodoTabComponent {
     };
 
     this.recognition.onend = () => {
-      if (this.recording()) this.recognition.start();
+      if (this.recording() && this.recognition) this.recognition.start();
     };
 
     this.recognition.start();
@@ -178,19 +178,17 @@ export class TodoTabComponent {
 
   stopRecording() {
     if (this.recognition) {
+      this.recording.set(false);
       this.recognition.stop();
       this.recognition = null;
+    } else {
+      this.recording.set(false);
     }
-    this.recording.set(false);
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
     this.timerText.set('');
-  }
-
-  ngOnDestroy() {
-    this.stopRecording();
   }
 
   async generate(textarea: HTMLTextAreaElement) {
@@ -255,6 +253,16 @@ export class TodoTabComponent {
           msg.id === typingId ? { ...msg, typing: false, text: '❌ ' + e.message } : msg,
         ),
       );
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopResize();
+    this.stopHResize();
+    if (this.recognition) {
+      try {
+        this.recognition.abort();
+      } catch (_) {}
     }
   }
 }

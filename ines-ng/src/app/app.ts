@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
@@ -103,5 +103,20 @@ export class AppComponent implements OnInit {
     // No session fallback, wait for manual upload
     this.llm.modelStatus.set('idle');
     this.llm.modelName.set('No model loaded');
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboard(e: KeyboardEvent) {
+    if (e.ctrlKey || e.metaKey) {
+      const idx = parseInt(e.key, 10);
+      if (idx >= 1 && idx <= this.tabs.length) {
+        e.preventDefault();
+        this.activeTab.set(this.tabs[idx - 1].id);
+      }
+    }
+    if (e.key === 'Escape') {
+      if (this.infoOpen()) this.infoOpen.set(false);
+      if (this.overlayOpen()) this.overlayOpen.set(false);
+    }
   }
 }

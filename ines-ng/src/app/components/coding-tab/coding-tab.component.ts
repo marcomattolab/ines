@@ -5,6 +5,7 @@ import {
   computed,
   ElementRef,
   AfterViewChecked,
+  OnDestroy,
   viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -53,7 +54,7 @@ Keep explanations extremely brief and let your premium code speak for itself. Al
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './coding-tab.css',
 })
-export class CodingTabComponent implements AfterViewChecked {
+export class CodingTabComponent implements AfterViewChecked, OnDestroy {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
@@ -75,16 +76,39 @@ export class CodingTabComponent implements AfterViewChecked {
   extractedCode = signal<string>('');
   playgroundTab = signal<'code' | 'preview'>('preview');
 
-  private history: ChatMessage[] = [];
-  private nextId = 1;
-  private shouldScroll = false;
-
   rightPanelWidth = signal<number>(window.innerWidth * 0.58);
   inputAreaHeight = signal<number>(85);
   readonly codeLines = computed(() => this.extractedCode().split('\n'));
   readonly safeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.extractedCode()));
   private isResizing = false;
   private isHResizing = false;
+
+  private history: ChatMessage[] = [];
+  private nextId = 1;
+  private shouldScroll = false;
+  showScrollBtn = signal(false);
+
+  ngAfterViewChecked() {
+    if (this.shouldScroll) {
+      const el = this.chatArea()?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+      this.shouldScroll = false;
+    }
+  }
+
+  onScroll() {
+    const el = this.chatArea()?.nativeElement;
+    if (!el) return;
+    this.showScrollBtn.set(el.scrollHeight - el.scrollTop - el.clientHeight > 100);
+  }
+
+  scrollToBottom() {
+    const el = this.chatArea()?.nativeElement;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+      this.showScrollBtn.set(false);
+    }
+  }
 
   startResize(e: MouseEvent) {
     this.isResizing = true;
@@ -127,14 +151,6 @@ export class CodingTabComponent implements AfterViewChecked {
     document.removeEventListener('mousemove', this.doHResize);
     document.removeEventListener('mouseup', this.stopHResize);
   };
-
-  ngAfterViewChecked() {
-    if (this.shouldScroll) {
-      const el = this.chatArea()?.nativeElement;
-      if (el) el.scrollTop = el.scrollHeight;
-      this.shouldScroll = false;
-    }
-  }
 
   onKey(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -241,5 +257,10 @@ export class CodingTabComponent implements AfterViewChecked {
     ]);
     this.tokenInfo.set('');
     this.extractedCode.set('');
+  }
+
+  ngOnDestroy() {
+    this.stopResize();
+    this.stopHResize();
   }
 }

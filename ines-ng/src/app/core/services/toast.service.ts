@@ -23,4 +23,8 @@ export class ToastService {
   error(msg: string, durationMs = 4000): void {
     this.show(`❌ ${msg}`, durationMs);
   }
+
+  dismiss(id: number): void {
+    this.toasts.update((t) => t.filter((x) => x.id !== id));
+  }
 }

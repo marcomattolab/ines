@@ -35,7 +35,7 @@ export class ButtonComponent {
         'bg-white/10 hover:bg-white/20 text-white border border-white/10 focus:ring-white/20',
       danger:
         'bg-accent-rose/10 hover:bg-accent-rose/20 text-accent-rose border border-accent-rose/30 focus:ring-accent-rose',
-      ghost: 'bg-transparent hover:bg-white/5 text-text-1 focus:ring-white/10',
+      ghost: 'bg-transparent hover:bg-white/5 text-[var(--text-1)] focus:ring-white/10',
     };
 
     const sizeClasses = {

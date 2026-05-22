@@ -21,7 +21,7 @@
       class="flex-1 min-w-[360px] bg-[rgba(13,16,23,0.45)] flex flex-col overflow-hidden shadow-[4px_0_20px_rgba(0,0,0,0.15)]"
     >
       <!-- Message Stream -->
-      <div class="chat-area" #chatArea>
+      <div class="chat-area" #chatArea (scroll)="onScroll()">
         @for (msg of messages(); track msg.id) {
           <app-message-bubble
             [role]="msg.role"
@@ -31,6 +31,11 @@
         }
         @if (typing()) {
           <app-typing-indicator />
+        }
+        @if (showScrollBtn()) {
+          <button class="scroll-btn" (click)="scrollToBottom()">
+            <mat-icon fontIcon="keyboard_arrow_down"></mat-icon>
+          </button>
         }
       </div>
 

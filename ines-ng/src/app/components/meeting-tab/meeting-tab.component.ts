@@ -85,7 +85,7 @@ export class MeetingTabComponent implements OnDestroy {
     };
 
     this.recognition.onend = () => {
-      if (this.recording()) this.recognition.start();
+      if (this.recording() && this.recognition) this.recognition.start();
     };
 
     this.recognition.start();
@@ -104,10 +104,12 @@ export class MeetingTabComponent implements OnDestroy {
 
   stopRecording() {
     if (this.recognition) {
+      this.recording.set(false);
       this.recognition.stop();
       this.recognition = null;
+    } else {
+      this.recording.set(false);
     }
-    this.recording.set(false);
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;

@@ -13,7 +13,7 @@
     </app-button>
   </div>
 
-  <div class="chat-area" #chatArea>
+  <div class="chat-area" #chatArea (scroll)="onScroll()">
     @for (msg of messages(); track msg.id) {
       @if (msg.role === 'ai' && msg.streaming) {
         <div class="message ai">
@@ -29,6 +29,11 @@
         <div class="msg-avatar">Ines</div>
         <div class="msg-bubble"><app-typing-indicator /></div>
       </div>
+    }
+    @if (showScrollBtn()) {
+      <button class="scroll-btn" (click)="scrollToBottom()">
+        <mat-icon fontIcon="keyboard_arrow_down"></mat-icon>
+      </button>
     }
   </div>
 

@@ -69,6 +69,11 @@
 </footer>
 
 <!-- Toast notifications -->
-@for (t of toast.toasts(); track t.id) {
-  <div class="toast">{{ t.msg }}</div>
-}
+<div id="toast-container">
+  @for (t of toast.toasts(); track t.id) {
+    <div class="toast">
+      <span class="toast-msg">{{ t.msg }}</span>
+      <button class="toast-close" (click)="toast.dismiss(t.id)">&times;</button>
+    </div>
+  }
+</div>

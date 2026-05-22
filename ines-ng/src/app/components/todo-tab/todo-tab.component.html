@@ -12,7 +12,7 @@
     </div>
     <div class="flex items-center gap-2">
       <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]"
-        >{{ todoSvc.doneCount }}/{{ todoSvc.total }} completed</span
+        >{{ todoSvc.doneCount() }}/{{ todoSvc.total() }} completed</span
       >
       <app-button variant="danger" size="sm" (onClick)="todoSvc.clearDone()">
         <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
@@ -40,7 +40,7 @@
             <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
           </div>
         }
-        @for (todo of todoSvc.todos(); track $index) {
+        @for (todo of todoSvc.todos(); track todo.id) {
           <div
             class="todo-item flex items-start gap-2.5 p-[10px] px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-2)] transition-all hover:border-white/10 [&.done]:opacity-45 [&.done_.todo-text]:line-through [&.done_.todo-text]:text-[var(--text-2)]"
             [class.done]="todo.done"

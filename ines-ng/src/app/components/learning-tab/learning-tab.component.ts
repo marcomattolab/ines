@@ -186,7 +186,8 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     this.messages.update((m) => [...m, assistantMsg]);
 
     try {
-      const fullPrompt = this.llm.buildPrompt(systemPrompt, text, this.messages().slice(-6, -1));
+      const trimmed = this.llm.trimConversation(systemPrompt, text, this.messages().slice(-6, -1));
+      const fullPrompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
       await this.llm.generate(fullPrompt, (partial, done, full) => {
         this.messages.update((msgs) => {
           const newMsgs = [...msgs];
@@ -196,7 +197,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
         if (done) this.isGenerating.set(false);
       });
     } catch (err: any) {
-      this.toast.error(err.message);
+      this.toast.error(
+        err.message?.includes('INVALID_ARGUMENT')
+          ? '⚠️ Conversation too long for this model. Try clearing older messages.'
+          : err.message,
+      );
       this.isGenerating.set(false);
     }
   }

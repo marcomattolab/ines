@@ -27,7 +27,6 @@ export class LlmService {
     this.setProgress(10, 'Initializing WASM runtime...');
 
     try {
-      // Dynamic CDN import at runtime — Function() bypasses TS static analysis
       const mediapipe = await new Function('url', 'return import(url)')(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
       );
@@ -36,42 +35,55 @@ export class LlmService {
       const genai = await FilesetResolver.forGenAiTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
       );
-      this.setProgress(40, 'WASM ready. Reading file into memory...');
+      this.setProgress(40, 'WASM ready. Loading model into GPU...');
 
-      const modelBuffer = await file.arrayBuffer();
-      this.setProgress(60, 'Loading model into GPU (30–90 s)...');
+      const maxBufferSize = 800 * 1024 * 1024;
+      let loadedViaBuffer = false;
 
-      this.llm = await LlmInference.createFromOptions(genai, {
-        baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
-        maxTokens: 8192,
-        topK: 40,
-        temperature: 0.8,
-        randomSeed: 101,
-      });
+      if (file.size <= maxBufferSize) {
+        try {
+          const modelBuffer = await file.arrayBuffer();
+          this.setProgress(60, 'Loading model into GPU (30–90 s)...');
+          this.llm = await LlmInference.createFromOptions(genai, {
+            baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
+            maxTokens: 8192,
+            topK: 40,
+            temperature: 0.8,
+            randomSeed: 101,
+          });
+          loadedViaBuffer = true;
 
-      this.setProgress(80, 'Caching model in browser storage...');
-      try {
-        await this.saveModelToCache(file.name, modelBuffer);
-      } catch (cacheErr) {
-        console.warn(
-          'Failed to cache model in IndexedDB (likely quota limit in incognito):',
-          cacheErr,
-        );
+          try {
+            await this.saveModelToCache(file.name, modelBuffer);
+          } catch (cacheErr) {
+            console.warn('Failed to cache model in IndexedDB:', cacheErr);
+          }
+        } catch {
+          console.warn('arrayBuffer failed, falling back to blob URL');
+        }
+      }
+
+      if (!loadedViaBuffer) {
+        this.setProgress(60, 'Streaming model into GPU...');
+        const blobUrl = URL.createObjectURL(file);
+        try {
+          this.llm = await LlmInference.createFromModelPath(genai, blobUrl);
+        } finally {
+          URL.revokeObjectURL(blobUrl);
+        }
       }
 
       try {
         sessionStorage.setItem('model_loaded_previously', 'true');
       } catch (e) {
-        console.warn(
-          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
-          e,
-        );
+        console.warn('Failed to cache model in sessionStorage:', e);
       }
 
       this.setProgress(100, 'Model ready!');
       this.modelStatus.set('ready');
       this.modelName.set(file.name.replace(/\.(task|litertlm|bin)$/, ''));
     } catch (err: any) {
+      console.error('Model load error:', err);
       this.modelStatus.set('error');
       this.modelName.set('Error: ' + (err?.message ?? err));
       throw err;
@@ -173,18 +185,54 @@ export class LlmService {
     }
   }
 
+  readonly modelMaxTokens = signal(8192);
+
+  static estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
+  }
+
+  trimConversation(
+    system: string,
+    userMsg: string,
+    history: ChatMessage[],
+    maxTotalTokens = 384,
+    reserveOutput = 128,
+  ): ChatMessage[] {
+    const maxInputTokens = maxTotalTokens - reserveOutput;
+    const systemTokens = LlmService.estimateTokens(system);
+    const userTokens = LlmService.estimateTokens(userMsg);
+    let budget = maxInputTokens - systemTokens - userTokens;
+    if (budget <= 0) return [];
+    const trimmed: ChatMessage[] = [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      const msg = history[i];
+      const tokens = LlmService.estimateTokens(msg.content);
+      if (tokens <= budget) {
+        trimmed.unshift(msg);
+        budget -= tokens;
+      } else {
+        break;
+      }
+    }
+    return trimmed;
+  }
+
   generate(
     prompt: string,
     onToken: (partial: string, done: boolean, full: string) => void,
   ): Promise<string> {
     if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let full = '';
-      this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
-        full += partial;
-        onToken(partial, done, full);
-        if (done) resolve(full);
-      });
+      try {
+        this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
+          full += partial;
+          onToken(partial, done, full);
+          if (done) resolve(full);
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 

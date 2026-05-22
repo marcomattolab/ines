@@ -167,7 +167,8 @@ export class CodingTabComponent implements AfterViewChecked {
     this.typing.set(true);
     this.shouldScroll = true;
 
-    const prompt = this.llm.buildPrompt(SYSTEM_CODING, text, this.history.slice(-6, -1));
+    const trimmed = this.llm.trimConversation(SYSTEM_CODING, text, this.history.slice(-6, -1));
+    const prompt = this.llm.buildPrompt(SYSTEM_CODING, text, trimmed);
     const aiId = this.nextId++;
 
     try {
@@ -193,10 +194,10 @@ export class CodingTabComponent implements AfterViewChecked {
       this.tokenInfo.set(`${this.history.length} messages in history`);
     } catch (e: any) {
       this.typing.set(false);
-      this.messages.update((m) => [
-        ...m,
-        { id: this.nextId++, role: 'ai', text: '❌ ' + e.message },
-      ]);
+      const msg = e.message?.includes('INVALID_ARGUMENT')
+        ? '⚠️ The conversation is too long for this model. I cleared older messages — try asking again.'
+        : '❌ ' + e.message;
+      this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
     }
 
     this.generating.set(false);

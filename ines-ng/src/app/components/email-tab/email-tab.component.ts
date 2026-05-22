@@ -1,4 +1,4 @@
-import { Component, inject, signal, ElementRef, viewChild } from '@angular/core';
+import { Component, inject, signal, ElementRef, viewChild, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
@@ -27,6 +27,45 @@ export class EmailTabComponent {
   action = signal('improve');
   result = signal('');
   processing = signal(false);
+
+  readonly toneOptions = [
+    { value: 'professional', label: 'Professional', icon: 'badge' },
+    { value: 'friendly', label: 'Friendly', icon: 'sentiment_satisfied' },
+    { value: 'assertive', label: 'Assertive', icon: 'flash_on' },
+    { value: 'formal', label: 'Formal', icon: 'description' },
+    { value: 'concise', label: 'Short and Concise', icon: 'short_text' },
+  ];
+
+  readonly actionOptions = [
+    { value: 'improve', label: 'Improve', icon: 'auto_fix_high' },
+    { value: 'fix', label: 'Fix grammar', icon: 'spellcheck' },
+    { value: 'shorten', label: 'Shorten', icon: 'content_cut' },
+    { value: 'formal', label: 'Formal', icon: 'badge' },
+    { value: 'reply', label: 'Reply', icon: 'reply' },
+    { value: 'summary', label: 'Summary', icon: 'summarize' },
+  ];
+
+  toneOpen = signal(false);
+  actionOpen = signal(false);
+
+  getToneIcon(): string {
+    return this.toneOptions.find((t) => t.value === this.tone())?.icon ?? 'badge';
+  }
+  getToneLabel(): string {
+    return this.toneOptions.find((t) => t.value === this.tone())?.label ?? '';
+  }
+  getActionIcon(): string {
+    return this.actionOptions.find((a) => a.value === this.action())?.icon ?? 'auto_fix_high';
+  }
+  getActionLabel(): string {
+    return this.actionOptions.find((a) => a.value === this.action())?.label ?? '';
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.toneOpen.set(false);
+    this.actionOpen.set(false);
+  }
 
   resultHtml() {
     return this.result()

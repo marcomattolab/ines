@@ -3,10 +3,8 @@ import {
   inject,
   signal,
   computed,
-  Signal,
   viewChild,
   ElementRef,
-  AfterViewInit,
   OnDestroy,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -29,17 +27,18 @@ const SYSTEM_PPT = `You are a professional presentation designer. Generate a com
 
 RULES:
 - Output ONLY valid HTML (no markdown fences, no explanations).
-- Use <section class="slide"> for each slide.
+- Use <section class="slide"> for each slide. Each slide must have a data-slide-number attribute starting at 1.
 - Include all CSS in a <style> tag inside the HTML.
-- Include JS for keyboard navigation (ArrowLeft/ArrowRight), dot indicators, and page numbers.
-- Each slide must have a data-slide-number attribute.
+- Include JS for keyboard navigation (ArrowLeft/ArrowRight), dot indicators showing the current slide, and page numbers in the bottom-right corner.
 - Design must be modern, dark-themed, with glassmorphism effects.
 - Use the colors specified in the branding variables below.
 - Include the logo text, author, and contact info on appropriate slides.
 - Make it responsive and professional.
 - Slide 1 = Title slide with logo, title, author.
-- Last slide = Thank you / contact slide with the contact info.
+- Last slide = Thank you / contact slide with contact info.
 - Total slides: 8-12 depending on content depth.
+- Every slide must have visible content inside the section element.
+- The first visible element in each slide must have meaningful text content.
 
 Branding to embed:
 - Logo: {LOGO}
@@ -59,7 +58,7 @@ Topic: {TOPIC}`;
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './presentation-tab.component.css',
 })
-export class PresentationTabComponent implements AfterViewInit, OnDestroy {
+export class PresentationTabComponent implements OnDestroy {
   private sanitizer = inject(DomSanitizer);
   llm = inject(LlmService);
   toast = inject(ToastService);
@@ -79,40 +78,15 @@ export class PresentationTabComponent implements AfterViewInit, OnDestroy {
   colorTheme = signal<ColorTheme>('professional');
   customPrimary = signal('#3b82f6');
 
-  readonly safeHtml: Signal<SafeHtml> = computed(() =>
-    this.sanitizer.bypassSecurityTrustHtml(this.generatedHtml()),
-  );
+  readonly safeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.generatedHtml()));
 
-  private resizeHandler: (() => void) | null = null;
   private isResizing = false;
 
   readonly themeColors = COLOR_THEMES;
   readonly themes: ColorTheme[] = ['professional', 'ocean', 'forest', 'sunset', 'monochrome'];
 
-  ngAfterViewInit() {
-    this.syncIframeHeight();
-  }
-
   ngOnDestroy() {
     this.removeResizeListeners();
-  }
-
-  private syncIframeHeight() {
-    const iframe = this.previewFrame()?.nativeElement;
-    if (!iframe) return;
-    const sync = () => {
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (doc?.body) {
-          const h = doc.body.scrollHeight;
-          if (h > 0 && iframe.style.height !== h + 'px') {
-            iframe.style.height = h + 'px';
-          }
-        }
-      } catch (_) {}
-    };
-    iframe.addEventListener('load', sync);
-    this.resizeHandler = sync;
   }
 
   async generate() {
@@ -178,11 +152,6 @@ export class PresentationTabComponent implements AfterViewInit, OnDestroy {
     this.generating.set(false);
   }
 
-  getPreviewHtml(): SafeHtml {
-    if (!this.generatedHtml()) return '';
-    return this.safeHtml();
-  }
-
   prevSlide() {
     this.currentSlide.update((c) => Math.max(1, c - 1));
     this.postSlideCommand();
@@ -246,10 +215,5 @@ export class PresentationTabComponent implements AfterViewInit, OnDestroy {
   private removeResizeListeners() {
     document.removeEventListener('mousemove', this.doResize);
     document.removeEventListener('mouseup', this.stopResize);
-  }
-
-  onIframeKeydown(e: KeyboardEvent) {
-    if (e.key === 'ArrowLeft') this.prevSlide();
-    if (e.key === 'ArrowRight') this.nextSlide();
   }
 }

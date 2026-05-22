@@ -20,7 +20,6 @@
         placeholder="Describe the presentation you want... e.g. 'Create a presentation about the future of quantum computing with 10 slides'"
         [value]="prompt()"
         (input)="prompt.set($any($event.target).value)"
-        (keydown)="onIframeKeydown($event)"
       ></textarea>
 
       <app-button
@@ -121,6 +120,11 @@
         <span class="text-[var(--text-2)] font-[var(--font-mono)] text-[11px]">
           Slide {{ currentSlide() }} / {{ slideCount() || '—' }}
         </span>
+        @if (generating()) {
+          <span class="text-accent-amber font-[var(--font-mono)] text-[11px] animate-pulse">
+            generating...
+          </span>
+        }
       </div>
       <div class="flex items-center gap-1.5">
         <app-button
@@ -155,7 +159,7 @@
     </div>
 
     <div class="preview-area">
-      @if (!generatedHtml()) {
+      @if (!generatedHtml() && !generating()) {
         <div class="empty-state">
           <mat-icon
             fontIcon="auto_stories"
@@ -167,14 +171,13 @@
             Describe the topic, customize your branding, and click Generate to create a slide deck.
           </div>
         </div>
-      } @else {
-        <iframe
-          #previewFrame
-          class="preview-iframe"
-          [srcdoc]="getPreviewHtml()"
-          sandbox="allow-scripts"
-        ></iframe>
       }
+      <iframe
+        #previewFrame
+        class="preview-iframe"
+        [srcdoc]="safeHtml()"
+        sandbox="allow-scripts"
+      ></iframe>
     </div>
   </div>
 </div>

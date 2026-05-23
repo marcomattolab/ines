@@ -10,7 +10,6 @@ import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.compon
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { CodingTabComponent } from './components/coding-tab/coding-tab.component';
-import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { VisionTabComponent } from './components/vision-tab/vision-tab.component';
 import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';

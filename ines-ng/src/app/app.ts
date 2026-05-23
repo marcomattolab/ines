@@ -10,6 +10,7 @@ import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.compon
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { CodingTabComponent } from './components/coding-tab/coding-tab.component';
+import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
@@ -21,6 +22,7 @@ type Tab =
   | 'translate'
   | 'todo'
   | 'coding'
+  | 'agents'
   | 'learning'
   | 'presentation';
 
@@ -38,6 +40,7 @@ const TABS: TabDef[] = [
   { id: 'translate', icon: 'languages', label: 'Translate', color: 'var(--tab-translate)' },
   { id: 'todo', icon: 'check-square', label: 'Todo', color: 'var(--tab-todo)' },
   { id: 'coding', icon: 'code', label: 'Code', color: 'var(--tab-coding)' },
+  { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'learning', icon: 'school', label: 'Learning', color: 'var(--tab-learning)' },
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
 ];
@@ -55,6 +58,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
+    AgentsTabComponent,
     PresentationTabComponent,
     LearningTabComponent,
     MatIconModule,

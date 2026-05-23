@@ -1,0 +1,154 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon fontIcon="visibility" class="text-accent-rose w-[18px] h-[18px] text-[18px]"></mat-icon>
+        Vision Assistant
+      </div>
+      <div class="panel-desc">Real-time Emotion & Gesture analysis on-device</div>
+    </div>
+    <app-button
+      [variant]="vision.isRunning() ? 'danger' : 'primary'"
+      [disabled]="isInitializing()"
+      (onClick)="toggleVision()"
+    >
+      <mat-icon [fontIcon]="vision.isRunning() ? 'videocam_off' : 'videocam'"></mat-icon>
+      {{ vision.isRunning() ? 'Stop Vision' : 'Start Vision' }}
+    </app-button>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden">
+    <!-- Camera Preview Card -->
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="relative flex-1 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center">
+        @if (!vision.isRunning()) {
+          <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
+            <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
+            <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Camera Offline</p>
+          </div>
+        }
+        <video
+          #videoEl
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          [class.opacity-0]="!vision.isRunning()"
+          autoplay
+          playsinline
+        ></video>
+
+        <!-- Overlays -->
+        @if (vision.isRunning()) {
+           <div class="absolute top-4 left-4 flex gap-2">
+             <div class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2">
+               <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
+               <span class="text-[10px] font-bold uppercase tracking-tighter">Live Inference</span>
+             </div>
+           </div>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-blue\/10]="adaptiveMode()"
+          [class.border-accent-blue\/30]="adaptiveMode()"
+          [class.border-white\/10]="!adaptiveMode()"
+          [class.bg-white\/5]="!adaptiveMode()"
+          (click)="adaptiveMode.set(!adaptiveMode())"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-blue/20 flex items-center justify-center">
+              <mat-icon fontIcon="face" class="text-accent-blue"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Emotion Adaptive</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Adjusts agent behavior</div>
+            </div>
+          </div>
+          <div class="w-4 h-4 rounded-full border-2 border-accent-blue flex items-center justify-center">
+            @if (adaptiveMode()) { <div class="w-2 h-2 bg-accent-blue rounded-full"></div> }
+          </div>
+        </div>
+
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-purple\/10]="gestureControl()"
+          [class.border-accent-purple\/30]="gestureControl()"
+          [class.border-white\/10]="!gestureControl()"
+          [class.bg-white\/5]="!gestureControl()"
+          (click)="gestureControl.set(!gestureControl())"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center">
+              <mat-icon fontIcon="back_hand" class="text-accent-purple"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Gesture Control</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Hands-free commands</div>
+            </div>
+          </div>
+          <div class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center">
+            @if (gestureControl()) { <div class="w-2 h-2 bg-accent-purple rounded-full"></div> }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Sidebar -->
+    <aside class="w-80 flex flex-col gap-4 overflow-y-auto">
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Real-time Analysis</h3>
+
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Detected Emotion</span>
+              <span class="text-accent-blue">{{ vision.isRunning() ? vision.emotion() : '--' }}</span>
+            </div>
+            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+               <div class="h-full bg-accent-blue transition-all duration-500" [style.width]="vision.isRunning() ? '100%' : '0%'"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Detected Gesture</span>
+              <span class="text-accent-purple">{{ vision.isRunning() ? vision.gesture() : '--' }}</span>
+            </div>
+            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+               <div class="h-full bg-accent-purple transition-all duration-500" [style.width]="vision.isRunning() ? '100%' : '0%'"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Detected Faces</span>
+              <span class="text-accent-green">{{ vision.isRunning() ? vision.faceCount() : '--' }}</span>
+            </div>
+            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+               <div class="h-full bg-accent-green transition-all duration-500" [style.width]="vision.isRunning() ? (vision.faceCount() * 20) + '%' : '0%'"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 flex-1 flex flex-col min-h-0">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Event Log</h3>
+        <div class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+           @for (n of notifications(); track n.id) {
+             <div class="flex items-start gap-3 p-2 rounded-lg bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-4 duration-300">
+               <mat-icon [fontIcon]="n.icon" class="text-sm w-4 h-4 mt-0.5" [class]="'text-accent-' + n.type"></mat-icon>
+               <div class="flex-1 min-w-0">
+                 <div class="text-[11px] leading-tight text-[var(--text-1)]">{{ n.msg }}</div>
+                 <div class="text-[9px] font-mono text-[var(--text-2)] mt-1 opacity-60">{{ n.time }}</div>
+               </div>
+             </div>
+           } @empty {
+             <div class="text-xs font-mono text-[var(--text-2)] italic opacity-50 p-2">Waiting for vision events...</div>
+           }
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

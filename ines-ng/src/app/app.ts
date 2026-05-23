@@ -25,7 +25,6 @@ type Tab =
   | 'coding'
   | 'agents'
   | 'vision'
-  | 'agents'
   | 'learning'
   | 'presentation';
 
@@ -45,7 +44,6 @@ const TABS: TabDef[] = [
   { id: 'coding', icon: 'code', label: 'Code', color: 'var(--tab-coding)' },
   { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'vision', icon: 'visibility', label: 'Vision', color: 'var(--tab-vision)' },
-  { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'learning', icon: 'school', label: 'Learning', color: 'var(--tab-learning)' },
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
 ];

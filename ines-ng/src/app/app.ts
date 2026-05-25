@@ -61,8 +61,6 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
-    AgentsTabComponent,
-    VisionTabComponent,
     PresentationTabComponent,
     LearningTabComponent,
     MatIconModule,

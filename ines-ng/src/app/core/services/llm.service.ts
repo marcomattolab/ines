@@ -249,6 +249,41 @@ export class LlmService {
     this.progress.set({ pct, label });
   }
 
+  async hasCachedModel(): Promise<boolean> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readonly');
+      const store = tx.objectStore('models');
+      const request = store.get('cached_model');
+      return new Promise((resolve) => {
+        request.onsuccess = () => resolve(!!request.result);
+        request.onerror = () => resolve(false);
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  async clearModelCache(): Promise<void> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readwrite');
+      const store = tx.objectStore('models');
+      store.delete('cached_model');
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => {
+          try {
+            sessionStorage.removeItem('model_loaded_previously');
+          } catch {}
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
   async initModelFromCache(): Promise<boolean> {
     const cached = await this.getCachedModel();
     if (!cached) return false;

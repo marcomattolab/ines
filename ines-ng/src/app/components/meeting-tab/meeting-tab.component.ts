@@ -152,6 +152,38 @@ export class MeetingTabComponent implements OnDestroy {
     navigator.clipboard.writeText(text).then(() => this.toast.show('📋 Copied!'));
   }
 
+  exportSummary(fmt: 'md' | 'txt') {
+    const text = this.summary().replace(/ ▋$/, '');
+    if (!text.trim()) {
+      this.toast.show('⚠️ No summary to export');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const transcript = this.transcript().replace(/ ▋$/, '');
+    const lines = [
+      fmt === 'md' ? '# Meeting Summary' : 'MEETING SUMMARY',
+      fmt === 'md' ? '' : '———————',
+      `Date: ${new Date().toLocaleString()}`,
+      '',
+      fmt === 'md' ? '## Summary' : 'SUMMARY:',
+      text,
+      '',
+      fmt === 'md' ? '---' : '———————',
+      fmt === 'md' ? '## Full Transcript' : 'FULL TRANSCRIPT:',
+      transcript || '(no transcript)',
+      '',
+      fmt === 'md' ? '_Exported from INES_' : 'Exported from INES',
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meeting-summary-${ts}.${fmt}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toast.show(`📄 Exported as .${fmt}`);
+  }
+
   ngOnDestroy() {
     this.stopRecording();
   }

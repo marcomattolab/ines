@@ -86,6 +86,26 @@
           >
             <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
           </app-button>
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!summary().trim()"
+            (onClick)="exportSummary('md')"
+            className="!w-8 !h-8 !p-0"
+            title="Export as .md"
+          >
+            <mat-icon fontIcon="description" class="text-sm w-3.5 h-3.5"></mat-icon>
+          </app-button>
+          <app-button
+            variant="ghost"
+            size="sm"
+            [disabled]="!summary().trim()"
+            (onClick)="exportSummary('txt')"
+            className="!w-8 !h-8 !p-0"
+            title="Export as .txt"
+          >
+            <mat-icon fontIcon="text_snippet" class="text-sm w-3.5 h-3.5"></mat-icon>
+          </app-button>
         </div>
       </div>
       <div

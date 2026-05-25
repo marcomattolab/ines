@@ -1,4 +1,12 @@
-import { Component, inject, signal, ElementRef, AfterViewChecked, viewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  ElementRef,
+  AfterViewChecked,
+  viewChild,
+  OnInit,
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -17,6 +25,15 @@ const SYSTEM_CHAT = `You're a general AI assistant, helpful, precise, and friend
 Respond concisely but completely. Use the same language as the user.
 Don't mention that you're an open-source AI model unless asked.`;
 
+const CHAT_STORAGE_KEY = 'ines_chat_history';
+const MAX_STORED_MESSAGES = 50;
+
+interface StoredChat {
+  messages: { id: number; role: 'user' | 'ai'; text: string }[];
+  history: ChatMessage[];
+  nextId: number;
+}
+
 @Component({
   selector: 'app-chat-tab',
   standalone: true,
@@ -24,7 +41,7 @@ Don't mention that you're an open-source AI model unless asked.`;
   templateUrl: './chat-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
-export class ChatTabComponent implements AfterViewChecked {
+export class ChatTabComponent implements AfterViewChecked, OnInit {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
@@ -46,6 +63,37 @@ export class ChatTabComponent implements AfterViewChecked {
   private nextId = 1;
   private shouldScroll = false;
   showScrollBtn = signal(false);
+
+  ngOnInit() {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const stored: StoredChat = JSON.parse(raw);
+      if (!stored.messages?.length) return;
+      this.messages.set(stored.messages.map((m) => ({ ...m, streaming: false })));
+      this.history = stored.history ?? [];
+      this.nextId = stored.nextId ?? this.messages().length + 1;
+      this.tokenInfo.set(`${this.history.length} messages in history`);
+    } catch {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+    }
+  }
+
+  private persist() {
+    try {
+      const msgs = this.messages()
+        .slice(-MAX_STORED_MESSAGES)
+        .map(({ streaming, ...rest }) => rest);
+      const stored: StoredChat = {
+        messages: msgs,
+        history: this.history.slice(-MAX_STORED_MESSAGES),
+        nextId: this.nextId,
+      };
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(stored));
+    } catch {
+      // localStorage full or unavailable
+    }
+  }
 
   ngAfterViewChecked() {
     if (this.shouldScroll) {
@@ -123,6 +171,7 @@ export class ChatTabComponent implements AfterViewChecked {
       });
       this.history.push({ role: 'assistant', content: full });
       this.tokenInfo.set(`${this.history.length} messages in history`);
+      this.persist();
     } catch (e: any) {
       this.typing.set(false);
       const msg = e.message?.includes('INVALID_ARGUMENT')
@@ -138,6 +187,7 @@ export class ChatTabComponent implements AfterViewChecked {
     this.history = [];
     this.messages.set([{ id: this.nextId++, role: 'ai', text: 'Chat cleaned. Can I help you?' }]);
     this.tokenInfo.set('');
+    localStorage.removeItem(CHAT_STORAGE_KEY);
   }
 
   html(text: string) {

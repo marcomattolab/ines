@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -11,7 +11,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   templateUrl: './loader-overlay.component.html',
   styleUrl: './loader-overlay.css',
 })
-export class LoaderOverlayComponent {
+export class LoaderOverlayComponent implements OnInit {
   visible = input<boolean>(true);
   closed = output<void>();
 
@@ -21,9 +21,24 @@ export class LoaderOverlayComponent {
   showText = signal<boolean>(false);
   dragging = false;
   dropText = 'Drag and drop the model file here or click to select';
+  cachedModelAvailable = signal(false);
+
+  async ngOnInit() {
+    this.cachedModelAvailable.set(await this.llm.hasCachedModel());
+  }
 
   close() {
     this.closed.emit();
+  }
+
+  async clearCached() {
+    try {
+      await this.llm.clearModelCache();
+      this.cachedModelAvailable.set(false);
+      this.toast.show('🗑️ Cached model cleared');
+    } catch {
+      this.toast.show('❌ Failed to clear model cache');
+    }
   }
 
   onDrop(e: DragEvent) {

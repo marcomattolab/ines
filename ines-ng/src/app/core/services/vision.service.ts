@@ -7,6 +7,7 @@ export type DetectedGesture = 'None' | 'Open_Palm' | 'Closed_Fist' | 'Thumbs_Up'
 export class VisionService {
   readonly emotion = signal<DetectedEmotion>('Neutral');
   readonly gesture = signal<DetectedGesture>('None');
+  readonly faceCount = signal(0);
   readonly isRunning = signal(false);
 
   private video: HTMLVideoElement | null = null;
@@ -34,7 +35,7 @@ export class VisionService {
         },
         outputFaceBlendshapes: true,
         runningMode: "VIDEO",
-        numFaces: 1
+        numFaces: 5
       });
 
       this.gestureRecognizer = await GestureRecognizer.createFromOptions(filesetResolver, {
@@ -83,6 +84,8 @@ export class VisionService {
 
     // Face Landmarker
     const faceResults = this.faceLandmarker.detectForVideo(this.video, startTimeMs);
+    this.faceCount.set(faceResults.faceLandmarks ? faceResults.faceLandmarks.length : 0);
+
     if (faceResults.faceBlendshapes && faceResults.faceBlendshapes.length > 0) {
       this.processEmotions(faceResults.faceBlendshapes[0].categories);
     }

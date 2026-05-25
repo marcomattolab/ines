@@ -120,19 +120,32 @@
                <div class="h-full bg-accent-purple transition-all duration-500" [style.width]="vision.isRunning() ? '100%' : '0%'"></div>
             </div>
           </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Detected Faces</span>
+              <span class="text-accent-green">{{ vision.isRunning() ? vision.faceCount() : '--' }}</span>
+            </div>
+            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+               <div class="h-full bg-accent-green transition-all duration-500" [style.width]="vision.isRunning() ? (vision.faceCount() * 20) + '%' : '0%'"></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 flex-1">
-        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Vision Log</h3>
-        <div class="text-xs font-mono text-[var(--text-2)] space-y-2">
-           @if (vision.isRunning()) {
-             <div class="text-accent-green">> MediaPipe Vision Engine initialized</div>
-             <div class="text-accent-blue">> Webcam stream active at 640x480</div>
-             @if (adaptiveMode()) { <div>> Emotion tracking active...</div> }
-             @if (gestureControl()) { <div>> Gesture recognizer listening...</div> }
-           } @else {
-             <div class="italic">Engine idle. Start vision to begin.</div>
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 flex-1 flex flex-col min-h-0">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Event Log</h3>
+        <div class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+           @for (n of notifications(); track n.id) {
+             <div class="flex items-start gap-3 p-2 rounded-lg bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-4 duration-300">
+               <mat-icon [fontIcon]="n.icon" class="text-sm w-4 h-4 mt-0.5" [class]="'text-accent-' + n.type"></mat-icon>
+               <div class="flex-1 min-w-0">
+                 <div class="text-[11px] leading-tight text-[var(--text-1)]">{{ n.msg }}</div>
+                 <div class="text-[9px] font-mono text-[var(--text-2)] mt-1 opacity-60">{{ n.time }}</div>
+               </div>
+             </div>
+           } @empty {
+             <div class="text-xs font-mono text-[var(--text-2)] italic opacity-50 p-2">Waiting for vision events...</div>
            }
         </div>
       </div>

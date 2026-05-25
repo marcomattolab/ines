@@ -24,21 +24,23 @@ export class VisionTabComponent implements OnDestroy {
   isInitializing = signal(false);
   adaptiveMode = signal(false);
   gestureControl = signal(false);
+  notifications = signal<{ id: number; icon: string; msg: string; type: string; time: string }[]>([]);
 
   private lastGesture = 'None';
+  private lastFaceCount = 0;
+  private nextNotifyId = 1;
 
   constructor() {
     // Gesture Logic Effect
     effect(() => {
       if (!this.gestureControl()) return;
       const g = this.vision.gesture();
-      if (g !== this.lastGesture) {
-        if (g === 'Open_Palm') {
-          this.toast.show('✋ Gesture detected: Open Palm (Pause Command)');
-        } else if (g === 'Thumbs_Up') {
-          this.toast.show('👍 Gesture detected: Thumbs Up (Approval)');
-        }
+      if (g !== 'None' && g !== this.lastGesture) {
+        const icons: any = { Open_Palm: 'back_hand', Thumbs_Up: 'thumb_up', Thumbs_Down: 'thumb_down' };
+        this.addNotification(icons[g] || 'gesture', `Gesture detected: ${g.replace('_', ' ')}`, 'purple');
         this.lastGesture = g;
+      } else if (g === 'None') {
+        this.lastGesture = 'None';
       }
     });
 
@@ -46,12 +48,27 @@ export class VisionTabComponent implements OnDestroy {
     effect(() => {
       if (!this.adaptiveMode()) return;
       const e = this.vision.emotion();
-      if (e === 'Thinking') {
-        this.toast.show('🤔 You look like you are thinking. Should I provide more detailed explanations?');
-      } else if (e === 'Surprised') {
-        this.toast.show('😲 Something surprised you? Need more context?');
+      if (e !== 'Neutral') {
+        const icons: any = { Thinking: 'psychology', Surprised: 'priority_high', Happy: 'sentiment_very_satisfied', Sad: 'sentiment_very_dissatisfied' };
+        this.addNotification(icons[e] || 'face', `Emotion sensed: ${e}`, 'blue');
       }
     });
+
+    // Face Count Effect
+    effect(() => {
+      const count = this.vision.faceCount();
+      if (count !== this.lastFaceCount) {
+        if (count > this.lastFaceCount) {
+          this.addNotification('group', `${count} face(s) in view`, 'green');
+        }
+        this.lastFaceCount = count;
+      }
+    });
+  }
+
+  private addNotification(icon: string, msg: string, type: string) {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    this.notifications.update(n => [{ id: this.nextNotifyId++, icon, msg, type, time }, ...n].slice(0, 50));
   }
 
   async toggleVision() {

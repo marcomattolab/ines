@@ -16,7 +16,6 @@ import { PresentationTabComponent } from './components/presentation-tab/presenta
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 
-
 type Tab =
   | 'chat'
   | 'email'

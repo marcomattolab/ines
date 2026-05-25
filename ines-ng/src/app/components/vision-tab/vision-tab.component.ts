@@ -33,24 +33,211 @@ const EMOTION_ICONS: Record<string, string> = {
   Neutral: 'face',
 };
 
-const FACEMESH_TRIANGLES = [
-  127, 34, 137, 34, 127, 162, 162, 127, 21, 21, 162, 54, 54, 21, 117, 117, 54, 66, 66, 117, 119,
-  119, 66, 67, 67, 119, 69, 69, 67, 68, 68, 69, 65, 65, 68, 63, 63, 65, 70, 70, 63, 71, 71, 70, 60,
-  60, 71, 61, 61, 60, 62, 62, 61, 64, 64, 62, 58, 58, 64, 59, 59, 58, 57, 57, 59, 56, 56, 57, 55,
-  55, 56, 53, 53, 55, 52, 52, 53, 51, 51, 52, 50, 50, 51, 49, 49, 50, 48, 48, 49, 47, 47, 48, 46,
-  46, 47, 45, 45, 46, 44, 44, 45, 43, 43, 44, 42, 42, 43, 41, 41, 42, 40, 40, 41, 39, 39, 40, 38,
-  38, 39, 37, 37, 38, 36, 36, 37, 35, 35, 36, 34, 34, 35, 137, 137, 34, 162, 162, 137, 216, 216,
-  162, 54, 54, 216, 117, 117, 216, 215, 215, 117, 66, 66, 215, 67, 67, 215, 214, 214, 67, 68, 68,
-  214, 63, 63, 214, 72, 72, 63, 73, 73, 72, 74, 74, 73, 75, 75, 74, 76, 76, 75, 77, 77, 76, 78, 78,
-  77, 79, 79, 78, 80, 80, 79, 81, 81, 80, 82, 82, 81, 83, 83, 82, 84, 84, 83, 85, 85, 84, 86, 86,
-  85, 87, 87, 86, 88, 88, 87, 89, 89, 88, 90, 90, 89, 91, 91, 90, 92, 92, 91, 93, 93, 92, 94, 94,
-  93, 95, 95, 94, 96, 96, 95, 97, 97, 96, 98, 98, 97, 99, 99, 98, 100, 100, 99, 101, 101, 100, 102,
-  102, 101, 103, 103, 102, 104, 104, 103, 105, 105, 104, 106, 106, 105, 107, 107, 106, 108, 108,
-  107, 109, 109, 108, 110, 110, 109, 111, 111, 110, 112, 112, 111, 113, 113, 112, 114, 114, 113,
-  115, 115, 114, 116, 116, 115, 117, 117, 116, 118, 118, 117, 119, 119, 118, 120, 120, 119, 121,
-  121, 120, 122, 122, 121, 123, 123, 122, 124, 124, 123, 125, 125, 124, 126, 126, 125, 58, 58, 126,
-  59, 59, 58, 60, 60, 59, 61, 61, 60, 62, 62, 61, 128, 128, 62, 129, 129, 128, 130, 130, 129, 131,
-  131, 130, 132, 132, 131, 133, 133, 132, 134, 134, 133, 135, 135, 134, 136, 136, 135, 216,
+// Face contour landmark indices from the MediaPipe canonical face mesh
+const FACE_OVAL: number[] = [
+  10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148,
+  176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10,
+];
+const LIPS_OUTER: number[] = [
+  61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185, 61,
+];
+const LIPS_INNER: number[] = [
+  78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78,
+];
+const LEFT_EYE: number[] = [
+  263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466, 263,
+];
+const RIGHT_EYE: number[] = [
+  33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33,
+];
+const LEFT_EYEBROW: number[] = [276, 283, 282, 295, 285, 300, 293, 334, 296, 336, 276];
+const RIGHT_EYEBROW: number[] = [46, 53, 52, 65, 55, 70, 63, 105, 66, 107, 46];
+const NOSE_BRIDGE: number[] = [168, 6, 197, 195, 5, 4, 1, 19, 94, 2];
+const NOSE_BOTTOM: number[] = [98, 97, 2, 326, 327];
+
+// Mesh edges connecting facial landmarks in a grid pattern (Google AI Edge style)
+// Pairs of landmark indices forming the wireframe
+const FACE_MESH_EDGES: [number, number][] = [
+  // --- Vertical columns ---
+  // Center column (nose bridge to chin)
+  [10, 109],
+  [109, 67],
+  [67, 103],
+  [103, 54],
+  [54, 21],
+  [21, 162],
+  [162, 127],
+  [127, 234],
+  [234, 93],
+  [93, 132],
+  [132, 58],
+  [58, 172],
+  [172, 136],
+  [136, 150],
+  [150, 149],
+  [149, 176],
+  [176, 148],
+  [148, 152],
+  // Right eye vertical
+  [338, 297],
+  [297, 332],
+  [332, 284],
+  [284, 251],
+  [251, 389],
+  [389, 356],
+  [356, 454],
+  [454, 323],
+  [323, 361],
+  [361, 288],
+  [288, 397],
+  [397, 365],
+  [365, 379],
+  [379, 378],
+  [378, 400],
+  [400, 377],
+  // Left eye vertical
+  [10, 338],
+  [162, 21],
+  [127, 234],
+  [152, 377],
+  // --- Horizontal rows ---
+  // Upper forehead
+  [10, 338],
+  [338, 297],
+  [297, 332],
+  [332, 284],
+  [284, 251],
+  [251, 389],
+  [389, 356],
+  [356, 454],
+  // Mid-face (eye level)
+  [127, 234],
+  [234, 93],
+  [93, 132],
+  [132, 58],
+  [58, 172],
+  [172, 136],
+  [136, 150],
+  [150, 149],
+  [149, 176],
+  [176, 148],
+  [148, 152],
+  // Nose wing cross
+  [54, 103],
+  [103, 67],
+  [67, 109],
+  [109, 10],
+  // Chin level
+  [152, 377],
+  [377, 378],
+  [378, 400],
+  [400, 379],
+  [379, 365],
+  [365, 397],
+  [397, 288],
+  [288, 361],
+  [361, 323],
+  [323, 454],
+  // --- Cross / Diagonal connections for triangle mesh effect ---
+  [10, 297],
+  [338, 332],
+  [297, 284],
+  [332, 251],
+  [284, 389],
+  [251, 356],
+  [389, 454],
+  [356, 323],
+  [454, 361],
+  [323, 288],
+  [361, 397],
+  [288, 365],
+  [397, 379],
+  [365, 378],
+  [379, 400],
+  [378, 377],
+  [400, 152],
+  [10, 67],
+  [338, 109],
+  [54, 162],
+  [103, 21],
+  [109, 234],
+  [10, 103],
+  [93, 58],
+  [132, 172],
+  [58, 136],
+  [172, 150],
+  [136, 149],
+  [150, 176],
+  [149, 148],
+  [176, 152],
+  // Inner face connections from nose bridge to eyes and lips
+  [168, 9],
+  [9, 8],
+  [8, 7],
+  [7, 163],
+  [163, 144],
+  [144, 145],
+  [145, 153],
+  [153, 154],
+  [154, 155],
+  [155, 133],
+  [168, 248],
+  [248, 249],
+  [249, 390],
+  [390, 373],
+  [373, 374],
+  [374, 380],
+  [380, 381],
+  [381, 382],
+  [382, 362],
+  // Nose bridge vertical
+  [168, 6],
+  [6, 197],
+  [197, 195],
+  [195, 5],
+  [5, 4],
+  [4, 1],
+  [1, 19],
+  [19, 94],
+  [94, 2],
+  // Nose to lip
+  [2, 0],
+  [0, 17],
+  [0, 37],
+  [17, 61],
+  [17, 291],
+  [61, 39],
+  [61, 40],
+  [61, 185],
+  [291, 409],
+  [291, 270],
+  [291, 375],
+  [1, 2],
+  [2, 98],
+  [98, 97],
+  [97, 326],
+  [326, 327],
+  // Eye brows to eyes
+  [9, 46],
+  [8, 53],
+  [7, 52],
+  [163, 65],
+  [144, 55],
+  [145, 70],
+  [153, 63],
+  [154, 105],
+  [155, 66],
+  [133, 107],
+  [248, 276],
+  [249, 283],
+  [390, 282],
+  [373, 295],
+  [374, 285],
+  [380, 300],
+  [381, 293],
+  [382, 334],
+  [362, 296],
+  [466, 336],
 ];
 
 @Component({
@@ -318,26 +505,78 @@ export class VisionTabComponent implements OnDestroy {
     ctx.restore();
   }
 
+  private faceContours: { indices: number[]; color: string; width: number }[] = [
+    { indices: FACE_OVAL, color: 'rgba(148, 163, 184, 0.4)', width: 1.2 },
+    { indices: LIPS_OUTER, color: 'rgba(251, 113, 133, 0.6)', width: 1.5 },
+    { indices: LIPS_INNER, color: 'rgba(251, 113, 133, 0.35)', width: 1 },
+    { indices: LEFT_EYE, color: 'rgba(96, 165, 250, 0.65)', width: 1.5 },
+    { indices: RIGHT_EYE, color: 'rgba(96, 165, 250, 0.65)', width: 1.5 },
+    { indices: LEFT_EYEBROW, color: 'rgba(251, 191, 36, 0.55)', width: 1.3 },
+    { indices: RIGHT_EYEBROW, color: 'rgba(251, 191, 36, 0.55)', width: 1.3 },
+    { indices: NOSE_BRIDGE, color: 'rgba(192, 132, 252, 0.4)', width: 1 },
+    { indices: NOSE_BOTTOM, color: 'rgba(192, 132, 252, 0.4)', width: 1 },
+  ];
+
   private drawFaceMesh(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
-    ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
-    ctx.lineWidth = 0.6;
-    for (let i = 0; i < FACEMESH_TRIANGLES.length; i += 3) {
-      const a = lm[FACEMESH_TRIANGLES[i]];
-      const b = lm[FACEMESH_TRIANGLES[i + 1]];
-      const c = lm[FACEMESH_TRIANGLES[i + 2]];
-      if (!a || !b || !c) continue;
+    // 1. Dense wireframe — thin, subtle edges connecting landmarks in a grid
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
+    ctx.lineWidth = 0.5;
+    for (const [i, j] of FACE_MESH_EDGES) {
+      const a = lm[i];
+      const b = lm[j];
+      if (!a || !b) continue;
       ctx.beginPath();
       ctx.moveTo(a.x * w, a.y * h);
       ctx.lineTo(b.x * w, b.y * h);
-      ctx.lineTo(c.x * w, c.y * h);
+      ctx.stroke();
+    }
+
+    // 2. Feature contours — face oval, eyes, lips, brows, nose
+    for (const contour of this.faceContours) {
+      const pts = contour.indices.map((i) => lm[i]).filter(Boolean);
+      if (pts.length < 2) continue;
+      ctx.strokeStyle = contour.color;
+      ctx.lineWidth = contour.width;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * w, pts[0].y * h);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i].x * w, pts[i].y * h);
+      }
       ctx.closePath();
       ctx.stroke();
     }
 
-    ctx.fillStyle = 'rgba(96, 165, 250, 0.5)';
-    for (const pt of lm) {
+    // 3. Iris glow (outer ring)
+    ctx.shadowColor = 'rgba(129, 199, 255, 0.5)';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = 'rgba(129, 199, 255, 0.15)';
+    for (const idx of [468, 473]) {
+      const p = lm[idx];
+      if (!p) continue;
       ctx.beginPath();
-      ctx.arc(pt.x * w, pt.y * h, 1, 0, 2 * Math.PI);
+      ctx.arc(p.x * w, p.y * h, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    // 4. Iris center (bright dot)
+    ctx.fillStyle = 'rgba(129, 199, 255, 0.9)';
+    for (const idx of [468, 473]) {
+      const p = lm[idx];
+      if (!p) continue;
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 5. Subtle landmark dots on contour points
+    const keyPoints = [...FACE_OVAL, ...LEFT_EYE, ...RIGHT_EYE, ...LIPS_OUTER, ...LIPS_INNER];
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.2)';
+    for (const i of keyPoints) {
+      const pt = lm[i];
+      if (!pt) continue;
+      ctx.beginPath();
+      ctx.arc(pt.x * w, pt.y * h, 0.6, 0, Math.PI * 2);
       ctx.fill();
     }
   }

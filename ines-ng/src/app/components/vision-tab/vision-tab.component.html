@@ -2,7 +2,10 @@
   <div class="panel-header">
     <div>
       <div class="panel-title">
-        <mat-icon fontIcon="visibility" class="text-accent-rose w-[18px] h-[18px] text-[18px]"></mat-icon>
+        <mat-icon
+          fontIcon="visibility"
+          class="text-accent-rose w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
         Vision Assistant
       </div>
       <div class="panel-desc">Real-time Emotion & Gesture analysis on-device</div>
@@ -19,8 +22,10 @@
 
   <div class="flex-1 flex p-6 gap-6 overflow-hidden">
     <!-- Camera Preview Card -->
-    <div class="flex-1 flex flex-col gap-4">
-      <div class="relative flex-1 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center">
+    <div class="flex-1 flex flex-col gap-4 min-w-0">
+      <div
+        class="relative flex-1 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+      >
         @if (!vision.isRunning()) {
           <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
             <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
@@ -35,24 +40,69 @@
           playsinline
         ></video>
 
-        <!-- Overlays -->
+        <!-- Canvas overlay for face mesh + face image -->
+        @if (vision.isRunning() && (showFaceMesh() || faceImageEnabled())) {
+          <canvas
+            #meshCanvas
+            class="absolute inset-0 w-full h-full pointer-events-none"
+            [class.opacity-80]="showFaceMesh()"
+          ></canvas>
+        }
+
+        <!-- Status overlays -->
         @if (vision.isRunning()) {
-           <div class="absolute top-4 left-4 flex gap-2">
-             <div class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2">
-               <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
-               <span class="text-[10px] font-bold uppercase tracking-tighter">Live Inference</span>
-             </div>
-           </div>
+          <div class="absolute top-4 left-4 flex gap-2">
+            <div
+              class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2"
+            >
+              <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
+              <span class="text-[10px] font-bold uppercase tracking-tighter">Live</span>
+            </div>
+            @if (powerSaveActive()) {
+              <div
+                class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-accent-amber/40 flex items-center gap-1.5"
+              >
+                <mat-icon
+                  fontIcon="power_settings_new"
+                  class="text-accent-amber text-xs w-3 h-3"
+                ></mat-icon>
+                <span class="text-[10px] font-bold uppercase tracking-tighter text-accent-amber"
+                  >Power Save</span
+                >
+              </div>
+            }
+          </div>
+
+          <!-- Top-right FPS -->
+          <div
+            class="absolute top-4 right-4 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md font-[var(--font-mono)] text-[10px] text-[var(--text-2)]"
+          >
+            {{ vision.fps() }} FPS
+          </div>
+
+          <!-- Bottom-left gaze -->
+          @if (vision.gaze() !== 'Center') {
+            <div
+              class="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2"
+            >
+              <mat-icon fontIcon="visibility" class="text-accent-cyan text-xs w-3 h-3"></mat-icon>
+              <span class="text-[10px] font-bold uppercase tracking-tighter"
+                >Looking {{ vision.gaze() }}</span
+              >
+            </div>
+          }
         }
       </div>
 
+      <!-- Feature Toggle Cards -->
       <div class="grid grid-cols-2 gap-4">
+        <!-- Emotion Adaptive -->
         <div
           class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-blue\/10]="adaptiveMode()"
-          [class.border-accent-blue\/30]="adaptiveMode()"
-          [class.border-white\/10]="!adaptiveMode()"
-          [class.bg-white\/5]="!adaptiveMode()"
+          [class.bg-accent-blue/10]="adaptiveMode()"
+          [class.border-accent-blue/30]="adaptiveMode()"
+          [class.border-white/10]="!adaptiveMode()"
+          [class.bg-white/5]="!adaptiveMode()"
           (click)="adaptiveMode.set(!adaptiveMode())"
           style="cursor: pointer"
         >
@@ -62,25 +112,32 @@
             </div>
             <div>
               <div class="text-sm font-bold">Emotion Adaptive</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Adjusts agent behavior</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Detect mood changes</div>
             </div>
           </div>
-          <div class="w-4 h-4 rounded-full border-2 border-accent-blue flex items-center justify-center">
-            @if (adaptiveMode()) { <div class="w-2 h-2 bg-accent-blue rounded-full"></div> }
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-blue flex items-center justify-center"
+          >
+            @if (adaptiveMode()) {
+              <div class="w-2 h-2 bg-accent-blue rounded-full"></div>
+            }
           </div>
         </div>
 
+        <!-- Gesture Control -->
         <div
           class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-purple\/10]="gestureControl()"
-          [class.border-accent-purple\/30]="gestureControl()"
-          [class.border-white\/10]="!gestureControl()"
-          [class.bg-white\/5]="!gestureControl()"
+          [class.bg-accent-purple/10]="gestureControl()"
+          [class.border-accent-purple/30]="gestureControl()"
+          [class.border-white/10]="!gestureControl()"
+          [class.bg-white/5]="!gestureControl()"
           (click)="gestureControl.set(!gestureControl())"
           style="cursor: pointer"
         >
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
+            >
               <mat-icon fontIcon="back_hand" class="text-accent-purple"></mat-icon>
             </div>
             <div>
@@ -88,65 +145,262 @@
               <div class="text-[10px] text-[var(--text-2)] uppercase">Hands-free commands</div>
             </div>
           </div>
-          <div class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center">
-            @if (gestureControl()) { <div class="w-2 h-2 bg-accent-purple rounded-full"></div> }
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
+          >
+            @if (gestureControl()) {
+              <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Face Mesh -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-cyan/10]="showFaceMesh()"
+          [class.border-accent-cyan/30]="showFaceMesh()"
+          [class.border-white/10]="!showFaceMesh()"
+          [class.bg-white/5]="!showFaceMesh()"
+          (click)="toggleFaceMesh()"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center">
+              <mat-icon fontIcon="grid_on" class="text-accent-cyan"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Face Mesh</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">478-landmark overlay</div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
+          >
+            @if (showFaceMesh()) {
+              <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Face Swap -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-rose/10]="faceImageEnabled()"
+          [class.border-accent-rose/30]="faceImageEnabled()"
+          [class.border-white/10]="!faceImageEnabled()"
+          [class.bg-white/5]="!faceImageEnabled()"
+          (click)="toggleFaceImage()"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-accent-rose/20 flex items-center justify-center">
+              <mat-icon fontIcon="switch_access_shortcut" class="text-accent-rose"></mat-icon>
+            </div>
+            <div class="min-w-0">
+              <div class="text-sm font-bold">Face Swap</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase truncate">
+                {{ loadedFileName() || 'Tap to load a face photo' }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            @if (loadedFaceImage()) {
+              <button
+                (click)="openFacePicker(); $event.stopPropagation()"
+                class="text-[var(--text-2)] hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
+                title="Change image"
+              >
+                <mat-icon fontIcon="edit" class="text-xs w-3 h-3"></mat-icon>
+              </button>
+            }
+            <div
+              class="w-4 h-4 rounded-full border-2 border-accent-rose flex items-center justify-center"
+            >
+              @if (faceImageEnabled()) {
+                <div class="w-2 h-2 bg-accent-rose rounded-full"></div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden file input -->
+        <input
+          #faceFileInput
+          type="file"
+          accept="image/*"
+          class="hidden"
+          (change)="onFaceImageSelected($event)"
+        />
+
+        <!-- Auto Power Save -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-amber/10]="autoPowerSave()"
+          [class.border-accent-amber/30]="autoPowerSave()"
+          [class.border-white/10]="!autoPowerSave()"
+          [class.bg-white/5]="!autoPowerSave()"
+          (click)="toggleAutoPowerSave()"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center">
+              <mat-icon fontIcon="power_settings_new" class="text-accent-amber"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Power Save</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Pause when no face</div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
+          >
+            @if (autoPowerSave()) {
+              <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
+            }
           </div>
         </div>
       </div>
     </div>
 
     <!-- Stats Sidebar -->
-    <aside class="w-80 flex flex-col gap-4 overflow-y-auto">
+    <aside class="w-80 flex flex-col gap-4 overflow-y-auto shrink-0">
+      <!-- Real-time Analysis -->
       <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Real-time Analysis</h3>
+        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">
+          Real-time Analysis
+        </h3>
 
         <div class="space-y-4">
+          <!-- Emotion -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Emotion</span>
+              <span class="text-accent-blue">{{
+                vision.isRunning() ? vision.emotion() : '--'
+              }}</span>
+            </div>
+            @if (vision.isRunning()) {
+              <div class="space-y-1">
+                @for (e of emotions; track e) {
+                  <div class="flex items-center gap-2 text-[10px]">
+                    <span class="w-16 text-right text-[var(--text-2)] font-mono">{{ e }}</span>
+                    <div class="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        class="h-full rounded-full transition-all duration-300"
+                        [style.width.%]="emotionConfidence(e) * 100"
+                        [class.bg-accent-blue]="e === 'Happy'"
+                        [class.bg-accent-purple]="e === 'Thinking'"
+                        [class.bg-accent-rose]="e === 'Sad'"
+                        [class.bg-accent-amber]="e === 'Surprised'"
+                        [class.bg-white/10]="e === 'Neutral'"
+                      ></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Gesture -->
           <div class="space-y-1">
             <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
-              <span>Detected Emotion</span>
-              <span class="text-accent-blue">{{ vision.isRunning() ? vision.emotion() : '--' }}</span>
+              <span>Gesture</span>
+              <span class="flex items-center gap-1">
+                @if (vision.isRunning() && vision.gesture() !== 'None') {
+                  <mat-icon
+                    [fontIcon]="gestureIcon(vision.gesture())"
+                    class="text-accent-purple text-sm w-3.5 h-3.5"
+                  ></mat-icon>
+                }
+                <span class="text-accent-purple">{{
+                  vision.isRunning() ? gestureLabel(vision.gesture()) : '--'
+                }}</span>
+              </span>
             </div>
-            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-               <div class="h-full bg-accent-blue transition-all duration-500" [style.width]="vision.isRunning() ? '100%' : '0%'"></div>
+            @if (vision.isRunning() && vision.gesture() !== 'None') {
+              <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-accent-purple transition-all duration-300"
+                  [style.width.%]="vision.gestureScore()"
+                ></div>
+              </div>
+              <div class="text-[9px] font-mono text-[var(--text-2)] text-right">
+                {{ vision.gestureScore() }}% confidence
+              </div>
+            }
+          </div>
+
+          <!-- Faces -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Faces</span>
+              <span class="text-accent-green">{{
+                vision.isRunning() ? vision.faceCount() : '--'
+              }}</span>
+            </div>
+            @if (vision.isRunning()) {
+              <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-accent-green transition-all duration-500"
+                  [style.width.%]="Math.min(vision.faceCount() * 20, 100)"
+                ></div>
+              </div>
+            }
+          </div>
+
+          <!-- Gaze -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Gaze</span>
+              <span class="flex items-center gap-1">
+                <mat-icon
+                  fontIcon="visibility"
+                  class="text-accent-cyan text-sm w-3.5 h-3.5"
+                ></mat-icon>
+                <span class="text-accent-cyan">{{
+                  vision.isRunning() ? vision.gaze() : '--'
+                }}</span>
+              </span>
             </div>
           </div>
 
+          <!-- Performance -->
           <div class="space-y-1">
             <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
-              <span>Detected Gesture</span>
-              <span class="text-accent-purple">{{ vision.isRunning() ? vision.gesture() : '--' }}</span>
-            </div>
-            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-               <div class="h-full bg-accent-purple transition-all duration-500" [style.width]="vision.isRunning() ? '100%' : '0%'"></div>
-            </div>
-          </div>
-
-          <div class="space-y-1">
-            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
-              <span>Detected Faces</span>
-              <span class="text-accent-green">{{ vision.isRunning() ? vision.faceCount() : '--' }}</span>
-            </div>
-            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-               <div class="h-full bg-accent-green transition-all duration-500" [style.width]="vision.isRunning() ? (vision.faceCount() * 20) + '%' : '0%'"></div>
+              <span>Performance</span>
+              <span class="text-[var(--text-1)] font-mono">{{ vision.fps() }} FPS</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 flex-1 flex flex-col min-h-0">
+      <!-- Event Log -->
+      <div
+        class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 flex-1 flex flex-col min-h-0"
+      >
         <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Event Log</h3>
         <div class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-           @for (n of notifications(); track n.id) {
-             <div class="flex items-start gap-3 p-2 rounded-lg bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-4 duration-300">
-               <mat-icon [fontIcon]="n.icon" class="text-sm w-4 h-4 mt-0.5" [class]="'text-accent-' + n.type"></mat-icon>
-               <div class="flex-1 min-w-0">
-                 <div class="text-[11px] leading-tight text-[var(--text-1)]">{{ n.msg }}</div>
-                 <div class="text-[9px] font-mono text-[var(--text-2)] mt-1 opacity-60">{{ n.time }}</div>
-               </div>
-             </div>
-           } @empty {
-             <div class="text-xs font-mono text-[var(--text-2)] italic opacity-50 p-2">Waiting for vision events...</div>
-           }
+          @for (n of notifications(); track n.id) {
+            <div
+              class="flex items-start gap-3 p-2 rounded-lg bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-4 duration-300"
+            >
+              <mat-icon
+                [fontIcon]="n.icon"
+                class="text-sm w-4 h-4 mt-0.5"
+                [class]="'text-accent-' + n.type"
+              ></mat-icon>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] leading-tight text-[var(--text-1)]">{{ n.msg }}</div>
+                <div class="text-[9px] font-mono text-[var(--text-2)] mt-1 opacity-60">
+                  {{ n.time }}
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-xs font-mono text-[var(--text-2)] italic opacity-50 p-2">
+              Waiting for vision events...
+            </div>
+          }
         </div>
       </div>
     </aside>

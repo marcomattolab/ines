@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, effect } from '@angular/core';
 
 export interface Skill {
   id: string;

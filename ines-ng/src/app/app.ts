@@ -63,6 +63,8 @@ const TABS: TabDef[] = [
     CodingTabComponent,
     PresentationTabComponent,
     LearningTabComponent,
+    AgentsTabComponent,
+    VisionTabComponent,
     MatIconModule,
   ],
   templateUrl: './app.html',

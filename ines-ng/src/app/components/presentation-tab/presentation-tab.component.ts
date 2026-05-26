@@ -6,6 +6,7 @@ import {
   viewChild,
   ElementRef,
   OnDestroy,
+  OnInit,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,13 +31,17 @@ RULES:
 - Use <section class="slide"> for each slide. Each slide must have a data-slide-number attribute starting at 1.
 - Include all CSS in a <style> tag inside the HTML.
 - Include JS for keyboard navigation (ArrowLeft/ArrowRight), dot indicators showing the current slide, and page numbers in the bottom-right corner.
+- Every slide must include visible, well-designed "Previous" and "Next" buttons (using appropriate icons or text) to navigate between slides. These buttons should be placed consistently (e.g., bottom corners or sides).
+- The "Previous" button should be hidden or disabled on the first slide, and the "Next" button should be hidden or disabled on the last slide.
+- Ensure the JavaScript handles clicks on these buttons to transition between slides smoothly.
+- When the slide changes (via buttons, keyboard, or dots), the JavaScript MUST post a message to the parent window: \`window.parent.postMessage({ type: 'slideChanged', slide: currentSlideNumber }, '*')\`.
 - Design must be modern, dark-themed, with glassmorphism effects.
 - Use the colors specified in the branding variables below.
 - Include the logo text, author, and contact info on appropriate slides.
 - Make it responsive and professional.
 - Slide 1 = Title slide with logo, title, author.
 - Last slide = Thank you / contact slide with contact info.
-- Total slides: 8-12 depending on content depth.
+- Total slides: 8-12 depending on content depth (unless provided Markdown suggests otherwise).
 - Every slide must have visible content inside the section element.
 - The first visible element in each slide must have meaningful text content.
 
@@ -48,7 +53,9 @@ Branding to embed:
 - Secondary color: {SECONDARY}
 - Accent color: {ACCENT}
 
-Topic: {TOPIC}`;
+Topic: {TOPIC}
+
+{MARKDOWN_CONTEXT}`;
 
 @Component({
   selector: 'app-presentation-tab',
@@ -58,7 +65,7 @@ Topic: {TOPIC}`;
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './presentation-tab.component.css',
 })
-export class PresentationTabComponent implements OnDestroy {
+export class PresentationTabComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   llm = inject(LlmService);
   toast = inject(ToastService);
@@ -66,6 +73,8 @@ export class PresentationTabComponent implements OnDestroy {
   readonly previewFrame = viewChild.required<ElementRef<HTMLIFrameElement>>('previewFrame');
 
   prompt = signal('Create a presentation about AI and machine learning trends in 2026');
+  mdContent = signal<string | null>(null);
+  mdFileName = signal<string | null>(null);
   generating = signal(false);
   slideCount = signal(0);
   currentSlide = signal(0);
@@ -85,8 +94,56 @@ export class PresentationTabComponent implements OnDestroy {
   readonly themeColors = COLOR_THEMES;
   readonly themes: ColorTheme[] = ['professional', 'ocean', 'forest', 'sunset', 'monochrome'];
 
+  ngOnInit() {
+    window.addEventListener('message', this.handleMessage);
+  }
+
   ngOnDestroy() {
     this.removeResizeListeners();
+    window.removeEventListener('message', this.handleMessage);
+  }
+
+  private handleMessage = (event: MessageEvent) => {
+    // Basic verification: check if it came from our iframe
+    const iframe = this.previewFrame()?.nativeElement;
+    if (!iframe || event.source !== iframe.contentWindow) return;
+
+    if (event.data?.type === 'slideChanged') {
+      const slide = event.data.slide;
+      if (typeof slide === 'number') {
+        this.currentSlide.set(slide);
+      }
+    }
+  };
+
+  async onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.md')) {
+      this.toast.show('⚠️ Please upload a .md file');
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      this.mdContent.set(text);
+      this.mdFileName.set(file.name);
+      this.toast.show(`📄 Loaded: ${file.name}`);
+      // If prompt is default or empty, update it
+      if (!this.prompt().trim() || this.prompt().includes('AI and machine learning trends')) {
+        this.prompt.set(`Generate a presentation based on the uploaded file: ${file.name}`);
+      }
+    } catch (err) {
+      this.toast.show('❌ Error reading file');
+    }
+  }
+
+  clearMd() {
+    this.mdContent.set(null);
+    this.mdFileName.set(null);
+    this.toast.show('🗑️ Markdown cleared');
   }
 
   async generate() {
@@ -118,7 +175,13 @@ export class PresentationTabComponent implements OnDestroy {
       .replace('{PRIMARY}', colors.primary)
       .replace('{SECONDARY}', colors.secondary)
       .replace('{ACCENT}', colors.accent)
-      .replace('{TOPIC}', this.prompt());
+      .replace('{TOPIC}', this.prompt())
+      .replace(
+        '{MARKDOWN_CONTEXT}',
+        this.mdContent()
+          ? `Use the following Markdown content as the primary source for the presentation:\n\n${this.mdContent()}`
+          : ''
+      );
 
     const prompt = this.llm.buildPrompt(systemPrompt, 'Generate the presentation now.');
 
@@ -131,6 +194,10 @@ export class PresentationTabComponent implements OnDestroy {
           .replace(/```\s*$/g, '')
           .trim();
         this.generatedHtml.set(cleaned);
+
+        // Update slide count during streaming too
+        const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
+        this.slideCount.set(count);
       });
 
       const cleaned = full

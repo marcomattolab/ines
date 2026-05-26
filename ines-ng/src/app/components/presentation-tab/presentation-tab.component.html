@@ -22,6 +22,29 @@
         (input)="prompt.set($any($event.target).value)"
       ></textarea>
 
+      <div class="md-upload-zone">
+        @if (!mdFileName()) {
+          <div class="upload-placeholder">
+            <input
+              type="file"
+              (change)="onFileSelected($event)"
+              accept=".md"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            <mat-icon fontIcon="upload_file" class="text-zinc-500 mb-1"></mat-icon>
+            <span class="text-[11px] text-zinc-400">Upload .md file (optional)</span>
+          </div>
+        } @else {
+          <div class="file-chip">
+            <mat-icon fontIcon="description" class="text-accent-amber !text-sm"></mat-icon>
+            <span class="file-name">{{ mdFileName() }}</span>
+            <button class="clear-btn" (click)="clearMd()">
+              <mat-icon fontIcon="close" class="!text-xs"></mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
       <app-button
         variant="primary"
         [disabled]="generating() || !llm.isReady() || !prompt().trim()"

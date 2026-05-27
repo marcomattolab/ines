@@ -95,7 +95,7 @@
       </div>
 
       <!-- Feature Toggle Cards -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-4">
         <!-- Emotion Adaptive -->
         <div
           class="p-4 rounded-2xl border transition-all flex items-center justify-between"
@@ -120,6 +120,34 @@
           >
             @if (adaptiveMode()) {
               <div class="w-2 h-2 bg-accent-blue rounded-full"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Cyberpunk Filter -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-cyan/10]="cyberpunkFilter()"
+          [class.border-accent-cyan/30]="cyberpunkFilter()"
+          [class.border-white/10]="!cyberpunkFilter()"
+          [class.bg-white/5]="!cyberpunkFilter()"
+          (click)="cyberpunkFilter.set(!cyberpunkFilter())"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center">
+              <mat-icon fontIcon="stream" class="text-accent-cyan"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Cyberpunk AR</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Digital HUD Overlay</div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
+          >
+            @if (cyberpunkFilter()) {
+              <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
             }
           </div>
         </div>
@@ -343,6 +371,50 @@
                 <div
                   class="h-full bg-accent-green transition-all duration-500"
                   [style.width.%]="Math.min(vision.faceCount() * 20, 100)"
+                ></div>
+              </div>
+            }
+          </div>
+
+          <!-- Vitals -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Vitals</span>
+              <span class="flex items-center gap-1">
+                @if (vision.isRunning() && vision.heartRate() > 0) {
+                  <mat-icon
+                    fontIcon="favorite"
+                    class="text-accent-rose text-sm w-3.5 h-3.5 animate-pulse"
+                  ></mat-icon>
+                }
+                <span class="text-accent-rose">{{
+                  vision.isRunning() && vision.heartRate() > 0 ? vision.heartRate() + ' BPM' : '--'
+                }}</span>
+              </span>
+            </div>
+            @if (vision.isRunning() && vision.heartRate() > 0) {
+              <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-accent-rose transition-all duration-700"
+                  [style.width.%]="Math.min(((vision.heartRate() - 50) / 70) * 100, 100)"
+                ></div>
+              </div>
+            }
+          </div>
+
+          <!-- Engagement -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]">
+              <span>Engagement</span>
+              <span class="text-accent-amber">{{
+                vision.isRunning() ? vision.engagement() + '%' : '--'
+              }}</span>
+            </div>
+            @if (vision.isRunning()) {
+              <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-accent-amber transition-all duration-500"
+                  [style.width.%]="vision.engagement()"
                 ></div>
               </div>
             }

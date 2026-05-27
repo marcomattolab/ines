@@ -22,6 +22,8 @@ export class VisionService {
   readonly gaze = signal<GazeDirection>('Center');
   readonly fps = signal(0);
   readonly isRunning = signal(false);
+  readonly heartRate = signal(0);
+  readonly engagement = signal(0);
 
   // Face mesh data for canvas overlay (last detected face)
   private _landmarks: any[] = [];
@@ -35,6 +37,12 @@ export class VisionService {
   private animationId: number | null = null;
   private frameCount = 0;
   private lastFpsTime = 0;
+
+  // Vitals tracking (rPPG simplified)
+  private intensities: number[] = [];
+  private timestamps: number[] = [];
+  private offscreenCanvas: HTMLCanvasElement | null = null;
+  private offscreenCtx: CanvasRenderingContext2D | null = null;
 
   async initVision(): Promise<void> {
     if (this.faceLandmarker && this.gestureRecognizer) return;
@@ -114,6 +122,13 @@ export class VisionService {
     if (!this.isRunning() || !this.video || !this.faceLandmarker || !this.gestureRecognizer) return;
 
     const startTimeMs = performance.now();
+    const videoWidth = this.video.videoWidth;
+    const videoHeight = this.video.videoHeight;
+
+    if (!videoWidth || !videoHeight) {
+      this.animationId = requestAnimationFrame(() => this.predict());
+      return;
+    }
 
     // --- FPS tracking ---
     this.frameCount++;
@@ -134,10 +149,16 @@ export class VisionService {
       if (faceResults.faceBlendshapes && faceResults.faceBlendshapes.length > 0) {
         this.processBlendshapes(faceResults.faceBlendshapes[0].categories);
       }
+      this.estimateVitals(this._landmarks, videoWidth, videoHeight);
+      this.calculateEngagement();
     } else {
       this._landmarks = [];
       this.emotion.set('Neutral');
       this.emotionScores.set({});
+      this.heartRate.set(0);
+      this.engagement.set(0);
+      this.intensities = [];
+      this.timestamps = [];
     }
 
     // --- Gesture Recognizer ---
@@ -152,6 +173,107 @@ export class VisionService {
     }
 
     this.animationId = requestAnimationFrame(() => this.predict());
+  }
+
+  private estimateVitals(landmarks: any[], w: number, h: number): void {
+    // We use a small area on the forehead (landmarks around index 10)
+    const forehead = landmarks[10];
+    if (!forehead) return;
+
+    if (!this.offscreenCanvas) {
+      this.offscreenCanvas = document.createElement('canvas');
+      this.offscreenCanvas.width = 10;
+      this.offscreenCanvas.height = 10;
+      this.offscreenCtx = this.offscreenCanvas.getContext('2d', { willReadFrequently: true });
+    }
+
+    const ctx = this.offscreenCtx;
+    if (!ctx) return;
+
+    // Sample a 20x20 area around the forehead
+    const sampleSize = 20;
+    const sx = forehead.x * w - sampleSize / 2;
+    const sy = forehead.y * h - sampleSize / 2;
+
+    ctx.drawImage(this.video!, sx, sy, sampleSize, sampleSize, 0, 0, 10, 10);
+    const data = ctx.getImageData(0, 0, 10, 10).data;
+
+    let r = 0,
+      g = 0,
+      b = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+    }
+    const avgG = g / (data.length / 4);
+
+    const now = performance.now();
+    this.intensities.push(avgG);
+    this.timestamps.push(now);
+
+    // Keep 4 seconds of data (approx 120 frames at 30fps)
+    if (this.intensities.length > 150) {
+      this.intensities.shift();
+      this.timestamps.shift();
+    }
+
+    if (this.intensities.length > 60) {
+      this.calculateBPM();
+    }
+  }
+
+  private calculateBPM(): void {
+    // Simple peak counting on the green channel variance
+    // In a real app, we'd use Bandpass filter + FFT
+    let peaks = 0;
+    const data = this.intensities;
+    const windowSize = 5;
+
+    // Moving average to smooth
+    const smoothed = [];
+    for (let i = windowSize; i < data.length - windowSize; i++) {
+      let sum = 0;
+      for (let j = -windowSize; j <= windowSize; j++) sum += data[i + j];
+      smoothed.push(sum / (windowSize * 2 + 1));
+    }
+
+    // Count peaks
+    for (let i = 1; i < smoothed.length - 1; i++) {
+      if (smoothed[i] > smoothed[i - 1] && smoothed[i] > smoothed[i + 1]) {
+        peaks++;
+      }
+    }
+
+    const durationSec = (this.timestamps[this.timestamps.length - 1] - this.timestamps[0]) / 1000;
+    const bpm = Math.round((peaks / durationSec) * 60);
+
+    // Realistic human range 60-100 for rest
+    if (bpm > 50 && bpm < 120) {
+      // Smooth the signal
+      const current = this.heartRate();
+      this.heartRate.set(current === 0 ? bpm : Math.round(current * 0.9 + bpm * 0.1));
+    }
+  }
+
+  private calculateEngagement(): void {
+    let score = 0;
+
+    // Face present
+    if (this.faceCount() > 0) score += 40;
+
+    // Gaze direction
+    if (this.gaze() === 'Center') score += 40;
+    else score += 10;
+
+    // Emotion - positive/active emotions boost engagement
+    const e = this.emotion();
+    if (e === 'Happy' || e === 'Thinking') score += 20;
+    else if (e === 'Surprised') score += 10;
+    else score += 5;
+
+    const current = this.engagement();
+    this.engagement.set(Math.round(current * 0.8 + score * 0.2));
   }
 
   private processBlendshapes(categories: any[]): void {

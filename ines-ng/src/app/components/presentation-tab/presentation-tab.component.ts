@@ -30,12 +30,9 @@ RULES:
 - Output ONLY valid HTML (no markdown fences, no explanations).
 - Use <section class="slide"> for each slide. Each slide must have a data-slide-number attribute starting at 1.
 - Include all CSS in a <style> tag inside the HTML.
-- Include JS for keyboard navigation (ArrowLeft/ArrowRight), dot indicators showing the current slide, and page numbers in the bottom-right corner.
-- Every slide must include visible, well-designed "Previous" and "Next" buttons (using appropriate icons or text) to navigate between slides. These buttons should be placed consistently (e.g., bottom corners or sides).
-- The "Previous" button should be hidden or disabled on the first slide, and the "Next" button should be hidden or disabled on the last slide.
-- Ensure the JavaScript handles clicks on these buttons to transition between slides smoothly.
-- When the slide changes (via buttons, keyboard, or dots), the JavaScript MUST post a message to the parent window: \`window.parent.postMessage({ type: 'slideChanged', slide: currentSlideNumber }, '*')\`.
-- Listen for \`message\` events from the parent window (\`window.addEventListener('message', ...)\`). When a message with \`event.data.command === 'goToSlide'\` is received, navigate to the slide number in \`event.data.slide\`.
+- Do NOT include any JavaScript (navigation is handled automatically).
+- Every slide must include visible "Previous" and "Next" buttons using <button data-nav="prev"> and <button data-nav="next"> respectively. Place them at the bottom corners of each slide.
+- Include a page indicator like <span data-page="current">1</span> / <span data-page="total">TOTAL</span> at the bottom center of each slide.
 - Design must be modern, dark-themed, with glassmorphism effects.
 - Use the colors specified in the branding variables below.
 - Include the logo text, author, and contact info on appropriate slides.
@@ -194,7 +191,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
           .replace(/```html\s*/gi, '')
           .replace(/```\s*$/g, '')
           .trim();
-        this.generatedHtml.set(cleaned);
+        this.generatedHtml.set(this.injectNavigationScript(cleaned));
 
         // Update slide count during streaming too
         const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
@@ -205,7 +202,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
         .replace(/```html\s*/gi, '')
         .replace(/```\s*$/g, '')
         .trim();
-      this.generatedHtml.set(cleaned);
+      this.generatedHtml.set(this.injectNavigationScript(cleaned));
       const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
       this.slideCount.set(count);
       this.currentSlide.set(1);
@@ -234,6 +231,43 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     const iframe = this.previewFrame()?.nativeElement;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.postMessage({ command: 'goToSlide', slide: this.currentSlide() }, '*');
+  }
+
+  private injectNavigationScript(html: string): string {
+    const script =
+      '<script>' +
+      'try{(function(){' +
+      'var s=document.querySelectorAll(".slide");' +
+      'var c=1;' +
+      'function g(n){' +
+      'if(n<1||n>s.length)return;' +
+      'c=n;' +
+      'for(var i=0;i<s.length;i++)s[i].style.display=i+1===n?"":"none";' +
+      'document.querySelectorAll("[data-page=\\"current\\"]").forEach(function(e){e.textContent=String(n)});' +
+      'document.querySelectorAll("[data-page=\\"total\\"]").forEach(function(e){e.textContent=String(s.length)});' +
+      'window.parent.postMessage({type:"slideChanged",slide:n},"*");' +
+      '}' +
+      'document.addEventListener("click",function(e){' +
+      'var b=e.target.closest("[data-nav]");' +
+      'if(!b)return;' +
+      'if(b.getAttribute("data-nav")==="prev")g(c-1);' +
+      'if(b.getAttribute("data-nav")==="next")g(c+1);' +
+      '});' +
+      'document.addEventListener("keydown",function(e){' +
+      'if(e.key==="ArrowLeft"){e.preventDefault();g(c-1);}' +
+      'if(e.key==="ArrowRight"){e.preventDefault();g(c+1);}' +
+      '});' +
+      'window.addEventListener("message",function(e){' +
+      'if(e.data&&e.data.command==="goToSlide"&&typeof e.data.slide==="number")g(e.data.slide);' +
+      '});' +
+      'g(1);' +
+      '})();}catch(e){console.error(e)}' +
+      '</script>';
+    const idx = html.lastIndexOf('</body>');
+    if (idx !== -1) {
+      return html.slice(0, idx) + script + html.slice(idx);
+    }
+    return html + script;
   }
 
   downloadHtml() {

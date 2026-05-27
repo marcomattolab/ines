@@ -64,7 +64,7 @@ Topic: {TOPIC}
   styleUrl: './presentation-tab.component.css',
 })
 export class PresentationTabComponent implements OnInit, OnDestroy {
-  private sanitizer = inject(DomSanitizer);
+  private readonly sanitizer = inject(DomSanitizer);
   llm = inject(LlmService);
   toast = inject(ToastService);
 

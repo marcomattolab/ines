@@ -260,6 +260,7 @@ export class VisionTabComponent implements OnDestroy {
   adaptiveMode = signal(false);
   gestureControl = signal(false);
   showFaceMesh = signal(false);
+  cyberpunkFilter = signal(false);
   autoPowerSave = signal(false);
   powerSaveActive = signal(false);
   faceImageEnabled = signal(false);
@@ -288,6 +289,16 @@ export class VisionTabComponent implements OnDestroy {
           `Gesture: ${GESTURE_LABELS[g] || g} (${this.vision.gestureScore()}%)`,
           'purple',
         );
+
+        // Perform UI actions based on gesture
+        if (g === 'Thumbs_Up') {
+          this.toast.success('Positive feedback received!');
+        } else if (g === 'Thumbs_Down') {
+          this.toast.show('Negative feedback noted.');
+        } else if (g === 'Victory') {
+          this.addNotification('celebration', 'Celebration detected!', 'rose');
+        }
+
         this.lastGesture = g;
       } else if (g === 'None') {
         this.lastGesture = 'None';
@@ -318,11 +329,25 @@ export class VisionTabComponent implements OnDestroy {
 
     // Start/stop draw loop when mesh or face image is active
     effect(() => {
-      const shouldDraw = this.showFaceMesh() || this.faceImageEnabled();
+      const shouldDraw = this.showFaceMesh() || this.faceImageEnabled() || this.cyberpunkFilter();
       if (shouldDraw && !this.drawRaf) {
         this.startDrawLoop();
       } else if (!shouldDraw && this.drawRaf) {
         this.stopDrawLoop();
+      }
+    });
+
+    // Auto Power Save Logic
+    effect(() => {
+      if (!this.autoPowerSave() || !this.vision.isRunning()) {
+        this.powerSaveActive.set(false);
+        return;
+      }
+      const count = this.vision.faceCount();
+      if (count === 0 && !this.powerSaveActive()) {
+        this.powerSaveActive.set(true);
+      } else if (count > 0 && this.powerSaveActive()) {
+        this.powerSaveActive.set(false);
       }
     });
   }
@@ -498,11 +523,64 @@ export class VisionTabComponent implements OnDestroy {
       this.drawFaceMesh(ctx, lm, w, h);
     }
 
+    if (this.cyberpunkFilter()) {
+      this.drawCyberpunkFilter(ctx, lm, w, h);
+    }
+
     if (this.faceImageEnabled()) {
       this.drawFaceImage(ctx, lm, w, h);
     }
 
     ctx.restore();
+  }
+
+  private drawCyberpunkFilter(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const time = performance.now() / 1000;
+
+    // 1. Scanning line
+    const scanY = (time % 2) / 2;
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, scanY * h);
+    ctx.lineTo(w, scanY * h);
+    ctx.stroke();
+
+    // 2. Neon highlights on major landmarks
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00ffff';
+    ctx.fillStyle = '#00ffff';
+
+    // Highlight eyes and mouth with neon glow
+    [468, 473, 13, 14].forEach((idx) => {
+      const p = lm[idx];
+      if (p) {
+        ctx.beginPath();
+        ctx.arc(p.x * w, p.y * h, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // 3. Digital "HUD" elements relative to head
+    const forehead = lm[10];
+    if (forehead) {
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText(`ID_SCAN: ACTIVE`, forehead.x * w + 40, forehead.y * h - 20);
+      ctx.fillText(`ENGAGEMENT: ${this.vision.engagement()}%`, forehead.x * w + 40, forehead.y * h - 5);
+
+      // Decorative brackets
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(forehead.x * w - 50, forehead.y * h - 30);
+      ctx.lineTo(forehead.x * w - 60, forehead.y * h - 30);
+      ctx.lineTo(forehead.x * w - 60, forehead.y * h + 30);
+      ctx.lineTo(forehead.x * w - 50, forehead.y * h + 30);
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
   }
 
   private faceContours: { indices: number[]; color: string; width: number }[] = [

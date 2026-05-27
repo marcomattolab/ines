@@ -41,7 +41,7 @@
         ></video>
 
         <!-- Canvas overlay for face mesh + face image -->
-        @if (vision.isRunning() && (showFaceMesh() || faceImageEnabled())) {
+        @if (vision.isRunning() && (showFaceMesh() || faceImageEnabled() || cyberpunkFilter())) {
           <canvas
             #meshCanvas
             class="absolute inset-0 w-full h-full pointer-events-none"

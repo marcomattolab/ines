@@ -35,6 +35,7 @@ RULES:
 - The "Previous" button should be hidden or disabled on the first slide, and the "Next" button should be hidden or disabled on the last slide.
 - Ensure the JavaScript handles clicks on these buttons to transition between slides smoothly.
 - When the slide changes (via buttons, keyboard, or dots), the JavaScript MUST post a message to the parent window: \`window.parent.postMessage({ type: 'slideChanged', slide: currentSlideNumber }, '*')\`.
+- Listen for \`message\` events from the parent window (\`window.addEventListener('message', ...)\`). When a message with \`event.data.command === 'goToSlide'\` is received, navigate to the slide number in \`event.data.slide\`.
 - Design must be modern, dark-themed, with glassmorphism effects.
 - Use the colors specified in the branding variables below.
 - Include the logo text, author, and contact info on appropriate slides.
@@ -180,7 +181,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
         '{MARKDOWN_CONTEXT}',
         this.mdContent()
           ? `Use the following Markdown content as the primary source for the presentation:\n\n${this.mdContent()}`
-          : ''
+          : '',
       );
 
     const prompt = this.llm.buildPrompt(systemPrompt, 'Generate the presentation now.');
@@ -273,7 +274,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     }
   };
 
-  private stopResize = () => {
+  private readonly stopResize = () => {
     this.isResizing = false;
     document.removeEventListener('mousemove', this.doResize);
     document.removeEventListener('mouseup', this.stopResize);

@@ -564,10 +564,26 @@ export class VisionTabComponent implements OnDestroy {
     // 3. Digital "HUD" elements relative to head
     const forehead = lm[10];
     if (forehead) {
+      // Draw text with identity transform so it's not mirrored
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.font = 'bold 10px monospace';
-      ctx.fillStyle = '#00ffff';
-      ctx.fillText(`ID_SCAN: ACTIVE`, forehead.x * w + 40, forehead.y * h - 20);
-      ctx.fillText(`ENGAGEMENT: ${this.vision.engagement()}%`, forehead.x * w + 40, forehead.y * h - 5);
+      const lines = [
+        { text: `ID_SCAN: ACTIVE`, x: w - (forehead.x * w + 40), y: forehead.y * h - 20 },
+        {
+          text: `ENGAGEMENT: ${this.vision.engagement()}%`,
+          x: w - (forehead.x * w + 40),
+          y: forehead.y * h - 5,
+        },
+      ];
+      for (const line of lines) {
+        const m = ctx.measureText(line.text);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(line.x - 4, line.y - 9, m.width + 8, 14);
+        ctx.fillStyle = '#00ffff';
+        ctx.fillText(line.text, line.x, line.y);
+      }
+      ctx.restore();
 
       // Decorative brackets
       ctx.strokeStyle = '#00ffff';

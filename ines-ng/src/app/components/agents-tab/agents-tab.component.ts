@@ -25,10 +25,9 @@ interface UiMessage {
     ButtonComponent,
     MessageBubbleComponent,
     TypingIndicatorComponent,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './agents-tab.component.html',
-  styleUrl: './agents-tab.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class AgentsTabComponent implements AfterViewChecked {
@@ -102,7 +101,7 @@ export class AgentsTabComponent implements AfterViewChecked {
     }
 
     this.history.push({ role: 'user', content: text });
-    this.messages.update(m => [...m, { id: this.nextId++, role: 'user', text }]);
+    this.messages.update((m) => [...m, { id: this.nextId++, role: 'user', text }]);
     this.typing.set(true);
     this.shouldScroll = true;
 
@@ -117,16 +116,24 @@ export class AgentsTabComponent implements AfterViewChecked {
         full = fullText;
         if (this.typing()) {
           this.typing.set(false);
-          this.messages.update(m => [...m, { id: aiId, role: 'ai', text: fullText, streaming: true }]);
+          this.messages.update((m) => [
+            ...m,
+            { id: aiId, role: 'ai', text: fullText, streaming: true },
+          ]);
         } else {
-          this.messages.update(m => m.map(msg => msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg));
+          this.messages.update((m) =>
+            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
+          );
         }
         this.shouldScroll = true;
       });
       this.history.push({ role: 'assistant', content: full });
     } catch (e: any) {
       this.typing.set(false);
-      this.messages.update(m => [...m, { id: this.nextId++, role: 'ai', text: '❌ ' + e.message }]);
+      this.messages.update((m) => [
+        ...m,
+        { id: this.nextId++, role: 'ai', text: '❌ ' + e.message },
+      ]);
     }
     this.generating.set(false);
   }
@@ -141,7 +148,7 @@ export class AgentsTabComponent implements AfterViewChecked {
     if (!agent) return;
 
     const skillIds = agent.skillIds.includes(skillId)
-      ? agent.skillIds.filter(id => id !== skillId)
+      ? agent.skillIds.filter((id) => id !== skillId)
       : [...agent.skillIds, skillId];
 
     const updated = { ...agent, skillIds };
@@ -159,7 +166,7 @@ export class AgentsTabComponent implements AfterViewChecked {
       name: 'New Agent',
       description: 'Description of the agent',
       systemPrompt: 'You are a helpful assistant.',
-      skillIds: []
+      skillIds: [],
     });
     this.selectedAgent.set(newAgent);
     this.activeMode.set('edit');
@@ -178,7 +185,7 @@ export class AgentsTabComponent implements AfterViewChecked {
       id: '',
       name: 'New Skill',
       description: 'Skill description',
-      instructions: 'How the agent should behave with this skill.'
+      instructions: 'How the agent should behave with this skill.',
     });
   }
 
@@ -201,7 +208,9 @@ export class AgentsTabComponent implements AfterViewChecked {
   }
 
   deleteSkill(id: string) {
-    if (confirm('Are you sure you want to delete this skill? It will be removed from all agents.')) {
+    if (
+      confirm('Are you sure you want to delete this skill? It will be removed from all agents.')
+    ) {
       this.agentSvc.deleteSkill(id);
       this.toast.show('🗑️ Skill deleted');
     }

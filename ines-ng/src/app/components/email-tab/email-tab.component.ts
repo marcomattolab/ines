@@ -1,4 +1,12 @@
-import { Component, inject, signal, ElementRef, viewChild, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  ElementRef,
+  viewChild,
+  HostListener,
+  OnDestroy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
@@ -17,7 +25,7 @@ Use the language of the original text.`;
   templateUrl: './email-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
-export class EmailTabComponent {
+export class EmailTabComponent implements OnDestroy {
   readonly emailInputRef = viewChild.required<ElementRef<HTMLTextAreaElement>>('emailInput');
 
   llm = inject(LlmService);
@@ -118,5 +126,9 @@ export class EmailTabComponent {
     const emailInputRef = this.emailInputRef();
     if (emailInputRef) emailInputRef.nativeElement.value = '';
     this.result.set('');
+  }
+
+  ngOnDestroy() {
+    // no-op: included for lifecycle completeness
   }
 }

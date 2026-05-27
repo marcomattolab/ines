@@ -1,6 +1,8 @@
 <div class="flex flex-1 overflow-hidden">
   <!-- Left: Agents List -->
-  <aside class="w-64 border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md">
+  <aside
+    class="w-64 border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md"
+  >
     <div class="p-4 border-b border-[var(--border)] flex justify-between items-center">
       <h2 class="font-[var(--font-ui)] font-bold text-sm uppercase tracking-wider">Agents</h2>
       <button (click)="addNewAgent()" class="text-accent-blue hover:scale-110 transition-transform">
@@ -70,7 +72,7 @@
           @for (msg of messages(); track msg.id) {
             @if (msg.role === 'ai' && msg.streaming) {
               <div class="message ai">
-                <div class="msg-avatar">{{ agent.name.substring(0,2).toUpperCase() }}</div>
+                <div class="msg-avatar">{{ agent.name.substring(0, 2).toUpperCase() }}</div>
                 <div class="msg-bubble cursor-blink" [innerHTML]="html(msg.text)"></div>
               </div>
             } @else {
@@ -83,7 +85,7 @@
           }
           @if (typing()) {
             <div class="message ai">
-              <div class="msg-avatar">{{ agent.name.substring(0,2).toUpperCase() }}</div>
+              <div class="msg-avatar">{{ agent.name.substring(0, 2).toUpperCase() }}</div>
               <div class="msg-bubble"><app-typing-indicator /></div>
             </div>
           }
@@ -149,7 +151,9 @@
               <mat-icon fontIcon="add" class="text-sm"></mat-icon> Add Skill
             </app-button>
           </div>
-          <p class="text-xs text-[var(--text-2)]">Enable specific behaviors and expertise for this agent.</p>
+          <p class="text-xs text-[var(--text-2)]">
+            Enable specific behaviors and expertise for this agent.
+          </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             @for (skill of agentSvc.skills(); track skill.id) {
               <div
@@ -160,14 +164,25 @@
                 [class.bg-white\/5]="!isSkillSelected(skill.id)"
               >
                 <div class="flex justify-between items-center">
-                  <div class="flex items-center gap-2 cursor-pointer flex-1" (click)="toggleSkill(skill.id)">
+                  <div
+                    class="flex items-center gap-2 cursor-pointer flex-1"
+                    (click)="toggleSkill(skill.id)"
+                  >
                     <span class="font-bold text-sm">{{ skill.name }}</span>
                     @if (isSkillSelected(skill.id)) {
-                      <mat-icon fontIcon="check_circle" class="text-accent-green text-sm w-4 h-4"></mat-icon>
+                      <mat-icon
+                        fontIcon="check_circle"
+                        class="text-accent-green text-sm w-4 h-4"
+                      ></mat-icon>
                     }
                   </div>
-                  <div class="flex gap-1 opacity-0 group-hover/skill:opacity-100 transition-opacity">
-                    <button (click)="editSkill(skill)" class="text-[var(--text-2)] hover:text-white">
+                  <div
+                    class="flex gap-1 opacity-0 group-hover/skill:opacity-100 transition-opacity"
+                  >
+                    <button
+                      (click)="editSkill(skill)"
+                      class="text-[var(--text-2)] hover:text-white"
+                    >
                       <mat-icon fontIcon="edit" class="text-xs w-4 h-4"></mat-icon>
                     </button>
                     <button (click)="deleteSkill(skill.id)" class="text-accent-rose">
@@ -183,21 +198,35 @@
 
         <!-- Skill Editor (Conditional) -->
         @if (editingSkill(); as skill) {
-          <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div class="bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+          <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <div
+              class="bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl"
+            >
               <h3 class="text-lg font-bold font-[var(--font-ui)]">Edit Skill</h3>
               <div class="space-y-3">
                 <div class="space-y-1">
                   <label class="text-[10px] uppercase text-[var(--text-2)]">Name</label>
-                  <input [(ngModel)]="skill.name" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none" />
+                  <input
+                    [(ngModel)]="skill.name"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+                  />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] uppercase text-[var(--text-2)]">Description</label>
-                  <input [(ngModel)]="skill.description" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none" />
+                  <input
+                    [(ngModel)]="skill.description"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+                  />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] uppercase text-[var(--text-2)]">Instructions</label>
-                  <textarea [(ngModel)]="skill.instructions" rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"></textarea>
+                  <textarea
+                    [(ngModel)]="skill.instructions"
+                    rows="4"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"
+                  ></textarea>
                 </div>
               </div>
               <div class="flex justify-end gap-2">

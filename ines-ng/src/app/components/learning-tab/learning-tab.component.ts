@@ -7,7 +7,7 @@ import {
   AfterViewInit,
   OnDestroy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
@@ -26,7 +26,7 @@ mermaid.initialize({
 @Component({
   selector: 'app-learning-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, ButtonComponent, MessageBubbleComponent],
+  imports: [DecimalPipe, FormsModule, MatIconModule, ButtonComponent, MessageBubbleComponent],
   templateUrl: './learning-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },
   styles: [

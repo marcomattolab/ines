@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
@@ -30,7 +30,7 @@ const LANGUAGES = [
   templateUrl: './translate-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
-export class TranslateTabComponent {
+export class TranslateTabComponent implements OnDestroy {
   llm = inject(LlmService);
   toast = inject(ToastService);
   speech = inject(SpeechService);
@@ -139,5 +139,12 @@ export class TranslateTabComponent {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br>');
+  }
+
+  ngOnDestroy() {
+    if (this.debounce) {
+      clearTimeout(this.debounce);
+      this.debounce = null;
+    }
   }
 }

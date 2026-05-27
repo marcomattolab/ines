@@ -6,6 +6,7 @@ import {
   AfterViewChecked,
   viewChild,
   OnInit,
+  OnDestroy,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
@@ -27,6 +28,7 @@ Don't mention that you're an open-source AI model unless asked.`;
 
 const CHAT_STORAGE_KEY = 'ines_chat_history';
 const MAX_STORED_MESSAGES = 50;
+const MAX_HISTORY_LENGTH = 100;
 
 interface StoredChat {
   messages: { id: number; role: 'user' | 'ai'; text: string }[];
@@ -41,7 +43,7 @@ interface StoredChat {
   templateUrl: './chat-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
-export class ChatTabComponent implements AfterViewChecked, OnInit {
+export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
@@ -144,6 +146,8 @@ export class ChatTabComponent implements AfterViewChecked, OnInit {
     this.inputEl().nativeElement.style.height = '';
 
     this.history.push({ role: 'user', content: text });
+    if (this.history.length > MAX_HISTORY_LENGTH)
+      this.history = this.history.slice(-MAX_HISTORY_LENGTH);
     this.messages.update((m) => [...m, { id: this.nextId++, role: 'user', text }]);
     this.typing.set(true);
     this.shouldScroll = true;
@@ -170,6 +174,8 @@ export class ChatTabComponent implements AfterViewChecked, OnInit {
         this.shouldScroll = true;
       });
       this.history.push({ role: 'assistant', content: full });
+      if (this.history.length > MAX_HISTORY_LENGTH)
+        this.history = this.history.slice(-MAX_HISTORY_LENGTH);
       this.tokenInfo.set(`${this.history.length} messages in history`);
       this.persist();
     } catch (e: any) {
@@ -188,6 +194,10 @@ export class ChatTabComponent implements AfterViewChecked, OnInit {
     this.messages.set([{ id: this.nextId++, role: 'ai', text: 'Chat cleaned. Can I help you?' }]);
     this.tokenInfo.set('');
     localStorage.removeItem(CHAT_STORAGE_KEY);
+  }
+
+  ngOnDestroy() {
+    this.persist();
   }
 
   html(text: string) {

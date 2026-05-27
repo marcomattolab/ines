@@ -684,49 +684,72 @@ export class VisionTabComponent implements OnDestroy {
     // Landmark indices: 10=forehead, 152=chin, 234=left cheek, 454=right cheek
     const forehead = lm[10];
     const chin = lm[152];
-    const leftEar = lm[234];
-    const rightEar = lm[454];
+    const leftCheek = lm[234];
+    const rightCheek = lm[454];
     const lEye = lm[33];
     const rEye = lm[362];
-    if (!forehead || !chin || !leftEar || !rightEar || !lEye || !rEye) return;
+    if (!forehead || !chin || !leftCheek || !rightCheek || !lEye || !rEye) return;
 
-    const faceW = Math.abs(rightEar.x - leftEar.x) * w * 1.0;
-    const faceH = Math.abs(chin.y - forehead.y) * h * 1.0;
-    const cx = ((leftEar.x + rightEar.x) / 2) * w;
+    const faceW = Math.abs(rightCheek.x - leftCheek.x) * w;
+    const faceH = Math.abs(chin.y - forehead.y) * h;
+    const cx = ((leftCheek.x + rightCheek.x) / 2) * w;
     const cy = ((forehead.y + chin.y) / 2) * h;
     const rot = Math.atan2(rEye.y - lEye.y, rEye.x - lEye.x);
 
+    // Build face contour from landmarks (FACE_OVAL indices), centered at (cx, cy)
+    const indices = FACE_OVAL;
+    const contour = indices
+      .map((i) => lm[i])
+      .filter((p): p is { x: number; y: number } => !!p)
+      .map((p) => ({ x: p.x * w - cx, y: p.y * h - cy }));
+    if (contour.length < 3) return;
+
+    // First pass — draw image clipped to the face contour
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(rot);
 
-    // Diagnostic: outline ellipse to verify face tracking
-    ctx.strokeStyle = 'rgba(0, 255, 100, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 6]);
     ctx.beginPath();
-    ctx.ellipse(0, 0, faceW / 2, faceH / 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Clip to oval
-    ctx.beginPath();
-    ctx.ellipse(0, 0, faceW / 2, faceH / 2, 0, 0, Math.PI * 2);
+    ctx.moveTo(contour[0].x, contour[0].y);
+    for (let i = 1; i < contour.length; i++) {
+      ctx.lineTo(contour[i].x, contour[i].y);
+    }
+    ctx.closePath();
     ctx.clip();
 
-    // Draw image scaled to fill the oval
+    // Scale image to cover the face area (slightly oversize for seamless coverage)
     const imgA = img.naturalWidth / img.naturalHeight;
-    const ovalA = faceW / faceH;
+    const faceA = faceW / faceH;
+    const pad = 1.15;
     let dw: number, dh: number;
-    if (imgA > ovalA) {
-      dh = faceH;
+    if (imgA > faceA) {
+      dh = faceH * pad;
       dw = dh * imgA;
     } else {
-      dw = faceW;
+      dw = faceW * pad;
       dh = dw / imgA;
     }
-
     ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    ctx.restore();
+
+    // Second pass — feather the edge by stroking the contour with a shadow blur
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot);
+
+    ctx.beginPath();
+    ctx.moveTo(contour[0].x, contour[0].y);
+    for (let i = 1; i < contour.length; i++) {
+      ctx.lineTo(contour[i].x, contour[i].y);
+    }
+    ctx.closePath();
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
     ctx.restore();
   }

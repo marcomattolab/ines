@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { VisionService } from '../../core/services/vision.service';
 import { ToastService } from '../../core/services/toast.service';
+import { LlmService } from '../../core/services/llm.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const GESTURE_ICONS: Record<string, string> = {
@@ -251,6 +252,7 @@ const FACE_MESH_EDGES: [number, number][] = [
 export class VisionTabComponent implements OnDestroy {
   vision = inject(VisionService);
   toast = inject(ToastService);
+  llm = inject(LlmService);
 
   readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   readonly meshCanvas = viewChild<ElementRef<HTMLCanvasElement>>('meshCanvas');
@@ -266,6 +268,9 @@ export class VisionTabComponent implements OnDestroy {
   faceImageEnabled = signal(false);
   loadedFaceImage = signal<HTMLImageElement | null>(null);
   loadedFileName = signal('');
+  aiInsights = signal(false);
+  aiInsightText = signal('');
+  aiInsightLoading = signal(false);
   notifications = signal<{ id: number; icon: string; msg: string; type: string; time: string }[]>(
     [],
   );
@@ -759,6 +764,54 @@ export class VisionTabComponent implements OnDestroy {
     if (!c) return;
     const ctx = c.getContext('2d');
     if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+  }
+
+  toggleAiInsights() {
+    this.aiInsights.update((v) => !v);
+    if (!this.aiInsights()) {
+      this.aiInsightText.set('');
+    }
+  }
+
+  async runAiInsight() {
+    if (this.aiInsightLoading() || !this.llm.isReady()) return;
+    this.aiInsightLoading.set(true);
+    this.aiInsightText.set('');
+
+    const context = this.buildVisionContext();
+    const system =
+      "You are an on-device edge AI vision assistant. Analyze the user's current state based on the vision data below. Keep responses to 2-3 short sentences. Be insightful but concise.";
+    const prompt = this.llm.buildPrompt(system, `Current vision state: ${context}`);
+
+    try {
+      await this.llm.generate(prompt, (partial, done, full) => {
+        this.aiInsightText.set(full);
+        if (done) {
+          this.aiInsightLoading.set(false);
+          this.addNotification('psychology', 'AI insight generated', 'purple');
+        }
+      });
+    } catch (err) {
+      this.aiInsightText.set('Failed to generate insight: ' + err);
+      this.aiInsightLoading.set(false);
+    }
+  }
+
+  private buildVisionContext(): string {
+    const parts: string[] = [];
+    parts.push(`Faces detected: ${this.vision.faceCount()}`);
+    parts.push(`Emotion: ${this.vision.emotion()}`);
+    if (this.vision.gesture() !== 'None') {
+      parts.push(
+        `Gesture: ${this.gestureLabel(this.vision.gesture())} (${this.vision.gestureScore()}% confidence)`,
+      );
+    }
+    parts.push(`Gaze direction: ${this.vision.gaze()}`);
+    if (this.vision.heartRate() > 0) {
+      parts.push(`Heart rate: ~${this.vision.heartRate()} BPM`);
+    }
+    parts.push(`Engagement level: ${this.vision.engagement()}%`);
+    return parts.join('. ');
   }
 
   ngOnDestroy() {

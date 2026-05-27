@@ -8,7 +8,7 @@
         ></mat-icon>
         Vision Assistant
       </div>
-      <div class="panel-desc">Real-time Emotion & Gesture analysis on-device</div>
+      <div class="panel-desc">On-device SML vision · Edge AI emotion & gesture analysis</div>
     </div>
     <app-button
       [variant]="vision.isRunning() ? 'danger' : 'primary'"
@@ -287,6 +287,36 @@
             }
           </div>
         </div>
+
+        <!-- AI Insights -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-purple/10]="aiInsights()"
+          [class.border-accent-purple/30]="aiInsights()"
+          [class.border-white/10]="!aiInsights()"
+          [class.bg-white/5]="!aiInsights()"
+          (click)="toggleAiInsights()"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
+            >
+              <mat-icon fontIcon="psychology" class="text-accent-purple"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">AI Insights</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">SML-powered analysis</div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
+          >
+            @if (aiInsights()) {
+              <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
+            }
+          </div>
+        </div>
       </div>
     </div>
 
@@ -443,6 +473,80 @@
               <span class="text-[var(--text-1)] font-mono">{{ vision.fps() }} FPS</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Edge AI Model Status -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">Edge AI</h3>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full bg-accent-green/20 flex items-center justify-center shrink-0"
+            >
+              <mat-icon fontIcon="memory" class="text-accent-green text-sm w-3.5 h-3.5"></mat-icon>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[10px] text-[var(--text-2)] uppercase font-bold">SML Model</div>
+              @if (llm.isReady()) {
+                <div class="text-xs truncate flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 bg-accent-green rounded-full"></span>
+                  {{ llm.modelName() }}
+                </div>
+              } @else if (llm.modelStatus() === 'loading') {
+                <div class="text-xs text-accent-amber flex items-center gap-1.5">
+                  <mat-icon fontIcon="sync" class="text-xs w-3 h-3 animate-spin"></mat-icon>
+                  Loading...
+                </div>
+              } @else {
+                <div class="text-xs text-[var(--text-2)]">Not loaded</div>
+              }
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full bg-accent-cyan/20 flex items-center justify-center shrink-0"
+            >
+              <mat-icon fontIcon="devices" class="text-accent-cyan text-sm w-3.5 h-3.5"></mat-icon>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[10px] text-[var(--text-2)] uppercase font-bold">Processing</div>
+              <div class="text-xs text-[var(--text-1)]">100% on-device · No cloud</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full bg-accent-amber/20 flex items-center justify-center shrink-0"
+            >
+              <mat-icon fontIcon="speed" class="text-accent-amber text-sm w-3.5 h-3.5"></mat-icon>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[10px] text-[var(--text-2)] uppercase font-bold">Vision FPS</div>
+              <div class="text-xs font-mono">{{ vision.fps() || '--' }} FPS</div>
+            </div>
+          </div>
+          @if (aiInsights() && llm.isReady()) {
+            <button
+              class="w-full py-2 px-3 rounded-xl border border-accent-purple/30 bg-accent-purple/10 text-accent-purple text-xs font-bold uppercase tracking-wider hover:bg-accent-purple/20 transition-all flex items-center justify-center gap-2"
+              [disabled]="aiInsightLoading() || !vision.isRunning()"
+              (click)="runAiInsight()"
+            >
+              @if (aiInsightLoading()) {
+                <mat-icon fontIcon="sync" class="text-xs w-3 h-3 animate-spin"></mat-icon>
+                Generating...
+              } @else {
+                <mat-icon fontIcon="auto_awesome" class="text-xs w-3 h-3"></mat-icon>
+                Generate Analysis
+              }
+            </button>
+          }
+          @if (aiInsightText()) {
+            <div
+              class="p-3 rounded-xl bg-accent-purple/5 border border-accent-purple/20 text-[11px] leading-relaxed text-[var(--text-1)]"
+            >
+              {{ aiInsightText() }}
+            </div>
+          }
         </div>
       </div>
 

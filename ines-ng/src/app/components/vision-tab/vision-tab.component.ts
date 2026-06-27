@@ -925,7 +925,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawPacmanOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const r = t.faceH * 0.55;
+    const r = Math.max(t.faceW, t.faceH) * 0.65;
     const mouthAngle = (Math.sin(performance.now() / 200) * 0.3 + 0.4) * Math.PI;
     ctx.save();
     ctx.translate(t.cx, t.cy);
@@ -951,7 +951,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawCatOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy - t.faceH * 0.05);
     ctx.rotate(t.rot);
@@ -1021,7 +1021,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawRobotOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.6;
+    const s = Math.max(t.faceW, t.faceH) * 0.7;
     ctx.save();
     ctx.translate(t.cx, t.cy);
     ctx.rotate(t.rot);
@@ -1071,7 +1071,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawAlienOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy - t.faceH * 0.1);
     ctx.rotate(t.rot);
@@ -1118,7 +1118,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawNinjaOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy);
     ctx.rotate(t.rot);
@@ -1167,7 +1167,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawJokerOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy - t.faceH * 0.02);
     ctx.rotate(t.rot);
@@ -1231,7 +1231,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawSunglassesOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy - t.faceH * 0.05);
     ctx.rotate(t.rot);
@@ -1272,7 +1272,7 @@ export class VisionTabComponent implements OnDestroy {
   private drawSkullOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
     const t = this.getOverlayTransform(lm, w, h);
     if (!t) return;
-    const s = t.faceH * 0.55;
+    const s = Math.max(t.faceW, t.faceH) * 0.65;
     ctx.save();
     ctx.translate(t.cx, t.cy);
     ctx.rotate(t.rot);

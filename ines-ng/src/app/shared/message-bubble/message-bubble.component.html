@@ -7,7 +7,7 @@
     }
   </div>
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
-    <span [innerHTML]="safeHtml()"></span>
+    <div class="msg-content" [innerHTML]="safeHtml()"></div>
     @if (role() === 'ai' && text()) {
       <div class="msg-actions" [class.visible]="isSpeaking()">
         <app-button

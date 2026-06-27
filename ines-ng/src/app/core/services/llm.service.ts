@@ -18,6 +18,7 @@ export class LlmService {
   readonly modelName = signal<string>('No model loaded');
   readonly progress = signal<ProgressState>({ pct: 0, label: '' });
   readonly isReady = computed(() => this.modelStatus() === 'ready');
+  readonly isBusy = signal(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private llm: any = null;
@@ -222,15 +223,22 @@ export class LlmService {
     onToken: (partial: string, done: boolean, full: string) => void,
   ): Promise<string> {
     if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
+    if (this.isBusy())
+      throw new Error('Model is busy processing another request. Wait for it to finish.');
+    this.isBusy.set(true);
     return new Promise((resolve, reject) => {
       let full = '';
       try {
         this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
           full += partial;
           onToken(partial, done, full);
-          if (done) resolve(full);
+          if (done) {
+            this.isBusy.set(false);
+            resolve(full);
+          }
         });
       } catch (e) {
+        this.isBusy.set(false);
         reject(e);
       }
     });

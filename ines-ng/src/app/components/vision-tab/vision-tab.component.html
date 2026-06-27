@@ -41,7 +41,15 @@
         ></video>
 
         <!-- Canvas overlay for face mesh + face image -->
-        @if (vision.isRunning() && (showFaceMesh() || faceImageEnabled() || cyberpunkFilter())) {
+        @if (
+          vision.isRunning() &&
+          (showFaceMesh() ||
+            faceImageEnabled() ||
+            cyberpunkFilter() ||
+            showHandOverlay() ||
+            showPoseOverlay() ||
+            faceOverlayType())
+        ) {
           <canvas
             #meshCanvas
             class="absolute inset-0 w-full h-full pointer-events-none"
@@ -210,29 +218,33 @@
           </div>
         </div>
 
-        <!-- Face Swap -->
+        <!-- Face Overlay -->
         <div
           class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-rose/10]="faceImageEnabled()"
-          [class.border-accent-rose/30]="faceImageEnabled()"
-          [class.border-white/10]="!faceImageEnabled()"
-          [class.bg-white/5]="!faceImageEnabled()"
-          (click)="toggleFaceImage()"
+          [class.bg-accent-rose/10]="showOverlayPicker()"
+          [class.border-accent-rose/30]="showOverlayPicker()"
+          [class.border-white/10]="!showOverlayPicker()"
+          [class.bg-white/5]="!showOverlayPicker()"
+          (click)="toggleOverlayPicker()"
           style="cursor: pointer"
         >
           <div class="flex items-center gap-3 flex-1 min-w-0">
             <div class="w-10 h-10 rounded-full bg-accent-rose/20 flex items-center justify-center">
-              <mat-icon fontIcon="switch_access_shortcut" class="text-accent-rose"></mat-icon>
+              <mat-icon fontIcon="filter_frames" class="text-accent-rose"></mat-icon>
             </div>
             <div class="min-w-0">
-              <div class="text-sm font-bold">Face Swap</div>
+              <div class="text-sm font-bold">Face Overlay</div>
               <div class="text-[10px] text-[var(--text-2)] uppercase truncate">
-                {{ loadedFileName() || 'Tap to load a face photo' }}
+                {{
+                  faceOverlayType() === 'photo'
+                    ? loadedFileName()
+                    : faceOverlayType() || 'Pac-Man, Cat, Photo & more'
+                }}
               </div>
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
-            @if (loadedFaceImage()) {
+            @if (faceOverlayType() === 'photo' && loadedFaceImage()) {
               <button
                 (click)="openFacePicker(); $event.stopPropagation()"
                 class="text-[var(--text-2)] hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
@@ -244,7 +256,7 @@
             <div
               class="w-4 h-4 rounded-full border-2 border-accent-rose flex items-center justify-center"
             >
-              @if (faceImageEnabled()) {
+              @if (faceOverlayType()) {
                 <div class="w-2 h-2 bg-accent-rose rounded-full"></div>
               }
             </div>
@@ -259,6 +271,66 @@
           class="hidden"
           (change)="onFaceImageSelected($event)"
         />
+
+        <!-- Hand Skeleton -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-green/10]="showHandOverlay()"
+          [class.border-accent-green/30]="showHandOverlay()"
+          [class.border-white/10]="!showHandOverlay()"
+          [class.bg-white/5]="!showHandOverlay()"
+          (click)="showHandOverlay.set(!showHandOverlay())"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-green/20 flex items-center justify-center">
+              <mat-icon fontIcon="pan_tool" class="text-accent-green"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Hand Skeleton</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">
+                21-landmark hand tracking
+              </div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-green flex items-center justify-center"
+          >
+            @if (showHandOverlay()) {
+              <div class="w-2 h-2 bg-accent-green rounded-full"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Pose Skeleton -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-accent-amber/10]="showPoseOverlay()"
+          [class.border-accent-amber/30]="showPoseOverlay()"
+          [class.border-white/10]="!showPoseOverlay()"
+          [class.bg-white/5]="!showPoseOverlay()"
+          (click)="showPoseOverlay.set(!showPoseOverlay())"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center">
+              <mat-icon fontIcon="accessibility" class="text-accent-amber"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Pose Skeleton</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">
+                33-landmark body tracking
+              </div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
+          >
+            @if (showPoseOverlay()) {
+              <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
+            }
+          </div>
+        </div>
 
         <!-- Auto Power Save -->
         <div
@@ -318,6 +390,40 @@
           </div>
         </div>
       </div>
+
+      <!-- Overlay Picker Panel -->
+      @if (showOverlayPicker()) {
+        <div
+          class="bg-white/5 border border-white/10 rounded-2xl p-4 transition-all animate-in fade-in slide-in-from-top-4 duration-300"
+        >
+          <div class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
+            Choose Overlay
+          </div>
+          <div class="grid grid-cols-5 gap-2">
+            @for (ov of OVERLAYS; track ov.type) {
+              <div
+                class="flex flex-col items-center gap-1.5 p-2 rounded-xl border cursor-pointer transition-all"
+                [class.border-accent-rose/50]="faceOverlayType() === ov.type"
+                [class.border-white/10]="faceOverlayType() !== ov.type"
+                [class.bg-accent-rose/10]="faceOverlayType() === ov.type"
+                [class.bg-white/5]="faceOverlayType() !== ov.type"
+                (click)="setOverlayType(ov.type)"
+              >
+                <mat-icon
+                  [fontIcon]="ov.icon"
+                  class="text-sm w-4 h-4"
+                  [class]="'text-' + ov.color"
+                ></mat-icon>
+                <span
+                  class="text-[8px] uppercase tracking-wider [font-weight:600] text-center leading-tight"
+                >
+                  {{ ov.label }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Stats Sidebar -->
@@ -473,6 +579,39 @@
               <span class="text-[var(--text-1)] font-mono">{{ vision.fps() }} FPS</span>
             </div>
           </div>
+
+          <!-- Hands -->
+          @if (showHandOverlay()) {
+            <div class="space-y-1">
+              <div
+                class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]"
+              >
+                <span>Hands</span>
+                <span class="text-accent-green">{{
+                  vision.isRunning() ? vision.handLandmarks().length + ' detected' : '--'
+                }}</span>
+              </div>
+              @if (vision.handLandmarks().length > 0 && vision.handedness().length) {
+                <div class="text-[9px] font-mono text-[var(--text-2)]">
+                  {{ vision.handedness().join(', ') }}
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Pose -->
+          @if (showPoseOverlay()) {
+            <div class="space-y-1">
+              <div
+                class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-2)]"
+              >
+                <span>Pose</span>
+                <span class="text-accent-amber">{{
+                  vision.isRunning() && vision.poseLandmarks().length > 0 ? 'Active' : '--'
+                }}</span>
+              </div>
+            </div>
+          }
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { Component, inject, signal, viewChild, ElementRef, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { VisionService } from '../../core/services/vision.service';
+import { VisionService, FaceOverlayType } from '../../core/services/vision.service';
 import { ToastService } from '../../core/services/toast.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -241,6 +241,84 @@ const FACE_MESH_EDGES: [number, number][] = [
   [466, 336],
 ];
 
+const OVERLAYS: { type: FaceOverlayType; icon: string; label: string; color: string }[] = [
+  { type: 'pacman', icon: 'radio_button_checked', label: 'Pac-Man', color: 'accent-amber' },
+  { type: 'cat', icon: 'pets', label: 'Cat', color: 'accent-orange' },
+  { type: 'robot', icon: 'smart_toy', label: 'Robot', color: 'accent-cyan' },
+  { type: 'alien', icon: 'bug_report', label: 'Alien', color: 'accent-green' },
+  { type: 'ninja', icon: 'dark_mode', label: 'Ninja', color: 'text-2' },
+  { type: 'joker', icon: 'sentiment_satisfied', label: 'Joker', color: 'accent-rose' },
+  { type: 'sunglasses', icon: 'sunglasses', label: 'Shades', color: 'accent-purple' },
+  { type: 'skull', icon: 'dangerous', label: 'Skull', color: 'accent-rose' },
+  { type: 'photo', icon: 'switch_access_shortcut', label: 'Photo', color: 'accent-indigo' },
+];
+
+// Hand skeleton connections (21 landmarks)
+const HAND_CONNECTIONS: [number, number][] = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4],
+  [0, 5],
+  [5, 6],
+  [6, 7],
+  [7, 8],
+  [0, 9],
+  [9, 10],
+  [10, 11],
+  [11, 12],
+  [0, 13],
+  [13, 14],
+  [14, 15],
+  [15, 16],
+  [0, 17],
+  [17, 18],
+  [18, 19],
+  [19, 20],
+  [5, 9],
+  [9, 13],
+  [13, 17],
+];
+
+// Pose skeleton connections (33 landmarks)
+const POSE_CONNECTIONS: [number, number][] = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 7],
+  [0, 4],
+  [4, 5],
+  [5, 6],
+  [6, 8],
+  [9, 10],
+  [11, 12],
+  [11, 23],
+  [12, 24],
+  [11, 13],
+  [13, 15],
+  [15, 17],
+  [15, 19],
+  [15, 21],
+  [17, 19],
+  [12, 14],
+  [14, 16],
+  [16, 18],
+  [16, 20],
+  [16, 22],
+  [18, 20],
+  [23, 24],
+  [23, 25],
+  [25, 27],
+  [27, 29],
+  [27, 31],
+  [29, 31],
+  [24, 26],
+  [26, 28],
+  [28, 30],
+  [28, 32],
+  [30, 32],
+];
+
 @Component({
   selector: 'app-vision-tab',
   standalone: true,
@@ -271,12 +349,17 @@ export class VisionTabComponent implements OnDestroy {
   aiInsights = signal(false);
   aiInsightText = signal('');
   aiInsightLoading = signal(false);
+  faceOverlayType = signal<FaceOverlayType | null>(null);
+  showOverlayPicker = signal(false);
+  showHandOverlay = signal(false);
+  showPoseOverlay = signal(false);
   notifications = signal<{ id: number; icon: string; msg: string; type: string; time: string }[]>(
     [],
   );
 
   readonly emotions = ['Happy', 'Surprised', 'Sad', 'Thinking', 'Neutral'] as const;
   readonly Math = Math;
+  readonly OVERLAYS = OVERLAYS;
 
   private lastGesture = 'None';
   private lastFaceCount = 0;
@@ -332,14 +415,27 @@ export class VisionTabComponent implements OnDestroy {
       }
     });
 
-    // Start/stop draw loop when mesh or face image is active
+    // Start/stop draw loop when any overlay is active
     effect(() => {
-      const shouldDraw = this.showFaceMesh() || this.faceImageEnabled() || this.cyberpunkFilter();
+      const hasFaceOverlay =
+        this.faceOverlayType() || this.faceImageEnabled() || this.cyberpunkFilter();
+      const shouldDraw =
+        this.showFaceMesh() || hasFaceOverlay || this.showHandOverlay() || this.showPoseOverlay();
       if (shouldDraw && !this.drawRaf) {
         this.startDrawLoop();
       } else if (!shouldDraw && this.drawRaf) {
         this.stopDrawLoop();
       }
+    });
+
+    // Enable/disable hand detection when toggled
+    effect(() => {
+      this.vision.enableHandDetection(this.showHandOverlay());
+    });
+
+    // Enable/disable pose detection when toggled
+    effect(() => {
+      this.vision.enablePoseDetection(this.showPoseOverlay());
     });
 
     // Auto Power Save Logic
@@ -431,6 +527,25 @@ export class VisionTabComponent implements OnDestroy {
     this.powerSaveActive.set(false);
   }
 
+  setOverlayType(type: FaceOverlayType) {
+    if (this.faceOverlayType() === type) {
+      this.faceOverlayType.set(null);
+    } else {
+      this.faceOverlayType.set(type);
+      this.showOverlayPicker.set(false);
+      if (type === 'photo') {
+        this.faceImageEnabled.set(false);
+        this.loadedFaceImage() ? this.faceImageEnabled.set(true) : this.openFacePicker();
+      } else {
+        this.faceImageEnabled.set(false);
+      }
+    }
+  }
+
+  toggleOverlayPicker() {
+    this.showOverlayPicker.update((v) => !v);
+  }
+
   toggleFaceImage() {
     if (this.faceImageEnabled()) {
       this.faceImageEnabled.set(false);
@@ -508,35 +623,60 @@ export class VisionTabComponent implements OnDestroy {
   }
 
   private drawOverlay() {
-    const lm = this.vision.faceLandmarks;
-    if (!lm || lm.length === 0) {
-      this.clearCanvas();
-      return;
-    }
-
     const ctx = this.getCtx();
     if (!ctx) return;
     const w = ctx.canvas.width;
     const h = ctx.canvas.height;
+
+    const lm = this.vision.faceLandmarks;
+    const hasFace = lm && lm.length > 0;
 
     // Mirror coordinates to match video's scale-x-[-1]
     ctx.save();
     ctx.scale(-1, 1);
     ctx.translate(-w, 0);
 
-    if (this.showFaceMesh()) {
-      this.drawFaceMesh(ctx, lm, w, h);
-    }
-
-    if (this.cyberpunkFilter()) {
-      this.drawCyberpunkFilter(ctx, lm, w, h);
-    }
-
-    if (this.faceImageEnabled()) {
-      this.drawFaceImage(ctx, lm, w, h);
+    if (hasFace) {
+      if (this.showFaceMesh()) {
+        this.drawFaceMesh(ctx, lm, w, h);
+      }
+      if (this.cyberpunkFilter()) {
+        this.drawCyberpunkFilter(ctx, lm, w, h);
+      }
+      if (this.faceImageEnabled()) {
+        this.drawFaceImage(ctx, lm, w, h);
+      }
+      this.drawFaceOverlay(ctx, lm, w, h);
     }
 
     ctx.restore();
+
+    // Hand & pose drawn without mirror so text/orientation reads correctly
+    if (this.showHandOverlay()) {
+      this.drawHandSkeleton(ctx);
+    }
+    if (this.showPoseOverlay()) {
+      this.drawPoseSkeleton(ctx);
+    }
+  }
+
+  private drawFaceOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const type = this.faceOverlayType();
+    if (!type || type === 'photo') return;
+    const dispatch: Record<
+      string,
+      (c: CanvasRenderingContext2D, l: any[], w: number, h: number) => void
+    > = {
+      pacman: this.drawPacmanOverlay,
+      cat: this.drawCatOverlay,
+      robot: this.drawRobotOverlay,
+      alien: this.drawAlienOverlay,
+      ninja: this.drawNinjaOverlay,
+      joker: this.drawJokerOverlay,
+      sunglasses: this.drawSunglassesOverlay,
+      skull: this.drawSkullOverlay,
+    };
+    dispatch[type]?.call(this, ctx, lm, w, h);
   }
 
   private drawCyberpunkFilter(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
@@ -759,6 +899,512 @@ export class VisionTabComponent implements OnDestroy {
     ctx.restore();
   }
 
+  // --- Icon face overlays (canvas-drawn meshes tracking face landmarks) ---
+
+  private getOverlayTransform(
+    lm: any[],
+    w: number,
+    h: number,
+  ): { cx: number; cy: number; rot: number; faceW: number; faceH: number } | null {
+    const forehead = lm[10],
+      chin = lm[152],
+      lEye = lm[33],
+      rEye = lm[362];
+    const leftCheek = lm[234],
+      rightCheek = lm[454];
+    if (!forehead || !chin || !lEye || !rEye || !leftCheek || !rightCheek) return null;
+    return {
+      cx: ((leftCheek.x + rightCheek.x) / 2) * w,
+      cy: ((forehead.y + chin.y) / 2) * h,
+      rot: Math.atan2(rEye.y - lEye.y, rEye.x - lEye.x),
+      faceW: Math.abs(rightCheek.x - leftCheek.x) * w,
+      faceH: Math.abs(chin.y - forehead.y) * h,
+    };
+  }
+
+  private drawPacmanOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const r = t.faceH * 0.55;
+    const mouthAngle = (Math.sin(performance.now() / 200) * 0.3 + 0.4) * Math.PI;
+    ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.rot);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, mouthAngle, Math.PI * 2 - mouthAngle);
+    ctx.closePath();
+    ctx.fillStyle = '#FFD700';
+    ctx.fill();
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    const eyeX = r * 0.25,
+      eyeY = -r * 0.25;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, r * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawCatOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy - t.faceH * 0.05);
+    ctx.rotate(t.rot);
+    ctx.fillStyle = '#FF8C42';
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#CC6A2E';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Ears
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * s * 0.5, -s * 0.1);
+      ctx.lineTo(side * s * 0.9, -s * 0.85);
+      ctx.lineTo(side * s * 0.1, -s * 0.55);
+      ctx.closePath();
+      ctx.fillStyle = '#FF8C42';
+      ctx.fill();
+      ctx.strokeStyle = '#CC6A2E';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Inner ear (pink)
+      ctx.beginPath();
+      ctx.moveTo(side * s * 0.45, -s * 0.15);
+      ctx.lineTo(side * s * 0.75, -s * 0.65);
+      ctx.lineTo(side * s * 0.2, -s * 0.5);
+      ctx.closePath();
+      ctx.fillStyle = '#FFB6C1';
+      ctx.fill();
+    }
+    // Eyes
+    ctx.fillStyle = '#2D5A27';
+    for (const ex of [-s * 0.25, s * 0.25]) {
+      ctx.beginPath();
+      ctx.ellipse(ex, -s * 0.1, s * 0.08, s * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(ex, -s * 0.1, s * 0.04, s * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#2D5A27';
+    }
+    // Nose
+    ctx.fillStyle = '#FF69B4';
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.12);
+    ctx.lineTo(-s * 0.06, s * 0.18);
+    ctx.lineTo(s * 0.06, s * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    // Whiskers
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 0.8;
+    for (const side of [-1, 1]) {
+      for (let wi = 0; wi < 3; wi++) {
+        const wy = s * (0.12 + wi * 0.07);
+        ctx.beginPath();
+        ctx.moveTo(side * s * 0.08, wy);
+        ctx.lineTo(side * s * 0.55, wy - s * 0.04 + wi * s * 0.03);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  private drawRobotOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.6;
+    ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.rot);
+    // Head (rounded rectangle)
+    ctx.fillStyle = '#A0A0A0';
+    const rw = s * 1.2,
+      rh = s * 1.3;
+    this.roundRect(ctx, -rw / 2, -rh / 2, rw, rh, s * 0.15);
+    ctx.fill();
+    ctx.strokeStyle = '#707070';
+    ctx.lineWidth = 2;
+    this.roundRect(ctx, -rw / 2, -rh / 2, rw, rh, s * 0.15);
+    ctx.stroke();
+    // Antenna
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -rh / 2);
+    ctx.lineTo(0, -rh / 2 - s * 0.3);
+    ctx.stroke();
+    ctx.fillStyle = '#FF4444';
+    ctx.beginPath();
+    ctx.arc(0, -rh / 2 - s * 0.3, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    // LED eyes
+    ctx.fillStyle = '#00FF88';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#00FF88';
+    for (const ex of [-s * 0.25, s * 0.25]) {
+      ctx.beginPath();
+      ctx.roundRect(ex - s * 0.1, -s * 0.15, s * 0.2, s * 0.12, s * 0.03);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    // Mouth grid
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1;
+    const my = s * 0.2;
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 5; col++) {
+        ctx.strokeRect(-s * 0.35 + col * s * 0.17, my + row * s * 0.12, s * 0.13, s * 0.08);
+      }
+    }
+    ctx.restore();
+  }
+
+  private drawAlienOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy - t.faceH * 0.1);
+    ctx.rotate(t.rot);
+    ctx.fillStyle = '#7CCD7C';
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#5B9E5B';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Antennae
+    ctx.strokeStyle = '#7CCD7C';
+    ctx.lineWidth = 3;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * s * 0.35, -s * 0.45);
+      ctx.quadraticCurveTo(side * s * 0.7, -s * 1.0, side * s * 0.5, -s * 1.1);
+      ctx.stroke();
+      ctx.fillStyle = '#FF69B4';
+      ctx.beginPath();
+      ctx.arc(side * s * 0.5, -s * 1.1, s * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Big black eyes
+    ctx.fillStyle = '#000';
+    for (const ex of [-s * 0.2, s * 0.2]) {
+      ctx.beginPath();
+      ctx.ellipse(ex, -s * 0.05, s * 0.15, s * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ex + s * 0.04, -s * 0.1, s * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+    }
+    // Small mouth
+    ctx.fillStyle = '#5B9E5B';
+    ctx.beginPath();
+    ctx.arc(0, s * 0.2, s * 0.06, 0, Math.PI);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawNinjaOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.rot);
+    // Face circle (dark mask)
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#2d2d44';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Eye cutouts (white glow)
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#fff';
+    for (const ex of [-s * 0.22, s * 0.22]) {
+      ctx.beginPath();
+      ctx.ellipse(ex, -s * 0.05, s * 0.1, s * 0.06, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    // Pupils
+    ctx.fillStyle = '#000';
+    for (const ex of [-s * 0.22, s * 0.22]) {
+      ctx.beginPath();
+      ctx.arc(ex, -s * 0.05, s * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Headband
+    ctx.fillStyle = '#C62828';
+    ctx.fillRect(-s * 1.1, -s * 0.55, s * 2.2, s * 0.12);
+    ctx.strokeStyle = '#B71C1C';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-s * 1.1, -s * 0.55, s * 2.2, s * 0.12);
+    // Headband tail
+    ctx.fillStyle = '#C62828';
+    ctx.beginPath();
+    ctx.moveTo(s * 0.8, -s * 0.55);
+    ctx.quadraticCurveTo(s * 1.2, -s * 0.9, s * 0.7, -s * 1.0);
+    ctx.lineTo(s * 0.6, -s * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawJokerOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy - t.faceH * 0.02);
+    ctx.rotate(t.rot);
+    // Face (white base)
+    ctx.fillStyle = '#F5F5DC';
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Green messy hair
+    ctx.fillStyle = '#2E7D32';
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * Math.PI * 2;
+      const r = s * 1.05;
+      const hx = Math.cos(angle) * r,
+        hy = Math.sin(angle) * r;
+      if (hy < -s * 0.2) continue;
+      ctx.beginPath();
+      ctx.moveTo(hx, hy);
+      const endX = hx + (Math.random() - 0.5) * s * 0.5;
+      const endY = hy - s * 0.3 - Math.random() * s * 0.15;
+      ctx.quadraticCurveTo((hx + endX) / 2, hy - s * 0.4, endX, endY);
+      ctx.lineWidth = 4 + Math.random() * 3;
+      ctx.stroke();
+    }
+    // Big red smile
+    ctx.strokeStyle = '#C62828';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, s * 0.05, s * 0.45, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    ctx.strokeStyle = '#B71C1C';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, s * 0.05, s * 0.45, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+    // Teeth
+    ctx.fillStyle = '#FFF';
+    for (let tx = -s * 0.3; tx <= s * 0.3; tx += s * 0.1) {
+      const ty = s * 0.05 + Math.sqrt(Math.max(0, (s * 0.45) ** 2 - tx ** 2));
+      ctx.fillRect(tx - s * 0.03, ty - s * 0.03, s * 0.06, s * 0.06);
+    }
+    // Eyes (dark makeup)
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.22, -s * 0.1, s * 0.12, s * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.22, -s * 0.1, s * 0.12, s * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Red nose
+    ctx.fillStyle = '#E53935';
+    ctx.beginPath();
+    ctx.arc(0, s * 0.08, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawSunglassesOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy - t.faceH * 0.05);
+    ctx.rotate(t.rot);
+    // Two large lenses
+    ctx.fillStyle = '#1a1a2e';
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.roundRect(side * s * 0.32 - s * 0.28, -s * 0.22, s * 0.5, s * 0.3, s * 0.06);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    // Bridge
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-s * 0.06, -s * 0.12, s * 0.12, s * 0.06);
+    // Arms
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.32, -s * 0.07);
+    ctx.lineTo(-s * 0.75, -s * 0.02);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.32, -s * 0.07);
+    ctx.lineTo(s * 0.75, -s * 0.02);
+    ctx.stroke();
+    // Lens reflections
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.roundRect(side * s * 0.32 - s * 0.2, -s * 0.17, s * 0.25, s * 0.08, s * 0.03);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  private drawSkullOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = t.faceH * 0.55;
+    ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.rot);
+    // Skull shape
+    ctx.fillStyle = '#F5F5F5';
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Jaw line
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.7, s * 0.1);
+    ctx.quadraticCurveTo(-s * 0.75, s * 0.55, 0, s * 0.7);
+    ctx.quadraticCurveTo(s * 0.75, s * 0.55, s * 0.7, s * 0.1);
+    ctx.fill();
+    ctx.stroke();
+    // Eye sockets
+    ctx.fillStyle = '#1a1a1a';
+    for (const ex of [-s * 0.22, s * 0.22]) {
+      ctx.beginPath();
+      ctx.ellipse(ex, -s * 0.08, s * 0.16, s * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Nose hole
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.08);
+    ctx.lineTo(-s * 0.05, s * 0.16);
+    ctx.lineTo(s * 0.05, s * 0.16);
+    ctx.closePath();
+    ctx.fill();
+    // Teeth
+    ctx.fillStyle = '#E0E0E0';
+    for (let row = 0; row < 2; row++) {
+      for (let col = -3; col <= 3; col++) {
+        if (col === 0 && row === 0) continue;
+        const tx = col * s * 0.08;
+        const ty = s * 0.28 + row * s * 0.1;
+        ctx.fillRect(tx - s * 0.03, ty, s * 0.06, s * 0.08);
+        ctx.strokeRect(tx - s * 0.03, ty, s * 0.06, s * 0.08);
+      }
+    }
+    ctx.restore();
+  }
+
+  private roundRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // --- Hand skeleton overlay ---
+
+  private drawHandSkeleton(ctx: CanvasRenderingContext2D) {
+    const hands = this.vision.handLandmarks();
+    if (!hands.length) return;
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+
+    for (let hi = 0; hi < hands.length; hi++) {
+      const lm = hands[hi];
+      if (!lm || lm.length < 21) continue;
+
+      // Bones
+      ctx.strokeStyle = 'rgba(0, 255, 136, 0.6)';
+      ctx.lineWidth = 2;
+      for (const [i, j] of HAND_CONNECTIONS) {
+        const a = lm[i],
+          b = lm[j];
+        if (!a || !b) continue;
+        ctx.beginPath();
+        ctx.moveTo((1 - a.x) * w, a.y * h);
+        ctx.lineTo((1 - b.x) * w, b.y * h);
+        ctx.stroke();
+      }
+
+      // Joint dots
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.9)';
+      for (const p of lm) {
+        if (!p) continue;
+        ctx.beginPath();
+        ctx.arc((1 - p.x) * w, p.y * h, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // --- Pose skeleton overlay ---
+
+  private drawPoseSkeleton(ctx: CanvasRenderingContext2D) {
+    const lm = this.vision.poseLandmarks();
+    if (!lm || lm.length < 33) return;
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+
+    ctx.strokeStyle = 'rgba(255, 200, 0, 0.5)';
+    ctx.lineWidth = 2;
+    for (const [i, j] of POSE_CONNECTIONS) {
+      const a = lm[i],
+        b = lm[j];
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo((1 - a.x) * w, a.y * h);
+      ctx.lineTo((1 - b.x) * w, b.y * h);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = 'rgba(255, 200, 0, 0.8)';
+    for (const p of lm) {
+      if (!p) continue;
+      ctx.beginPath();
+      ctx.arc((1 - p.x) * w, p.y * h, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   private clearCanvas() {
     const c = this.meshCanvas()?.nativeElement;
     if (!c) return;
@@ -800,17 +1446,29 @@ export class VisionTabComponent implements OnDestroy {
   private buildVisionContext(): string {
     const parts: string[] = [];
     parts.push(`Faces detected: ${this.vision.faceCount()}`);
-    parts.push(`Emotion: ${this.vision.emotion()}`);
+    if (this.vision.faceCount() > 0) {
+      parts.push(`Emotion: ${this.vision.emotion()}`);
+      parts.push(`Gaze direction: ${this.vision.gaze()}`);
+    }
     if (this.vision.gesture() !== 'None') {
       parts.push(
         `Gesture: ${this.gestureLabel(this.vision.gesture())} (${this.vision.gestureScore()}% confidence)`,
       );
     }
-    parts.push(`Gaze direction: ${this.vision.gaze()}`);
     if (this.vision.heartRate() > 0) {
       parts.push(`Heart rate: ~${this.vision.heartRate()} BPM`);
     }
     parts.push(`Engagement level: ${this.vision.engagement()}%`);
+    const hands = this.vision.handLandmarks();
+    if (hands.length > 0) {
+      parts.push(`Hands detected: ${hands.length}`);
+      const h = this.vision.handedness();
+      if (h.length) parts.push(`Handedness: ${h.join(', ')}`);
+    }
+    const pose = this.vision.poseLandmarks();
+    if (pose.length > 0) {
+      parts.push('Body pose detected');
+    }
     return parts.join('. ');
   }
 

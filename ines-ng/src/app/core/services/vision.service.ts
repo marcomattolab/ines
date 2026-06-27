@@ -12,6 +12,17 @@ export type DetectedGesture =
   | 'Pointing_Up';
 export type GazeDirection = 'Center' | 'Left' | 'Right' | 'Up' | 'Down';
 
+export type FaceOverlayType =
+  | 'photo'
+  | 'pacman'
+  | 'cat'
+  | 'robot'
+  | 'alien'
+  | 'ninja'
+  | 'joker'
+  | 'sunglasses'
+  | 'skull';
+
 @Injectable({ providedIn: 'root' })
 export class VisionService {
   readonly emotion = signal<DetectedEmotion>('Neutral');
@@ -24,8 +35,10 @@ export class VisionService {
   readonly isRunning = signal(false);
   readonly heartRate = signal(0);
   readonly engagement = signal(0);
+  readonly handLandmarks = signal<any[][]>([]);
+  readonly poseLandmarks = signal<any[]>([]);
+  readonly handedness = signal<string[]>([]);
 
-  // Face mesh data for canvas overlay (last detected face)
   private _landmarks: any[] = [];
   get faceLandmarks(): any[] {
     return this._landmarks;
@@ -34,11 +47,15 @@ export class VisionService {
   private video: HTMLVideoElement | null = null;
   private faceLandmarker: any = null;
   private gestureRecognizer: any = null;
+  private handLandmarker: any = null;
+  private poseLandmarker: any = null;
+  private filesetResolver: any = null;
   private animationId: number | null = null;
   private frameCount = 0;
   private lastFpsTime = 0;
+  private _detectHands = false;
+  private _detectPose = false;
 
-  // Vitals tracking (rPPG simplified)
   private intensities: number[] = [];
   private timestamps: number[] = [];
   private offscreenCanvas: HTMLCanvasElement | null = null;
@@ -53,11 +70,11 @@ export class VisionService {
       );
       const { FilesetResolver, FaceLandmarker, GestureRecognizer } = vision;
 
-      const filesetResolver = await FilesetResolver.forVisionTasks(
+      this.filesetResolver = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm',
       );
 
-      this.faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+      this.faceLandmarker = await FaceLandmarker.createFromOptions(this.filesetResolver, {
         baseOptions: {
           modelAssetPath:
             'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
@@ -68,7 +85,7 @@ export class VisionService {
         numFaces: 5,
       });
 
-      this.gestureRecognizer = await GestureRecognizer.createFromOptions(filesetResolver, {
+      this.gestureRecognizer = await GestureRecognizer.createFromOptions(this.filesetResolver, {
         baseOptions: {
           modelAssetPath:
             'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',
@@ -79,6 +96,60 @@ export class VisionService {
     } catch (err) {
       console.error('Failed to init MediaPipe Vision:', err);
       throw err;
+    }
+  }
+
+  async enableHandDetection(enabled: boolean): Promise<void> {
+    this._detectHands = enabled;
+    if (enabled && !this.handLandmarker && this.filesetResolver) {
+      try {
+        const vision = await new Function('url', 'return import(url)')(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision',
+        );
+        const { HandLandmarker } = vision;
+        this.handLandmarker = await HandLandmarker.createFromOptions(this.filesetResolver, {
+          baseOptions: {
+            modelAssetPath:
+              'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numHands: 2,
+        });
+      } catch (err) {
+        console.error('Failed to init HandLandmarker:', err);
+        this._detectHands = false;
+      }
+    }
+    if (!enabled) {
+      this.handLandmarks.set([]);
+      this.handedness.set([]);
+    }
+  }
+
+  async enablePoseDetection(enabled: boolean): Promise<void> {
+    this._detectPose = enabled;
+    if (enabled && !this.poseLandmarker && this.filesetResolver) {
+      try {
+        const vision = await new Function('url', 'return import(url)')(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision',
+        );
+        const { PoseLandmarker } = vision;
+        this.poseLandmarker = await PoseLandmarker.createFromOptions(this.filesetResolver, {
+          baseOptions: {
+            modelAssetPath:
+              'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+        });
+      } catch (err) {
+        console.error('Failed to init PoseLandmarker:', err);
+        this._detectPose = false;
+      }
+    }
+    if (!enabled) {
+      this.poseLandmarks.set([]);
     }
   }
 
@@ -116,6 +187,9 @@ export class VisionService {
     this.emotionScores.set({});
     this.gestureScore.set(0);
     this.fps.set(0);
+    this.handLandmarks.set([]);
+    this.poseLandmarks.set([]);
+    this.handedness.set([]);
   }
 
   private predict(): void {
@@ -170,6 +244,32 @@ export class VisionService {
     } else {
       this.gesture.set('None');
       this.gestureScore.set(0);
+    }
+
+    // --- Hand Landmarker ---
+    if (this.handLandmarker && this._detectHands) {
+      const handResults = this.handLandmarker.detectForVideo(this.video, startTimeMs);
+      if (handResults.landmarks && handResults.landmarks.length > 0) {
+        this.handLandmarks.set(handResults.landmarks);
+        this.handedness.set(
+          handResults.handedness
+            ? handResults.handedness.map((h: any) => h[0]?.categoryName || 'Unknown')
+            : [],
+        );
+      } else {
+        this.handLandmarks.set([]);
+        this.handedness.set([]);
+      }
+    }
+
+    // --- Pose Landmarker ---
+    if (this.poseLandmarker && this._detectPose) {
+      const poseResults = this.poseLandmarker.detectForVideo(this.video, startTimeMs);
+      if (poseResults.landmarks && poseResults.landmarks.length > 0) {
+        this.poseLandmarks.set(poseResults.landmarks[0]);
+      } else {
+        this.poseLandmarks.set([]);
+      }
     }
 
     this.animationId = requestAnimationFrame(() => this.predict());

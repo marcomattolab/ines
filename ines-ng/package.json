@@ -13,6 +13,10 @@
   },
   "private": true,
   "packageManager": "npm@10.9.7",
+  "overrides": {
+    "@babel/core": "7.29.7",
+    "esbuild": "0.28.1"
+  },
   "dependencies": {
     "@angular/animations": "^22.0.0",
     "@angular/cdk": "^22.0.0",
@@ -30,7 +34,6 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^22.0.0",
     "@angular/build": "^22.0.0",
     "@angular/cli": "^22.0.0",
     "@angular/compiler-cli": "^22.0.0",

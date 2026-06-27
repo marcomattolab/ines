@@ -38,7 +38,7 @@ export class LlmService {
       );
       this.setProgress(40, 'WASM ready. Loading model into GPU...');
 
-      const maxBufferSize = 800 * 1024 * 1024;
+      const maxBufferSize = 2048 * 1024 * 1024;
       let loadedViaBuffer = false;
 
       if (file.size <= maxBufferSize) {
@@ -71,6 +71,12 @@ export class LlmService {
           this.llm = await LlmInference.createFromModelPath(genai, blobUrl);
         } finally {
           URL.revokeObjectURL(blobUrl);
+        }
+        try {
+          const buffer = await file.arrayBuffer();
+          await this.saveModelToCache(file.name, buffer);
+        } catch {
+          /* cache is best-effort */
         }
       }
 

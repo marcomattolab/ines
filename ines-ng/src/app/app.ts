@@ -100,30 +100,25 @@ export class AppComponent implements OnInit {
       });
   }
 
-  private checkSessionFallback() {
+  private async checkSessionFallback() {
     try {
       if (sessionStorage.getItem('model_loaded_previously') === 'true') {
-        // User had the model loaded in this tab session previously. Try to auto-fetch from local URL.
-        this.llm
-          .initModelFromUrl('/models/gemma3-1b-it-int8-web.task', 'gemma3-1b-it-int8-web.task')
-          .then(() => {
+        const url = '/models/gemma3-1b-it-int8-web.task';
+        try {
+          const res = await fetch(url, { method: 'HEAD' });
+          const cl = parseInt(res.headers.get('content-length') || '0', 10);
+          if (res.ok && cl > 100 * 1024 * 1024) {
+            await this.llm.initModelFromUrl(url, 'gemma3-1b-it-int8-web.task');
             this.overlayOpen.set(false);
-          })
-          .catch((err) => {
-            console.log(
-              'Session fallback URL load failed (expected in production if no hosted model):',
-              err,
-            );
-            this.llm.modelStatus.set('idle');
-            this.llm.modelName.set('No model loaded');
-          });
-        return;
+            return;
+          }
+        } catch {
+          /* URL unreachable — fall through */
+        }
       }
-    } catch (e) {
-      console.warn('Failed to read from sessionStorage:', e);
+    } catch {
+      /* sessionStorage unavailable */
     }
-
-    // No session fallback, wait for manual upload
     this.llm.modelStatus.set('idle');
     this.llm.modelName.set('No model loaded');
   }

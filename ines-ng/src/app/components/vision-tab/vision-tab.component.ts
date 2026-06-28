@@ -14,6 +14,7 @@ const GESTURE_ICONS: Record<string, string> = {
   Victory: 'peace',
   ILoveYou: 'favorite',
   Pointing_Up: 'ads_click',
+  Corna: 'whatshot',
 };
 
 const GESTURE_LABELS: Record<string, string> = {
@@ -24,6 +25,7 @@ const GESTURE_LABELS: Record<string, string> = {
   Victory: 'Victory',
   ILoveYou: 'I Love You',
   Pointing_Up: 'Pointing Up',
+  Corna: 'Corna',
 };
 
 const EMOTION_ICONS: Record<string, string> = {
@@ -386,6 +388,8 @@ export class VisionTabComponent implements OnDestroy {
           this.toast.show('Negative feedback noted.');
         } else if (g === 'Victory') {
           this.addNotification('celebration', 'Celebration detected!', 'rose');
+        } else if (g === 'Corna') {
+          this.addNotification('whatshot', '🤘 Rock on!', 'rose');
         }
 
         this.lastGesture = g;
@@ -429,9 +433,9 @@ export class VisionTabComponent implements OnDestroy {
       }
     });
 
-    // Enable/disable hand detection when toggled
+    // Enable/disable hand detection when hand skeleton or gesture control is active
     effect(() => {
-      this.vision.enableHandDetection(this.showHandOverlay());
+      this.vision.enableHandDetection(this.showHandOverlay() || this.gestureControl());
     });
 
     // Enable/disable pose detection when toggled

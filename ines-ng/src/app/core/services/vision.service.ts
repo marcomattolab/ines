@@ -9,7 +9,8 @@ export type DetectedGesture =
   | 'Thumbs_Down'
   | 'Victory'
   | 'ILoveYou'
-  | 'Pointing_Up';
+  | 'Pointing_Up'
+  | 'Corna';
 export type GazeDirection = 'Center' | 'Left' | 'Right' | 'Up' | 'Down';
 
 export type FaceOverlayType =
@@ -262,6 +263,15 @@ export class VisionService {
         this.handedness.set([]);
       }
     }
+    // Check for corna gesture from hand landmarks (only if not already ILoveYou)
+    if (
+      this.gesture() !== 'ILoveYou' &&
+      this.handLandmarks().length > 0 &&
+      this.isCorna(this.handLandmarks())
+    ) {
+      this.gesture.set('Corna');
+      this.gestureScore.set(95);
+    }
 
     // --- Pose Landmarker ---
     if (this.poseLandmarker && this._detectPose) {
@@ -375,6 +385,34 @@ export class VisionService {
 
     const current = this.engagement();
     this.engagement.set(Math.round(current * 0.8 + score * 0.2));
+  }
+
+  private isCorna(hands: any[][]): boolean {
+    for (const hand of hands) {
+      if (!hand || hand.length < 21) continue;
+      const iTip = hand[8]?.y,
+        iPip = hand[6]?.y;
+      const mTip = hand[12]?.y,
+        mPip = hand[10]?.y;
+      const rTip = hand[16]?.y,
+        rPip = hand[14]?.y;
+      const pTip = hand[20]?.y,
+        pPip = hand[18]?.y;
+      if (iTip == null || mTip == null || rTip == null || pTip == null) continue;
+      // Index and pinky extended (tip above PIP), middle and ring curled (tip below PIP)
+      if (!(iTip < iPip && pTip < pPip && mTip > mPip && rTip > rPip)) continue;
+
+      // Thumb must be folded (not extended) to distinguish corna 🤘 from I Love You 🤟
+      const thumbTip = hand[4];
+      const wrist = hand[0];
+      if (!thumbTip || !wrist) continue;
+      const thumbToWrist = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
+      const indexToWrist = Math.hypot(hand[8].x - wrist.x, hand[8].y - wrist.y);
+      if (thumbToWrist > indexToWrist * 0.5) continue; // thumb extended → ILoveYou
+
+      return true;
+    }
+    return false;
   }
 
   private processBlendshapes(categories: any[]): void {

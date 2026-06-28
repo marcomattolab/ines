@@ -15,6 +15,7 @@ export type GazeDirection = 'Center' | 'Left' | 'Right' | 'Up' | 'Down';
 export type FaceOverlayType =
   | 'photo'
   | 'pacman'
+  | 'goku'
   | 'cat'
   | 'robot'
   | 'alien'

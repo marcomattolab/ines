@@ -243,6 +243,7 @@ const FACE_MESH_EDGES: [number, number][] = [
 
 const OVERLAYS: { type: FaceOverlayType; icon: string; label: string; color: string }[] = [
   { type: 'pacman', icon: 'radio_button_checked', label: 'Pac-Man', color: 'accent-amber' },
+  { type: 'goku', icon: 'flare', label: 'Super Saiyan', color: 'accent-amber' },
   { type: 'cat', icon: 'pets', label: 'Cat', color: 'accent-orange' },
   { type: 'robot', icon: 'smart_toy', label: 'Robot', color: 'accent-cyan' },
   { type: 'alien', icon: 'bug_report', label: 'Alien', color: 'accent-green' },
@@ -668,6 +669,7 @@ export class VisionTabComponent implements OnDestroy {
       (c: CanvasRenderingContext2D, l: any[], w: number, h: number) => void
     > = {
       pacman: this.drawPacmanOverlay,
+      goku: this.drawGokuOverlay,
       cat: this.drawCatOverlay,
       robot: this.drawRobotOverlay,
       alien: this.drawAlienOverlay,
@@ -946,6 +948,233 @@ export class VisionTabComponent implements OnDestroy {
     ctx.arc(eyeX, eyeY, r * 0.08, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+  }
+
+  private drawGokuOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const t = this.getOverlayTransform(lm, w, h);
+    if (!t) return;
+    const s = Math.max(t.faceW, t.faceH) * 0.8;
+    ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.rot);
+
+    // ---- Golden aura ----
+    ctx.shadowBlur = 60;
+    ctx.shadowColor = '#FFD700';
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.04)';
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 1.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ---- Hair base (solid gold mass) ----
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.1, s * 0.62, Math.PI * 0.1, Math.PI * 0.9, false);
+    ctx.closePath();
+    ctx.fill();
+
+    // ---- Spiky hair in radial layers ----
+    const hairColor = '#FFD700';
+    const hlColor = '#FFC107';
+    const darkColor = '#DAA520';
+
+    // Back/side spikes (layer 1 — darker)
+    ctx.fillStyle = darkColor;
+    const sideAngles = [
+      [0.55, 1.25],
+      [0.65, 1.6],
+      [0.5, 2.2],
+      [0.5, -2.2],
+      [0.65, -1.6],
+      [0.55, -1.25],
+    ];
+    for (const [lenMul, angle] of sideAngles) {
+      this.drawHairSpike(ctx, s * 0.55, s * 0.65 * lenMul, angle, 0.08);
+    }
+
+    // Middle spikes (layer 2 — main gold)
+    ctx.fillStyle = hairColor;
+    const midAngles = [-0.35, -0.2, 0, 0.2, 0.35];
+    for (const a of midAngles) {
+      this.drawHairSpike(ctx, s * 0.5, s * 0.78, -Math.PI / 2 + a, 0.06 + Math.abs(a) * 0.06);
+    }
+
+    // Top fringe (iconic Goku bangs — layer 3, brightest)
+    ctx.fillStyle = hlColor;
+    const fringe = [
+      { angle: -0.45, len: 1.1 },
+      { angle: -0.3, len: 1.25 },
+      { angle: -0.15, len: 1.3 },
+      { angle: 0.0, len: 1.35 },
+      { angle: 0.15, len: 1.3 },
+      { angle: 0.3, len: 1.2 },
+      { angle: 0.45, len: 1.0 },
+    ];
+    for (const { angle, len } of fringe) {
+      this.drawHairSpike(ctx, s * 0.42, s * 0.65 * len, -Math.PI / 2 + angle, 0.04);
+    }
+
+    // Small forehead spikes covering the hairline
+    ctx.fillStyle = hairColor;
+    for (let i = -0.6; i <= 0.6; i += 0.15) {
+      this.drawHairSpike(ctx, s * 0.35, s * 0.5, -Math.PI / 2 + i, 0.05);
+    }
+
+    // ---- Round face (skin) ----
+    ctx.fillStyle = '#F5D6B8';
+    ctx.beginPath();
+    ctx.arc(0, s * 0.04, s * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtle cheek color
+    ctx.fillStyle = 'rgba(255, 180, 150, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.25, s * 0.12, s * 0.12, s * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.25, s * 0.12, s * 0.12, s * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ---- Jaw line (soft, round) ----
+    ctx.strokeStyle = '#E0B890';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.42, s * 0.05);
+    ctx.quadraticCurveTo(-s * 0.48, s * 0.32, -s * 0.3, s * 0.48);
+    ctx.quadraticCurveTo(0, s * 0.55, s * 0.3, s * 0.48);
+    ctx.quadraticCurveTo(s * 0.48, s * 0.32, s * 0.42, s * 0.05);
+    ctx.stroke();
+
+    // ---- Eyebrows (thick, dark, slanted down toward center) ----
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.32, -s * 0.16);
+    ctx.lineTo(-s * 0.1, -s * 0.12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.1, -s * 0.12);
+    ctx.lineTo(s * 0.32, -s * 0.16);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ---- Eyes (large, green-blue iris, Goku style) ----
+    for (const side of [-1, 1]) {
+      const ex = side * s * 0.18;
+      const ey = -s * 0.03;
+
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, s * 0.08, s * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(ex, ey, s * 0.09, Math.PI * 0.1, Math.PI * 0.9, false);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ex, ey, s * 0.09, Math.PI * 0.9, Math.PI * 0.1, true);
+      ctx.stroke();
+
+      ctx.fillStyle = '#3FBF7F';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, s * 0.05, s * 0.075, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#2E8B57';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, s * 0.048, s * 0.07, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(ex, ey, s * 0.03, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath();
+      ctx.arc(ex - s * 0.015, ey - s * 0.025, s * 0.018, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + s * 0.02, ey + s * 0.01, s * 0.008, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ---- Nose (small, simple) ----
+    ctx.strokeStyle = '#D4A070';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.02, s * 0.02);
+    ctx.lineTo(0, s * 0.07);
+    ctx.lineTo(-s * 0.02, s * 0.02);
+    ctx.stroke();
+    ctx.fillStyle = '#C89060';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.015, s * 0.07, s * 0.01, s * 0.007, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.015, s * 0.07, s * 0.01, s * 0.007, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ---- Mouth (confident Goku smile) ----
+    ctx.strokeStyle = '#B06060';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.1, s * 0.18);
+    ctx.quadraticCurveTo(0, s * 0.22, s * 0.1, s * 0.18);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(180, 80, 80, 0.1)';
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.21, s * 0.08, s * 0.03, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200, 100, 100, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.11, s * 0.17, s * 0.015, s * 0.01, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s * 0.11, s * 0.17, s * 0.015, s * 0.01, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ---- Orange gi collar ----
+    ctx.strokeStyle = '#E65100';
+    ctx.lineWidth = s * 0.07;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5, s * 0.12);
+    ctx.quadraticCurveTo(-s * 0.52, s * 0.38, 0, s * 0.52);
+    ctx.quadraticCurveTo(s * 0.52, s * 0.38, s * 0.5, s * 0.12);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#1565C0';
+    ctx.lineWidth = s * 0.025;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.42, s * 0.18);
+    ctx.quadraticCurveTo(-s * 0.44, s * 0.38, 0, s * 0.48);
+    ctx.quadraticCurveTo(s * 0.44, s * 0.38, s * 0.42, s * 0.18);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    ctx.restore();
+  }
+
+  private drawHairSpike(
+    ctx: CanvasRenderingContext2D,
+    baseR: number,
+    tipR: number,
+    angle: number,
+    spread: number,
+  ) {
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(angle - spread) * baseR, Math.sin(angle - spread) * baseR);
+    ctx.lineTo(Math.cos(angle) * tipR, Math.sin(angle) * tipR);
+    ctx.lineTo(Math.cos(angle + spread) * baseR, Math.sin(angle + spread) * baseR);
+    ctx.closePath();
+    ctx.fill();
   }
 
   private drawCatOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {

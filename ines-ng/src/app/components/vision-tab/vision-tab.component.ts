@@ -15,6 +15,8 @@ const GESTURE_ICONS: Record<string, string> = {
   ILoveYou: 'favorite',
   Pointing_Up: 'ads_click',
   Corna: 'whatshot',
+  Ok: 'check_circle',
+  Heart: 'favorite',
 };
 
 const GESTURE_LABELS: Record<string, string> = {
@@ -26,6 +28,8 @@ const GESTURE_LABELS: Record<string, string> = {
   ILoveYou: 'I Love You',
   Pointing_Up: 'Pointing Up',
   Corna: 'Corna',
+  Ok: 'OK',
+  Heart: 'Heart',
 };
 
 const EMOTION_ICONS: Record<string, string> = {
@@ -390,6 +394,10 @@ export class VisionTabComponent implements OnDestroy {
           this.addNotification('celebration', 'Celebration detected!', 'rose');
         } else if (g === 'Corna') {
           this.addNotification('whatshot', '🤘 Rock on!', 'rose');
+        } else if (g === 'Ok') {
+          this.addNotification('check_circle', '👌 OK!', 'green');
+        } else if (g === 'Heart') {
+          this.addNotification('favorite', '🩷 Heart!', 'rose');
         }
 
         this.lastGesture = g;

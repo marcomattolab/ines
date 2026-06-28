@@ -10,7 +10,9 @@ export type DetectedGesture =
   | 'Victory'
   | 'ILoveYou'
   | 'Pointing_Up'
-  | 'Corna';
+  | 'Corna'
+  | 'Ok'
+  | 'Heart';
 export type GazeDirection = 'Center' | 'Left' | 'Right' | 'Up' | 'Down';
 
 export type FaceOverlayType =
@@ -273,6 +275,23 @@ export class VisionService {
       this.gestureScore.set(95);
     }
 
+    // Check for OK gesture (thumb-index circle, other fingers extended)
+    if (
+      this.gesture() !== 'ILoveYou' &&
+      this.gesture() !== 'Corna' &&
+      this.handLandmarks().length > 0 &&
+      this.isOk(this.handLandmarks())
+    ) {
+      this.gesture.set('Ok');
+      this.gestureScore.set(90);
+    }
+
+    // Check for Heart gesture (two hands forming a heart shape)
+    if (this.handLandmarks().length === 2 && this.isHeart(this.handLandmarks())) {
+      this.gesture.set('Heart');
+      this.gestureScore.set(90);
+    }
+
     // --- Pose Landmarker ---
     if (this.poseLandmarker && this._detectPose) {
       const poseResults = this.poseLandmarker.detectForVideo(this.video, startTimeMs);
@@ -413,6 +432,61 @@ export class VisionService {
       return true;
     }
     return false;
+  }
+
+  private isOk(hands: any[][]): boolean {
+    for (const hand of hands) {
+      if (!hand || hand.length < 21) continue;
+      const thumbTip = hand[4];
+      const indexTip = hand[8];
+      if (!thumbTip || !indexTip) continue;
+      const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+      if (dist > 0.06) continue; // too far apart — not forming a circle
+      // Middle, ring, pinky should be extended (tip above PIP)
+      const mTip = hand[12]?.y,
+        mPip = hand[10]?.y;
+      const rTip = hand[16]?.y,
+        rPip = hand[14]?.y;
+      const pTip = hand[20]?.y,
+        pPip = hand[18]?.y;
+      if (mTip == null || rTip == null || pTip == null) continue;
+      if (mTip < mPip && rTip < rPip && pTip < pPip) return true;
+    }
+    return false;
+  }
+
+  private isHeart(hands: any[][]): boolean {
+    if (hands.length < 2) return false;
+
+    for (const hand of hands) {
+      if (!hand || hand.length < 21) return false;
+      const iTip = hand[8]?.y,
+        iPip = hand[6]?.y;
+      const mTip = hand[12]?.y,
+        mPip = hand[10]?.y;
+      const rTip = hand[16]?.y,
+        rPip = hand[14]?.y;
+      const pTip = hand[20]?.y,
+        pPip = hand[18]?.y;
+      if (iTip == null || mTip == null || rTip == null || pTip == null) return false;
+      // Index extended (tip above PIP), other fingers curled
+      if (!(iTip < iPip && mTip > mPip && rTip > rPip && pTip > pPip)) return false;
+
+      // Thumb must be extended (far from wrist) to form the bottom of the heart
+      const thumbTip = hand[4],
+        wrist = hand[0];
+      if (!thumbTip || !wrist) return false;
+      const thumbToWrist = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
+      const indexToWrist = Math.hypot(hand[8].x - wrist.x, hand[8].y - wrist.y);
+      if (thumbToWrist < indexToWrist * 0.5) return false; // thumb curled
+    }
+
+    // Both hands' index tips should be close (top of heart) and both thumb tips close (bottom)
+    const h0 = hands[0],
+      h1 = hands[1];
+    const idxDist = Math.hypot(h0[8].x - h1[8].x, h0[8].y - h1[8].y);
+    const thumbDist = Math.hypot(h0[4].x - h1[4].x, h0[4].y - h1[4].y);
+    return idxDist < 0.1 && thumbDist < 0.1;
   }
 
   private processBlendshapes(categories: any[]): void {

@@ -6,52 +6,52 @@
 @tailwind utilities;
 
 :root {
-  --bg-0: #050508;
-  --bg-1: rgba(10, 11, 16, 0.45);
-  --bg-2: rgba(18, 20, 27, 0.65);
-  --bg-3: rgba(28, 32, 45, 0.75);
-  --bg-glass: rgba(10, 11, 15, 0.45);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-active: rgba(96, 165, 250, 0.4);
+  --bg-0: #05050b;
+  --bg-1: rgba(14, 18, 30, 0.78);
+  --bg-2: rgba(17, 23, 37, 0.82);
+  --bg-3: rgba(26, 33, 48, 0.88);
+  --bg-glass: rgba(10, 12, 18, 0.54);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(97, 176, 255, 0.38);
 
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
-  --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.25);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.56);
+  --shadow-glow: 0 0 24px rgba(96, 165, 250, 0.22);
 
-  --shadow-glow-blue: 0 0 25px rgba(96, 165, 250, 0.35);
-  --shadow-glow-green: 0 0 25px rgba(52, 211, 153, 0.35);
-  --shadow-glow-amber: 0 0 25px rgba(251, 191, 36, 0.35);
-  --shadow-glow-rose: 0 0 25px rgba(251, 113, 133, 0.35);
-  --shadow-glow-purple: 0 0 25px rgba(192, 132, 252, 0.35);
-  --shadow-glow-cyan: 0 0 25px rgba(34, 211, 238, 0.35);
+  --shadow-glow-blue: 0 0 28px rgba(96, 165, 250, 0.38);
+  --shadow-glow-green: 0 0 28px rgba(49, 209, 161, 0.34);
+  --shadow-glow-amber: 0 0 28px rgba(255, 216, 105, 0.34);
+  --shadow-glow-rose: 0 0 28px rgba(255, 122, 168, 0.36);
+  --shadow-glow-purple: 0 0 28px rgba(191, 146, 255, 0.36);
+  --shadow-glow-cyan: 0 0 28px rgba(86, 217, 255, 0.34);
   --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --text-0: #f8fafc;
-  --text-1: #cbd5e1;
-  --text-2: #94a3b8;
+  --text-0: #f8fbff;
+  --text-1: #cfd8ef;
+  --text-2: #94a5c2;
 
-  --accent-blue: #60a5fa;
-  --accent-green: #34d399;
-  --accent-amber: #fbbf24;
-  --accent-rose: #fb7185;
-  --accent-purple: #c084fc;
+  --accent-blue: #82b7ff;
+  --accent-green: #5ee3b4;
+  --accent-amber: #ffd869;
+  --accent-rose: #ff7aa8;
+  --accent-purple: #bf92ff;
 
-  --tab-chat: #60a5fa;
-  --tab-email: #34d399;
-  --tab-meeting: #fb7185;
-  --tab-translate: #fbbf24;
-  --tab-todo: #c084fc;
-  --tab-coding: #06b6d4;
-  --tab-agents: #8b5cf6;
-  --tab-vision: #fb7185;
-  --tab-learning: #3b82f6;
-  --tab-presentation: #f97316;
-  --tab-knowledge: #a78bfa;
+  --tab-chat: #82b7ff;
+  --tab-email: #5ee3b4;
+  --tab-meeting: #ff7aa8;
+  --tab-translate: #ffd869;
+  --tab-todo: #bf92ff;
+  --tab-coding: #4fd1e0;
+  --tab-agents: #a78bfa;
+  --tab-vision: #fda4af;
+  --tab-learning: #60a5fa;
+  --tab-presentation: #fb923c;
+  --tab-knowledge: #c4b5fd;
 
-  --accent-cyan: #22d3ee;
-  --radius: 16px;
-  --radius-sm: 10px;
+  --accent-cyan: #56d9ff;
+  --radius: 18px;
+  --radius-sm: 12px;
   --font-ui: 'Syne', sans-serif;
   --font-body: 'IBM Plex Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;

@@ -6,13 +6,14 @@
 
 <div id="app">
   <!-- Sidebar -->
-  <nav id="sidebar" class="flex flex-col items-center py-4 gap-2 shrink-0 z-10">
+  <nav id="sidebar" class="flex flex-col items-center gap-3 shrink-0 z-10">
     @for (tab of tabs; track tab.id) {
       <button
         class="tab-btn cursor-pointer text-[var(--text-2)] flex flex-col items-center justify-center gap-1 relative shrink-0"
         [class.active]="activeTab() === tab.id"
         [style.--tab-color]="tab.color"
         (click)="activeTab.set(tab.id)"
+        title="{{ tab.label }}"
       >
         <span class="tab-icon inline-flex items-center justify-center">
           <mat-icon
@@ -21,7 +22,7 @@
           ></mat-icon>
         </span>
         <span
-          class="font-[var(--font-ui)] text-[8.5px] font-bold tracking-[0.04em] uppercase leading-none"
+          class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none"
           >{{ tab.label }}</span
         >
       </button>

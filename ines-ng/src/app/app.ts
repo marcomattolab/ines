@@ -37,6 +37,8 @@ interface TabDef {
   icon: string;
   label: string;
   color: string;
+  dividerBefore?: boolean;
+  category?: string;
 }
 
 const TABS: TabDef[] = [
@@ -45,10 +47,24 @@ const TABS: TabDef[] = [
   { id: 'meeting', icon: 'mic', label: 'Meeting', color: 'var(--tab-meeting)' },
   { id: 'translate', icon: 'languages', label: 'Translate', color: 'var(--tab-translate)' },
   { id: 'todo', icon: 'check-square', label: 'Todo', color: 'var(--tab-todo)' },
-  { id: 'coding', icon: 'code', label: 'Code', color: 'var(--tab-coding)' },
+  {
+    id: 'coding',
+    icon: 'code',
+    label: 'Code',
+    color: 'var(--tab-coding)',
+    dividerBefore: true,
+    category: 'Development',
+  },
   { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'vision', icon: 'visibility', label: 'Vision', color: 'var(--tab-vision)' },
-  { id: 'learning', icon: 'school', label: 'Learning', color: 'var(--tab-learning)' },
+  {
+    id: 'learning',
+    icon: 'school',
+    label: 'Learning',
+    color: 'var(--tab-learning)',
+    dividerBefore: true,
+    category: 'Content',
+  },
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
   { id: 'knowledge', icon: 'auto_stories', label: 'Knowledge', color: 'var(--tab-knowledge)' },
   { id: 'project', icon: 'folder', label: 'Project', color: 'var(--tab-project)' },

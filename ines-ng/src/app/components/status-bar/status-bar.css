@@ -7,32 +7,70 @@
 }
 
 .status-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--text-2);
-  transition: background 0.4s;
+  transition: all 0.4s var(--spring-easing);
+  position: relative;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  transition: border-color 0.4s;
 }
 
 .status-dot.loading {
   background: var(--accent-amber);
-  animation: blink 0.8s step-end infinite;
+  animation: statusBlink 0.8s step-end infinite;
+}
+
+.status-dot.loading::after {
+  border-color: var(--accent-amber);
+  opacity: 0.4;
+  animation: statusPing 1.2s ease-out infinite;
 }
 
 .status-dot.ready {
   background: var(--accent-green);
+  box-shadow: 0 0 8px rgba(49, 209, 161, 0.4);
+}
+
+.status-dot.ready::after {
+  border-color: var(--accent-green);
+  opacity: 0.2;
 }
 
 .status-dot.error {
   background: var(--accent-rose);
 }
 
-@keyframes blink {
+.status-dot.error::after {
+  border-color: var(--accent-rose);
+  opacity: 0.4;
+}
+
+@keyframes statusBlink {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.2;
+    opacity: 0.15;
+  }
+}
+
+@keyframes statusPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
   }
 }

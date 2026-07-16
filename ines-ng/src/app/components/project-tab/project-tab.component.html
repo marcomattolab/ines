@@ -1,4 +1,47 @@
 <div class="flex flex-1 overflow-hidden h-full">
+  <!-- Document Preview Overlay -->
+  @if (showPreview()) {
+    <div class="absolute inset-0 z-20 flex flex-col bg-[var(--bg-1)]">
+      <header
+        class="flex items-center justify-between px-6 py-3 border-b border-[var(--border)] shrink-0"
+      >
+        <div class="flex items-center gap-3 min-w-0">
+          <button (click)="closePreview()" class="btn-tertiary !p-1" title="Back to project">
+            <mat-icon class="scale-90">arrow_back</mat-icon>
+          </button>
+          <mat-icon class="scale-90" [style.color]="previewDocIconColor()">description</mat-icon>
+          <h3 class="text-sm font-bold text-[var(--text-0)] truncate font-[var(--font-ui)]">
+            {{ previewDocName() }}
+          </h3>
+        </div>
+        <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
+          {{ previewChunks().length }} chunks
+        </span>
+      </header>
+      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        @for (chunk of previewChunks(); track chunk.position) {
+          <div class="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
+            <div
+              class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-2 pb-2 border-b border-[var(--border)]"
+            >
+              Position {{ chunk.position }}
+            </div>
+            <pre
+              class="text-sm text-[var(--text-1)] leading-relaxed whitespace-pre-wrap font-[var(--font-ui)]"
+              >{{ chunk.text }}</pre
+            >
+          </div>
+        }
+        @if (previewChunks().length === 0) {
+          <div class="empty-state py-12">
+            <mat-icon class="empty-icon scale-150 text-[var(--text-2)]">description</mat-icon>
+            <p class="empty-text">No chunk data available for this document.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Left Sidebar -->
   <aside
     class="w-72 border-r border-[var(--border)] p-4 flex flex-col gap-4 overflow-y-auto shrink-0"
@@ -12,14 +55,24 @@
         <mat-icon class="scale-90 text-[var(--accent-green)]">folder_special</mat-icon>
         Project Memory
       </h3>
-      <button
-        (click)="clearAll()"
-        class="btn-tertiary"
-        title="Clear all documents"
-        [disabled]="project.documents().length === 0"
-      >
-        <mat-icon class="scale-75">delete_outline</mat-icon>
-      </button>
+      <div class="flex gap-1">
+        <button
+          (click)="onExport()"
+          class="btn-tertiary"
+          title="Export project"
+          [disabled]="project.documents().length === 0"
+        >
+          <mat-icon class="scale-75">file_upload</mat-icon>
+        </button>
+        <button
+          (click)="clearAll()"
+          class="btn-tertiary"
+          title="Clear all documents"
+          [disabled]="project.documents().length === 0"
+        >
+          <mat-icon class="scale-75">delete_outline</mat-icon>
+        </button>
+      </div>
     </div>
 
     <!-- Stats -->
@@ -54,13 +107,18 @@
 
       @for (doc of filteredDocs(); track doc.id) {
         <div
-          class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] group hover:border-[var(--border-active)] transition-all"
+          class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] group hover:border-[var(--border-active)] transition-all cursor-pointer"
+          [class.border-[var(--accent-green)]!]="selectedDocId() === doc.id"
+          (click)="selectDoc(doc)"
         >
-          <mat-icon class="scale-75 text-[var(--accent-amber)] shrink-0">description</mat-icon>
+          <mat-icon class="scale-75 shrink-0" [style.color]="fileColor(doc.type)">{{
+            fileIcon(doc.type)
+          }}</mat-icon>
           <div class="flex-1 min-w-0">
             <p class="text-xs text-[var(--text-0)] truncate font-medium">{{ doc.name }}</p>
             <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
-              {{ doc.date | date: 'mediumDate' }}
+              {{ doc.date | date: 'mediumDate' }} &middot;
+              {{ doc.size > 1024 ? (doc.size / 1024 | number: '1.0-0') + ' KB' : doc.size + ' B' }}
             </p>
           </div>
           <button
@@ -74,7 +132,7 @@
       }
     </div>
 
-    <!-- Upload -->
+    <!-- Upload + Import -->
     <div class="space-y-2 pt-2 border-t border-[var(--border)]">
       <div class="relative group">
         <input
@@ -100,6 +158,19 @@
           <span>{{ project.processingStatus() }}</span>
         </div>
       }
+
+      <div class="relative group">
+        <input
+          type="file"
+          (change)="onImport($event)"
+          accept=".ines-project,.json"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <button class="btn-secondary w-full text-xs py-2">
+          <mat-icon class="scale-75">file_download</mat-icon>
+          Import .ines-project
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -128,6 +199,13 @@
       >
         <mat-icon class="scale-75 inline align-middle mr-1">chat</mat-icon>
         Output
+        @if (project.documents().length > 0) {
+          <span
+            class="ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--accent-blue)]/10 text-[10px] text-[var(--accent-blue)] font-[var(--font-mono)]"
+          >
+            {{ project.documents().length }}
+          </span>
+        }
       </button>
     </nav>
 
@@ -163,7 +241,8 @@
             <div class="grid gap-3 sm:grid-cols-2">
               @for (doc of project.documents(); track doc.id) {
                 <div
-                  class="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 flex items-start gap-3 group hover:border-[var(--border-active)]/50 transition-all"
+                  class="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 flex items-start gap-3 group hover:border-[var(--border-active)]/50 transition-all cursor-pointer"
+                  (click)="selectDoc(doc)"
                 >
                   <div
                     class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
@@ -172,26 +251,13 @@
                         ? 'rgba(130,183,255,0.12)'
                         : doc.type === 'pdf'
                           ? 'rgba(255,122,168,0.12)'
-                          : 'rgba(86,217,255,0.12)'
+                          : doc.type === 'html' || doc.type === 'htm'
+                            ? 'rgba(255,216,105,0.12)'
+                            : 'rgba(49,209,161,0.12)'
                     "
                   >
-                    <mat-icon
-                      class="scale-90"
-                      [style.color]="
-                        doc.type === 'md'
-                          ? 'var(--accent-blue)'
-                          : doc.type === 'pdf'
-                            ? 'var(--accent-rose)'
-                            : 'var(--accent-cyan)'
-                      "
-                    >
-                      {{
-                        doc.type === 'md'
-                          ? 'code'
-                          : doc.type === 'pdf'
-                            ? 'picture_as_pdf'
-                            : 'description'
-                      }}
+                    <mat-icon class="scale-90" [style.color]="fileColor(doc.type)">
+                      {{ fileIcon(doc.type) }}
                     </mat-icon>
                   </div>
                   <div class="flex-1 min-w-0">
@@ -240,6 +306,16 @@
                   Upload documents in the <strong>Input</strong> tab first.
                 </p>
               }
+
+              @if (project.documents().length > 0) {
+                <div class="flex flex-wrap justify-center gap-1.5 mt-4 max-w-lg">
+                  @for (chip of suggestionChips; track chip) {
+                    <button class="suggestion-chip" (click)="useSuggestion(chip)">
+                      {{ chip }}
+                    </button>
+                  }
+                </div>
+              }
             </div>
           }
 
@@ -256,7 +332,11 @@
               ) {
                 <div class="flex flex-wrap gap-1.5 px-2 pb-2">
                   @for (src of msgSources(); track $index) {
-                    <span class="source-chip">
+                    <span
+                      class="source-chip cursor-pointer"
+                      [title]="'Click to view: ' + src"
+                      (click)="previewDocFromSource(src)"
+                    >
                       <mat-icon class="scale-50">article</mat-icon>
                       {{ src }}
                     </span>
@@ -281,6 +361,17 @@
             [disabled]="!llm.isReady() || isGenerating()"
             rows="1"
           ></textarea>
+          @if (messages().length > 0) {
+            <app-button
+              variant="danger"
+              size="sm"
+              (onClick)="clearChat()"
+              className="!rounded-full !w-9 !h-9 !p-0 shrink-0"
+              title="Clear chat"
+            >
+              <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+            </app-button>
+          }
           <button
             class="send-btn"
             (click)="sendMessage()"

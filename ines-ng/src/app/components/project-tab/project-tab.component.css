@@ -13,4 +13,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.source-chip:hover {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.25s var(--spring-easing);
+}
+
+.suggestion-chip:hover {
+  border-color: var(--accent-blue);
+  background: rgba(130, 183, 255, 0.08);
+  color: var(--accent-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(130, 183, 255, 0.12);
 }

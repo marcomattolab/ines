@@ -1,0 +1,296 @@
+<div class="flex flex-1 overflow-hidden h-full">
+  <!-- Left Sidebar -->
+  <aside
+    class="w-72 border-r border-[var(--border)] p-4 flex flex-col gap-4 overflow-y-auto shrink-0"
+    style="background: var(--bg-1); backdrop-filter: blur(28px)"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <h3
+        class="text-sm font-bold text-[var(--text-0)] flex items-center gap-2 font-[var(--font-ui)]"
+      >
+        <mat-icon class="scale-90 text-[var(--accent-green)]">folder_special</mat-icon>
+        Project Memory
+      </h3>
+      <button
+        (click)="clearAll()"
+        class="btn-tertiary"
+        title="Clear all documents"
+        [disabled]="project.documents().length === 0"
+      >
+        <mat-icon class="scale-75">delete_outline</mat-icon>
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="flex items-center gap-3 text-[10px] font-[var(--font-mono)] text-[var(--text-2)]">
+      <span>{{ project.documents().length }} docs</span>
+      <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+      <span>{{ totalChunks() }} chunks</span>
+    </div>
+
+    <!-- Search -->
+    <div class="relative">
+      <input
+        type="text"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        placeholder="Search documents..."
+        class="input-field w-full text-xs py-2 pl-8 pr-3"
+      />
+      <mat-icon class="absolute left-2 top-1/2 -translate-y-1/2 scale-75 text-[var(--text-2)]"
+        >search</mat-icon
+      >
+    </div>
+
+    <!-- Document list -->
+    <div class="flex flex-col gap-1.5 flex-1 overflow-y-auto min-h-0">
+      @if (project.documents().length === 0) {
+        <div class="empty-state py-8">
+          <mat-icon class="empty-icon scale-150 text-[var(--text-2)]">folder_open</mat-icon>
+          <p class="empty-text">No project docs yet. Upload README, MD, TXT or PDF files.</p>
+        </div>
+      }
+
+      @for (doc of filteredDocs(); track doc.id) {
+        <div
+          class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] group hover:border-[var(--border-active)] transition-all"
+        >
+          <mat-icon class="scale-75 text-[var(--accent-amber)] shrink-0">description</mat-icon>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-[var(--text-0)] truncate font-medium">{{ doc.name }}</p>
+            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
+              {{ doc.date | date: 'mediumDate' }}
+            </p>
+          </div>
+          <button
+            (click)="deleteDoc($event, doc.id)"
+            class="btn-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Remove document"
+          >
+            <mat-icon class="scale-75">close</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Upload -->
+    <div class="space-y-2 pt-2 border-t border-[var(--border)]">
+      <div class="relative group">
+        <input
+          type="file"
+          (change)="onFileSelected($event)"
+          multiple
+          accept=".pdf,.html,.txt,.md"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <div
+          class="border-2 border-dashed border-[var(--border)] rounded-xl p-4 text-center group-hover:border-[var(--accent-green)]/50 transition-colors bg-[var(--bg-2)]"
+        >
+          <mat-icon class="scale-100 text-[var(--text-2)] mb-1">add_circle_outline</mat-icon>
+          <p class="text-[10px] text-[var(--text-2)]">Upload PDF, HTML, TXT, MD</p>
+        </div>
+      </div>
+
+      @if (project.isProcessing()) {
+        <div class="flex items-center gap-2 p-2 text-xs text-[var(--text-2)]">
+          <div
+            class="animate-spin h-3 w-3 border-2 border-[var(--accent-green)] border-t-transparent rounded-full"
+          ></div>
+          <span>{{ project.processingStatus() }}</span>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col min-w-0 relative">
+    <!-- Sub-tab Nav -->
+    <nav class="flex items-center px-6 border-b border-[var(--border)] shrink-0">
+      <button
+        (click)="activeSubTab.set('input')"
+        class="px-4 py-3 text-xs font-medium border-b-2 transition-colors font-[var(--font-ui)]"
+        [class.border-[var(--accent-green)]]="activeSubTab() === 'input'"
+        [class.text-[var(--accent-green)]]="activeSubTab() === 'input'"
+        [class.border-transparent]="activeSubTab() !== 'input'"
+        [class.text-[var(--text-2)]]="activeSubTab() !== 'input'"
+      >
+        <mat-icon class="scale-75 inline align-middle mr-1">upload_file</mat-icon>
+        Input
+      </button>
+      <button
+        (click)="activeSubTab.set('output')"
+        class="px-4 py-3 text-xs font-medium border-b-2 transition-colors font-[var(--font-ui)]"
+        [class.border-[var(--accent-blue)]]="activeSubTab() === 'output'"
+        [class.text-[var(--accent-blue)]]="activeSubTab() === 'output'"
+        [class.border-transparent]="activeSubTab() !== 'output'"
+        [class.text-[var(--text-2)]]="activeSubTab() !== 'output'"
+      >
+        <mat-icon class="scale-75 inline align-middle mr-1">chat</mat-icon>
+        Output
+      </button>
+    </nav>
+
+    <!-- Input View -->
+    @if (activeSubTab() === 'input') {
+      <div class="flex-1 overflow-y-auto p-6">
+        @if (project.documents().length === 0) {
+          <div class="empty-state">
+            <mat-icon class="empty-icon scale-150 text-[var(--accent-green)]">upload_file</mat-icon>
+            <h3 class="text-base font-bold text-[var(--text-0)] font-[var(--font-ui)]">
+              Add project context
+            </h3>
+            <p class="empty-text">
+              Upload README, documentation, procedures, commands, or any project-related files. The
+              AI will use them to answer questions in Output mode.
+            </p>
+            <p class="text-[11px] text-[var(--accent-amber)] mt-2">
+              Supported formats: PDF, MD, TXT, HTML
+            </p>
+          </div>
+        }
+
+        @if (project.documents().length > 0) {
+          <div class="max-w-4xl mx-auto space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-bold text-[var(--text-1)] font-[var(--font-ui)]">
+                Uploaded Documents ({{ project.documents().length }})
+              </h4>
+              <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
+                {{ totalChunks() }} total chunks ready for RAG
+              </span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+              @for (doc of project.documents(); track doc.id) {
+                <div
+                  class="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 flex items-start gap-3 group hover:border-[var(--border-active)]/50 transition-all"
+                >
+                  <div
+                    class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                    [style.background]="
+                      doc.type === 'md'
+                        ? 'rgba(130,183,255,0.12)'
+                        : doc.type === 'pdf'
+                          ? 'rgba(255,122,168,0.12)'
+                          : 'rgba(86,217,255,0.12)'
+                    "
+                  >
+                    <mat-icon
+                      class="scale-90"
+                      [style.color]="
+                        doc.type === 'md'
+                          ? 'var(--accent-blue)'
+                          : doc.type === 'pdf'
+                            ? 'var(--accent-rose)'
+                            : 'var(--accent-cyan)'
+                      "
+                    >
+                      {{
+                        doc.type === 'md'
+                          ? 'code'
+                          : doc.type === 'pdf'
+                            ? 'picture_as_pdf'
+                            : 'description'
+                      }}
+                    </mat-icon>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[var(--text-0)] truncate font-medium">{{ doc.name }}</p>
+                    <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mt-0.5">
+                      {{ doc.date | date: 'mediumDate' }} &middot;
+                      {{
+                        doc.size > 1024
+                          ? (doc.size / 1024 | number: '1.0-0') + ' KB'
+                          : doc.size + ' B'
+                      }}
+                    </p>
+                  </div>
+                  <button
+                    (click)="deleteDoc($event, doc.id)"
+                    class="btn-tertiary opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    title="Remove document"
+                  >
+                    <mat-icon class="scale-75">close</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Output View: Chat -->
+    @if (activeSubTab() === 'output') {
+      <div class="flex-1 flex flex-col min-h-0">
+        <!-- Messages -->
+        <div class="chat-area flex-1">
+          @if (messages().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-[var(--accent-blue)]">psychology</mat-icon>
+              <h3 class="text-base font-bold text-[var(--text-0)] font-[var(--font-ui)]">
+                Ask about your project
+              </h3>
+              <p class="empty-text">
+                Query across your project documents. The AI retrieves relevant context and answers
+                with source citations.
+              </p>
+              @if (project.documents().length === 0) {
+                <p class="text-[11px] text-[var(--accent-amber)] mt-2">
+                  Upload documents in the <strong>Input</strong> tab first.
+                </p>
+              }
+            </div>
+          }
+
+          <div class="space-y-4">
+            @for (msg of messages(); track $index) {
+              <app-message-bubble
+                [role]="msg.role === 'assistant' ? 'ai' : 'user'"
+                [text]="msg.content"
+              />
+              @if (
+                msg.role === 'assistant' &&
+                msgSources().length > 0 &&
+                $index === messages().length - 1
+              ) {
+                <div class="flex flex-wrap gap-1.5 px-2 pb-2">
+                  @for (src of msgSources(); track $index) {
+                    <span class="source-chip">
+                      <mat-icon class="scale-50">article</mat-icon>
+                      {{ src }}
+                    </span>
+                  }
+                </div>
+              }
+            }
+            @if (isGenerating()) {
+              <app-typing-indicator />
+            }
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-zone">
+          <textarea
+            class="input-field"
+            [value]="userInput()"
+            (input)="userInput.set($any($event.target).value)"
+            (keydown)="onKeydown($event)"
+            placeholder="Ask a question about your project docs..."
+            [disabled]="!llm.isReady() || isGenerating()"
+            rows="1"
+          ></textarea>
+          <button
+            class="send-btn"
+            (click)="sendMessage()"
+            [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()"
+            [title]="llm.isReady() ? 'Send' : 'Model not loaded'"
+          >
+            <mat-icon>send</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </main>
+</div>

@@ -11,7 +11,14 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 @Component({
   selector: 'app-project-tab',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, MatIconModule, MessageBubbleComponent, TypingIndicatorComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    MatIconModule,
+    MessageBubbleComponent,
+    TypingIndicatorComponent,
+  ],
   templateUrl: './project-tab.component.html',
   styleUrl: './project-tab.component.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },

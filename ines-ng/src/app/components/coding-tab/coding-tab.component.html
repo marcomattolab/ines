@@ -1,26 +1,54 @@
 <div class="tab-panel-inner">
-  <!-- Top Panel Header (aligned with TODO and Meeting tabs) -->
+  <!-- Top Panel Header -->
   <div class="panel-header">
     <div>
       <div class="panel-title">
         <mat-icon fontIcon="code" class="text-accent-cyan text-lg w-[18px] h-[18px]"></mat-icon>
-        Coding Assistant
+        Angular + TypeScript Assistant
       </div>
-      <div class="panel-desc">Client-Side Edge Web Developer & Sandbox Playground</div>
+      <div class="panel-desc">Standalone components · signals · inject() · RxJS · Tailwind</div>
     </div>
-    <app-button variant="danger" size="sm" (onClick)="clear()">
-      <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
-      Clear Conversation
-    </app-button>
+    <div class="flex items-center gap-2">
+      @if (docFetch.isFetching()) {
+        <span
+          class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] flex items-center gap-1.5"
+        >
+          <span
+            class="animate-spin h-3 w-3 border-2 border-[var(--accent-blue)] border-t-transparent rounded-full"
+          ></span>
+          {{ docFetch.fetchProgress() }}
+        </span>
+      } @else if (docFetch.docsLoaded()) {
+        <span
+          class="text-[10px] text-[var(--accent-green)] font-[var(--font-mono)] flex items-center gap-1"
+        >
+          <mat-icon class="scale-50">check_circle</mat-icon>
+          {{ km.documents().length }} docs loaded
+        </span>
+      } @else {
+        <app-button
+          variant="secondary"
+          size="sm"
+          (onClick)="loadAngularDocs()"
+          [disabled]="!llm.isReady()"
+        >
+          <mat-icon class="scale-75">download</mat-icon>
+          Load Angular Docs
+        </app-button>
+      }
+      <app-button variant="danger" size="sm" (onClick)="clear()">
+        <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Clear
+      </app-button>
+    </div>
   </div>
 
   <!-- Resizable split workspace -->
   <div class="coding-workspace">
-    <!-- Left Side: Terminal Chat Interface -->
+    <!-- Left: Chat -->
     <div
       class="flex-1 min-w-[360px] bg-[rgba(13,16,23,0.45)] flex flex-col overflow-hidden shadow-[4px_0_20px_rgba(0,0,0,0.15)]"
     >
-      <!-- Message Stream -->
       <div class="chat-area" #chatArea (scroll)="onScroll()">
         @for (msg of messages(); track msg.id) {
           <app-message-bubble
@@ -39,7 +67,6 @@
         }
       </div>
 
-      <!-- Input Box -->
       <div class="token-info" [style.visibility]="tokenInfo() ? 'visible' : 'hidden'">
         {{ tokenInfo() }}
       </div>
@@ -48,7 +75,7 @@
         <textarea
           #inputEl
           class="input-field"
-          placeholder="Type a web layout or component request (e.g., 'A modern calculator widget with a dark theme')..."
+          placeholder="Describe an Angular component, service, or feature (e.g., 'A signal-based data table with sorting and pagination')..."
           (keydown)="onKey($event)"
         ></textarea>
         <app-button
@@ -64,52 +91,61 @@
 
     <div class="resizer" (mousedown)="startResize($event)"></div>
 
-    <!-- Right Side: Sandbox Code & Live Preview Workspace -->
+    <!-- Right: Code Viewer -->
     <div
       class="flex flex-col bg-[var(--bg-0)] overflow-hidden shrink-0 min-w-[300px]"
       [style.width.px]="rightPanelWidth()"
     >
-      <!-- Sandbox Header -->
+      <!-- File Tabs Header -->
       <div
-        class="flex items-center justify-between shrink-0 p-[10px] px-4 bg-[rgba(13,16,23,0.35)] border-b border-[var(--border)]"
+        class="flex items-center justify-between shrink-0 border-b border-[var(--border)] bg-[rgba(13,16,23,0.35)]"
       >
-        <div class="flex gap-2">
-          <app-button
-            variant="secondary"
-            size="sm"
-            [className]="playgroundTab() === 'preview' ? 'active' : ''"
-            (onClick)="playgroundTab.set('preview')"
-          >
-            <mat-icon fontIcon="preview" class="text-accent-blue text-sm w-3.5 h-3.5"></mat-icon>
-            Live Preview
-          </app-button>
-          <app-button
-            variant="secondary"
-            size="sm"
-            [className]="playgroundTab() === 'code' ? 'active' : ''"
-            (onClick)="playgroundTab.set('code')"
-          >
-            <mat-icon fontIcon="code" class="text-accent-cyan text-sm w-3.5 h-3.5"></mat-icon>
-            Source Code
-          </app-button>
+        <div class="flex items-center overflow-x-auto scrollbar-thin flex-1 min-w-0">
+          @if (files().length === 0) {
+            <span class="px-4 py-[10px] text-[11px] text-[var(--text-2)] font-[var(--font-mono)]"
+              >No files yet</span
+            >
+          }
+          @for (file of files(); track file.name; let i = $index) {
+            <button
+              class="file-tab shrink-0 cursor-pointer transition-colors"
+              [class.active]="activeFileIndex() === i"
+              (click)="selectFile(i)"
+              [title]="file.name"
+            >
+              <mat-icon class="scale-75 shrink-0">
+                {{
+                  file.language === 'typescript' || file.language === 'ts'
+                    ? 'description'
+                    : file.language === 'html'
+                      ? 'code'
+                      : file.language === 'css' || file.language === 'scss'
+                        ? 'palette'
+                        : 'insert_drive_file'
+                }}
+              </mat-icon>
+              <span>{{ file.name }}</span>
+            </button>
+          }
         </div>
 
-        <div class="flex gap-2" [style.display]="extractedCode() ? 'flex' : 'none'">
-          <app-button variant="secondary" size="sm" (onClick)="copyCode()">
-            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
-            Copy
-          </app-button>
-          <app-button variant="secondary" size="sm" (onClick)="downloadCode()">
-            <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
-            Download
-          </app-button>
+        <div class="flex items-center gap-1 px-2 shrink-0">
+          @if (activeFile()) {
+            <button class="btn-tertiary" (click)="copyFile(activeFile()!)" title="Copy active file">
+              <mat-icon class="scale-75">content_copy</mat-icon>
+            </button>
+          }
+          @if (files().length > 1) {
+            <button class="btn-tertiary" (click)="copyAllCode()" title="Copy all files">
+              <mat-icon class="scale-75">content_paste</mat-icon>
+            </button>
+          }
         </div>
       </div>
 
-      <!-- Sandbox Body -->
+      <!-- Code Body -->
       <div class="flex-1 relative overflow-hidden bg-[#08090c]">
-        @if (!extractedCode()) {
-          <!-- Empty State -->
+        @if (files().length === 0) {
           <div
             class="flex flex-col items-center justify-center h-full gap-4 text-[var(--text-2)] p-10 text-center"
             style="
@@ -134,42 +170,49 @@
               ></mat-icon>
             </div>
             <div class="font-[var(--font-ui)] font-bold text-lg text-[var(--text-1)]">
-              Waiting for Code Request
+              Generate Angular Code
             </div>
-            <div class="text-[13.5px] max-w-[380px] leading-[1.6]">
-              Describe a user interface, dashboard, or widget you'd like me to build on the left.
-              The live, interactive render and source code will appear here instantly!
+            <div class="text-[13.5px] max-w-[420px] leading-[1.6]">
+              Describe what you need — a component, service, directive, or pipe — and the generated
+              TypeScript, HTML, and CSS files will appear here as separate tabs.
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 mt-2">
+              @for (
+                item of [
+                  'Data table component',
+                  'Auth service with signals',
+                  'Custom form control',
+                  'Drag & drop list',
+                ];
+                track $index
+              ) {
+                <span
+                  class="text-[10px] px-2 py-1 rounded-full bg-white/5 text-[var(--text-2)] border border-white/5"
+                  >{{ item }}</span
+                >
+              }
             </div>
           </div>
         } @else {
-          <!-- Live Preview IFrame -->
-          <div class="w-full h-full bg-white flex" [hidden]="playgroundTab() !== 'preview'">
-            <iframe
-              [srcdoc]="safeHtml()"
-              sandbox="allow-scripts allow-popups allow-modals"
-              class="sandbox-iframe"
-            >
-            </iframe>
-          </div>
-
-          <!-- Code Viewer -->
-          <div
-            class="w-full h-full overflow-auto bg-[#0c0e14] p-4 scrollbar-thin"
-            [hidden]="playgroundTab() !== 'code'"
-          >
-            <div class="flex font-[var(--font-mono)] text-[13px] leading-[1.5] min-h-full">
-              <div
-                class="flex flex-col text-right pr-3 mr-3 border-r border-white/[0.06] text-[var(--text-2)] select-none text-xs leading-[1.5]"
-              >
-                @for (line of codeLines(); track $index) {
-                  <span class="min-h-[19.5px]">{{ $index + 1 }}</span>
-                }
+          @if (activeFile()) {
+            <div class="w-full h-full overflow-auto bg-[#0c0e14] p-4 scrollbar-thin">
+              <div class="flex font-[var(--font-mono)] text-[13px] leading-[1.5] min-h-full">
+                <!-- Line Numbers -->
+                <div
+                  class="flex flex-col text-right pr-3 mr-3 border-r border-white/[0.06] text-[var(--text-2)] select-none text-xs leading-[1.5] shrink-0"
+                >
+                  @for (line of codeLines(); track $index) {
+                    <span class="min-h-[19.5px]">{{ $index + 1 }}</span>
+                  }
+                </div>
+                <!-- Code -->
+                <pre
+                  class="flex-1 m-0 overflow-visible whitespace-pre-wrap break-all font-[var(--font-mono)]"
+                  [style.color]="codeColor(activeFile()!.language)"
+                ><code>{{ activeFile()!.content }}</code></pre>
               </div>
-              <pre
-                class="flex-1 m-0 overflow-visible text-[#94a3b8] whitespace-pre-wrap break-all font-[var(--font-mono)]"
-              ><code>{{ extractedCode() }}</code></pre>
             </div>
-          </div>
+          }
         }
       </div>
     </div>

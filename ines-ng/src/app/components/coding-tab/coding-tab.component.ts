@@ -8,10 +8,11 @@ import {
   OnDestroy,
   viewChild,
 } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DocFetchService } from '../../core/services/doc-fetch.service';
+import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -23,28 +24,48 @@ interface UiMessage {
   streaming?: boolean;
 }
 
-const SYSTEM_CODING = `You are INES Coding Assistant, an elite client-side AI web developer and front-end architect.
-You specialize in modern, responsive, and gorgeous web designs.
-Always write clean, clean, production-ready code.
-Wrap all your code inside single self-contained HTML markdown blocks:
-\`\`\`html
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    /* Add rich, modern CSS styling here */
-  </style>
-</head>
-<body>
-  <!-- Structure -->
-  <script>
-    // Modern JS logic here
-  </script>
-</body>
-</html>
-\`\`\`
-Ensure all designs are visually stunning: use smooth CSS gradients, dark mode aesthetics, glassmorphism, responsive grid/flexbox layouts, elegant typography, and subtle micro-animations.
-Keep explanations extremely brief and let your premium code speak for itself. Always answer in the same language as the user.`;
+interface CodeFile {
+  name: string;
+  language: string;
+  content: string;
+}
+
+const SYSTEM_CODING = `You are INES Coding Assistant, an expert Angular + TypeScript architect and senior frontend engineer.
+
+Your specialties:
+- Angular 17+ standalone components with signals, inject(), and OnPush change detection
+- TypeScript 5+ with strict mode, generics, utility types, and discriminated unions
+- RxJS observables, operators, subjects, and async patterns
+- Angular Router, HTTP client, forms (reactive + template), and DI
+- Tailwind CSS for styling, CSS custom properties for theming
+- Vitest for unit testing, Cypress for E2E
+- Clean architecture patterns: services, repositories, facades
+
+CODE OUTPUT RULES (strict):
+1. Always output at least TWO code blocks: the TypeScript component AND its HTML template.
+2. If relevant, also include a CSS/SCSS block and/or a service block.
+3. Each code block MUST start with a file-name comment on the FIRST line:
+   \`\`\`typescript
+   // my-component.component.ts
+   import { Component, signal, inject } from '@angular/core';
+   ...
+   \`\`\`
+4. Use these language tags exactly: \`\`\`typescript, \`\`\`html, \`\`\`css, \`\`\`scss
+5. Write clean, production-ready code. Use Angular standalone components (no NgModules). Prefer signals over decorators. Use inject() for DI.
+6. Keep explanations BRIEF — let the code speak. 1-2 sentences max before code blocks.
+7. Answer in the same language as the user.
+8. NEVER use markdown backticks inside explanations that could be confused with code blocks.
+
+ANGULAR PATTERNS TO USE:
+- standalone: true in @Component
+- signal() for state, computed() for derivations
+- inject() instead of constructor DI
+- host: { class: '...' } for host bindings
+- styleUrl / styleUrls for component styles
+- viewChild / model / input / output signals
+- AsyncPipe for observables in templates
+- @if / @for / @switch control flow in templates
+- provideHttpClient() etc. for providers`;
 
 @Component({
   selector: 'app-coding-tab',
@@ -60,28 +81,30 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy {
 
   llm = inject(LlmService);
   toast = inject(ToastService);
-  private sanitizer = inject(DomSanitizer);
+  docFetch = inject(DocFetchService);
+  km = inject(KnowledgeManagerService);
 
   messages = signal<UiMessage[]>([
     {
       id: 0,
       role: 'ai',
-      text: "Hey developer! I'm INES, your client-side Coding Assistant. I can write premium, fully styled, and interactive web widgets. Describe what you want me to build, and you will see the live preview on the right!",
+      text: "Hey! I'm INES, your Angular + TypeScript coding assistant. Describe the component, service, or feature you need — I'll generate clean, standalone Angular code with signals, templates, and styles. The code appears on the right as file tabs.",
     },
   ]);
   typing = signal(false);
   generating = signal(false);
   tokenInfo = signal('');
 
-  extractedCode = signal<string>('');
-  playgroundTab = signal<'code' | 'preview'>('preview');
+  files = signal<CodeFile[]>([]);
+  activeFileIndex = signal(0);
 
   rightPanelWidth = signal<number>(window.innerWidth * 0.58);
   inputAreaHeight = signal<number>(85);
-  readonly codeLines = computed(() => this.extractedCode().split('\n'));
-  readonly safeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.extractedCode()));
-  private isResizing = false;
-  private isHResizing = false;
+  readonly activeFile = computed(() => this.files()[this.activeFileIndex()] ?? null);
+  readonly codeLines = computed(() => {
+    const f = this.activeFile();
+    return f ? f.content.split('\n') : [];
+  });
 
   private history: ChatMessage[] = [];
   private nextId = 1;
@@ -111,46 +134,36 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy {
   }
 
   startResize(e: MouseEvent) {
-    this.isResizing = true;
     e.preventDefault();
-    document.addEventListener('mousemove', this.doResize);
-    document.addEventListener('mouseup', this.stopResize);
+    const doResize = (ev: MouseEvent) => {
+      const newWidth = window.innerWidth - ev.clientX;
+      if (newWidth >= 300 && newWidth <= window.innerWidth - 380) {
+        this.rightPanelWidth.set(newWidth);
+      }
+    };
+    const stopResize = () => {
+      document.removeEventListener('mousemove', doResize);
+      document.removeEventListener('mouseup', stopResize);
+    };
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
   }
-
-  private doResize = (e: MouseEvent) => {
-    if (!this.isResizing) return;
-    const newWidth = window.innerWidth - e.clientX;
-    if (newWidth >= 300 && newWidth <= window.innerWidth - 380) {
-      this.rightPanelWidth.set(newWidth);
-    }
-  };
-
-  private stopResize = () => {
-    this.isResizing = false;
-    document.removeEventListener('mousemove', this.doResize);
-    document.removeEventListener('mouseup', this.stopResize);
-  };
 
   startHResize(e: MouseEvent) {
-    this.isHResizing = true;
     e.preventDefault();
-    document.addEventListener('mousemove', this.doHResize);
-    document.addEventListener('mouseup', this.stopHResize);
+    const doResize = (ev: MouseEvent) => {
+      const newHeight = window.innerHeight - ev.clientY - 32;
+      if (newHeight >= 60 && newHeight <= window.innerHeight - 150) {
+        this.inputAreaHeight.set(newHeight);
+      }
+    };
+    const stopResize = () => {
+      document.removeEventListener('mousemove', doResize);
+      document.removeEventListener('mouseup', stopResize);
+    };
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
   }
-
-  private doHResize = (e: MouseEvent) => {
-    if (!this.isHResizing) return;
-    const newHeight = window.innerHeight - e.clientY - 32; // Subtract footer height
-    if (newHeight >= 60 && newHeight <= window.innerHeight - 150) {
-      this.inputAreaHeight.set(newHeight);
-    }
-  };
-
-  private stopHResize = () => {
-    this.isHResizing = false;
-    document.removeEventListener('mousemove', this.doHResize);
-    document.removeEventListener('mouseup', this.stopHResize);
-  };
 
   onKey(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -183,15 +196,29 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy {
     this.typing.set(true);
     this.shouldScroll = true;
 
-    const trimmed = this.llm.trimConversation(SYSTEM_CODING, text, this.history.slice(-6, -1));
-    const prompt = this.llm.buildPrompt(SYSTEM_CODING, text, trimmed);
+    let systemPrompt = SYSTEM_CODING;
+
+    if (this.docFetch.docsLoaded() && this.km.documents().length > 0) {
+      try {
+        const chunks = await this.km.getRelevantChunks(text, 2, 200);
+        if (chunks.length > 0) {
+          const context = chunks.map((c) => c.text).join('\n\n---\n\n');
+          systemPrompt += `\n\nANGULAR DOCS CONTEXT (use these APIs/precise signatures from official docs):\n${context}`;
+        }
+      } catch {
+        /* RAG best-effort */
+      }
+    }
+
+    const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
+    const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
     const aiId = this.nextId++;
 
     try {
       let full = '';
       await this.llm.generate(prompt, (_, done, fullText) => {
         full = fullText;
-        this.updateExtractedCode(fullText);
+        this.updateExtractedFiles(fullText);
 
         if (this.typing()) {
           this.typing.set(false);
@@ -219,48 +246,119 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy {
     this.generating.set(false);
   }
 
-  private updateExtractedCode(text: string) {
-    const match = text.match(/```html([\s\S]*?)```/) || text.match(/```([\s\S]*?)```/);
-    if (match) {
-      this.extractedCode.set(match[1].trim());
-      return;
-    }
-    const streamMatch = text.match(/```html([\s\S]*)/) || text.match(/```([\s\S]*)/);
-    if (streamMatch) {
-      this.extractedCode.set(streamMatch[1].trim());
+  private updateExtractedFiles(text: string) {
+    const parsed = this.parseCodeBlocks(text);
+    if (parsed.length > 0) {
+      this.files.set(parsed);
+      this.activeFileIndex.set(0);
     }
   }
 
-  copyCode() {
-    if (!this.extractedCode()) return;
-    navigator.clipboard.writeText(this.extractedCode()).then(() => {
-      this.toast.show('📋 Code copied to clipboard!');
+  private parseCodeBlocks(text: string): CodeFile[] {
+    const files: CodeFile[] = [];
+    const regex = /```(\w+)\n([\s\S]*?)```/g;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(text)) !== null) {
+      const language = match[1].toLowerCase();
+      let content = match[2].trim();
+
+      let name = this.fileNameForLang(language);
+      const firstLine = content.split('\n')[0]?.trim() ?? '';
+      if (firstLine.startsWith('//') && firstLine.includes('.')) {
+        const candidate = firstLine.replace(/^\/\/\s*/, '').trim();
+        if (/\.(ts|html|css|scss)$/.test(candidate)) {
+          name = candidate;
+        }
+      }
+
+      const existing = files.find((f) => f.name === name);
+      if (existing) {
+        existing.content += '\n\n' + content;
+      } else {
+        files.push({ name, language, content });
+      }
+    }
+
+    return files;
+  }
+
+  private fileNameForLang(lang: string): string {
+    switch (lang) {
+      case 'typescript':
+      case 'ts':
+        return 'component.ts';
+      case 'html':
+        return 'component.html';
+      case 'css':
+        return 'component.css';
+      case 'scss':
+        return 'component.scss';
+      case 'javascript':
+      case 'js':
+        return 'script.js';
+      default:
+        return `code.${lang}`;
+    }
+  }
+
+  selectFile(index: number) {
+    this.activeFileIndex.set(index);
+  }
+
+  copyFile(file: CodeFile) {
+    navigator.clipboard.writeText(file.content).then(() => {
+      this.toast.show(`📋 ${file.name} copied!`);
     });
   }
 
-  downloadCode() {
-    if (!this.extractedCode()) return;
-    const blob = new Blob([this.extractedCode()], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'generated_webpage.html';
-    a.click();
-    URL.revokeObjectURL(url);
-    this.toast.show('💾 File download started!');
+  copyAllCode() {
+    const all = this.files()
+      .map((f) => `// ${f.name}\n${f.content}`)
+      .join('\n\n');
+    if (!all) return;
+    navigator.clipboard.writeText(all).then(() => {
+      this.toast.show('📋 All files copied!');
+    });
   }
 
   clear() {
     this.history = [];
     this.messages.set([
-      { id: this.nextId++, role: 'ai', text: "Cleaned. Let's build something else!" },
+      { id: this.nextId++, role: 'ai', text: 'Cleaned. What Angular component should I build?' },
     ]);
     this.tokenInfo.set('');
-    this.extractedCode.set('');
+    this.files.set([]);
+    this.activeFileIndex.set(0);
   }
 
-  ngOnDestroy() {
-    this.stopResize();
-    this.stopHResize();
+  async loadAngularDocs() {
+    if (this.docFetch.isFetching()) return;
+    try {
+      await this.docFetch.fetchAngularDocs();
+      await this.km.loadDocuments();
+    } catch (err: any) {
+      this.toast.error('Failed to load Angular docs: ' + err.message);
+    }
   }
+
+  codeColor(lang: string): string {
+    switch (lang) {
+      case 'typescript':
+      case 'ts':
+        return '#82b7ff';
+      case 'html':
+        return '#ff7aa8';
+      case 'css':
+      case 'scss':
+        return '#56d9ff';
+      case 'javascript':
+      case 'js':
+        return '#ffd869';
+      default:
+        return '#94a5c2';
+    }
+  }
+
+  ngOnDestroy() {}
 }

@@ -23,26 +23,76 @@
       ></textarea>
 
       <div class="md-upload-zone">
-        @if (!mdFileName()) {
+        @if (!fileName()) {
           <div class="upload-placeholder">
             <input
               type="file"
               (change)="onFileSelected($event)"
-              accept=".md"
+              accept=".md,.txt,.pdf"
               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
             <mat-icon fontIcon="upload_file" class="text-zinc-500 mb-1"></mat-icon>
-            <span class="text-[11px] text-zinc-400">Upload .md file (optional)</span>
+            <span class="text-[11px] text-zinc-400">Upload .md, .txt or .pdf</span>
           </div>
         } @else {
           <div class="file-chip">
             <mat-icon fontIcon="description" class="text-accent-amber !text-sm"></mat-icon>
-            <span class="file-name">{{ mdFileName() }}</span>
-            <button class="clear-btn" (click)="clearMd()">
+            <span class="file-name">{{ fileName() }}</span>
+            <button class="clear-btn" (click)="clearFile()">
               <mat-icon fontIcon="close" class="!text-xs"></mat-icon>
             </button>
           </div>
         }
+      </div>
+
+      <!-- Slide Count & Style Selectors -->
+      <div class="flex items-center gap-2">
+        <div class="flex-1">
+          <label class="ppt-label">Slides</label>
+          <div class="flex gap-1">
+            <button
+              class="ppt-option-chip"
+              [class.active]="slideCountOption() === 'auto'"
+              (click)="slideCountOption.set('auto')"
+            >
+              Auto
+            </button>
+            <button
+              class="ppt-option-chip"
+              [class.active]="slideCountOption() !== 'auto'"
+              (click)="slideCountOption.set(10)"
+            >
+              Custom
+            </button>
+            @if (slideCountOption() !== 'auto') {
+              <div class="ppt-number-stepper">
+                <button (click)="decrementSlides()">
+                  <mat-icon fontIcon="remove" class="text-xs w-3 h-3"></mat-icon>
+                </button>
+                <span class="ppt-stepper-value">{{ slideCountCustom() }}</span>
+                <button (click)="incrementSlides()">
+                  <mat-icon fontIcon="add" class="text-xs w-3 h-3"></mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="ppt-label">Style</label>
+        <div class="flex gap-1 flex-wrap">
+          @for (opt of styleOptions; track opt.value) {
+            <button
+              class="ppt-option-chip"
+              [class.active]="style() === opt.value"
+              (click)="setStyle(opt.value)"
+            >
+              <mat-icon fontIcon="{{ opt.icon }}" class="text-xs w-3 h-3"></mat-icon>
+              {{ opt.label }}
+            </button>
+          }
+        </div>
       </div>
 
       <app-button
@@ -148,6 +198,9 @@
             generating...
           </span>
         }
+        <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] ml-1">
+          ← → keys
+        </span>
       </div>
       <div class="flex items-center gap-1.5">
         <app-button
@@ -167,6 +220,27 @@
           className="!w-7 !h-7 !p-0"
         >
           <mat-icon fontIcon="chevron_right" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+        @if (generatedHtml()) {
+          <app-button
+            variant="ghost"
+            size="sm"
+            (onClick)="regenerate()"
+            className="!w-7 !h-7 !p-0"
+            title="Regenerate with same prompt"
+          >
+            <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
+          </app-button>
+        }
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!generatedHtml()"
+          (onClick)="toggleFullscreen()"
+          className="!w-7 !h-7 !p-0"
+          title="Fullscreen preview"
+        >
+          <mat-icon fontIcon="fullscreen" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
         <app-button
           variant="ghost"

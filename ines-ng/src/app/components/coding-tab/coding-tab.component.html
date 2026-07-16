@@ -43,6 +43,20 @@
     </div>
   </div>
 
+  <!-- Suggestion chips -->
+  <div
+    class="flex items-center gap-1.5 px-[22px] py-2.5 border-b border-[var(--border)] overflow-x-auto shrink-0 scrollbar-thin"
+  >
+    <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] shrink-0 mr-1"
+      >Quick:</span
+    >
+    @for (chip of suggestionChips; track chip) {
+      <button class="suggestion-chip" (click)="useSuggestion(chip)" [title]="'Generate: ' + chip">
+        {{ chip }}
+      </button>
+    }
+  </div>
+
   <!-- Resizable split workspace -->
   <div class="coding-workspace">
     <!-- Left: Chat -->
@@ -107,25 +121,26 @@
             >
           }
           @for (file of files(); track file.name; let i = $index) {
-            <button
-              class="file-tab shrink-0 cursor-pointer transition-colors"
-              [class.active]="activeFileIndex() === i"
-              (click)="selectFile(i)"
-              [title]="file.name"
-            >
-              <mat-icon class="scale-75 shrink-0">
-                {{
-                  file.language === 'typescript' || file.language === 'ts'
-                    ? 'description'
-                    : file.language === 'html'
-                      ? 'code'
-                      : file.language === 'css' || file.language === 'scss'
-                        ? 'palette'
-                        : 'insert_drive_file'
-                }}
-              </mat-icon>
-              <span>{{ file.name }}</span>
-            </button>
+            <div class="file-tab-wrapper shrink-0">
+              <button
+                class="file-tab cursor-pointer transition-colors"
+                [class.active]="activeFileIndex() === i"
+                (click)="selectFile(i)"
+                [title]="file.name"
+              >
+                <mat-icon class="file-icon shrink-0">
+                  {{ fileIcon(file) }}
+                </mat-icon>
+                <span>{{ file.name }}</span>
+              </button>
+              <button
+                class="file-tab-close"
+                (click)="closeFile(i, $event)"
+                title="Close {{ file.name }}"
+              >
+                <mat-icon class="scale-50">close</mat-icon>
+              </button>
+            </div>
           }
         </div>
 
@@ -138,6 +153,20 @@
           @if (files().length > 1) {
             <button class="btn-tertiary" (click)="copyAllCode()" title="Copy all files">
               <mat-icon class="scale-75">content_paste</mat-icon>
+            </button>
+          }
+          @if (activeFile()) {
+            <button
+              class="btn-tertiary"
+              (click)="downloadFile(activeFile()!)"
+              title="Download file"
+            >
+              <mat-icon class="scale-75">download</mat-icon>
+            </button>
+          }
+          @if (messages().length > 1) {
+            <button class="btn-tertiary" (click)="regenerate()" title="Regenerate last response">
+              <mat-icon class="scale-75">refresh</mat-icon>
             </button>
           }
         </div>
@@ -170,19 +199,20 @@
               ></mat-icon>
             </div>
             <div class="font-[var(--font-ui)] font-bold text-lg text-[var(--text-1)]">
-              Generate Angular Code
+              Generate Angular 22 Code
             </div>
             <div class="text-[13.5px] max-w-[420px] leading-[1.6]">
-              Describe what you need — a component, service, directive, or pipe — and the generated
-              TypeScript, HTML, and CSS files will appear here as separate tabs.
+              Describe what you need — a component, service, directive, or pipe — using the latest
+              Angular 22 signal-based APIs. Generated TypeScript, HTML, and CSS files appear as
+              separate tabs here.
             </div>
             <div class="flex flex-wrap justify-center gap-2 mt-2">
               @for (
                 item of [
-                  'Data table component',
-                  'Auth service with signals',
-                  'Custom form control',
-                  'Drag & drop list',
+                  'Signal-based data table',
+                  'resource() API wrapper',
+                  'model() form component',
+                  'linkedSignal() demo',
                 ];
                 track $index
               ) {
@@ -195,21 +225,20 @@
           </div>
         } @else {
           @if (activeFile()) {
-            <div class="w-full h-full overflow-auto bg-[#0c0e14] p-4 scrollbar-thin">
+            <div class="w-full h-full overflow-auto bg-[#0c0e14] scrollbar-thin">
               <div class="flex font-[var(--font-mono)] text-[13px] leading-[1.5] min-h-full">
                 <!-- Line Numbers -->
                 <div
-                  class="flex flex-col text-right pr-3 mr-3 border-r border-white/[0.06] text-[var(--text-2)] select-none text-xs leading-[1.5] shrink-0"
+                  class="line-numbers flex flex-col text-right pr-3 mr-3 border-r border-white/[0.06] text-[var(--text-2)] select-none text-xs leading-[1.5] shrink-0"
                 >
                   @for (line of codeLines(); track $index) {
-                    <span class="min-h-[19.5px]">{{ $index + 1 }}</span>
+                    <span class="line-number">{{ $index + 1 }}</span>
                   }
                 </div>
-                <!-- Code -->
+                <!-- Code with syntax highlighting -->
                 <pre
                   class="flex-1 m-0 overflow-visible whitespace-pre-wrap break-all font-[var(--font-mono)]"
-                  [style.color]="codeColor(activeFile()!.language)"
-                ><code>{{ activeFile()!.content }}</code></pre>
+                ><code [innerHTML]="highlightedCode()"></code></pre>
               </div>
             </div>
           }

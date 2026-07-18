@@ -62,7 +62,10 @@
   width: 100px;
   min-width: 100px;
   padding: 18px 10px 20px;
-  background: linear-gradient(180deg, rgba(12, 16, 26, 0.95), rgba(7, 10, 18, 0.98));
+  background: var(
+    --sidebar-bg,
+    linear-gradient(180deg, rgba(12, 16, 26, 0.95), rgba(7, 10, 18, 0.98))
+  );
   backdrop-filter: blur(28px) saturate(180%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 14px 0 45px rgba(0, 0, 0, 0.32);
@@ -294,7 +297,7 @@
     padding: 0 4px;
     overflow-x: auto;
     border-right: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
     border-radius: 0;
     z-index: 100;
   }
@@ -303,7 +306,7 @@
     width: 1px;
     height: 24px;
     margin: 0 6px;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    background: linear-gradient(180deg, transparent, var(--border), transparent);
   }
 
   .sidebar-header {
@@ -371,4 +374,54 @@
     height: 18px !important;
     font-size: 18px !important;
   }
+}
+
+#sidebar {
+  min-height: calc(100vh - 76px);
+}
+
+body.theme-light #sidebar {
+  background: var(--sidebar-bg, #ffffff) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: none !important;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-light #sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light #sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+body.theme-light .sidebar-divider {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
+}
+
+body.theme-light .sidebar-header {
+  color: #6b7280;
+  opacity: 0.7;
+}
+
+body.theme-light #app-footer {
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  color: #374151;
+}
+
+body.theme-light .tab-btn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: transparent;
+}
+
+body.theme-light .tab-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tab-btn.active {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }

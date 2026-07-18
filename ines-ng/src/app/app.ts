@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, HostListener, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener, computed, effect } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
@@ -120,6 +120,14 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     window.addEventListener('online', () => this.isOnline.set(true));
     window.addEventListener('offline', () => this.isOnline.set(false));
+
+    try {
+      if (sessionStorage.getItem('ines_light_theme') === 'true') {
+        this.isLightTheme.set(true);
+      }
+    } catch {
+      /* best effort */
+    }
     // 1. Try to load from IndexedDB cache first
     this.llm
       .initModelFromCache()
@@ -207,4 +215,8 @@ export class AppComponent implements OnInit {
       /* best effort */
     }
   }
+
+  private themeEffect = effect(() => {
+    document.body.classList.toggle('theme-light', this.isLightTheme());
+  });
 }

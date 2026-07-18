@@ -32,10 +32,11 @@ export class ButtonComponent {
     const variantClasses = {
       primary: 'bg-accent-blue hover:brightness-110 text-white focus:ring-accent-blue',
       secondary:
-        'bg-white/10 hover:bg-white/20 text-white border border-white/10 focus:ring-white/20',
+        'bg-[var(--bg-2)] hover:bg-[var(--bg-3)] text-[var(--text-0)] border border-[var(--border)] focus:ring-[var(--border-active)]',
       danger:
         'bg-accent-rose/10 hover:bg-accent-rose/20 text-accent-rose border border-accent-rose/30 focus:ring-accent-rose',
-      ghost: 'bg-transparent hover:bg-white/5 text-[var(--text-1)] focus:ring-white/10',
+      ghost:
+        'bg-transparent hover:bg-[var(--bg-2)] text-[var(--text-1)] focus:ring-[var(--border-active)]',
     };
 
     const sizeClasses = {

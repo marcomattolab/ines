@@ -337,7 +337,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #08090c;
+  background: #000000;
 }
 
 .preview-iframe {

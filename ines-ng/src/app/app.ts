@@ -15,6 +15,7 @@ import { VisionTabComponent } from './components/vision-tab/vision-tab.component
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
 import { KnowledgeManagerTabComponent } from './components/knowledge-manager-tab/knowledge-manager-tab.component';
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
+import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 
@@ -30,7 +31,8 @@ type Tab =
   | 'learning'
   | 'presentation'
   | 'knowledge'
-  | 'project';
+  | 'project'
+  | 'dev-agent';
 
 interface TabDef {
   id: Tab;
@@ -68,6 +70,14 @@ const TABS: TabDef[] = [
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
   { id: 'knowledge', icon: 'auto_stories', label: 'Knowledge', color: 'var(--tab-knowledge)' },
   { id: 'project', icon: 'folder', label: 'Project', color: 'var(--tab-project)' },
+  {
+    id: 'dev-agent',
+    icon: 'smart_toy',
+    label: 'DevAgent',
+    color: 'var(--tab-dev-agent)',
+    dividerBefore: true,
+    category: 'AI',
+  },
 ];
 
 @Component({
@@ -86,6 +96,7 @@ const TABS: TabDef[] = [
     PresentationTabComponent,
     KnowledgeManagerTabComponent,
     ProjectTabComponent,
+    DevAgentTabComponent,
     LearningTabComponent,
     AgentsTabComponent,
     VisionTabComponent,

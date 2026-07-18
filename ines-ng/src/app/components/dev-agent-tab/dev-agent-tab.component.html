@@ -1,0 +1,367 @@
+<div class="flex flex-1 overflow-hidden h-full">
+  <input
+    #dirInput
+    type="file"
+    (change)="onDirSelected($event)"
+    webkitdirectory
+    directory
+    multiple
+    class="hidden"
+  />
+
+  <!-- Left Sidebar -->
+  <aside
+    class="w-64 border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md shrink-0"
+  >
+    <!-- Agent selector -->
+    <div class="p-4 border-b border-[var(--border)]">
+      <h2
+        class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-purple)] mb-3 flex items-center gap-1.5"
+      >
+        <mat-icon class="scale-75" fontIcon="smart_toy"></mat-icon>
+        Agent
+      </h2>
+      <div class="space-y-1">
+        @for (agent of agentSvc.agents(); track agent.id) {
+          <button
+            (click)="selectAgent(agent)"
+            class="w-full text-left p-2.5 rounded-lg transition-all flex flex-col gap-0.5 text-xs"
+            [class.bg-accent-purple\/15]="selectedAgent()?.id === agent.id"
+            [class.border]="selectedAgent()?.id === agent.id"
+            [class.border-accent-purple\/30]="selectedAgent()?.id === agent.id"
+            [class.hover:bg-white\/5]="selectedAgent()?.id !== agent.id"
+          >
+            <span class="font-semibold text-[var(--text-1)]">{{ agent.name }}</span>
+            <span class="text-[10px] text-[var(--text-2)] line-clamp-1">{{
+              agent.description
+            }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Repo section -->
+    <div class="flex-1 flex flex-col min-h-0">
+      <div class="p-4 border-b border-[var(--border)] flex justify-between items-center">
+        <h2
+          class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-green)] flex items-center gap-1.5"
+        >
+          <mat-icon class="scale-75" fontIcon="folder_special"></mat-icon>
+          Repository
+        </h2>
+        @if (repoFiles().length > 0) {
+          <button (click)="clearRepo()" class="btn-tertiary !w-7 !h-7" title="Clear repo">
+            <mat-icon class="scale-50">delete</mat-icon>
+          </button>
+        }
+      </div>
+
+      @if (repoFiles().length === 0) {
+        <div class="flex-1 flex flex-col items-center justify-center p-4 gap-3 text-center">
+          <mat-icon class="text-4xl text-[var(--text-2)] opacity-40">folder_open</mat-icon>
+          <p class="text-[11px] text-[var(--text-2)] leading-relaxed">
+            Select a local project folder to let the agent analyze your codebase
+          </p>
+          <app-button
+            variant="primary"
+            size="sm"
+            (onClick)="openDirPicker()"
+            [disabled]="isLoadingDir()"
+          >
+            <mat-icon class="scale-75" fontIcon="folder_open"></mat-icon>
+            Open Folder
+          </app-button>
+        </div>
+      } @else {
+        <!-- Loading -->
+        @if (isLoadingDir()) {
+          <div class="flex items-center gap-2 p-4 text-xs text-[var(--text-2)]">
+            <div
+              class="animate-spin h-3 w-3 border-2 border-[var(--accent-green)] border-t-transparent rounded-full"
+            ></div>
+            <span>Indexing files...</span>
+          </div>
+        }
+
+        <!-- Repo info -->
+        <div
+          class="p-3 border-b border-[var(--border)] flex items-center gap-2 text-[10px] text-[var(--text-2)] font-[var(--font-mono)]"
+        >
+          <mat-icon class="scale-50 text-[var(--accent-green)]">folder</mat-icon>
+          <span class="truncate font-semibold text-[var(--text-1)]">{{ repoName() }}</span>
+          <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+          <span>{{ repoFiles().length }} files</span>
+          @if (totalChunks() > 0) {
+            <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+            <span>{{ totalChunks() }} chunks</span>
+          }
+        </div>
+
+        <!-- File tree -->
+        <div class="flex-1 overflow-y-auto p-1.5">
+          @for (key of getFolderKeys(folderTree()); track key) {
+            @if (isFolder(folderTree()[key])) {
+              <div class="text-[11px]">
+                <button
+                  (click)="toggleFolder(key)"
+                  class="w-full text-left px-2 py-1 rounded flex items-center gap-1 hover:bg-white/5 transition-colors text-[var(--text-2)]"
+                >
+                  <mat-icon class="scale-50">
+                    {{ expandedFolders().has(key) ? 'expand_more' : 'chevron_right' }}
+                  </mat-icon>
+                  <mat-icon class="scale-50 text-[var(--accent-amber)]">folder</mat-icon>
+                  <span class="truncate">{{ key }}</span>
+                </button>
+                @if (expandedFolders().has(key)) {
+                  <div class="ml-3 border-l border-[var(--border)] pl-2">
+                    @for (childKey of getFolderKeys(folderTree()[key]); track childKey) {
+                      @if (isFolder(folderTree()[key][childKey])) {
+                        <button
+                          (click)="toggleFolder(key + '/' + childKey)"
+                          class="w-full text-left px-2 py-0.5 rounded flex items-center gap-1 hover:bg-white/5 transition-colors text-[var(--text-2)]"
+                        >
+                          <mat-icon class="scale-50">
+                            {{
+                              expandedFolders().has(key + '/' + childKey)
+                                ? 'expand_more'
+                                : 'chevron_right'
+                            }}
+                          </mat-icon>
+                          <mat-icon class="scale-50 text-[var(--accent-amber)]">folder</mat-icon>
+                          <span class="truncate">{{ childKey }}</span>
+                        </button>
+                        @if (expandedFolders().has(key + '/' + childKey)) {
+                          <div class="ml-3">
+                            @for (
+                              fileKey of getFolderKeys(folderTree()[key][childKey]);
+                              track fileKey
+                            ) {
+                              @if (folderTree()[key][childKey][fileKey]._file; as file) {
+                                <div
+                                  class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]"
+                                >
+                                  <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
+                                    fileIcon(file.type)
+                                  }}</mat-icon>
+                                  <span class="truncate">{{ file.name }}</span>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      } @else if (folderTree()[key][childKey]._file; as file) {
+                        <div
+                          class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]"
+                        >
+                          <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
+                            fileIcon(file.type)
+                          }}</mat-icon>
+                          <span class="truncate">{{ file.name }}</span>
+                          <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
+                            formatSize(file.size)
+                          }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            } @else if (folderTree()[key]._file; as file) {
+              <div class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]">
+                <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
+                  fileIcon(file.type)
+                }}</mat-icon>
+                <span class="truncate">{{ file.name }}</span>
+                <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
+                  formatSize(file.size)
+                }}</span>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- New folder button at bottom -->
+        <div class="p-3 border-t border-[var(--border)]">
+          <button
+            (click)="openDirPicker()"
+            class="w-full btn-secondary text-xs py-2"
+            [disabled]="isLoadingDir()"
+          >
+            <mat-icon class="scale-75">folder_open</mat-icon>
+            Change Folder
+          </button>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg-0)]">
+    @if (selectedAgent(); as agent) {
+      <!-- Header -->
+      <div class="panel-header !bg-transparent">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-10 h-10 rounded-xl bg-accent-purple/15 border border-accent-purple/30 flex items-center justify-center shrink-0"
+          >
+            <mat-icon class="scale-90 text-[var(--accent-purple)]" fontIcon="smart_toy"></mat-icon>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-base font-bold font-[var(--font-ui)] truncate">{{ agent.name }}</h1>
+            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] truncate">
+              {{ repoName() || 'No repository selected' }}
+              @if (repoFiles().length > 0) {
+                &middot; {{ repoFiles().length }} files &middot; {{ totalChunks() }} chunks
+              }
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <app-button
+            variant="secondary"
+            size="sm"
+            (onClick)="showFileTree.update((v) => !v)"
+            [className]="showFileTree() ? '!border-accent-purple/30 !bg-accent-purple/10' : ''"
+          >
+            <mat-icon class="scale-75" fontIcon="folder_special"></mat-icon>
+            {{ showFileTree() ? 'Hide' : 'Show' }} Tree
+          </app-button>
+          @if (messages().length > 0) {
+            <app-button variant="danger" size="sm" (onClick)="clearChat()">
+              <mat-icon class="scale-75" fontIcon="delete"></mat-icon>
+              Clear
+            </app-button>
+          }
+        </div>
+      </div>
+
+      <div class="flex-1 flex min-h-0">
+        <!-- Chat Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+          <div class="chat-area" #chatArea (scroll)="onScroll()">
+            @if (messages().length === 0) {
+              <div class="empty-state">
+                <mat-icon
+                  class="empty-icon text-[var(--accent-purple)]"
+                  fontIcon="smart_toy"
+                ></mat-icon>
+                <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">
+                  {{ agent.name }}
+                </h3>
+                <p class="empty-text">
+                  {{
+                    repoFiles().length > 0
+                      ? 'Ask me about the codebase. I can analyze, explain, and suggest improvements based on the project context.'
+                      : 'Select a project folder in the sidebar, then ask me to analyze, explain, or improve the code.'
+                  }}
+                </p>
+                @if (repoFiles().length > 0) {
+                  <div class="flex flex-wrap justify-center gap-1.5 mt-4 max-w-lg">
+                    @for (chip of suggestionChips; track chip) {
+                      <button class="suggestion-chip" (click)="useSuggestion(chip)">
+                        {{ chip }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (repoFiles().length === 0) {
+                  <app-button variant="primary" (onClick)="openDirPicker()" className="mt-4">
+                    <mat-icon fontIcon="folder_open" class="scale-75"></mat-icon>
+                    Open Folder
+                  </app-button>
+                }
+              </div>
+            }
+
+            @for (msg of messages(); track msg.id) {
+              @if (msg.role === 'ai' && msg.streaming) {
+                <div class="flex gap-3 px-2">
+                  <div
+                    class="w-8 h-8 rounded-full bg-accent-purple/15 border border-accent-purple/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-[var(--accent-purple)] font-[var(--font-mono)]"
+                  >
+                    {{ agent.name.substring(0, 2).toUpperCase() }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div
+                      class="text-xs text-[var(--accent-purple)] font-semibold mb-1 font-[var(--font-ui)]"
+                    >
+                      {{ agent.name }}
+                    </div>
+                    <div
+                      class="text-sm leading-relaxed text-[var(--text-1)] cursor-blink"
+                      [innerHTML]="html(msg.text)"
+                    ></div>
+                  </div>
+                </div>
+              } @else {
+                <app-message-bubble
+                  [role]="msg.role === 'user' ? 'user' : 'ai'"
+                  [text]="msg.text"
+                  [streaming]="!!msg.streaming"
+                />
+              }
+            }
+
+            @if (typing()) {
+              <app-typing-indicator />
+            }
+
+            @if (msgSources().length > 0 && messages().length > 0) {
+              <div class="flex flex-wrap gap-1.5 px-2 pb-1">
+                <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]"
+                  >Sources:</span
+                >
+                @for (src of msgSources(); track src) {
+                  <span class="source-chip">
+                    <mat-icon class="scale-50" fontIcon="article"></mat-icon>
+                    {{ src }}
+                  </span>
+                }
+              </div>
+            }
+
+            @if (showScrollBtn()) {
+              <button class="scroll-btn" (click)="scrollToBottom()">
+                <mat-icon fontIcon="keyboard_arrow_down"></mat-icon>
+              </button>
+            }
+          </div>
+
+          <!-- Input -->
+          <div class="input-zone">
+            <textarea
+              class="input-field"
+              #inputEl
+              [placeholder]="'Ask ' + agent.name + ' about the codebase...'"
+              rows="1"
+              (keydown)="onKey($event)"
+              (input)="autoResize($event)"
+            ></textarea>
+            <app-button
+              variant="primary"
+              [disabled]="generating() || !llm.isReady()"
+              (onClick)="send()"
+              className="!rounded-full !w-11 !h-11 !p-0"
+            >
+              <mat-icon fontIcon="send" class="text-lg"></mat-icon>
+            </app-button>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon class="empty-icon text-[var(--accent-purple)]" fontIcon="smart_toy"></mat-icon>
+        <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">Dev Agent</h3>
+        <p class="empty-text">
+          Select an agent from the sidebar and a project folder to start coding with AI assistance.
+          The agent can analyze your codebase, explain architecture, and help with code changes.
+        </p>
+        @if (agentSvc.agents().length === 0) {
+          <p class="text-[11px] text-[var(--accent-amber)] mt-2">
+            No agents available. Create one in the <strong>Agents</strong> tab first.
+          </p>
+        }
+      </div>
+    }
+  </main>
+</div>

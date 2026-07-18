@@ -326,7 +326,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     const text = this.inputEl().nativeElement.value.trim();
     if (!text) return;
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -497,7 +497,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
   downloadFile(file: CodeFile) {
     this.dom.downloadText(file.content, file.name);
-    this.toast.show(`📥 ${file.name} downloaded`);
+    this.toast.success(`${file.name} downloaded`);
   }
 
   regenerate() {
@@ -526,7 +526,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
   copyFile(file: CodeFile) {
     this.dom.copyToClipboard(file.content).then(() => {
-      this.toast.show(`📋 ${file.name} copied!`);
+      this.toast.success(`${file.name} copied!`);
     });
   }
 
@@ -536,7 +536,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
       .join('\n\n');
     if (!all) return;
     this.dom.copyToClipboard(all).then(() => {
-      this.toast.show('📋 All files copied!');
+      this.toast.success('All files copied!');
     });
   }
 

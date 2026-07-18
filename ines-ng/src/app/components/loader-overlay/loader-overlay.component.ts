@@ -35,9 +35,9 @@ export class LoaderOverlayComponent implements OnInit {
     try {
       await this.llm.clearModelCache();
       this.cachedModelAvailable.set(false);
-      this.toast.show('🗑️ Cached model cleared');
+      this.toast.show('Cached model cleared');
     } catch {
-      this.toast.show('❌ Failed to clear model cache');
+      this.toast.error('Failed to clear model cache');
     }
   }
 
@@ -59,7 +59,7 @@ export class LoaderOverlayComponent implements OnInit {
       await this.llm.initModel(file);
       setTimeout(() => this.closed.emit(), 600);
     } catch (err: any) {
-      this.toast.show('❌ Error loading model: ' + (err?.message ?? err));
+      this.toast.error('Error loading model: ' + (err?.message ?? err));
     }
   }
 }

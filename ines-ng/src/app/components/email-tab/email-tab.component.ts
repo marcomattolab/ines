@@ -55,11 +55,11 @@ export class EmailTabComponent implements OnDestroy {
   async process() {
     const emailText = this.emailInputRef()?.nativeElement.value.trim();
     if (!emailText) {
-      this.toast.show('⚠️ Insert the email text first');
+      this.toast.show('Insert the email text first');
       return;
     }
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -88,7 +88,7 @@ export class EmailTabComponent implements OnDestroy {
   }
 
   copy() {
-    this.dom.copyToClipboard(this.result()).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(this.result()).then(() => this.toast.success('Copied!'));
   }
 
   clear() {

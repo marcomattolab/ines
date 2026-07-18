@@ -130,7 +130,7 @@ export class TodoTabComponent implements OnDestroy {
       textarea.value = text;
     });
     if (!ok) {
-      this.toast.show('⚠️ Web Speech API not supported in this browser');
+      this.toast.show('Web Speech API not supported in this browser');
     }
   }
 
@@ -143,11 +143,11 @@ export class TodoTabComponent implements OnDestroy {
 
     const desc = textarea.value.trim();
     if (!desc) {
-      this.toast.show('⚠️ Describe what you have to do today');
+      this.toast.show('Describe what you have to do today');
       return;
     }
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 

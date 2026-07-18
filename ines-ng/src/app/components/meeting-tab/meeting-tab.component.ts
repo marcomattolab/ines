@@ -56,7 +56,7 @@ export class MeetingTabComponent implements OnDestroy {
   startRecording() {
     const ok = this.speech.startRecording(this.transcript(), (text) => this.transcript.set(text));
     if (!ok) {
-      this.toast.show('⚠️ Web Speech API not supported in this browser');
+      this.toast.show('Web Speech API not supported in this browser');
     }
   }
 
@@ -70,11 +70,11 @@ export class MeetingTabComponent implements OnDestroy {
   async summarize() {
     const text = this.transcript().trim();
     if (!text) {
-      this.toast.show('⚠️ No transcript available');
+      this.toast.show('No transcript available');
       return;
     }
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -95,13 +95,13 @@ export class MeetingTabComponent implements OnDestroy {
   }
 
   copy(text: string) {
-    this.dom.copyToClipboard(text).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(text).then(() => this.toast.success('Copied!'));
   }
 
   exportSummary(fmt: 'md' | 'txt') {
     const text = this.summary().replace(/ ▋$/, '');
     if (!text.trim()) {
-      this.toast.show('⚠️ No summary to export');
+      this.toast.show('No summary to export');
       return;
     }
     const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
@@ -121,7 +121,7 @@ export class MeetingTabComponent implements OnDestroy {
       fmt === 'md' ? '_Exported from INES_' : 'Exported from INES',
     ];
     this.dom.downloadText(lines.join('\n'), `meeting-summary-${ts}.${fmt}`);
-    this.toast.show(`📄 Exported as .${fmt}`);
+    this.toast.success(`Exported as .${fmt}`);
   }
 
   ngOnDestroy() {

@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
-import PptxGenJS from 'pptxgenjs';
 import { PRESENTATION_SYSTEM_PROMPT } from '../../core/services/presentation-prompt';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -107,7 +106,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     const ext = file.name.split('.').pop()?.toLowerCase();
     const allowed = ['md', 'txt', 'pdf'];
     if (!ext || !allowed.includes(ext)) {
-      this.toast.show('⚠️ Please upload a .md, .txt, or .pdf file');
+      this.toast.show('Please upload a .md, .txt, or .pdf file');
       return;
     }
 
@@ -121,20 +120,20 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
 
       this.fileContent.set(text);
       this.fileName.set(file.name);
-      this.toast.show(`📄 Loaded: ${file.name} (${(text.length / 1024).toFixed(1)} KB)`);
+      this.toast.show(`Loaded: ${file.name} (${(text.length / 1024).toFixed(1)} KB)`);
 
       if (!this.prompt().trim() || this.prompt().includes('AI and machine learning trends')) {
         this.prompt.set(`Generate a presentation based on the uploaded file: ${file.name}`);
       }
     } catch (err) {
-      this.toast.show('❌ Error reading file');
+      this.toast.error('Error reading file');
     }
   }
 
   clearFile() {
     this.fileContent.set(null);
     this.fileName.set(null);
-    this.toast.show('🗑️ File cleared');
+    this.toast.show('File cleared');
   }
 
   onLogoImageSelected(event: Event) {
@@ -158,7 +157,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   async generate() {
     if (this.generating()) return;
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -166,7 +165,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     this.generatedHtml.set('');
     this.slideCount.set(0);
     this.currentSlide.set(0);
-    this.toast.show('⏳ Generating presentation...');
+    this.toast.show('Generating presentation...');
 
     const theme = this.colorTheme();
     const colors =
@@ -257,7 +256,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
       const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
       this.slideCount.set(count);
       this.currentSlide.set(1);
-      this.toast.show(`✅ Presentation generated! ${count} slides`);
+      this.toast.success(`Presentation generated! ${count} slides`);
     } catch (e: any) {
       const msg = e.message?.includes('INVALID_ARGUMENT')
         ? '⚠️ Presentation too long — try a simpler topic or fewer slides.'
@@ -408,7 +407,16 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     a.download = 'presentation.html';
     a.click();
     URL.revokeObjectURL(url);
-    this.toast.show('💾 Presentation downloaded!');
+    this.toast.success('Presentation downloaded!');
+  }
+
+  private pptxPromise: Promise<any> | null = null;
+
+  private async getPptxGenJS(): Promise<any> {
+    if (!this.pptxPromise) {
+      this.pptxPromise = import('pptxgenjs').then((m) => m.default);
+    }
+    return this.pptxPromise;
   }
 
   async downloadPptx() {
@@ -419,10 +427,11 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     const slides = Array.from(doc.querySelectorAll('section.slide'));
 
     if (slides.length === 0) {
-      this.toast.show('⚠️ No slides found in the presentation');
+      this.toast.show('No slides found in the presentation');
       return;
     }
 
+    const PptxGenJS = await this.getPptxGenJS();
     const pptx = new PptxGenJS();
     pptx.layout = 'LAYOUT_WIDE';
     pptx.author = this.author();
@@ -604,7 +613,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     }
 
     await pptx.writeFile({ fileName: 'presentation.pptx' });
-    this.toast.show('📊 PPTX downloaded!');
+    this.toast.success('PPTX downloaded!');
   }
 
   setColorTheme(theme: ColorTheme) {

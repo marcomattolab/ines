@@ -92,7 +92,7 @@ export class AgentsTabComponent implements AfterViewChecked {
     if (!text) return;
 
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -160,7 +160,7 @@ export class AgentsTabComponent implements AfterViewChecked {
 
   saveAgent(agent: Agent) {
     this.agentSvc.updateAgent(agent);
-    this.toast.show('✅ Agent updated');
+    this.toast.success('Agent updated');
   }
 
   addNewAgent() {
@@ -202,7 +202,7 @@ export class AgentsTabComponent implements AfterViewChecked {
       this.agentSvc.addSkill(skill);
     }
     this.editingSkill.set(null);
-    this.toast.show('✅ Skill saved');
+    this.toast.success('Skill saved');
   }
 
   cancelEditSkill() {
@@ -214,7 +214,7 @@ export class AgentsTabComponent implements AfterViewChecked {
       confirm('Are you sure you want to delete this skill? It will be removed from all agents.')
     ) {
       this.agentSvc.deleteSkill(id);
-      this.toast.show('🗑️ Skill deleted');
+      this.toast.show('Skill deleted');
     }
   }
 

@@ -45,7 +45,7 @@ export class MessageBubbleComponent {
   }
 
   copy() {
-    navigator.clipboard.writeText(this.text()).then(() => this.toast.show('📋 Copied!'));
+    navigator.clipboard.writeText(this.text()).then(() => this.toast.success('Copied!'));
   }
 
   toggleSpeak() {

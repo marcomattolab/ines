@@ -87,7 +87,7 @@ export class TranslateTabComponent implements OnDestroy {
   async translate() {
     if (!this.inputText().trim()) return;
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 
@@ -120,7 +120,7 @@ export class TranslateTabComponent implements OnDestroy {
   }
 
   copy() {
-    this.dom.copyToClipboard(this.result()).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(this.result()).then(() => this.toast.success('Copied!'));
   }
 
   clear() {

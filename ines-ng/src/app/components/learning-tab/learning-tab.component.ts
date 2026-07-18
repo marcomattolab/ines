@@ -15,13 +15,6 @@ import { RagService } from '../../core/services/rag.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
-import mermaid from 'mermaid';
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'neutral',
-  securityLevel: 'loose',
-});
 
 @Component({
   selector: 'app-learning-tab',
@@ -405,10 +398,27 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private mermaidPromise: Promise<any> | null = null;
+
+  private async getMermaid(): Promise<any> {
+    if (!this.mermaidPromise) {
+      this.mermaidPromise = import('mermaid').then((m) => {
+        m.default.initialize({
+          startOnLoad: false,
+          theme: 'neutral',
+          securityLevel: 'loose',
+        });
+        return m.default;
+      });
+    }
+    return this.mermaidPromise;
+  }
+
   async renderMindMap(code: string) {
     const container = this.mermaidContainer();
     if (!container) return;
     try {
+      const mermaid = await this.getMermaid();
       const { svg } = await mermaid.render('mermaid-svg-' + Date.now(), code);
       container.nativeElement.innerHTML = svg;
     } catch (err) {
@@ -640,7 +650,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
         if (sec <= 1) {
           this.stopQuizTimer();
           this.submitEntireQuiz();
-          this.toast.show("⏰ Time's up! Your quiz has been auto-submitted.", 4000);
+          this.toast.show("Time's up! Your quiz has been auto-submitted.", 4000);
           return 0;
         }
         return sec - 1;

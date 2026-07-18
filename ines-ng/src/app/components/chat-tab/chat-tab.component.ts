@@ -131,7 +131,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const text = this.inputEl().nativeElement.value.trim();
     if (!text) return;
     if (!this.llm.isReady()) {
-      this.toast.show('⚠️ Load the model first!');
+      this.toast.show('Load the model first!');
       return;
     }
 

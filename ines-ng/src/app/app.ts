@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener, computed } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
@@ -110,6 +110,8 @@ export class AppComponent implements OnInit {
   activeTab = signal<Tab>('chat');
   overlayOpen = signal(true); // show on load
   infoOpen = signal(false);
+  commandPaletteOpen = signal(false);
+  commandQuery = signal('');
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
 
@@ -154,8 +156,20 @@ export class AppComponent implements OnInit {
     this.llm.modelName.set('No model loaded');
   }
 
+  filteredTabs = computed(() => {
+    const q = this.commandQuery().toLowerCase();
+    if (!q) return this.tabs;
+    return this.tabs.filter((t) => t.label.toLowerCase().includes(q));
+  });
+
   @HostListener('document:keydown', ['$event'])
   handleKeyboard(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      this.commandPaletteOpen.update((v) => !v);
+      this.commandQuery.set('');
+      return;
+    }
     if (e.ctrlKey || e.metaKey) {
       const idx = parseInt(e.key, 10);
       if (idx >= 1 && idx <= this.tabs.length) {
@@ -166,6 +180,13 @@ export class AppComponent implements OnInit {
     if (e.key === 'Escape') {
       if (this.infoOpen()) this.infoOpen.set(false);
       if (this.overlayOpen()) this.overlayOpen.set(false);
+      if (this.commandPaletteOpen()) this.commandPaletteOpen.set(false);
     }
+  }
+
+  selectCommandTab(tab: Tab) {
+    this.activeTab.set(tab);
+    this.commandPaletteOpen.set(false);
+    this.commandQuery.set('');
   }
 }

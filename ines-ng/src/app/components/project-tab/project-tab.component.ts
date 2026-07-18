@@ -146,7 +146,7 @@ export class ProjectTabComponent implements OnInit {
     try {
       const blob = await this.project.exportProject();
       this.dom.downloadBlob(blob, 'project.ines-project');
-      this.toast.show('📦 Project exported');
+      this.toast.success('Project exported');
     } catch (err: any) {
       this.toast.error('Export failed: ' + err.message);
     }

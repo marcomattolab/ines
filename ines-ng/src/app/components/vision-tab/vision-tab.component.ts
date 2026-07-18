@@ -466,14 +466,22 @@ export class VisionTabComponent implements OnDestroy {
     });
   }
 
+  private drawFrameInterval = 0;
+  private lastDrawTime = 0;
+
   private startDrawLoop() {
-    const loop = () => {
+    this.lastDrawTime = 0;
+    const loop = (timestamp: number) => {
       if (!this.vision.isRunning()) {
         this.clearCanvas();
         this.drawRaf = null;
         return;
       }
-      this.drawOverlay();
+      this.drawFrameInterval = this.vision.fps() > 0 ? 1000 / Math.min(30, this.vision.fps()) : 33;
+      if (timestamp - this.lastDrawTime >= this.drawFrameInterval) {
+        this.drawOverlay();
+        this.lastDrawTime = timestamp;
+      }
       this.drawRaf = requestAnimationFrame(loop);
     };
     this.drawRaf = requestAnimationFrame(loop);
@@ -587,12 +595,12 @@ export class VisionTabComponent implements OnDestroy {
         this.loadedFaceImage.set(img);
         this.loadedFileName.set(file.name);
         this.faceImageEnabled.set(true);
-        this.toast.show('✅ Face image loaded');
+        this.toast.success('Face image loaded');
       };
-      img.onerror = () => this.toast.show('❌ Failed to load image');
+      img.onerror = () => this.toast.error('Failed to load image');
       img.src = reader.result as string;
     };
-    reader.onerror = () => this.toast.show('❌ Failed to read file');
+    reader.onerror = () => this.toast.error('Failed to read file');
     reader.readAsDataURL(file);
   }
 
@@ -607,7 +615,7 @@ export class VisionTabComponent implements OnDestroy {
           await this.vision.startWebcam(this.videoEl()!.nativeElement);
         }
       } catch (err) {
-        this.toast.show('❌ Failed to start Vision: ' + err);
+        this.toast.error('Failed to start Vision: ' + err);
       } finally {
         this.isInitializing.set(false);
       }

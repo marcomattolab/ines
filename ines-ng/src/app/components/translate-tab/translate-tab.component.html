@@ -102,6 +102,19 @@
       <mat-icon fontIcon="translate" class="text-sm w-3.5 h-3.5"></mat-icon>
       Translate
     </app-button>
+    <label class="cursor-pointer">
+      <input
+        type="file"
+        accept=".txt,.md,.html,.pdf"
+        class="hidden"
+        (change)="onDocSelected($event)"
+      />
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+      >
+        <mat-icon fontIcon="upload" class="text-sm w-3.5 h-3.5"></mat-icon> Upload doc
+      </span>
+    </label>
     <app-button variant="danger" (onClick)="clear()">
       <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
       Clear

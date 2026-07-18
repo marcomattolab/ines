@@ -8,10 +8,11 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
 Given a transcript of a meeting, produce:
-1. **KEY POINTS** (3-6 bullet points of the topics discussed)
-2. **DECISIONS MADE** (what was decided)
-3. **ACTION ITEMS** (who must do what, if available)
-4. **NEXT STEPS**
+1. **SPEAKERS** — identify each speaker (as "Speaker A", "Speaker B", etc.) and attribute their statements
+2. **KEY POINTS** (3-6 bullet points of the topics discussed, attributed to specific speakers)
+3. **DECISIONS MADE** (what was decided, by whom)
+4. **ACTION ITEMS** (who must do what, if available — format as "Speaker A: task description")
+5. **NEXT STEPS**
 
 Be concise and use the language of the transcript. Format the result clearly.`;
 

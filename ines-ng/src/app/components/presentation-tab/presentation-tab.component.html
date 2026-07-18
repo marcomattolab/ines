@@ -289,6 +289,21 @@
           <mat-icon fontIcon="slideshow" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
       </div>
+
+      <div
+        class="flex gap-1.5 items-center flex-wrap px-[18px] py-2 shrink-0 overflow-x-auto border-b border-[var(--border)]"
+      >
+        <span class="text-[10px] text-[var(--text-2)] font-mono shrink-0 mr-1">Template:</span>
+        @for (tmpl of templates; track tmpl.label) {
+          <button
+            class="suggestion-chip text-[10px]"
+            (click)="prompt.set(tmpl.prompt)"
+            [title]="tmpl.prompt"
+          >
+            {{ tmpl.label }}
+          </button>
+        }
+      </div>
     </div>
 
     <div class="preview-area">

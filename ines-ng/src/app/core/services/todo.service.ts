@@ -6,6 +6,8 @@ export interface Todo {
   text: string;
   priority: 'normal' | 'priority';
   done: boolean;
+  dueDate?: string;
+  category?: 'work' | 'personal' | 'health' | 'other';
 }
 
 const STORAGE_KEY = 'localai_todos';

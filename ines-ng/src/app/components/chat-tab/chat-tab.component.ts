@@ -73,6 +73,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   tokenInfo = signal('');
   editingMessageId = signal<number | null>(null);
   showClearConfirm = signal(false);
+  private abortController: AbortController | null = null;
 
   private history: ChatMessage[] = [];
   private nextId = 1;
@@ -166,6 +167,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
 
     this.generating.set(true);
+    this.abortController = new AbortController();
     this.inputEl().nativeElement.value = '';
     this.inputEl().nativeElement.style.height = '';
 
@@ -196,21 +198,27 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     try {
       let full = '';
-      await this.llm.generate(prompt, (_, done, fullText) => {
-        full = fullText;
-        if (this.typing()) {
-          this.typing.set(false);
-          this.messages.update((m) => [
-            ...m,
-            { id: aiId, role: 'ai', text: fullText, streaming: true },
-          ]);
-        } else {
-          this.messages.update((m) =>
-            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
-          );
-        }
-        this.shouldScroll = true;
-      });
+      await this.llm.generate(
+        prompt,
+        (_, done, fullText) => {
+          full = fullText;
+          if (this.typing()) {
+            this.typing.set(false);
+            this.messages.update((m) => [
+              ...m,
+              { id: aiId, role: 'ai', text: fullText, streaming: true },
+            ]);
+          } else {
+            this.messages.update((m) =>
+              m.map((msg) =>
+                msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg,
+              ),
+            );
+          }
+          this.shouldScroll = true;
+        },
+        this.abortController?.signal,
+      );
       this.history.push({ role: 'assistant', content: full });
       if (this.history.length > MAX_HISTORY_LENGTH)
         this.history = this.history.slice(-MAX_HISTORY_LENGTH);
@@ -225,6 +233,28 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
 
     this.generating.set(false);
+    this.abortController = null;
+  }
+
+  stopGeneration() {
+    this.abortController?.abort();
+  }
+
+  regenerate() {
+    const msgs = this.messages();
+    const lastUser = [...msgs].reverse().find((m) => m.role === 'user');
+    if (!lastUser) return;
+    this.messages.update((m) =>
+      m.filter(
+        (msg) => msg.role !== 'ai' || m.indexOf(msg) < m.findIndex((x) => x.id === lastUser.id),
+      ),
+    );
+    this.history = this.history.filter((h) => h.role === 'user');
+    const el = this.inputEl()?.nativeElement;
+    if (el) {
+      el.value = lastUser.text;
+      this.send();
+    }
   }
 
   clear() {

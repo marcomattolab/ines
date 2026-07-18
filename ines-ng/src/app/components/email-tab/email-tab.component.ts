@@ -30,6 +30,41 @@ export class EmailTabComponent implements OnDestroy {
   action = signal('improve');
   result = signal('');
   processing = signal(false);
+  selectedTemplate = signal('');
+
+  readonly templates = [
+    {
+      value: 'reply',
+      label: 'Reply to customer',
+      text: 'Thank you for reaching out. I appreciate your patience and I am happy to help with your request.',
+    },
+    {
+      value: 'followup',
+      label: 'Follow-up meeting',
+      text: 'Great meeting today! I wanted to follow up on our discussion and share the next steps we agreed upon.\n\nAction items:\n- \n- \n',
+    },
+    {
+      value: 'cold',
+      label: 'Cold outreach',
+      text: 'Hi, I came across your work and was really impressed. I would love to connect and explore potential collaboration.',
+    },
+    {
+      value: 'complaint',
+      label: 'Handle complaint',
+      text: 'I understand your frustration and I sincerely apologize for the inconvenience. Let me address your concerns immediately.',
+    },
+    {
+      value: 'proposal',
+      label: 'Business proposal',
+      text: 'I am excited to present this proposal for our potential collaboration. Below you will find the scope, timeline, and investment details.\n\nScope:\n- \n\nTimeline:\n- \n\nInvestment:\n- ',
+    },
+  ];
+
+  applyTemplate(tmpl: (typeof this.templates)[number]) {
+    const el = this.emailInputRef()?.nativeElement;
+    if (el) el.value = tmpl.text;
+    this.selectedTemplate.set(tmpl.value);
+  }
 
   readonly toneOptions = [
     { value: 'professional', label: 'Professional', icon: 'badge' },

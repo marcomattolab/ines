@@ -67,7 +67,14 @@ export class KnowledgeManagerTabComponent implements OnInit {
   }
 
   selectDoc(id: string) {
-    this.selectedDocId.update((current) => (current === id ? null : id));
+    if (this.selectedDocId() === id) {
+      this.selectedDocId.set(null);
+      this.showPreview.set(false);
+      return;
+    }
+    this.selectedDocId.set(id);
+    const doc = this.km.documents().find((d) => d.id === id);
+    if (doc) this.showSourcePreview(doc.name);
   }
 
   async deleteDoc(event: MouseEvent, id: string) {

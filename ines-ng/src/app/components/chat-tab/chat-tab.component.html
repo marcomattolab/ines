@@ -85,6 +85,28 @@
     >
       <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
     </app-button>
+    @if (generating()) {
+      <app-button
+        variant="danger"
+        size="sm"
+        (onClick)="stopGeneration()"
+        title="Stop generating"
+        className="!rounded-full !w-9 !h-9 !p-0"
+      >
+        <mat-icon fontIcon="stop" class="text-sm w-4 h-4"></mat-icon>
+      </app-button>
+    }
+    @if (messages().length > 1 && !generating()) {
+      <app-button
+        variant="secondary"
+        size="sm"
+        (onClick)="regenerate()"
+        title="Regenerate last response"
+        className="!rounded-full !w-9 !h-9 !p-0"
+      >
+        <mat-icon fontIcon="refresh" class="text-sm w-4 h-4"></mat-icon>
+      </app-button>
+    }
   </div>
 </div>
 

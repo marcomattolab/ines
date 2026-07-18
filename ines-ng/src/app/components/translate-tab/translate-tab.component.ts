@@ -7,6 +7,7 @@ import { SpeechService } from '../../core/services/speech.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
+import { TextProcessingService } from '../../core/services/text-processing.service';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
 Translate the given text EXACTLY as requested, preserving style, tone and formatting.
@@ -37,6 +38,7 @@ export class TranslateTabComponent implements OnDestroy {
   readonly toast = inject(ToastService);
   readonly speech = inject(SpeechService);
   private readonly dom = inject(DomUtilsService);
+  private readonly textProc = inject(TextProcessingService);
 
   languages = LANGUAGES;
 
@@ -120,6 +122,21 @@ export class TranslateTabComponent implements OnDestroy {
     this.inputText.set(prevResult);
     this.result.set('');
     if (prevResult.length > 3) this.translate();
+  }
+
+  async onDocSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await this.textProc.extractTextFromFile(file);
+      this.inputText.set(text);
+      this.toast.show(`Loaded: ${file.name} (${(text.length / 1024).toFixed(1)} KB)`);
+      if (text.length > 10 && this.llm.isReady()) this.translate();
+    } catch {
+      this.toast.error('Could not read file. Supported: .txt, .md, .html, .pdf');
+    }
+    input.value = '';
   }
 
   copy() {

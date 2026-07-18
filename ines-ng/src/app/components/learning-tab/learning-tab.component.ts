@@ -16,6 +16,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 
 @Component({
   selector: 'app-learning-tab',
@@ -39,6 +40,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   readonly rag = inject(RagService);
   readonly toast = inject(ToastService);
   private readonly jsonParser = inject(JsonParserService);
+  private readonly dom = inject(DomUtilsService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 
@@ -60,7 +62,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   quizSecondsLeft = signal(0);
   private timerIntervalId: any = null;
 
-  activeSubTab = signal<'chat' | 'mindmap' | 'quiz'>('chat');
+  activeSubTab = signal<'chat' | 'mindmap' | 'quiz' | 'flashcards'>('chat');
   isMindMapPlaceholder = true;
   showMindMapOnRight = signal(false);
   zoomLevel = signal(1.0);
@@ -72,8 +74,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   private dragStartPanX = 0;
   private dragStartPanY = 0;
 
-  selectSubTab(tab: 'chat' | 'mindmap' | 'quiz') {
+  selectSubTab(tab: 'chat' | 'mindmap' | 'quiz' | 'flashcards') {
     this.activeSubTab.set(tab);
+    if (tab === 'flashcards' && this.rag.hasContext() && !this.isGenerating()) {
+      this.generateFlashcards();
+    }
     if (
       tab === 'mindmap' &&
       this.isMindMapPlaceholder &&
@@ -658,12 +663,54 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  flashcardsText = signal('');
+
+  async generateFlashcards() {
+    if (!this.rag.hasContext()) {
+      this.toast.error('Please upload documents first.');
+      return;
+    }
+    if (!this.llm.isReady()) {
+      this.toast.error('Load the model first!');
+      return;
+    }
+
+    this.isGenerating.set(true);
+    this.activeSubTab.set('flashcards');
+    const context = this.rag.getRelevantChunks('key concepts definitions terms', 10, 1500);
+
+    const systemPrompt = `Generate 15-20 flashcards (question/answer pairs) from the context. Return ONLY a CSV with columns: front,back. No headers. One card per line. Example:
+"What is Angular?","A TypeScript-based web framework by Google"`;
+
+    try {
+      const prompt = this.llm.buildPrompt(
+        systemPrompt,
+        `Context:\n${context}\n\nGenerate flashcards:`,
+      );
+      const result = await this.llm.generate(prompt, () => {});
+      this.flashcardsText.set(result);
+    } catch (err: any) {
+      this.flashcardsText.set('Error: ' + err.message);
+    }
+    this.isGenerating.set(false);
+  }
+
+  downloadFlashcards() {
+    const csv = this.flashcardsText();
+    if (!csv.trim()) return;
+    const lines = csv.split('\n').filter((l) => l.includes('","'));
+    const header = 'front,back\n';
+    this.dom.downloadText(header + lines.join('\n'), 'flashcards.csv');
+    this.toast.success('Flashcards downloaded (import into Anki)');
+  }
+
   clearAll() {
     this.messages.set([]);
     this.files.set([]);
     this.rag.clearContext();
     this.quizQuestions.set([]);
     this.selectedAnswers.set([]);
+    this.flashcardsText.set('');
     this.stopQuizTimer();
     this.isMindMapPlaceholder = true;
     this.renderMindMap('mindmap\n  root((Learning Context))\n    (Topic 1)\n    (Topic 2)');

@@ -55,7 +55,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   slideCountCustom = signal(10);
   style = signal<'modern' | 'minimal' | 'bold' | 'corporate'>('modern');
 
-  logo = signal('✦ INES');
+  logo = signal('INES');
   logoImage = signal<string | null>(null);
   logoImageName = signal<string | null>(null);
   author = signal('Marco Martorana');
@@ -69,6 +69,40 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
 
   readonly themeColors = COLOR_THEMES;
   readonly themes: ColorTheme[] = ['professional', 'ocean', 'forest', 'sunset', 'monochrome'];
+
+  readonly templates = [
+    {
+      label: 'Startup Pitch',
+      prompt:
+        'Create a 10-slide startup pitch deck for a SaaS company. Include: problem slide, solution, market size, traction, team, business model, competition, and ask.',
+    },
+    {
+      label: 'QBR Report',
+      prompt:
+        'Create a quarterly business review presentation with 8 slides. Include: executive summary, KPIs, wins, challenges, roadmap, and Q&A.',
+    },
+    {
+      label: 'Lesson',
+      prompt:
+        'Create a 10-slide educational lesson about photosynthesis. Include objectives, key concepts, diagrams, examples, quiz questions, and summary.',
+    },
+    {
+      label: 'Conference',
+      prompt:
+        'Create a 12-slide conference keynote about the future of remote work. Include statistics, trends, case studies, and actionable takeaways.',
+    },
+    {
+      label: 'Product Launch',
+      prompt:
+        'Create a 10-slide product launch deck. Include: teaser, problem, solution, features, demo, pricing, timeline, and call to action.',
+    },
+    {
+      label: 'Portfolio',
+      prompt:
+        'Create an 8-slide personal portfolio presentation. Include: intro, skills, projects with metrics, testimonials, and contact.',
+    },
+  ];
+
   readonly styleOptions: Array<{ value: string; label: string; icon: string }> = [
     { value: 'modern', label: 'Modern', icon: 'auto_awesome' },
     { value: 'minimal', label: 'Minimal', icon: 'minimize' },

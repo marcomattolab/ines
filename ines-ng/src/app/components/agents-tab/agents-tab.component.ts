@@ -65,6 +65,34 @@ export class AgentsTabComponent implements AfterViewChecked {
     this.clearChat();
   }
 
+  exportAgent(agent: Agent) {
+    const data = JSON.stringify(agent, null, 2);
+    this.dom.downloadText(data, `${agent.name.toLowerCase().replace(/\s+/g, '-')}.ines-agent.json`);
+    this.toast.success('Agent exported');
+  }
+
+  async importAgent(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const agent = JSON.parse(text) as Agent;
+      if (!agent.name || !agent.systemPrompt) throw new Error('Invalid agent file');
+      const newAgent = this.agentSvc.addAgent({
+        name: agent.name + ' (imported)',
+        description: agent.description || '',
+        systemPrompt: agent.systemPrompt,
+        skillIds: agent.skillIds || [],
+      });
+      this.selectedAgent.set(newAgent);
+      this.toast.success('Agent imported');
+    } catch {
+      this.toast.error('Invalid agent file');
+    }
+    input.value = '';
+  }
+
   clearChat() {
     this.messages.set([]);
     this.history = [];

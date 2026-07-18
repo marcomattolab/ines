@@ -12,12 +12,24 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
-import { AgentService, Agent } from '../../core/services/agent.service';
+import { AgentService, Agent, Skill } from '../../core/services/agent.service';
 import { ProjectService } from '../../core/services/project.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+
+declare global {
+  interface Window {
+    showDirectoryPicker(options?: FilePickerOptions): Promise<FileSystemDirectoryHandle>;
+  }
+}
+
+interface FilePickerOptions {
+  mode?: 'read' | 'readwrite';
+}
+
+type Mode = 'chat' | 'review' | 'modify' | 'explain';
 
 interface UiMessage {
   id: number;
@@ -33,6 +45,37 @@ interface RepoFile {
   type: string;
 }
 
+interface CodePatch {
+  fileName: string;
+  language: string;
+  code: string;
+  applied: boolean;
+}
+
+const MODE_LABELS: Record<Mode, string> = {
+  chat: 'Chat',
+  review: 'Code Review',
+  modify: 'Modify Code',
+  explain: 'Explain',
+};
+
+const MODE_ICONS: Record<Mode, string> = {
+  chat: 'chat',
+  review: 'rate_review',
+  modify: 'edit',
+  explain: 'help_outline',
+};
+
+const MODE_PROMPTS: Record<Mode, string> = {
+  chat: '',
+  review:
+    'Perform a thorough code review of the relevant code. Check for bugs, security issues, performance problems, and style violations. For each issue cite the file, explain the problem, and suggest a fix. Rate severity.',
+  modify:
+    'Modify the source code as requested. Output the complete modified file in a markdown code block with the file path as the language tag. Show a brief summary of what changed before the code.',
+  explain:
+    'Explain how the relevant code works. Describe the architecture, data flow, and key decisions. Be detailed but clear.',
+};
+
 const SYSTEM_DEV_AGENT = `You are a Dev Agent — an expert software engineer working on the user's local repository.
 You have access to the project files and can analyze, explain, and modify code.
 
@@ -40,9 +83,10 @@ You have access to the project files and can analyze, explain, and modify code.
 CAPABILITIES
 ═══════════════════════════════
 - Read and analyze code from the provided project context
+- Perform thorough code reviews (bugs, security, performance, style)
 - Explain architecture, patterns, and logic
+- Modify source code and output complete revised files
 - Suggest improvements, refactors, and bug fixes
-- Write or modify code following the project's existing conventions
 - Answer questions about dependencies, config, and tooling
 
 ═══════════════════════════════
@@ -51,12 +95,17 @@ PROJECT CONTEXT
 {CONTEXT}
 
 ═══════════════════════════════
+MODE: {MODE}
+═══════════════════════════════
+{MODE_INSTRUCTIONS}
+
+═══════════════════════════════
 RULES
 ═══════════════════════════════
 - Base answers on the project context above when relevant
 - Quote file paths and code verbatim from the context
 - When context is missing, say so and suggest what to add
-- Output code in markdown code blocks with file name comments
+- Output code in markdown code blocks with file name as the language tag
 - Match the project's existing code style and conventions
 - Be concise and actionable`;
 
@@ -97,14 +146,25 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   typing = signal(false);
   msgSources = signal<string[]>([]);
 
+  activeMode = signal<Mode>('chat');
+  codePatches = signal<CodePatch[]>([]);
+  showPatchesPanel = signal(false);
+
   showFileTree = signal(true);
-  rightPanelWidth = signal(Math.min(480, window.innerWidth * 0.42));
   expandedFolders = signal<Set<string>>(new Set());
 
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
   showScrollBtn = signal(false);
+
+  private dirHandle: FileSystemDirectoryHandle | null = null;
+  private fileHandles = new Map<string, FileSystemFileHandle>();
+
+  readonly hasWriteAccess = computed(() => this.dirHandle !== null);
+
+  readonly MODE_LABELS = MODE_LABELS;
+  readonly MODE_ICONS = MODE_ICONS;
 
   readonly suggestionChips = [
     'Summarize the project architecture',
@@ -114,6 +174,30 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     'How is authentication handled?',
     'Explain the main entry point',
   ];
+
+  readonly quickActions: { mode: Mode; label: string; prompt: string }[] = [
+    { mode: 'review', label: 'Code Review', prompt: MODE_PROMPTS.review },
+    {
+      mode: 'modify',
+      label: 'Modify Code',
+      prompt: 'I need to modify the source code. Please help me with the following change: ',
+    },
+    {
+      mode: 'explain',
+      label: 'Explain Code',
+      prompt: MODE_PROMPTS.explain,
+    },
+    { mode: 'chat', label: 'Chat', prompt: '' },
+  ];
+
+  readonly agentSkills = computed(() => {
+    const agent = this.selectedAgent();
+    if (!agent) return [] as Skill[];
+    return this.agentSvc.skills().filter((s) => agent.skillIds.includes(s.id));
+  });
+
+  readonly activeModeLabel = computed(() => MODE_LABELS[this.activeMode()]);
+  readonly activeModeIcon = computed(() => MODE_ICONS[this.activeMode()]);
 
   readonly folderTree = computed(() => {
     const files = this.repoFiles();
@@ -189,6 +273,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
           const agent = this.agentSvc.agents().find((a) => a.id === parsed.agentId);
           if (agent) this.selectedAgent.set(agent);
         }
+        if (parsed.activeMode) this.activeMode.set(parsed.activeMode);
       } catch {
         localStorage.removeItem('ines_dev_agent');
       }
@@ -203,10 +288,28 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
           repoName: this.repoName(),
           repoFiles: this.repoFiles(),
           agentId: this.selectedAgent()?.id,
+          activeMode: this.activeMode(),
         }),
       );
     } catch {
       /* quota */
+    }
+  }
+
+  setMode(mode: Mode) {
+    this.activeMode.set(mode);
+    this.persistState();
+  }
+
+  quickAction(action: { mode: Mode; label: string; prompt: string }) {
+    this.setMode(action.mode);
+    const el = this.inputEl()?.nativeElement;
+    if (el) {
+      el.value = action.prompt;
+      el.focus();
+      if (!action.prompt.endsWith(' ')) {
+        el.selectionStart = el.value.length;
+      }
     }
   }
 
@@ -216,8 +319,80 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
-  openDirPicker() {
+  async openDirPicker() {
+    if ('showDirectoryPicker' in window) {
+      try {
+        const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        await this.loadFromDirectoryHandle(handle);
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+        this.toast.show('Write access denied — falling back to read-only mode');
+      }
+    }
     this.dirInput()?.nativeElement.click();
+  }
+
+  private async loadFromDirectoryHandle(handle: FileSystemDirectoryHandle) {
+    this.isLoadingDir.set(true);
+    this.dirHandle = handle;
+    this.fileHandles.clear();
+    this.repoFiles.set([]);
+    this.repoName.set(handle.name);
+    this.project.clearAll();
+
+    const fileList: RepoFile[] = [];
+    const processQueue: { file: File; handle: FileSystemFileHandle }[] = [];
+
+    await this.scanDirectory(handle, '', fileList, processQueue);
+
+    this.repoFiles.set(fileList);
+    this.persistState();
+
+    if (processQueue.length > 0) {
+      this.toast.show(`Indexing ${processQueue.length} files...`);
+      for (const item of processQueue) {
+        try {
+          await this.project.processFile(item.file);
+        } catch {
+          /* duplicate */
+        }
+      }
+      await this.project.loadDocuments();
+      this.totalChunks.set(await this.project.countChunks());
+      this.toast.show(
+        `Indexed ${fileList.length} files (${processQueue.length} processed) — write access enabled`,
+      );
+    } else {
+      this.totalChunks.set(0);
+    }
+
+    this.isLoadingDir.set(false);
+  }
+
+  private async scanDirectory(
+    dirHandle: FileSystemDirectoryHandle,
+    prefix: string,
+    fileList: RepoFile[],
+    processQueue: { file: File; handle: FileSystemFileHandle }[],
+  ) {
+    for await (const [name, entry] of dirHandle.entries()) {
+      if (entry.kind === 'directory') {
+        await this.scanDirectory(entry, prefix + name + '/', fileList, processQueue);
+      } else {
+        const fileHandle = entry as FileSystemFileHandle;
+        const file = await fileHandle.getFile();
+        const path = prefix + name;
+        const ext = name.split('.').pop()?.toLowerCase() || '';
+
+        fileList.push({ name, path, size: file.size, type: ext });
+        this.fileHandles.set(path, fileHandle);
+
+        if (this.fileExtensions.has(ext) && file.size < 1024 * 1024) {
+          processQueue.push({ file, handle: fileHandle });
+        }
+      }
+    }
   }
 
   async onDirSelected(event: Event) {
@@ -226,6 +401,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     if (!files || files.length === 0) return;
 
     this.isLoadingDir.set(true);
+    this.dirHandle = null;
+    this.fileHandles.clear();
     this.repoFiles.set([]);
     this.repoName.set('');
 
@@ -278,11 +455,129 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
 
   clearRepo() {
     this.project.clearAll();
+    this.dirHandle = null;
+    this.fileHandles.clear();
     this.repoFiles.set([]);
     this.repoName.set('');
     this.totalChunks.set(0);
     this.clearChat();
     this.persistState();
+  }
+
+  async applyPatch(index: number) {
+    if (!this.dirHandle) {
+      this.toast.show('No write access. Re-open the folder with write permissions.');
+      return;
+    }
+
+    const patch = this.codePatches()[index];
+    if (!patch || !patch.fileName) {
+      this.toast.show('This code block has no associated file name.');
+      return;
+    }
+
+    const fileHandle = this.fileHandles.get(patch.fileName);
+    if (!fileHandle) {
+      this.toast.show(`File "${patch.fileName}" not found in repository.`);
+      return;
+    }
+
+    try {
+      const writable = await fileHandle.createWritable();
+      await writable.write(patch.code);
+      await writable.close();
+
+      this.codePatches.update((patches) =>
+        patches.map((p, i) => (i === index ? { ...p, applied: true } : p)),
+      );
+
+      await this.reindexFile(patch.fileName, fileHandle);
+
+      this.toast.show(`Applied changes to "${patch.fileName}"`);
+    } catch (err: any) {
+      this.toast.show(`Failed to write "${patch.fileName}": ${err.message}`);
+    }
+  }
+
+  async applyAllPatches() {
+    const patches = this.codePatches();
+    let applied = 0;
+    let failed = 0;
+
+    for (let i = 0; i < patches.length; i++) {
+      if (patches[i].applied) {
+        applied++;
+        continue;
+      }
+      if (!this.dirHandle) break;
+      if (!patches[i].fileName) {
+        failed++;
+        continue;
+      }
+
+      const fileHandle = this.fileHandles.get(patches[i].fileName);
+      if (!fileHandle) {
+        failed++;
+        continue;
+      }
+
+      try {
+        const writable = await fileHandle.createWritable();
+        await writable.write(patches[i].code);
+        await writable.close();
+
+        this.codePatches.update((list) =>
+          list.map((p, idx) => (idx === i ? { ...p, applied: true } : p)),
+        );
+
+        await this.reindexFile(patches[i].fileName, fileHandle);
+        applied++;
+      } catch {
+        failed++;
+      }
+    }
+
+    if (applied > 0 && failed === 0) {
+      this.toast.show(`Applied all ${applied} changes`);
+    } else if (applied > 0) {
+      this.toast.show(`Applied ${applied} changes, ${failed} failed`);
+    } else {
+      this.toast.show('No changes could be applied');
+    }
+  }
+
+  async revertPatch(index: number) {
+    if (!this.dirHandle) return;
+
+    const patch = this.codePatches()[index];
+    if (!patch || !patch.fileName || !patch.applied) return;
+
+    const fileHandle = this.fileHandles.get(patch.fileName);
+    if (!fileHandle) return;
+
+    try {
+      const originalFile = await fileHandle.getFile();
+      const text = await originalFile.text();
+
+      this.codePatches.update((patches) =>
+        patches.map((p, i) => (i === index ? { ...p, applied: false, code: text } : p)),
+      );
+
+      this.toast.show(`Reverted "${patch.fileName}" — original content shown above.`);
+    } catch (err: any) {
+      this.toast.show(`Failed to read "${patch.fileName}": ${err.message}`);
+    }
+  }
+
+  private async reindexFile(fileName: string, fileHandle: FileSystemFileHandle) {
+    const file = await fileHandle.getFile();
+    try {
+      await this.project.processFile(file);
+      await this.project.loadDocuments();
+      this.totalChunks.set(await this.project.countChunks());
+    } catch {
+      /* re-index failure is non-critical */
+    }
   }
 
   async loadDocuments() {
@@ -400,6 +695,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     this.history = [];
     this.nextId = 1;
     this.msgSources.set([]);
+    this.codePatches.set([]);
+    this.showPatchesPanel.set(false);
   }
 
   useSuggestion(chip: string) {
@@ -419,7 +716,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     }
     if (this.generating()) return;
 
-    const text = this.inputEl()?.nativeElement.value.trim();
+    const el = this.inputEl()?.nativeElement;
+    const text = el?.value.trim();
     if (!text) return;
     if (!this.llm.isReady()) {
       this.toast.show('Load the model first!');
@@ -427,22 +725,26 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     }
 
     this.generating.set(true);
-    if (this.inputEl()) {
-      this.inputEl()!.nativeElement.value = '';
-      this.inputEl()!.nativeElement.style.height = '';
+    if (el) {
+      el.value = '';
+      el.style.height = '';
     }
     this.msgSources.set([]);
+    this.codePatches.set([]);
 
     this.history.push({ role: 'user', content: text });
     this.messages.update((m) => [...m, { id: this.nextId++, role: 'user', text }]);
     this.typing.set(true);
     this.shouldScroll = true;
 
+    const mode = this.activeMode();
     let systemPrompt = this.agentSvc.getAgentFullPrompt(agent) + '\n\n' + SYSTEM_DEV_AGENT;
+    systemPrompt = systemPrompt.replace('{MODE}', MODE_LABELS[mode]);
+    systemPrompt = systemPrompt.replace('{MODE_INSTRUCTIONS}', MODE_PROMPTS[mode]);
 
     if (this.repoFiles().length > 0 && this.totalChunks() > 0) {
       try {
-        const chunks = await this.project.getRelevantChunks(text, 3, 400);
+        const chunks = await this.project.getRelevantChunks(text, 5, 600);
         if (chunks.length > 0) {
           const sourceNames = [...new Set(chunks.map((c) => c.docName))];
           this.msgSources.set(sourceNames);
@@ -483,6 +785,13 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
             m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
           );
         }
+        if (done) {
+          const patches = this.extractCodeBlocks(fullText);
+          if (patches.length > 0) {
+            this.codePatches.set(patches);
+            this.showPatchesPanel.set(true);
+          }
+        }
         this.shouldScroll = true;
       });
       this.history.push({ role: 'assistant', content: full });
@@ -497,6 +806,26 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     this.generating.set(false);
   }
 
+  private extractCodeBlocks(text: string): CodePatch[] {
+    const patches: CodePatch[] = [];
+    const regex = /```(\w+)?\n([\s\S]*?)```/g;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+      const lang = match[1] || 'text';
+      const code = match[2].trim();
+      if (code.length > 0) {
+        const isFilePath = lang.includes('/') || lang.includes('.') || lang.includes('\\');
+        patches.push({
+          fileName: isFilePath ? lang : '',
+          language: isFilePath ? lang.split('.').pop() || 'text' : lang,
+          code,
+          applied: false,
+        });
+      }
+    }
+    return patches;
+  }
+
   onScroll() {
     const el = this.chatArea()?.nativeElement;
     if (!el) return;
@@ -509,6 +838,17 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       el.scrollTop = el.scrollHeight;
       this.showScrollBtn.set(false);
     }
+  }
+
+  togglePatchesPanel() {
+    this.showPatchesPanel.update((v) => !v);
+  }
+
+  copyPatch(code: string) {
+    navigator.clipboard.writeText(code).then(
+      () => this.toast.show('Code copied to clipboard'),
+      () => this.toast.show('Failed to copy'),
+    );
   }
 
   ngOnDestroy() {

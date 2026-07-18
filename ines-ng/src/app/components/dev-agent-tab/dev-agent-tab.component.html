@@ -199,24 +199,37 @@
   <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg-0)]">
     @if (selectedAgent(); as agent) {
       <!-- Header -->
-      <div class="panel-header !bg-transparent">
-        <div class="flex items-center gap-4">
+      <div class="panel-header panel-header-dev">
+        <div class="flex items-center gap-4 min-w-0">
           <div
             class="w-10 h-10 rounded-xl bg-accent-purple/15 border border-accent-purple/30 flex items-center justify-center shrink-0"
           >
             <mat-icon class="scale-90 text-[var(--accent-purple)]" fontIcon="smart_toy"></mat-icon>
           </div>
           <div class="min-w-0">
-            <h1 class="text-base font-bold font-[var(--font-ui)] truncate">{{ agent.name }}</h1>
-            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] truncate">
-              {{ repoName() || 'No repository selected' }}
-              @if (repoFiles().length > 0) {
-                &middot; {{ repoFiles().length }} files &middot; {{ totalChunks() }} chunks
+            <div class="flex items-center gap-2">
+              <h1 class="text-base font-bold font-[var(--font-ui)] truncate">{{ agent.name }}</h1>
+              <span class="mode-badge" [attr.data-mode]="activeMode()">
+                <mat-icon class="scale-50" [fontIcon]="activeModeIcon()"></mat-icon>
+                {{ activeModeLabel() }}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] truncate">
+                {{ repoName() || 'No repository selected' }}
+                @if (repoFiles().length > 0) {
+                  &middot; {{ repoFiles().length }} files &middot; {{ totalChunks() }} chunks
+                }
+              </p>
+              @for (skill of agentSkills(); track skill.id) {
+                <span class="skill-badge" [title]="skill.description">
+                  {{ skill.name }}
+                </span>
               }
-            </p>
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0">
           <app-button
             variant="secondary"
             size="sm"
@@ -226,6 +239,17 @@
             <mat-icon class="scale-75" fontIcon="folder_special"></mat-icon>
             {{ showFileTree() ? 'Hide' : 'Show' }} Tree
           </app-button>
+          @if (codePatches().length > 0) {
+            <app-button
+              variant="secondary"
+              size="sm"
+              (onClick)="togglePatchesPanel()"
+              [className]="showPatchesPanel() ? '!border-accent-green/30 !bg-accent-green/10' : ''"
+            >
+              <mat-icon class="scale-75" fontIcon="code"></mat-icon>
+              Patches ({{ codePatches().length }})
+            </app-button>
+          }
           @if (messages().length > 0) {
             <app-button variant="danger" size="sm" (onClick)="clearChat()">
               <mat-icon class="scale-75" fontIcon="delete"></mat-icon>
@@ -238,22 +262,54 @@
       <div class="flex-1 flex min-h-0">
         <!-- Chat Area -->
         <div class="flex-1 flex flex-col min-w-0">
+          <!-- Mode selector bar -->
+          <div class="mode-bar">
+            @for (action of quickActions; track action.mode) {
+              <button
+                (click)="quickAction(action)"
+                class="mode-btn"
+                [class.active]="activeMode() === action.mode"
+                [attr.data-mode]="action.mode"
+              >
+                <mat-icon class="scale-50" [fontIcon]="MODE_ICONS[action.mode]"></mat-icon>
+                {{ action.label }}
+              </button>
+            }
+          </div>
+
           <div class="chat-area" #chatArea (scroll)="onScroll()">
             @if (messages().length === 0) {
               <div class="empty-state">
                 <mat-icon
                   class="empty-icon text-[var(--accent-purple)]"
-                  fontIcon="smart_toy"
+                  [fontIcon]="activeModeIcon()"
                 ></mat-icon>
                 <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">
                   {{ agent.name }}
+                  <span class="text-[var(--text-2)] font-normal text-sm">
+                    — {{ activeModeLabel() }}</span
+                  >
                 </h3>
                 <p class="empty-text">
-                  {{
-                    repoFiles().length > 0
-                      ? 'Ask me about the codebase. I can analyze, explain, and suggest improvements based on the project context.'
-                      : 'Select a project folder in the sidebar, then ask me to analyze, explain, or improve the code.'
-                  }}
+                  @if (activeMode() === 'review') {
+                    I'll perform a thorough code review. Ask me about a specific file, module, or
+                    the entire codebase — I'll check for bugs, security issues, performance
+                    problems, and style violations.
+                  } @else if (activeMode() === 'modify') {
+                    Tell me what you want to change — I'll output the complete modified files with a
+                    summary of changes. You can copy the code from the Patches panel.
+                  } @else if (activeMode() === 'explain') {
+                    Ask me to explain any part of the codebase — architecture, data flow,
+                    algorithms, or design decisions. I'll provide clear, detailed explanations.
+                  } @else {
+                    @if (repoFiles().length > 0) {
+                      Ask me about the codebase. I can analyze, explain, review, and modify code
+                      based on the project context.
+                    } @else {
+                      Select a project folder in the sidebar, then ask me to analyze, explain, or
+                      improve the code.
+                    }
+                  }
                 </p>
                 @if (repoFiles().length > 0) {
                   <div class="flex flex-wrap justify-center gap-1.5 mt-4 max-w-lg">
@@ -332,7 +388,15 @@
             <textarea
               class="input-field"
               #inputEl
-              [placeholder]="'Ask ' + agent.name + ' about the codebase...'"
+              [placeholder]="
+                activeMode() === 'review'
+                  ? 'What would you like me to review?'
+                  : activeMode() === 'modify'
+                    ? 'Describe the code change you need...'
+                    : activeMode() === 'explain'
+                      ? 'What should I explain?'
+                      : 'Ask ' + agent.name + ' about the codebase...'
+              "
               rows="1"
               (keydown)="onKey($event)"
               (input)="autoResize($event)"
@@ -347,6 +411,104 @@
             </app-button>
           </div>
         </div>
+
+        <!-- Code Patches panel -->
+        @if (showPatchesPanel() && codePatches().length > 0) {
+          <aside class="patches-panel">
+            <div class="patches-header">
+              <h3
+                class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-green)] flex items-center gap-1.5"
+              >
+                <mat-icon class="scale-75" fontIcon="code"></mat-icon>
+                Code Patches ({{ codePatches().length }})
+              </h3>
+              <div class="flex items-center gap-1.5">
+                @if (!hasWriteAccess()) {
+                  <span class="text-[9px] text-[var(--accent-amber)] font-[var(--font-mono)]"
+                    >Read-only</span
+                  >
+                }
+                <button (click)="togglePatchesPanel()" class="btn-tertiary !w-7 !h-7">
+                  <mat-icon class="scale-50">close</mat-icon>
+                </button>
+              </div>
+            </div>
+            @if (hasWriteAccess()) {
+              <div class="patches-actions">
+                <button (click)="applyAllPatches()" class="patches-apply-all-btn">
+                  <mat-icon class="scale-50" fontIcon="save"></mat-icon>
+                  Apply All
+                </button>
+                <span class="text-[9px] text-[var(--text-2)]"
+                  >Changes will be written directly to the project folder</span
+                >
+              </div>
+            } @else {
+              <div class="patches-actions-readonly">
+                <mat-icon class="scale-50 text-[var(--accent-amber)]" fontIcon="warning"></mat-icon>
+                <span class="text-[9px] text-[var(--text-2)]"
+                  >Re-open folder with write permissions to apply changes</span
+                >
+              </div>
+            }
+            <div class="patches-body">
+              @for (patch of codePatches(); track $index; let idx = $index) {
+                <div class="patch-block" [class.patch-applied]="patch.applied">
+                  <div class="patch-file-header">
+                    @if (patch.applied) {
+                      <mat-icon class="scale-50 text-[var(--accent-green)]">check_circle</mat-icon>
+                    } @else if (patch.fileName) {
+                      <mat-icon class="scale-50 text-[var(--accent-green)]"
+                        >insert_drive_file</mat-icon
+                      >
+                    } @else {
+                      <mat-icon class="scale-50 text-[var(--text-2)]">code</mat-icon>
+                    }
+                    @if (patch.fileName) {
+                      <span class="patch-filename">{{ patch.fileName }}</span>
+                    } @else {
+                      <span class="patch-filename text-[var(--text-2)]"
+                        >Code block #{{ idx + 1 }}</span
+                      >
+                    }
+                    @if (patch.applied) {
+                      <span class="patch-applied-badge">applied</span>
+                    }
+                    <div class="patch-actions ml-auto">
+                      <button
+                        (click)="copyPatch(patch.code)"
+                        class="btn-tertiary !w-7 !h-7"
+                        title="Copy code"
+                      >
+                        <mat-icon class="scale-50">content_copy</mat-icon>
+                      </button>
+                      @if (hasWriteAccess() && patch.fileName) {
+                        @if (patch.applied) {
+                          <button
+                            (click)="revertPatch(idx)"
+                            class="btn-tertiary !w-7 !h-7"
+                            title="Revert changes"
+                          >
+                            <mat-icon class="scale-50">undo</mat-icon>
+                          </button>
+                        } @else {
+                          <button
+                            (click)="applyPatch(idx)"
+                            class="btn-tertiary !w-7 !h-7"
+                            title="Apply to file"
+                          >
+                            <mat-icon class="scale-50">save</mat-icon>
+                          </button>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <pre class="patch-code"><code>{{ patch.code }}</code></pre>
+                </div>
+              }
+            </div>
+          </aside>
+        }
       </div>
     } @else {
       <div class="empty-state">
@@ -354,7 +516,8 @@
         <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">Dev Agent</h3>
         <p class="empty-text">
           Select an agent from the sidebar and a project folder to start coding with AI assistance.
-          The agent can analyze your codebase, explain architecture, and help with code changes.
+          The agent can analyze your codebase, explain architecture, review code, and help with code
+          changes.
         </p>
         @if (agentSvc.agents().length === 0) {
           <p class="text-[11px] text-[var(--accent-amber)] mt-2">

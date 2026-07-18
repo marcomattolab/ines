@@ -64,6 +64,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   typing = signal(false);
   generating = signal(false);
   tokenInfo = signal('');
+  editingMessageId = signal<number | null>(null);
 
   private history: ChatMessage[] = [];
   private nextId = 1;
@@ -113,6 +114,27 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
   }
 
+  editMessage(msg: UiMessage) {
+    if (msg.role !== 'user') return;
+    this.editingMessageId.set(msg.id);
+    const el = this.inputEl()?.nativeElement;
+    if (el) {
+      el.value = msg.text;
+      el.focus();
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+    }
+  }
+
+  cancelEdit() {
+    this.editingMessageId.set(null);
+    const el = this.inputEl()?.nativeElement;
+    if (el) {
+      el.value = '';
+      el.style.height = '';
+    }
+  }
+
   onKey(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -138,6 +160,20 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.generating.set(true);
     this.inputEl().nativeElement.value = '';
     this.inputEl().nativeElement.style.height = '';
+
+    const editingId = this.editingMessageId();
+    if (editingId !== null) {
+      const idx = this.messages().findIndex((m) => m.id === editingId);
+      if (idx >= 0) {
+        const kept = this.messages().slice(0, idx + 1);
+        this.messages.set(kept);
+        const userMsgs = kept.filter((m) => m.role === 'user').length;
+        const assistantMsgs = kept.filter((m) => m.role === 'ai').length;
+        this.history = this.history.slice(0, userMsgs + assistantMsgs - 1);
+      }
+      this.editingMessageId.set(null);
+      this.nextId = this.messages().reduce((max, m) => Math.max(max, m.id), 0) + 1;
+    }
 
     this.history.push({ role: 'user', content: text });
     if (this.history.length > MAX_HISTORY_LENGTH)
@@ -188,6 +224,22 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.messages.set([{ id: this.nextId++, role: 'ai', text: 'Chat cleaned. Can I help you?' }]);
     this.tokenInfo.set('');
     this.storage.remove(CHAT_STORAGE_KEY);
+  }
+
+  exportChat(format: 'md' | 'json') {
+    const msgs = this.messages()
+      .filter((m) => !m.streaming)
+      .map((m) => ({ role: m.role, text: m.text }));
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    if (format === 'json') {
+      this.dom.downloadText(JSON.stringify(msgs, null, 2), `chat-${ts}.json`);
+    } else {
+      const md = msgs
+        .map((m) => `### ${m.role === 'user' ? 'You' : 'INES'}\n\n${m.text}\n`)
+        .join('\n');
+      this.dom.downloadText(md, `chat-${ts}.md`);
+    }
+    this.toast.success(`Exported as .${format}`);
   }
 
   ngOnDestroy() {

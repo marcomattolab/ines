@@ -196,9 +196,84 @@ export class LlmService {
   readonly temperature = signal(0.8);
   readonly randomSeed = signal(101);
   readonly topK = signal(40);
+  readonly requestCooldown = signal(0);
+  private lastRequestTime = 0;
 
   static estimateTokens(text: string): number {
     return Math.ceil(text.length / 4);
+  }
+
+  generate(
+    prompt: string,
+    onToken: (partial: string, done: boolean, full: string) => void,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
+    if (this.isBusy())
+      throw new Error('Model is busy processing another request. Wait for it to finish.');
+
+    const now = Date.now();
+    if (now - this.lastRequestTime < this.requestCooldown()) {
+      throw new Error(
+        `Please wait ${Math.ceil((this.requestCooldown() - (now - this.lastRequestTime)) / 1000)}s before sending another request.`,
+      );
+    }
+
+    this.isBusy.set(true);
+    this.lastRequestTime = now;
+
+    const doGenerate = (): Promise<string> =>
+      new Promise((resolve, reject) => {
+        let full = '';
+        if (signal?.aborted) {
+          this.isBusy.set(false);
+          reject(new DOMException('Aborted', 'AbortError'));
+          return;
+        }
+        const onAbort = () => {
+          this.isBusy.set(false);
+          reject(new DOMException('Aborted', 'AbortError'));
+        };
+        signal?.addEventListener('abort', onAbort, { once: true });
+        try {
+          this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
+            full += partial;
+            onToken(partial, done, full);
+            if (done) {
+              signal?.removeEventListener('abort', onAbort);
+              this.isBusy.set(false);
+              resolve(full);
+            }
+          });
+        } catch (e) {
+          signal?.removeEventListener('abort', onAbort);
+          this.isBusy.set(false);
+          reject(e);
+        }
+      });
+
+    return this.withRetry(doGenerate, signal);
+  }
+
+  private async withRetry(fn: () => Promise<string>, signal?: AbortSignal): Promise<string> {
+    const maxRetries = 2;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err;
+        if (err instanceof DOMException && err.name === 'AbortError') throw err;
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 800;
+          await new Promise((r) => setTimeout(r, delay));
+          this.lastRequestTime = Date.now();
+        }
+      }
+    }
+    throw lastError;
   }
 
   trimConversation(
@@ -225,32 +300,6 @@ export class LlmService {
       }
     }
     return trimmed;
-  }
-
-  generate(
-    prompt: string,
-    onToken: (partial: string, done: boolean, full: string) => void,
-  ): Promise<string> {
-    if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
-    if (this.isBusy())
-      throw new Error('Model is busy processing another request. Wait for it to finish.');
-    this.isBusy.set(true);
-    return new Promise((resolve, reject) => {
-      let full = '';
-      try {
-        this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
-          full += partial;
-          onToken(partial, done, full);
-          if (done) {
-            this.isBusy.set(false);
-            resolve(full);
-          }
-        });
-      } catch (e) {
-        this.isBusy.set(false);
-        reject(e);
-      }
-    });
   }
 
   buildPrompt(system: string, userMsg: string, history: ChatMessage[] = []): string {

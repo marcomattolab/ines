@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed, OnInit } from '@angular/core';
+import { Component, signal, inject, computed, OnInit, HostListener } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -222,6 +222,22 @@ ${context ? `Context from documents:\n${context}` : 'No relevant documents found
 
   closePreview() {
     this.showPreview.set(false);
+  }
+
+  @HostListener('dragover', ['$event'])
+  onDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    if (files?.length) {
+      this.onFileSelected({ target: { files, value: '' } });
+    }
   }
 }
 

@@ -191,5 +191,10 @@ export class AppComponent implements OnInit {
     this.activeTab.set(tab);
     this.commandPaletteOpen.set(false);
     this.commandQuery.set('');
+    try {
+      sessionStorage.setItem('ines_active_tab', tab);
+    } catch {
+      /* best effort */
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, input, computed } from '@angular/core';
+import { Component, inject, input, computed, output } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { ToastService } from '../../core/services/toast.service';
@@ -17,6 +17,7 @@ export class MessageBubbleComponent {
   role = input.required<'user' | 'ai'>();
   text = input<string>('');
   streaming = input<boolean>(false);
+  readonly onEdit = output<void>();
 
   private readonly toast = inject(ToastService);
   private readonly speech = inject(SpeechService);

@@ -15,6 +15,7 @@ import { RagService } from '../../core/services/rag.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
+import { JsonParserService } from '../../core/services/json-parser.service';
 
 @Component({
   selector: 'app-learning-tab',
@@ -37,6 +38,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   readonly llm = inject(LlmService);
   readonly rag = inject(RagService);
   readonly toast = inject(ToastService);
+  private readonly jsonParser = inject(JsonParserService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 
@@ -479,7 +481,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
       );
       const result = await this.llm.generate(fullPrompt, () => {});
 
-      const parsedQuestions = this.parseQuizJson(result);
+      const parsedQuestions = this.jsonParser.parseArray<{
+        question: string;
+        options: string[];
+        answer: number;
+      }>(result);
       if (!parsedQuestions || parsedQuestions.length === 0) {
         throw new Error('No questions could be parsed from the response.');
       }
@@ -515,84 +521,6 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     } finally {
       this.isGenerating.set(false);
     }
-  }
-
-  private parseQuizJson(text: string): any[] {
-    text = text.trim();
-
-    // 1. Remove markdown code blocks if present
-    const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
-    let cleaned = codeBlockMatch ? codeBlockMatch[1] : text;
-    cleaned = cleaned.trim();
-
-    // 2. Find the outermost [ and ]
-    const startIdx = cleaned.indexOf('[');
-    const endIdx = cleaned.lastIndexOf(']');
-    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-      cleaned = cleaned.substring(startIdx, endIdx + 1);
-    }
-
-    try {
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    } catch (e) {
-      console.warn('Standard JSON parse failed, attempting regex/loose repair', e);
-    }
-
-    // 3. Fallback: Parse using regex to extract object fields if JSON is slightly malformed
-    const questions: any[] = [];
-    const objectRegex =
-      /\{\s*"question"\s*:\s*"([\s\S]*?)"\s*,\s*"options"\s*:\s*\[\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*,\s*"([\s\S]*?)"\s*\]\s*,\s*"answer"\s*:\s*(\d)\s*\}/gi;
-    let match;
-    while ((match = objectRegex.exec(cleaned)) !== null) {
-      questions.push({
-        question: match[1].trim(),
-        options: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()],
-        answer: parseInt(match[6], 10),
-      });
-    }
-
-    if (questions.length > 0) {
-      return questions;
-    }
-
-    // 4. Second Fallback: Parse text questions line-by-line (e.g. if model output bullet points)
-    const textQuestions: any[] = [];
-    const blocks = text.split(/\n\s*\n/);
-    for (const block of blocks) {
-      const lines = block
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean);
-      if (lines.length >= 5) {
-        let questionText = '';
-        const options: string[] = [];
-        let answerIndex = 0;
-
-        for (const line of lines) {
-          if (/^\d+\.?\s*(.*)/.test(line)) {
-            questionText = line.replace(/^\d+\.?\s*/, '');
-          } else if (/^[a-dA-D]\)?\s*(.*)/i.test(line)) {
-            options.push(line.replace(/^[a-dA-D]\)?\s*/i, ''));
-          } else if (/answer:\s*([a-d])/i.test(line)) {
-            const ansChar = line.match(/answer:\s*([a-d])/i)?.[1].toUpperCase();
-            answerIndex = ['A', 'B', 'C', 'D'].indexOf(ansChar || 'A');
-          }
-        }
-
-        if (questionText && options.length >= 4) {
-          textQuestions.push({
-            question: questionText,
-            options: options.slice(0, 4),
-            answer: answerIndex >= 0 ? answerIndex : 0,
-          });
-        }
-      }
-    }
-
-    return textQuestions;
   }
 
   selectAnswer(index: number) {

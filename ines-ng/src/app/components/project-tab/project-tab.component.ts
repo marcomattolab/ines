@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed, OnInit } from '@angular/core';
+import { Component, signal, inject, computed, OnInit, HostListener } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -298,5 +298,21 @@ export class ProjectTabComponent implements OnInit {
   previewDocIconColor(): string {
     const doc = this.project.documents().find((d) => d.name === this.previewDocName());
     return doc ? this.fileColor(doc.type) : 'var(--text-2)';
+  }
+
+  @HostListener('dragover', ['$event'])
+  onDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    if (files?.length) {
+      this.onFileSelected({ target: { files, value: '' } });
+    }
   }
 }

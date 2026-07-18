@@ -8,6 +8,19 @@
   </div>
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
     <div class="msg-content" [innerHTML]="safeHtml()"></div>
+    @if (role() === 'user' && text()) {
+      <div class="msg-actions">
+        <app-button
+          variant="ghost"
+          size="sm"
+          (onClick)="onEdit.emit()"
+          className="!w-8 !h-8 !p-0"
+          title="Edit message"
+        >
+          <mat-icon fontIcon="edit" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+      </div>
+    }
     @if (role() === 'ai' && text()) {
       <div class="msg-actions" [class.visible]="isSpeaking()">
         <app-button

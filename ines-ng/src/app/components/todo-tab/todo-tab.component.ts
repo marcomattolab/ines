@@ -9,6 +9,7 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { JsonParserService } from '../../core/services/json-parser.service';
 
 interface AiChat {
   id: number;
@@ -51,6 +52,7 @@ export class TodoTabComponent implements OnDestroy {
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   readonly speech = inject(SpeechService);
+  private readonly jsonParser = inject(JsonParserService);
   readonly recording = this.speech.recording;
   readonly timerText = this.speech.recordingTimer;
 
@@ -182,14 +184,16 @@ export class TodoTabComponent implements OnDestroy {
         );
       });
 
-      const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const data = JSON.parse(jsonMatch[0]);
+      const data = this.jsonParser.parseObject<{
+        tasks: { text: string; priority: string }[];
+        message: string;
+      }>(fullText);
+      if (data?.tasks) {
         this.todoSvc.addMany(data.tasks);
         this.aiMessages.update((m) =>
           m.map((msg) =>
             msg.id === typingId
-              ? { ...msg, text: `✅ Added ${data.tasks.length} tasks! ${data.message || ''}` }
+              ? { ...msg, text: `Added ${data.tasks.length} tasks! ${data.message || ''}` }
               : msg,
           ),
         );

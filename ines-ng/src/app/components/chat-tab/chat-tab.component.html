@@ -11,6 +11,14 @@
       <mat-icon fontIcon="delete" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
       Clear
     </app-button>
+    <app-button
+      variant="secondary"
+      size="sm"
+      (onClick)="exportChat('md')"
+      title="Export as Markdown"
+    >
+      <mat-icon fontIcon="download" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
+    </app-button>
   </div>
 
   <div class="chat-area" #chatArea (scroll)="onScroll()">
@@ -21,7 +29,12 @@
           <div class="msg-bubble cursor-blink" [innerHTML]="html(msg.text)"></div>
         </div>
       } @else {
-        <app-message-bubble [role]="msg.role" [text]="msg.text" [streaming]="!!msg.streaming" />
+        <app-message-bubble
+          [role]="msg.role"
+          [text]="msg.text"
+          [streaming]="!!msg.streaming"
+          (onEdit)="editMessage(msg)"
+        />
       }
     }
     @if (typing()) {
@@ -37,9 +50,24 @@
     }
   </div>
 
-  <div class="token-info">{{ tokenInfo() }}</div>
+  <div class="token-info">
+    @if (editingMessageId()) {
+      <span class="text-accent-amber">Editing message — press Enter to resend, Esc to cancel</span>
+    } @else {
+      {{ tokenInfo() }}
+    }
+  </div>
 
   <div class="input-zone">
+    @if (editingMessageId()) {
+      <button
+        class="text-xs text-accent-amber hover:text-accent-rose transition-colors shrink-0 px-2"
+        (click)="cancelEdit()"
+        title="Cancel editing"
+      >
+        <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
+      </button>
+    }
     <textarea
       class="input-field"
       #inputEl

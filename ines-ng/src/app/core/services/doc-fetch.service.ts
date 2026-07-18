@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { KnowledgeManagerService } from './knowledge-manager.service';
 import { ToastService } from './toast.service';
 
@@ -147,10 +147,8 @@ export class DocFetchService {
   readonly docsLoaded = signal(false);
   private readonly fetchedUrls = new Set<string>();
 
-  constructor(
-    private km: KnowledgeManagerService,
-    private toast: ToastService,
-  ) {}
+  private readonly km = inject(KnowledgeManagerService);
+  private readonly toast = inject(ToastService);
 
   async fetchAngularDocs(): Promise<{ added: number; skipped: number; failed: number }> {
     this.isFetching.set(true);

@@ -4,6 +4,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TodoService } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SpeechService } from '../../core/services/speech.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -44,21 +45,18 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
   styleUrl: './todo-tab.css',
 })
 export class TodoTabComponent implements OnDestroy {
-  todoSvc = inject(TodoService);
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly todoSvc = inject(TodoService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  readonly speech = inject(SpeechService);
+  readonly recording = this.speech.recording;
+  readonly timerText = this.speech.recordingTimer;
 
   aiMessages = signal<AiChat[]>([]);
-  recording = signal(false);
-  timerText = signal('');
   rightPanelWidth = signal(320);
   inputAreaHeight = signal(200);
 
   private nextId = 0;
-  private recognition: any = null;
-  private seconds = 0;
-  private intervalId: ReturnType<typeof setInterval> | null = null;
-  private baseText = '';
   private isResizing = false;
   private isHResizing = false;
 
@@ -124,75 +122,24 @@ export class TodoTabComponent implements OnDestroy {
   }
 
   toggleRecording(textarea: HTMLTextAreaElement) {
-    this.recording() ? this.stopRecording() : this.startRecording(textarea);
+    this.speech.recording() ? this.stopRecording() : this.startRecording(textarea);
   }
 
   startRecording(textarea: HTMLTextAreaElement) {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
+    const ok = this.speech.startRecording(textarea.value, (text) => {
+      textarea.value = text;
+    });
+    if (!ok) {
       this.toast.show('⚠️ Web Speech API not supported in this browser');
-      return;
     }
-
-    this.baseText = textarea.value.trim();
-    if (this.baseText) this.baseText += ' ';
-
-    this.recognition = new SR();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = navigator.language || 'en-US';
-
-    this.recognition.onresult = (e: any) => {
-      let interim = '',
-        final = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) final += t + ' ';
-        else interim += t;
-      }
-      if (final) this.baseText += final;
-      textarea.value = this.baseText + (interim ? `[${interim}]` : '');
-    };
-
-    this.recognition.onerror = (e: any) => {
-      if (e.error !== 'no-speech') this.toast.show('⚠️ Mic error: ' + e.error);
-    };
-
-    this.recognition.onend = () => {
-      if (this.recording() && this.recognition) this.recognition.start();
-    };
-
-    this.recognition.start();
-    this.recording.set(true);
-    this.seconds = 0;
-
-    this.intervalId = setInterval(() => {
-      this.seconds++;
-      const m = Math.floor(this.seconds / 60)
-        .toString()
-        .padStart(2, '0');
-      const s = (this.seconds % 60).toString().padStart(2, '0');
-      this.timerText.set(`${m}:${s}`);
-    }, 1000);
   }
 
   stopRecording() {
-    if (this.recognition) {
-      this.recording.set(false);
-      this.recognition.stop();
-      this.recognition = null;
-    } else {
-      this.recording.set(false);
-    }
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-    this.timerText.set('');
+    this.speech.stopRecording();
   }
 
   async generate(textarea: HTMLTextAreaElement) {
-    if (this.recording()) this.stopRecording();
+    if (this.speech.recording()) this.speech.stopRecording();
 
     const desc = textarea.value.trim();
     if (!desc) {
@@ -212,7 +159,6 @@ export class TodoTabComponent implements OnDestroy {
       { id: typingId, role: 'ai', text: '', typing: true },
     ]);
     textarea.value = '';
-    this.baseText = '';
 
     const prompt = this.llm.buildPrompt(SYSTEM_TODO, `Today I have to do: ${desc}. Plan my day.`);
 
@@ -259,10 +205,6 @@ export class TodoTabComponent implements OnDestroy {
   ngOnDestroy() {
     this.stopResize();
     this.stopHResize();
-    if (this.recognition) {
-      try {
-        this.recognition.abort();
-      } catch (_) {}
-    }
+    this.speech.abortRecording();
   }
 }

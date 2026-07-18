@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ProjectService, ProjectChunk, ProjectDocument } from '../../core/services/project.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -50,9 +51,10 @@ PROJECT CONTEXT
   host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },
 })
 export class ProjectTabComponent implements OnInit {
-  llm = inject(LlmService);
-  project = inject(ProjectService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly project = inject(ProjectService);
+  readonly toast = inject(ToastService);
+  private readonly dom = inject(DomUtilsService);
 
   activeSubTab = signal<'input' | 'output'>('input');
   userInput = signal('');
@@ -143,12 +145,7 @@ export class ProjectTabComponent implements OnInit {
     if (this.project.documents().length === 0) return;
     try {
       const blob = await this.project.exportProject();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'project.ines-project';
-      a.click();
-      URL.revokeObjectURL(url);
+      this.dom.downloadBlob(blob, 'project.ines-project');
       this.toast.show('📦 Project exported');
     } catch (err: any) {
       this.toast.error('Export failed: ' + err.message);

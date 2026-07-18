@@ -335,9 +335,9 @@ const POSE_CONNECTIONS: [number, number][] = [
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class VisionTabComponent implements OnDestroy {
-  vision = inject(VisionService);
-  toast = inject(ToastService);
-  llm = inject(LlmService);
+  readonly vision = inject(VisionService);
+  readonly toast = inject(ToastService);
+  readonly llm = inject(LlmService);
 
   readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   readonly meshCanvas = viewChild<ElementRef<HTMLCanvasElement>>('meshCanvas');

@@ -5,8 +5,17 @@ export class SpeechService {
   readonly speaking = signal<boolean>(false);
   readonly activeId = signal<string | null>(null);
 
+  readonly recording = signal(false);
+  readonly recordingTimer = signal('');
+
   private synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
+
+  private recognition: any = null;
+  private recordingBaseText = '';
+  private recordingCallback: ((text: string) => void) | null = null;
+  private recordingSeconds = 0;
+  private recordingIntervalId: ReturnType<typeof setInterval> | null = null;
 
   speak(id: string, text: string, langOrName?: string): void {
     if (!this.synth) return;
@@ -108,6 +117,91 @@ export class SpeechService {
     return maps[lang.toLowerCase()] || lang;
   }
 
+  startRecording(baseText: string, onResult: (text: string) => void): boolean {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return false;
+
+    this.recordingBaseText = baseText.trim();
+    if (this.recordingBaseText) this.recordingBaseText += ' ';
+    this.recordingCallback = onResult;
+
+    this.recognition = new SR();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = navigator.language || 'en-US';
+
+    this.recognition.onresult = (e: any) => {
+      let interim = '',
+        final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t + ' ';
+        else interim += t;
+      }
+      if (final) this.recordingBaseText += final;
+      const displayText = this.recordingBaseText + (interim ? `[${interim}]` : '');
+      this.recordingCallback?.(displayText);
+    };
+
+    this.recognition.onerror = () => {};
+
+    this.recognition.onend = () => {
+      if (this.recording() && this.recognition) this.recognition.start();
+    };
+
+    this.recognition.start();
+    this.recording.set(true);
+    this.recordingSeconds = 0;
+
+    this.recordingIntervalId = setInterval(() => {
+      this.recordingSeconds++;
+      const m = Math.floor(this.recordingSeconds / 60)
+        .toString()
+        .padStart(2, '0');
+      const s = (this.recordingSeconds % 60).toString().padStart(2, '0');
+      this.recordingTimer.set(`${m}:${s}`);
+    }, 1000);
+
+    return true;
+  }
+
+  stopRecording(): string {
+    if (this.recognition) {
+      this.recording.set(false);
+      this.recognition.stop();
+      this.recognition = null;
+    } else {
+      this.recording.set(false);
+    }
+    if (this.recordingIntervalId) {
+      clearInterval(this.recordingIntervalId);
+      this.recordingIntervalId = null;
+    }
+    this.recordingTimer.set('');
+    const finalText = this.recordingBaseText.trim();
+    this.recordingBaseText = '';
+    this.recordingCallback = null;
+    return finalText;
+  }
+
+  abortRecording(): void {
+    if (this.recognition) {
+      try {
+        this.recognition.abort();
+      } catch {
+        /* best-effort */
+      }
+      this.recognition = null;
+    }
+    this.recording.set(false);
+    if (this.recordingIntervalId) {
+      clearInterval(this.recordingIntervalId);
+      this.recordingIntervalId = null;
+    }
+    this.recordingTimer.set('');
+    this.recordingBaseText = '';
+    this.recordingCallback = null;
+  }
   private stripMarkdownAndHtml(text: string): string {
     if (!text) return '';
     // Strip HTML elements

@@ -15,8 +15,8 @@ export class LoaderOverlayComponent implements OnInit {
   visible = input<boolean>(true);
   closed = output<void>();
 
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
 
   showText = signal<boolean>(false);
   dragging = false;

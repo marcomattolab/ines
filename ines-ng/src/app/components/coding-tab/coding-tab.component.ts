@@ -14,6 +14,7 @@ import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DocFetchService } from '../../core/services/doc-fetch.service';
 import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -193,10 +194,11 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
-  llm = inject(LlmService);
-  toast = inject(ToastService);
-  docFetch = inject(DocFetchService);
-  km = inject(KnowledgeManagerService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  readonly docFetch = inject(DocFetchService);
+  readonly km = inject(KnowledgeManagerService);
+  private readonly dom = inject(DomUtilsService);
 
   messages = signal<UiMessage[]>([
     {
@@ -500,13 +502,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   }
 
   downloadFile(file: CodeFile) {
-    const blob = new Blob([file.content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.dom.downloadText(file.content, file.name);
     this.toast.show(`📥 ${file.name} downloaded`);
   }
 
@@ -535,7 +531,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   }
 
   copyFile(file: CodeFile) {
-    navigator.clipboard.writeText(file.content).then(() => {
+    this.dom.copyToClipboard(file.content).then(() => {
       this.toast.show(`📋 ${file.name} copied!`);
     });
   }
@@ -545,7 +541,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
       .map((f) => `// ${f.name}\n${f.content}`)
       .join('\n\n');
     if (!all) return;
-    navigator.clipboard.writeText(all).then(() => {
+    this.dom.copyToClipboard(all).then(() => {
       this.toast.show('📋 All files copied!');
     });
   }

@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
-import * as pdfjsLib from 'pdfjs-dist';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 type ColorTheme = 'professional' | 'ocean' | 'forest' | 'sunset' | 'monochrome';
 
@@ -228,8 +226,9 @@ Topic: {TOPIC}
 })
 export class PresentationTabComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  private readonly textProc = inject(TextProcessingService);
 
   readonly previewFrame = viewChild.required<ElementRef<HTMLIFrameElement>>('previewFrame');
 
@@ -302,7 +301,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     try {
       let text = '';
       if (ext === 'pdf') {
-        text = await this.extractPdfText(file);
+        text = await this.textProc.extractTextFromPdf(file);
       } else {
         text = await file.text();
       }
@@ -317,23 +316,6 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     } catch (err) {
       this.toast.show('❌ Error reading file');
     }
-  }
-
-  private async extractPdfText(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useSystemFonts: true,
-      disableFontFace: false,
-    }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items.map((item: any) => item.str);
-      fullText += strings.join(' ') + '\n';
-    }
-    return fullText;
   }
 
   clearFile() {

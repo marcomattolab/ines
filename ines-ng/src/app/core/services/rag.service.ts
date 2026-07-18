@@ -1,8 +1,5 @@
-import { Injectable, signal } from '@angular/core';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Use local worker instead of CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { Injectable, signal, inject } from '@angular/core';
+import { TextProcessingService } from './text-processing.service';
 
 export interface DocumentChunk {
   text: string;
@@ -12,75 +9,19 @@ export interface DocumentChunk {
 
 @Injectable({ providedIn: 'root' })
 export class RagService {
+  private readonly textProc = inject(TextProcessingService);
   private readonly chunks = signal<DocumentChunk[]>([]);
 
   async processFile(file: File): Promise<void> {
-    let text = '';
+    const text = await this.textProc.extractTextFromFile(file);
     const extension = file.name.split('.').pop()?.toLowerCase();
-    if (file.type === 'application/pdf' || extension === 'pdf') {
-      text = await this.extractTextFromPdf(file);
-    } else if (file.type === 'text/html' || extension === 'html' || extension === 'htm') {
-      text = await this.extractTextFromHtml(file);
-    } else if (file.type === 'text/plain' || extension === 'txt') {
-      text = await file.text();
-    } else {
-      throw new Error('Unsupported file type');
-    }
-
-    const newChunks = this.chunkText(text, file.name);
+    const docId = crypto.randomUUID();
+    const rawChunks = this.textProc.chunkText(text, file.name, docId);
+    const newChunks: DocumentChunk[] = rawChunks.map((c) => ({
+      text: c.text,
+      source: file.name,
+    }));
     this.chunks.update((prev) => [...prev, ...newChunks]);
-  }
-
-  private async extractTextFromPdf(file: File): Promise<string> {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({
-        data: arrayBuffer,
-        // Add these options to help with worker loading
-        useSystemFonts: true,
-        disableFontFace: false,
-      }).promise;
-
-      let fullText = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const strings = content.items.map((item: any) => item.str);
-        fullText += strings.join(' ') + '\n';
-      }
-      return fullText;
-    } catch (error) {
-      console.error('PDF extraction error:', error);
-      throw new Error('Failed to extract text from PDF. Please ensure the file is not corrupted.');
-    }
-  }
-
-  private async extractTextFromHtml(file: File): Promise<string> {
-    const html = await file.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    return doc.body.innerText || '';
-  }
-
-  private chunkText(
-    text: string,
-    source: string,
-    chunkSize: number = 256,
-    overlap: number = 32,
-  ): DocumentChunk[] {
-    const words = text.split(/\s+/);
-    const chunks: DocumentChunk[] = [];
-
-    for (let i = 0; i < words.length; i += chunkSize - overlap) {
-      const chunkWords = words.slice(i, i + chunkSize);
-      chunks.push({
-        text: chunkWords.join(' '),
-        source: source,
-      });
-      if (i + chunkSize >= words.length) break;
-    }
-
-    return chunks;
   }
 
   getRelevantChunks(query: string, topK: number = 3, maxWords: number = 800): string {

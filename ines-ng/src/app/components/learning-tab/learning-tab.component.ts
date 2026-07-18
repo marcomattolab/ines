@@ -39,9 +39,9 @@ mermaid.initialize({
   ],
 })
 export class LearningTabComponent implements AfterViewInit, OnDestroy {
-  llm = inject(LlmService);
-  rag = inject(RagService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly rag = inject(RagService);
+  readonly toast = inject(ToastService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 

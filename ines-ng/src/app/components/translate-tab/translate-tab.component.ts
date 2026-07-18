@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
@@ -31,9 +32,10 @@ const LANGUAGES = [
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class TranslateTabComponent implements OnDestroy {
-  llm = inject(LlmService);
-  toast = inject(ToastService);
-  speech = inject(SpeechService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  readonly speech = inject(SpeechService);
+  private readonly dom = inject(DomUtilsService);
 
   languages = LANGUAGES;
   fromLang = signal('auto');
@@ -125,7 +127,7 @@ export class TranslateTabComponent implements OnDestroy {
   }
 
   copy() {
-    navigator.clipboard.writeText(this.result()).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(this.result()).then(() => this.toast.show('📋 Copied!'));
   }
 
   clear() {
@@ -134,11 +136,7 @@ export class TranslateTabComponent implements OnDestroy {
   }
 
   resultHtml() {
-    return this.result()
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
+    return this.dom.escapeHtml(this.result());
   }
 
   ngOnDestroy() {

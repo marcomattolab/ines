@@ -1,7 +1,5 @@
-import { Injectable, signal } from '@angular/core';
-import * as pdfjsLib from 'pdfjs-dist';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { Injectable, signal, inject } from '@angular/core';
+import { TextProcessingService } from './text-processing.service';
 
 export interface ProjectDocument {
   id: string;
@@ -32,402 +30,11 @@ const DB_VERSION = 1;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
+  private readonly textProc = inject(TextProcessingService);
+
   readonly documents = signal<ProjectDocument[]>([]);
   readonly isProcessing = signal(false);
   readonly processingStatus = signal('');
-
-  private static readonly STOP_WORDS = new Set([
-    'the',
-    'a',
-    'an',
-    'in',
-    'on',
-    'at',
-    'to',
-    'for',
-    'of',
-    'and',
-    'or',
-    'is',
-    'are',
-    'was',
-    'were',
-    'be',
-    'been',
-    'being',
-    'have',
-    'has',
-    'had',
-    'do',
-    'does',
-    'did',
-    'will',
-    'would',
-    'could',
-    'should',
-    'may',
-    'might',
-    'shall',
-    'can',
-    'with',
-    'from',
-    'by',
-    'as',
-    'into',
-    'through',
-    'during',
-    'before',
-    'after',
-    'above',
-    'below',
-    'between',
-    'out',
-    'off',
-    'over',
-    'under',
-    'again',
-    'further',
-    'then',
-    'once',
-    'here',
-    'there',
-    'when',
-    'where',
-    'why',
-    'how',
-    'all',
-    'each',
-    'every',
-    'both',
-    'few',
-    'more',
-    'most',
-    'some',
-    'any',
-    'no',
-    'not',
-    'only',
-    'own',
-    'same',
-    'so',
-    'than',
-    'too',
-    'very',
-    'just',
-    'because',
-    'but',
-    'which',
-    'who',
-    'whom',
-    'what',
-    'this',
-    'that',
-    'these',
-    'those',
-    'its',
-    'it',
-    'i',
-    'me',
-    'my',
-    'we',
-    'our',
-    'you',
-    'your',
-    'he',
-    'she',
-    'his',
-    'her',
-    'they',
-    'them',
-    'their',
-    'about',
-    'up',
-    'down',
-    'also',
-    'although',
-    'though',
-    'unless',
-    'until',
-    'while',
-    'whether',
-    'either',
-    'neither',
-    'without',
-    'within',
-    'across',
-    'along',
-    'around',
-    'among',
-    'behind',
-    'beneath',
-    'beside',
-    'beyond',
-    'despite',
-    'except',
-    'inside',
-    'outside',
-    'since',
-    'toward',
-    'towards',
-    'upon',
-    'via',
-    'else',
-    'even',
-    'still',
-    'already',
-    'yet',
-    'enough',
-    'such',
-    'rather',
-    'quite',
-    'well',
-    'much',
-    'many',
-    'several',
-    'il',
-    'lo',
-    'la',
-    'le',
-    'gli',
-    'un',
-    'una',
-    'uno',
-    'di',
-    'a',
-    'da',
-    'con',
-    'su',
-    'per',
-    'tra',
-    'fra',
-    'del',
-    'dello',
-    'della',
-    'delle',
-    'degli',
-    'dei',
-    'al',
-    'allo',
-    'alla',
-    'alle',
-    'agli',
-    'dal',
-    'dallo',
-    'dalla',
-    'dalle',
-    'dagli',
-    'nel',
-    'nello',
-    'nella',
-    'nelle',
-    'negli',
-    'sul',
-    'sullo',
-    'sulla',
-    'sulle',
-    'sugli',
-    'che',
-    'chi',
-    'cui',
-    'quale',
-    'quali',
-    'quanto',
-    'come',
-    'dove',
-    'quando',
-    'perché',
-    'perche',
-    'e',
-    'ed',
-    'o',
-    'ma',
-    'anche',
-    'se',
-    'però',
-    'pero',
-    'mentre',
-    'poiché',
-    'poiche',
-    'siccome',
-    'non',
-    'più',
-    'piu',
-    'meno',
-    'molto',
-    'tanto',
-    'poco',
-    'troppo',
-    'già',
-    'gia',
-    'ancora',
-    'sempre',
-    'mai',
-    'appena',
-    'solo',
-    'pure',
-    'poi',
-    'dopo',
-    'prima',
-    'ora',
-    'adesso',
-    'qui',
-    'qua',
-    'lì',
-    'li',
-    'ci',
-    'si',
-    'vi',
-    'ne',
-    'mi',
-    'ti',
-    'mio',
-    'tuo',
-    'suo',
-    'nostro',
-    'vostro',
-    'loro',
-    'questa',
-    'questo',
-    'questi',
-    'queste',
-    'quella',
-    'quello',
-    'quelle',
-    'quelli',
-    'stessa',
-    'stesso',
-    'stesse',
-    'stessi',
-    'qualche',
-    'ogni',
-    'tutto',
-    'tutta',
-    'tutti',
-    'tutte',
-    'sono',
-    'sia',
-    'siamo',
-    'siete',
-    'era',
-    'erano',
-    'sarà',
-    'sara',
-    'ha',
-    'hai',
-    'hanno',
-    'ho',
-    'abbiamo',
-    'avete',
-    'avere',
-    'essere',
-    'fare',
-    'stare',
-    'dire',
-    'volere',
-    'potere',
-    'posso',
-    'puoi',
-    'può',
-    'puo',
-    'possiamo',
-    'potete',
-    'possono',
-    'voglio',
-    'vuoi',
-    'vuole',
-    'vogliamo',
-    'volete',
-    'vogliono',
-    'devo',
-    'devi',
-    'deve',
-    'dobbiamo',
-    'dovete',
-    'devono',
-    'sapere',
-    'vedere',
-    'venire',
-    'dare',
-    'parlare',
-    'trovare',
-    'pensare',
-    'credere',
-    'prendere',
-    'chiedere',
-    'lasciare',
-    'cercare',
-    'lavorare',
-    'studiare',
-    'leggere',
-    'scrivere',
-    'capire',
-    'vivere',
-    'morire',
-    'nascere',
-    'crescere',
-    'cominciare',
-    'finire',
-    'continuare',
-    'restare',
-    'rimanere',
-    'diventare',
-    'sembrare',
-    'servire',
-    'bastare',
-    'mancare',
-    'piacere',
-    'succedere',
-    'valere',
-    'contenere',
-    'ottenere',
-    'ricevere',
-    'offrire',
-    'decidere',
-    'dividere',
-    'vincere',
-    'perdere',
-    'salire',
-    'scendere',
-    'cadere',
-    'mettere',
-    'tenere',
-    'portare',
-    'guardare',
-    'sentire',
-    'importare',
-    'cambiare',
-    'passare',
-    'arrivare',
-    'partire',
-    'tornare',
-    'entrare',
-    'uscire',
-    'aprire',
-    'chiudere',
-    'accendere',
-    'spegnere',
-    'invece',
-    'inoltre',
-    'quindi',
-    'pertanto',
-    'dunque',
-    'cioè',
-    'cioe',
-    'tuttavia',
-    'altrimenti',
-    'comunque',
-    'anzi',
-    'oppure',
-    'ovvero',
-    'ossia',
-    'infatti',
-    'davvero',
-    'forse',
-    'probabilmente',
-    'certamente',
-    'sicuramente',
-    'veramente',
-  ]);
 
   private db: IDBDatabase | null = null;
   private initPromise: Promise<void> | null = null;
@@ -483,22 +90,12 @@ export class ProjectService {
     this.documents.set(docs);
   }
 
-  private async computeHash(text: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-      .slice(0, 16);
+  private computeHash(text: string): Promise<string> {
+    return this.textProc.computeHash(text);
   }
 
   private extractKeywords(text: string): string[] {
-    const words = text.toLowerCase().split(/\s+/);
-    return Array.from(
-      new Set(words.filter((w) => w.length >= 2 && !ProjectService.STOP_WORDS.has(w))),
-    );
+    return this.textProc.extractKeywords(text);
   }
 
   private chunkText(
@@ -508,49 +105,10 @@ export class ProjectService {
     chunkSize: number = 256,
     overlap: number = 32,
   ): Omit<ProjectChunk, 'id' | 'hash'>[] {
-    const words = text.split(/\s+/);
-    const result: Omit<ProjectChunk, 'id' | 'hash'>[] = [];
-    for (let i = 0; i < words.length; i += chunkSize - overlap) {
-      const chunkWords = words.slice(i, i + chunkSize);
-      const chunkText = chunkWords.join(' ');
-      result.push({
-        text: chunkText,
-        docId,
-        docName: source,
-        position: i,
-        keywords: this.extractKeywords(chunkText),
-      });
-      if (i + chunkSize >= words.length) break;
-    }
-    return result;
-  }
-
-  private async extractTextFromPdf(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useSystemFonts: true,
-      disableFontFace: false,
-    }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items.map((item: any) => item.str);
-      fullText += strings.join(' ') + '\n';
-    }
-    return fullText;
-  }
-
-  private async extractTextFromHtml(file: File): Promise<string> {
-    const html = await file.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    return doc.body.innerText || '';
+    return this.textProc.chunkText(text, source, docId, chunkSize, overlap);
   }
 
   async processFile(file: File): Promise<void> {
-    const extension = file.name.split('.').pop()?.toLowerCase();
     const fileHash = await this.computeHash(file.name + file.size + file.lastModified);
 
     const existing = this.documents().find((d) => d.hash === fileHash);
@@ -560,16 +118,8 @@ export class ProjectService {
     this.processingStatus.set(`Parsing "${file.name}"...`);
 
     try {
-      let text = '';
-      if (file.type === 'application/pdf' || extension === 'pdf') {
-        text = await this.extractTextFromPdf(file);
-      } else if (file.type === 'text/html' || extension === 'html' || extension === 'htm') {
-        text = await this.extractTextFromHtml(file);
-      } else if (file.type === 'text/plain' || extension === 'txt' || extension === 'md') {
-        text = await file.text();
-      } else {
-        throw new Error(`Unsupported file type: ${extension}`);
-      }
+      const text = await this.textProc.extractTextFromFile(file);
+      const extension = file.name.split('.').pop()?.toLowerCase();
 
       const docId = crypto.randomUUID();
       const doc: ProjectDocument = {
@@ -619,7 +169,9 @@ export class ProjectService {
     maxWords: number = 800,
   ): Promise<{ text: string; docName: string }[]> {
     const allWords = query.toLowerCase().split(/\s+/);
-    const queryWords = allWords.filter((w) => w.length >= 2 && !ProjectService.STOP_WORDS.has(w));
+    const queryWords = allWords.filter(
+      (w) => w.length >= 2 && !TextProcessingService.STOP_WORDS.has(w),
+    );
 
     if (queryWords.length === 0) return [];
 

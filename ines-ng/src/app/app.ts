@@ -99,8 +99,8 @@ export class AppComponent implements OnInit {
   activeTab = signal<Tab>('chat');
   overlayOpen = signal(true); // show on load
   infoOpen = signal(false);
-  toast = inject(ToastService);
-  llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  readonly llm = inject(LlmService);
 
   ngOnInit() {
     // 1. Try to load from IndexedDB cache first

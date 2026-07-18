@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 
@@ -22,9 +23,10 @@ interface ChunkRef {
   host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },
 })
 export class KnowledgeManagerTabComponent implements OnInit {
-  llm = inject(LlmService);
-  km = inject(KnowledgeManagerService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly km = inject(KnowledgeManagerService);
+  readonly toast = inject(ToastService);
+  private readonly dom = inject(DomUtilsService);
 
   activeSubTab = signal<'chat' | 'saved'>('chat');
   userInput = signal('');
@@ -111,14 +113,10 @@ export class KnowledgeManagerTabComponent implements OnInit {
   async exportKB() {
     try {
       const blob = await this.km.exportKnowledgeBase();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ines-knowledge-${new Date().toISOString().slice(0, 10)}.ines-knowledge`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      this.dom.downloadBlob(
+        blob,
+        `ines-knowledge-${new Date().toISOString().slice(0, 10)}.ines-knowledge`,
+      );
       this.toast.success('Knowledge base exported');
     } catch (err: any) {
       this.toast.error('Export failed: ' + err.message);

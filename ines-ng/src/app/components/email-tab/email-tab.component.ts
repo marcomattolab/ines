@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_EMAIL = `You are a professional in corporate communication and professional writing.
@@ -28,8 +29,9 @@ Use the language of the original text.`;
 export class EmailTabComponent implements OnDestroy {
   readonly emailInputRef = viewChild.required<ElementRef<HTMLTextAreaElement>>('emailInput');
 
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  private readonly dom = inject(DomUtilsService);
 
   tone = signal('professional');
   action = signal('improve');
@@ -76,11 +78,7 @@ export class EmailTabComponent implements OnDestroy {
   }
 
   resultHtml() {
-    return this.result()
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
+    return this.dom.escapeHtml(this.result());
   }
 
   async process() {
@@ -119,7 +117,7 @@ export class EmailTabComponent implements OnDestroy {
   }
 
   copy() {
-    navigator.clipboard.writeText(this.result()).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(this.result()).then(() => this.toast.show('📋 Copied!'));
   }
 
   clear() {

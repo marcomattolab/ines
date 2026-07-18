@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
@@ -23,14 +24,13 @@ Be concise and use the language of the transcript. Format the result clearly.`;
   styleUrl: './meeting-tab.css',
 })
 export class MeetingTabComponent implements OnDestroy {
-  llm = inject(LlmService);
-  toast = inject(ToastService);
-  speech = inject(SpeechService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  readonly speech = inject(SpeechService);
+  private readonly dom = inject(DomUtilsService);
 
   transcript = signal('');
   summary = signal('');
-  recording = signal(false);
-  timerText = signal('');
 
   readonly isTranscriptSpeaking = computed(
     () => this.speech.speaking() && this.speech.activeId() === 'meet-trans',
@@ -38,6 +38,8 @@ export class MeetingTabComponent implements OnDestroy {
   readonly isSummarySpeaking = computed(
     () => this.speech.speaking() && this.speech.activeId() === 'meet-sum',
   );
+  readonly recording = this.speech.recording;
+  readonly timerText = this.speech.recordingTimer;
 
   toggleSpeakTranscript() {
     this.speech.toggle('meet-trans', this.transcript());
@@ -47,80 +49,26 @@ export class MeetingTabComponent implements OnDestroy {
     this.speech.toggle('meet-sum', this.summary());
   }
 
-  private recognition: any = null;
-  private fullTranscript = '';
-  private seconds = 0;
-  private intervalId: ReturnType<typeof setInterval> | null = null;
-
   toggleRecording() {
-    this.recording() ? this.stopRecording() : this.startRecording();
+    this.speech.recording() ? this.stopRecording() : this.startRecording();
   }
 
   startRecording() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
+    const ok = this.speech.startRecording(this.transcript(), (text) => this.transcript.set(text));
+    if (!ok) {
       this.toast.show('⚠️ Web Speech API not supported in this browser');
-      return;
     }
-
-    this.recognition = new SR();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = navigator.language || 'en-US';
-
-    this.recognition.onresult = (e: any) => {
-      let interim = '',
-        final = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) final += t + ' ';
-        else interim += t;
-      }
-      if (final) this.fullTranscript += final;
-      this.transcript.set(this.fullTranscript + (interim ? `[${interim}]` : ''));
-    };
-
-    this.recognition.onerror = (e: any) => {
-      if (e.error !== 'no-speech') this.toast.show('⚠️ Mic error: ' + e.error);
-    };
-
-    this.recognition.onend = () => {
-      if (this.recording() && this.recognition) this.recognition.start();
-    };
-
-    this.recognition.start();
-    this.recording.set(true);
-    this.seconds = 0;
-
-    this.intervalId = setInterval(() => {
-      this.seconds++;
-      const m = Math.floor(this.seconds / 60)
-        .toString()
-        .padStart(2, '0');
-      const s = (this.seconds % 60).toString().padStart(2, '0');
-      this.timerText.set(`⏱ ${m}:${s}`);
-    }, 1000);
   }
 
   stopRecording() {
-    if (this.recognition) {
-      this.recording.set(false);
-      this.recognition.stop();
-      this.recognition = null;
-    } else {
-      this.recording.set(false);
-    }
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-    if (this.fullTranscript.trim() && this.llm.isReady()) {
+    this.speech.stopRecording();
+    if (this.transcript().trim() && this.llm.isReady()) {
       setTimeout(() => this.summarize(), 500);
     }
   }
 
   async summarize() {
-    const text = this.fullTranscript.trim() || this.transcript().trim();
+    const text = this.transcript().trim();
     if (!text) {
       this.toast.show('⚠️ No transcript available');
       return;
@@ -142,14 +90,12 @@ export class MeetingTabComponent implements OnDestroy {
   }
 
   clear() {
-    this.fullTranscript = '';
     this.transcript.set('');
     this.summary.set('');
-    this.timerText.set('');
   }
 
   copy(text: string) {
-    navigator.clipboard.writeText(text).then(() => this.toast.show('📋 Copied!'));
+    this.dom.copyToClipboard(text).then(() => this.toast.show('📋 Copied!'));
   }
 
   exportSummary(fmt: 'md' | 'txt') {
@@ -174,17 +120,11 @@ export class MeetingTabComponent implements OnDestroy {
       '',
       fmt === 'md' ? '_Exported from INES_' : 'Exported from INES',
     ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meeting-summary-${ts}.${fmt}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.dom.downloadText(lines.join('\n'), `meeting-summary-${ts}.${fmt}`);
     this.toast.show(`📄 Exported as .${fmt}`);
   }
 
   ngOnDestroy() {
-    this.stopRecording();
+    this.speech.abortRecording();
   }
 }

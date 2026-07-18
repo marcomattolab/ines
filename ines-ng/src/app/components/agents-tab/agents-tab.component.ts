@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AgentService, Agent, Skill } from '../../core/services/agent.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
@@ -31,9 +32,10 @@ interface UiMessage {
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class AgentsTabComponent implements AfterViewChecked {
-  agentSvc = inject(AgentService);
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly agentSvc = inject(AgentService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  private readonly dom = inject(DomUtilsService);
 
   selectedAgent = signal<Agent | null>(this.agentSvc.agents()[0] || null);
   activeMode = signal<'chat' | 'edit'>('chat');
@@ -217,10 +219,6 @@ export class AgentsTabComponent implements AfterViewChecked {
   }
 
   html(text: string) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
+    return this.dom.escapeHtml(text);
   }
 }

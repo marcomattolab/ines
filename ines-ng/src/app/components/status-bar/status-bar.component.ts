@@ -11,7 +11,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   styleUrl: './status-bar.css',
 })
 export class StatusBarComponent {
-  llm = inject(LlmService);
+  readonly llm = inject(LlmService);
   openLoader = output<void>();
   openInfo = output<void>();
 }

@@ -14,6 +14,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 
 interface UiMessage {
   id: number;
@@ -47,8 +48,9 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly chatArea = viewChild.required<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild.required<ElementRef<HTMLTextAreaElement>>('inputEl');
 
-  llm = inject(LlmService);
-  toast = inject(ToastService);
+  readonly llm = inject(LlmService);
+  readonly toast = inject(ToastService);
+  private readonly dom = inject(DomUtilsService);
 
   messages = signal<UiMessage[]>([
     {
@@ -201,10 +203,6 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   html(text: string) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
+    return this.dom.escapeHtml(text);
   }
 }

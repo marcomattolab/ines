@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
@@ -6,6 +6,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
 Translate the given text EXACTLY as requested, preserving style, tone and formatting.
@@ -27,7 +28,7 @@ const LANGUAGES = [
 @Component({
   selector: 'app-translate-tab',
   standalone: true,
-  imports: [FormsModule, MatIconModule, ButtonComponent],
+  imports: [FormsModule, MatIconModule, ButtonComponent, DropdownComponent],
   templateUrl: './translate-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
@@ -38,29 +39,21 @@ export class TranslateTabComponent implements OnDestroy {
   private readonly dom = inject(DomUtilsService);
 
   languages = LANGUAGES;
+
+  readonly fromLangOptions = computed(() => [
+    { value: 'auto', label: 'Auto-detect', icon: 'auto_awesome' },
+    ...this.languages.map((l) => ({ value: l.value, label: l.label })),
+  ]);
+
+  readonly toLangOptions = computed(() =>
+    this.languages.map((l) => ({ value: l.value, label: l.label })),
+  );
+
   fromLang = signal('auto');
   toLang = signal('English');
   inputText = signal('');
   result = signal('');
   translating = signal(false);
-
-  fromLangOpen = signal(false);
-  toLangOpen = signal(false);
-
-  getFromLangLabel(): string {
-    if (this.fromLang() === 'auto') return 'Auto-detect';
-    return this.languages.find((l) => l.value === this.fromLang())?.label ?? '';
-  }
-
-  getToLangLabel(): string {
-    return this.languages.find((l) => l.value === this.toLang())?.label ?? '';
-  }
-
-  @HostListener('document:click')
-  onDocumentClick() {
-    this.fromLangOpen.set(false);
-    this.toLangOpen.set(false);
-  }
 
   readonly isSourceSpeaking = computed(
     () => this.speech.speaking() && this.speech.activeId() === 'trans-source',

@@ -1,4 +1,5 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
+import { StorageService } from './storage.service';
 
 export interface Skill {
   id: string;
@@ -184,21 +185,22 @@ const DEFAULT_AGENTS: Agent[] = [
 
 @Injectable({ providedIn: 'root' })
 export class AgentService {
-  readonly agents = signal<Agent[]>(this.loadFromStorage(AGENTS_STORAGE_KEY, DEFAULT_AGENTS));
-  readonly skills = signal<Skill[]>(this.loadFromStorage(SKILLS_STORAGE_KEY, DEFAULT_SKILLS));
+  private readonly storage = inject(StorageService);
+
+  readonly agents = signal<Agent[]>(
+    this.storage.get<Agent[]>(AGENTS_STORAGE_KEY) ?? DEFAULT_AGENTS,
+  );
+  readonly skills = signal<Skill[]>(
+    this.storage.get<Skill[]>(SKILLS_STORAGE_KEY) ?? DEFAULT_SKILLS,
+  );
 
   constructor() {
     effect(() => {
-      localStorage.setItem(AGENTS_STORAGE_KEY, JSON.stringify(this.agents()));
+      this.storage.set(AGENTS_STORAGE_KEY, this.agents());
     });
     effect(() => {
-      localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(this.skills()));
+      this.storage.set(SKILLS_STORAGE_KEY, this.skills());
     });
-  }
-
-  private loadFromStorage<T>(key: string, defaultValue: T): T {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
   }
 
   // Agent CRUD

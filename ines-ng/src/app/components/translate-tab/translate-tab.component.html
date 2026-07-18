@@ -18,54 +18,7 @@
         class="flex items-center gap-2.5 px-4 py-[10px] shrink-0 border-b border-[var(--border)]"
       >
         <!-- Source Language Dropdown -->
-        <div class="relative flex-1 min-w-0" (click)="$event.stopPropagation()">
-          <button
-            class="pill-select flex items-center gap-2 w-full"
-            (click)="fromLangOpen.set(!fromLangOpen())"
-          >
-            @if (fromLang() === 'auto') {
-              <mat-icon
-                fontIcon="auto_awesome"
-                class="text-sm w-3.5 h-3.5 flex-shrink-0 text-accent-amber"
-              ></mat-icon>
-            }
-            <span class="flex-1 text-left truncate">{{ getFromLangLabel() }}</span>
-            <mat-icon
-              fontIcon="expand_more"
-              class="text-sm w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="fromLangOpen()"
-            ></mat-icon>
-          </button>
-          @if (fromLangOpen()) {
-            <div
-              class="absolute top-full left-0 mt-1.5 z-50 min-w-full w-max max-w-[220px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-1 overflow-hidden"
-            >
-              <button
-                class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
-                [class.text-accent-amber]="fromLang() === 'auto'"
-                [class.text-zinc-300]="fromLang() !== 'auto'"
-                (click)="fromLang.set('auto'); fromLangOpen.set(false)"
-              >
-                <mat-icon
-                  fontIcon="auto_awesome"
-                  class="text-sm w-3.5 h-3.5 flex-shrink-0"
-                ></mat-icon>
-                <span>Auto-detect</span>
-              </button>
-              <div class="h-px bg-white/10 mx-2 my-1"></div>
-              @for (lang of languages; track lang.value) {
-                <button
-                  class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
-                  [class.text-accent-amber]="fromLang() === lang.value"
-                  [class.text-zinc-300]="fromLang() !== lang.value"
-                  (click)="fromLang.set(lang.value); fromLangOpen.set(false)"
-                >
-                  <span>{{ lang.label }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
+        <app-dropdown [options]="fromLangOptions()" [(value)]="fromLang" class="flex-1 min-w-0" />
         <app-button
           variant="ghost"
           size="sm"
@@ -104,35 +57,7 @@
           <mat-icon fontIcon="swap_horiz" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
         <!-- Target Language Dropdown -->
-        <div class="relative flex-1 min-w-0" (click)="$event.stopPropagation()">
-          <button
-            class="pill-select flex items-center gap-2 w-full"
-            (click)="toLangOpen.set(!toLangOpen())"
-          >
-            <span class="flex-1 text-left truncate">{{ getToLangLabel() }}</span>
-            <mat-icon
-              fontIcon="expand_more"
-              class="text-sm w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="toLangOpen()"
-            ></mat-icon>
-          </button>
-          @if (toLangOpen()) {
-            <div
-              class="absolute top-full left-0 mt-1.5 z-50 min-w-full w-max max-w-[220px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-1 overflow-hidden"
-            >
-              @for (lang of languages; track lang.value) {
-                <button
-                  class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
-                  [class.text-accent-amber]="toLang() === lang.value"
-                  [class.text-zinc-300]="toLang() !== lang.value"
-                  (click)="toLang.set(lang.value); toLangOpen.set(false)"
-                >
-                  <span>{{ lang.label }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
+        <app-dropdown [options]="toLangOptions()" [(value)]="toLang" class="flex-1 min-w-0" />
         <app-button
           variant="ghost"
           size="sm"

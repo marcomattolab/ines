@@ -14,85 +14,8 @@
   </div>
 
   <div class="flex gap-2 items-center flex-wrap px-[22px] py-3 shrink-0">
-    <!-- Tone Dropdown -->
-    <div class="relative" (click)="$event.stopPropagation()">
-      <button
-        class="pill-select flex items-center gap-2 min-w-[120px]"
-        (click)="toneOpen.set(!toneOpen())"
-      >
-        <mat-icon
-          fontIcon="{{ getToneIcon() }}"
-          class="text-sm w-3.5 h-3.5 flex-shrink-0"
-        ></mat-icon>
-        <span class="flex-1 text-left truncate">{{ getToneLabel() }}</span>
-        <mat-icon
-          fontIcon="expand_more"
-          class="text-sm w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-          [class.rotate-180]="toneOpen()"
-        ></mat-icon>
-      </button>
-      @if (toneOpen()) {
-        <div
-          class="absolute top-full left-0 mt-1.5 z-50 min-w-full w-max max-w-[200px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-1 overflow-hidden"
-        >
-          @for (opt of toneOptions; track opt.value) {
-            <button
-              class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
-              [class.text-accent-blue]="tone() === opt.value"
-              [class.text-zinc-300]="tone() !== opt.value"
-              (click)="tone.set(opt.value); toneOpen.set(false)"
-            >
-              <mat-icon
-                fontIcon="{{ opt.icon }}"
-                class="text-sm w-3.5 h-3.5 flex-shrink-0"
-                [class.text-accent-blue]="tone() === opt.value"
-              ></mat-icon>
-              <span>{{ opt.label }}</span>
-            </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Action Dropdown -->
-    <div class="relative" (click)="$event.stopPropagation()">
-      <button
-        class="pill-select flex items-center gap-2 min-w-[120px]"
-        (click)="actionOpen.set(!actionOpen())"
-      >
-        <mat-icon
-          fontIcon="{{ getActionIcon() }}"
-          class="text-sm w-3.5 h-3.5 flex-shrink-0"
-        ></mat-icon>
-        <span class="flex-1 text-left truncate">{{ getActionLabel() }}</span>
-        <mat-icon
-          fontIcon="expand_more"
-          class="text-sm w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-          [class.rotate-180]="actionOpen()"
-        ></mat-icon>
-      </button>
-      @if (actionOpen()) {
-        <div
-          class="absolute top-full left-0 mt-1.5 z-50 min-w-full w-max max-w-[200px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-1 overflow-hidden"
-        >
-          @for (opt of actionOptions; track opt.value) {
-            <button
-              class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
-              [class.text-accent-blue]="action() === opt.value"
-              [class.text-zinc-300]="action() !== opt.value"
-              (click)="action.set(opt.value); actionOpen.set(false)"
-            >
-              <mat-icon
-                fontIcon="{{ opt.icon }}"
-                class="text-sm w-3.5 h-3.5 flex-shrink-0"
-                [class.text-accent-blue]="action() === opt.value"
-              ></mat-icon>
-              <span>{{ opt.label }}</span>
-            </button>
-          }
-        </div>
-      }
-    </div>
+    <app-dropdown [options]="toneOptions" [(value)]="tone" class="min-w-[120px]" />
+    <app-dropdown [options]="actionOptions" [(value)]="action" class="min-w-[120px]" />
     <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
       <mat-icon
         [fontIcon]="processing() ? 'hourglass_empty' : 'send'"

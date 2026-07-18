@@ -1,25 +1,16 @@
-import { Injectable, signal, inject } from '@angular/core';
-import { TextProcessingService } from './text-processing.service';
+import { Injectable } from '@angular/core';
+import {
+  BaseIndexedDbService,
+  BaseDocument,
+  BaseChunk,
+  RagResult,
+} from './base-indexed-db.service';
 
-export interface KnowledgeDocument {
-  id: string;
-  name: string;
-  type: string;
-  date: number;
-  size: number;
-  hash: string;
+export interface KnowledgeDocument extends BaseDocument {
   tags: string[];
 }
 
-export interface KnowledgeChunk {
-  id: string;
-  docId: string;
-  docName: string;
-  text: string;
-  position: number;
-  keywords: string[];
-  hash: string;
-}
+export interface KnowledgeChunk extends BaseChunk {}
 
 export interface KnowledgeQA {
   id: string;
@@ -37,239 +28,32 @@ export interface ExportPayload {
   qas: KnowledgeQA[];
 }
 
-interface ChunkWithScore {
-  chunk: KnowledgeChunk;
-  score: number;
-}
-
 const DB_NAME = 'InesKnowledgeDB';
 const DB_VERSION = 1;
+const QA_STORE = 'qas';
+const GRAPH_STORE = 'graph';
 
 @Injectable({ providedIn: 'root' })
-export class KnowledgeManagerService {
-  private readonly textProc = inject(TextProcessingService);
+export class KnowledgeManagerService extends BaseIndexedDbService<
+  KnowledgeDocument,
+  KnowledgeChunk
+> {
+  protected override readonly dbName = DB_NAME;
+  protected override readonly dbVersion = DB_VERSION;
 
-  readonly documents = signal<KnowledgeDocument[]>([]);
-  readonly isProcessing = signal(false);
-  readonly processingStatus = signal('');
-
-  private db: IDBDatabase | null = null;
-  private initPromise: Promise<void> | null = null;
-
-  private async ensureDB(): Promise<IDBDatabase> {
-    if (this.db) return this.db;
-    if (this.initPromise) return this.initPromise.then(() => this.db!);
-    this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains('documents')) {
-          db.createObjectStore('documents', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('chunks')) {
-          const chunkStore = db.createObjectStore('chunks', { keyPath: 'id' });
-          chunkStore.createIndex('docId', 'docId', { unique: false });
-        }
-        if (!db.objectStoreNames.contains('qas')) {
-          db.createObjectStore('qas', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('graph')) {
-          db.createObjectStore('graph', { keyPath: 'id' });
-        }
-      };
-      request.onsuccess = () => {
-        this.db = request.result;
-        resolve();
-      };
-      request.onerror = () => reject(request.error);
-    });
-    return this.initPromise.then(() => this.db!);
-  }
-
-  private async getAllFromStore<T>(storeName: string): Promise<T[]> {
-    const db = await this.ensureDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  private async putInStore(storeName: string, value: any): Promise<void> {
-    const db = await this.ensureDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      store.put(value);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  private async deleteFromStore(storeName: string, id: string): Promise<void> {
-    const db = await this.ensureDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      store.delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  private async clearStore(storeName: string): Promise<void> {
-    const db = await this.ensureDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      store.clear();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  async loadDocuments(): Promise<void> {
-    const docs = await this.getAllFromStore<KnowledgeDocument>('documents');
-    this.documents.set(docs);
-  }
-
-  private computeHash(text: string): Promise<string> {
-    return this.textProc.computeHash(text);
-  }
-
-  private extractKeywords(text: string): string[] {
-    return this.textProc.extractKeywords(text);
-  }
-
-  private chunkText(
-    text: string,
-    source: string,
-    docId: string,
-    chunkSize: number = 256,
-    overlap: number = 32,
-  ): Omit<KnowledgeChunk, 'id' | 'hash'>[] {
-    return this.textProc.chunkText(text, source, docId, chunkSize, overlap);
-  }
-
-  async processFile(file: File): Promise<void> {
-    const fileHash = await this.computeHash(file.name + file.size + file.lastModified);
-
-    const existing = this.documents().find((d) => d.hash === fileHash);
-    if (existing) throw new Error(`Duplicate: "${file.name}" already in knowledge base`);
-
-    this.isProcessing.set(true);
-    this.processingStatus.set(`Parsing "${file.name}"...`);
-
-    try {
-      const text = await this.textProc.extractTextFromFile(file);
-      const extension = file.name.split('.').pop()?.toLowerCase();
-
-      const docId = crypto.randomUUID();
-      const doc: KnowledgeDocument = {
-        id: docId,
-        name: file.name,
-        type: extension || 'unknown',
-        date: Date.now(),
-        size: file.size,
-        hash: fileHash,
-        tags: [],
-      };
-
-      this.processingStatus.set(`Chunking "${file.name}"...`);
-      const rawChunks = this.chunkText(text, file.name, docId);
-
-      const db = await this.ensureDB();
-      const tx = db.transaction(['documents', 'chunks'], 'readwrite');
-      const docStore = tx.objectStore('documents');
-      const chunkStore = tx.objectStore('chunks');
-
-      docStore.put(doc);
-
-      for (const raw of rawChunks) {
-        const chunkHash = await this.computeHash(raw.text);
-        const chunk: KnowledgeChunk = {
-          id: crypto.randomUUID(),
-          ...raw,
-          hash: chunkHash,
-        };
-        chunkStore.put(chunk);
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-
-      this.documents.update((list) => [...list, doc]);
-    } finally {
-      this.isProcessing.set(false);
-      this.processingStatus.set('');
+  protected override onUpgrade(db: IDBDatabase): void {
+    if (!db.objectStoreNames.contains(QA_STORE)) {
+      db.createObjectStore(QA_STORE, { keyPath: 'id' });
+    }
+    if (!db.objectStoreNames.contains(GRAPH_STORE)) {
+      db.createObjectStore(GRAPH_STORE, { keyPath: 'id' });
     }
   }
 
-  async getRelevantChunks(
-    query: string,
-    topK: number = 3,
-    maxWords: number = 800,
-  ): Promise<{ text: string; docName: string }[]> {
-    const allWords = query.toLowerCase().split(/\s+/);
-    const queryWords = allWords.filter(
-      (w) => w.length >= 2 && !TextProcessingService.STOP_WORDS.has(w),
-    );
-
-    if (queryWords.length === 0) return [];
-
-    const allChunks = await this.getAllFromStore<KnowledgeChunk>('chunks');
-    if (allChunks.length === 0) return [];
-
-    const queryLower = query.toLowerCase();
-
-    const scored: ChunkWithScore[] = allChunks.map((chunk) => {
-      let score = 0;
-      const lower = chunk.text.toLowerCase();
-
-      // Score 1: exact phrase match (highest weight)
-      if (lower.includes(queryLower)) score += 5;
-
-      // Score 2: individual keyword matches (word-boundary only)
-      for (const word of queryWords) {
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
-        const matches = lower.match(regex);
-        if (matches) {
-          score += matches.length;
-        }
-      }
-
-      // Score 3: keyword overlap with pre-computed doc keywords
-      const docKeywords = chunk.keywords || [];
-      for (const kw of docKeywords) {
-        if (queryWords.includes(kw)) score += 2;
-      }
-
-      // Score 4: all query words found in chunk (bonus for completeness)
-      const allFound = queryWords.every((w) => lower.includes(w));
-      if (allFound) score += 3;
-
-      return { chunk, score };
-    });
-
-    const sorted = scored.sort((a, b) => b.score - a.score);
-    const result: { text: string; docName: string }[] = [];
-    let wordCount = 0;
-
-    for (const item of sorted) {
-      if (item.score === 0 && result.length > 0) break;
-      if (result.length >= topK) break;
-      const chunkWords = item.chunk.text.split(/\s+/).length;
-      if (result.length > 0 && wordCount + chunkWords > maxWords) break;
-      result.push({ text: item.chunk.text, docName: item.chunk.docName });
-      wordCount += chunkWords;
-    }
-
-    return result;
+  override async clearAll(): Promise<void> {
+    await super.clearAll();
+    await this.clearStore(QA_STORE);
+    await this.clearStore(GRAPH_STORE);
   }
 
   async getChunksByDocName(docName: string): Promise<{ text: string; position: number }[]> {
@@ -278,31 +62,6 @@ export class KnowledgeManagerService {
       .filter((c) => c.docName === docName)
       .sort((a, b) => a.position - b.position)
       .map((c) => ({ text: c.text, position: c.position }));
-  }
-
-  async deleteDocument(id: string): Promise<void> {
-    const db = await this.ensureDB();
-    const tx = db.transaction(['documents', 'chunks'], 'readwrite');
-    const docStore = tx.objectStore('documents');
-    const chunkIndex = tx.objectStore('chunks').index('docId');
-    const chunkRequest = chunkIndex.getAllKeys(id);
-
-    chunkRequest.onsuccess = () => {
-      const chunkKeys = chunkRequest.result;
-      const chunkStore = tx.objectStore('chunks');
-      for (const key of chunkKeys) {
-        chunkStore.delete(key);
-      }
-    };
-
-    docStore.delete(id);
-
-    await new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-
-    this.documents.update((list) => list.filter((d) => d.id !== id));
   }
 
   async saveQA(
@@ -317,22 +76,22 @@ export class KnowledgeManagerService {
       sources,
       date: Date.now(),
     };
-    await this.putInStore('qas', qa);
+    await this.putInStore(QA_STORE, qa);
   }
 
   async getQAs(): Promise<KnowledgeQA[]> {
-    const all = await this.getAllFromStore<KnowledgeQA>('qas');
+    const all = await this.getAllFromStore<KnowledgeQA>(QA_STORE);
     return all.sort((a, b) => b.date - a.date);
   }
 
   async deleteQA(id: string): Promise<void> {
-    await this.deleteFromStore('qas', id);
+    await this.deleteFromStore(QA_STORE, id);
   }
 
   async exportKnowledgeBase(): Promise<Blob> {
     const documents = await this.getAllFromStore<KnowledgeDocument>('documents');
     const chunks = await this.getAllFromStore<KnowledgeChunk>('chunks');
-    const qas = await this.getAllFromStore<KnowledgeQA>('qas');
+    const qas = await this.getAllFromStore<KnowledgeQA>(QA_STORE);
 
     const payload: ExportPayload = {
       version: 1,
@@ -343,8 +102,7 @@ export class KnowledgeManagerService {
     };
 
     const json = JSON.stringify(payload);
-    const compressed = new Blob([json], { type: 'application/json' });
-    return compressed;
+    return new Blob([json], { type: 'application/json' });
   }
 
   async importKnowledgeBase(
@@ -372,10 +130,10 @@ export class KnowledgeManagerService {
     const existingHashes = new Set(existingDocs.map((d) => d.hash));
     const existingIds = new Set(existingDocs.map((d) => d.id));
 
-    const tx = db.transaction(['documents', 'chunks', 'qas'], 'readwrite');
+    const tx = db.transaction(['documents', 'chunks', QA_STORE], 'readwrite');
     const docStore = tx.objectStore('documents');
     const chunkStore = tx.objectStore('chunks');
-    const qaStore = tx.objectStore('qas');
+    const qaStore = tx.objectStore(QA_STORE);
 
     for (const doc of payload.documents) {
       if (existingHashes.has(doc.hash)) {
@@ -407,18 +165,5 @@ export class KnowledgeManagerService {
 
     await this.loadDocuments();
     return { docsAdded, chunksAdded, qasAdded, duplicates };
-  }
-
-  async clearAll(): Promise<void> {
-    await this.clearStore('documents');
-    await this.clearStore('chunks');
-    await this.clearStore('qas');
-    await this.clearStore('graph');
-    this.documents.set([]);
-  }
-
-  async countChunks(): Promise<number> {
-    const chunks = await this.getAllFromStore<KnowledgeChunk>('chunks');
-    return chunks.length;
   }
 }

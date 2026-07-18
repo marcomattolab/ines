@@ -1,18 +1,11 @@
-import {
-  Component,
-  inject,
-  signal,
-  ElementRef,
-  viewChild,
-  HostListener,
-  OnDestroy,
-} from '@angular/core';
+import { Component, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
 
 const SYSTEM_EMAIL = `You are a professional in corporate communication and professional writing.
 Your task is to edit emails according to the instructions.
@@ -22,7 +15,7 @@ Use the language of the original text.`;
 @Component({
   selector: 'app-email-tab',
   standalone: true,
-  imports: [FormsModule, MatIconModule, ButtonComponent],
+  imports: [FormsModule, MatIconModule, ButtonComponent, DropdownComponent],
   templateUrl: './email-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
@@ -54,28 +47,6 @@ export class EmailTabComponent implements OnDestroy {
     { value: 'reply', label: 'Reply', icon: 'reply' },
     { value: 'summary', label: 'Summary', icon: 'summarize' },
   ];
-
-  toneOpen = signal(false);
-  actionOpen = signal(false);
-
-  getToneIcon(): string {
-    return this.toneOptions.find((t) => t.value === this.tone())?.icon ?? 'badge';
-  }
-  getToneLabel(): string {
-    return this.toneOptions.find((t) => t.value === this.tone())?.label ?? '';
-  }
-  getActionIcon(): string {
-    return this.actionOptions.find((a) => a.value === this.action())?.icon ?? 'auto_fix_high';
-  }
-  getActionLabel(): string {
-    return this.actionOptions.find((a) => a.value === this.action())?.label ?? '';
-  }
-
-  @HostListener('document:click')
-  onDocumentClick() {
-    this.toneOpen.set(false);
-    this.actionOpen.set(false);
-  }
 
   resultHtml() {
     return this.dom.escapeHtml(this.result());

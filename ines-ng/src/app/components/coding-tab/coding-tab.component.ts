@@ -15,6 +15,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { DocFetchService } from '../../core/services/doc-fetch.service';
 import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { SyntaxHighlightService } from '../../core/services/syntax-highlight.service';
+import { StorageService } from '../../core/services/storage.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -199,6 +201,8 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   readonly docFetch = inject(DocFetchService);
   readonly km = inject(KnowledgeManagerService);
   private readonly dom = inject(DomUtilsService);
+  private readonly highlight = inject(SyntaxHighlightService);
+  private readonly storage = inject(StorageService);
 
   messages = signal<UiMessage[]>([
     {
@@ -235,7 +239,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   readonly highlightedCode = computed(() => {
     const f = this.activeFile();
     if (!f) return '';
-    return highlightCode(f.content, f.language);
+    return this.highlight.highlight(f.content, f.language);
   });
 
   private history: ChatMessage[] = [];
@@ -244,15 +248,9 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   showScrollBtn = signal(false);
 
   ngOnInit() {
-    const raw = localStorage.getItem('ines_coding_files');
-    if (!raw) return;
-    try {
-      const stored = JSON.parse(raw);
-      if (Array.isArray(stored) && stored.length > 0) {
-        this.files.set(stored);
-      }
-    } catch {
-      localStorage.removeItem('ines_coding_files');
+    const stored = this.storage.get<CodeFile[]>('ines_coding_files');
+    if (Array.isArray(stored) && stored.length > 0) {
+      this.files.set(stored);
     }
   }
 
@@ -401,15 +399,11 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   }
 
   private persistFiles() {
-    try {
-      const current = this.files();
-      if (current.length > 0) {
-        localStorage.setItem('ines_coding_files', JSON.stringify(current));
-      } else {
-        localStorage.removeItem('ines_coding_files');
-      }
-    } catch {
-      // localStorage full or unavailable
+    const current = this.files();
+    if (current.length > 0) {
+      this.storage.set('ines_coding_files', current);
+    } else {
+      this.storage.remove('ines_coding_files');
     }
   }
 
@@ -558,7 +552,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     this.tokenInfo.set('');
     this.files.set([]);
     this.activeFileIndex.set(0);
-    localStorage.removeItem('ines_coding_files');
+    this.storage.remove('ines_coding_files');
   }
 
   async loadAngularDocs() {
@@ -573,82 +567,5 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
   ngOnDestroy() {
     this.persistFiles();
-  }
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function highlightCode(code: string, lang: string): string {
-  const escaped = escapeHtml(code);
-
-  switch (lang) {
-    case 'typescript':
-    case 'ts':
-      return escaped
-        .replace(
-          /(&quot;[^&]*&quot;|&#39;[^&]*&#39;|`[^`]*`)/g,
-          '<span class="hl-string">$1</span>',
-        )
-        .replace(/(\/\/.*)/g, '<span class="hl-comment">$1</span>')
-        .replace(
-          /\b(import|export|default|from|const|let|var|function|return|if|else|class|interface|type|enum|extends|implements|new|this|super|async|await|try|catch|throw|finally|typeof|instanceof|readonly|private|protected|public|static|abstract|as|in|of|void|never|unknown|any|boolean|string|number|symbol|null|undefined|true|false|switch|case|break|continue|for|while|do|yield|get|set)\b/g,
-          '<span class="hl-keyword">$1</span>',
-        )
-        .replace(
-          /\b(@Component|@Directive|@Pipe|@Injectable|@Input|@Output|@ViewChild|@HostListener|@HostBinding|@NgModule|signal|computed|linkedSignal|input|output|model|viewChild|viewChildren|contentChild|contentChildren|effect|inject|resource|afterRender|afterNextRender|takeUntilDestroyed|outputFromObservable|toSignal|toObservable)\b/g,
-          '<span class="hl-decorator">$1</span>',
-        )
-        .replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-
-    case 'html':
-      return escaped
-        .replace(/(&lt;\/?)([\w-]+)/g, '$1<span class="hl-tag">$2</span>')
-        .replace(/\/?&gt;/g, '<span class="hl-tag">$&</span>')
-        .replace(
-          /(\s[\w-]+)=(&quot;)/g,
-          '<span class="hl-attr">$1</span>=<span class="hl-string">$2',
-        )
-        .replace(/&quot;/g, '&quot;</span>')
-        .replace(/@(\w+)/g, '<span class="hl-decorator">@$1</span>')
-        .replace(
-          /\b(let|@if|@for|@switch|@defer|@placeholder|@loading|@error|@case|@default|@empty|track)\b/g,
-          '<span class="hl-keyword">$1</span>',
-        )
-        .replace(/({{|}})/g, '<span class="hl-brace">$1</span>');
-
-    case 'css':
-    case 'scss':
-      return escaped
-        .replace(/([.#@]?[\w-]+)(?=\s*[{:,])/g, '<span class="hl-selector">$1</span>')
-        .replace(/(:\s*)([^;{}]+)/g, '$1<span class="hl-value">$2</span>')
-        .replace(/\/\*[\s\S]*?\*\//g, '<span class="hl-comment">$&</span>')
-        .replace(
-          /@(media|keyframes|import|supports|layer|container|apply|font-face|page|charset|namespace)\b/g,
-          '<span class="hl-decorator">$&</span>',
-        )
-        .replace(/!important/g, '<span class="hl-keyword">!important</span>')
-        .replace(
-          /(\d+\.?\d*)(px|em|rem|%|vh|vw|ch|ex|deg|s|ms)/g,
-          '<span class="hl-number">$1</span>$2',
-        );
-
-    case 'javascript':
-    case 'js':
-      return escaped
-        .replace(
-          /(&quot;[^&]*&quot;|&#39;[^&]*&#39;|`[^`]*`)/g,
-          '<span class="hl-string">$1</span>',
-        )
-        .replace(/(\/\/.*)/g, '<span class="hl-comment">$1</span>')
-        .replace(
-          /\b(const|let|var|function|return|if|else|class|extends|new|this|async|await|try|catch|throw|import|export|default|from|typeof|instanceof|null|undefined|true|false)\b/g,
-          '<span class="hl-keyword">$1</span>',
-        )
-        .replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-
-    default:
-      return escaped;
   }
 }

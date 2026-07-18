@@ -469,7 +469,7 @@ export class TextProcessingService {
     const html = await file.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    return doc.body.innerText || '';
+    return doc.body.textContent || '';
   }
 
   async extractTextFromFile(file: File): Promise<string> {

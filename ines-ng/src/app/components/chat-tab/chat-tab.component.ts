@@ -11,6 +11,7 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { StorageService } from '../../core/services/storage.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -50,6 +51,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
+  private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
 
   messages = signal<UiMessage[]>([
@@ -69,34 +71,24 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   showScrollBtn = signal(false);
 
   ngOnInit() {
-    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const stored: StoredChat = JSON.parse(raw);
-      if (!stored.messages?.length) return;
-      this.messages.set(stored.messages.map((m) => ({ ...m, streaming: false })));
-      this.history = stored.history ?? [];
-      this.nextId = stored.nextId ?? this.messages().length + 1;
-      this.tokenInfo.set(`${this.history.length} messages in history`);
-    } catch {
-      localStorage.removeItem(CHAT_STORAGE_KEY);
-    }
+    const stored = this.storage.get<StoredChat>(CHAT_STORAGE_KEY);
+    if (!stored?.messages?.length) return;
+    this.messages.set(stored.messages.map((m) => ({ ...m, streaming: false })));
+    this.history = stored.history ?? [];
+    this.nextId = stored.nextId ?? this.messages().length + 1;
+    this.tokenInfo.set(`${this.history.length} messages in history`);
   }
 
   private persist() {
-    try {
-      const msgs = this.messages()
-        .slice(-MAX_STORED_MESSAGES)
-        .map(({ streaming, ...rest }) => rest);
-      const stored: StoredChat = {
-        messages: msgs,
-        history: this.history.slice(-MAX_STORED_MESSAGES),
-        nextId: this.nextId,
-      };
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(stored));
-    } catch {
-      // localStorage full or unavailable
-    }
+    const msgs = this.messages()
+      .slice(-MAX_STORED_MESSAGES)
+      .map(({ streaming, ...rest }) => rest);
+    const stored: StoredChat = {
+      messages: msgs,
+      history: this.history.slice(-MAX_STORED_MESSAGES),
+      nextId: this.nextId,
+    };
+    this.storage.set(CHAT_STORAGE_KEY, stored);
   }
 
   ngAfterViewChecked() {
@@ -195,7 +187,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.history = [];
     this.messages.set([{ id: this.nextId++, role: 'ai', text: 'Chat cleaned. Can I help you?' }]);
     this.tokenInfo.set('');
-    localStorage.removeItem(CHAT_STORAGE_KEY);
+    this.storage.remove(CHAT_STORAGE_KEY);
   }
 
   ngOnDestroy() {

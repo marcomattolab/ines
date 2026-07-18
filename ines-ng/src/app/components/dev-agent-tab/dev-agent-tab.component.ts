@@ -14,6 +14,7 @@ import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AgentService, Agent, Skill } from '../../core/services/agent.service';
 import { ProjectService } from '../../core/services/project.service';
+import { StorageService } from '../../core/services/storage.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
@@ -128,6 +129,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   readonly toast = inject(ToastService);
   readonly agentSvc = inject(AgentService);
   readonly project = inject(ProjectService);
+  private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
 
   readonly chatArea = viewChild<ElementRef<HTMLDivElement>>('chatArea');
@@ -263,37 +265,30 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   ]);
 
   ngOnInit() {
-    const stored = localStorage.getItem('ines_dev_agent');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.repoName) this.repoName.set(parsed.repoName);
-        if (parsed.repoFiles) this.repoFiles.set(parsed.repoFiles);
-        if (parsed.agentId) {
-          const agent = this.agentSvc.agents().find((a) => a.id === parsed.agentId);
-          if (agent) this.selectedAgent.set(agent);
-        }
-        if (parsed.activeMode) this.activeMode.set(parsed.activeMode);
-      } catch {
-        localStorage.removeItem('ines_dev_agent');
+    const parsed = this.storage.get<{
+      repoName: string;
+      repoFiles: unknown[];
+      agentId: string;
+      activeMode: Mode;
+    }>('ines_dev_agent');
+    if (parsed) {
+      if (parsed.repoName) this.repoName.set(parsed.repoName);
+      if (parsed.repoFiles) this.repoFiles.set(parsed.repoFiles as RepoFile[]);
+      if (parsed.agentId) {
+        const agent = this.agentSvc.agents().find((a) => a.id === parsed.agentId);
+        if (agent) this.selectedAgent.set(agent);
       }
+      if (parsed.activeMode) this.activeMode.set(parsed.activeMode);
     }
   }
 
   private persistState() {
-    try {
-      localStorage.setItem(
-        'ines_dev_agent',
-        JSON.stringify({
-          repoName: this.repoName(),
-          repoFiles: this.repoFiles(),
-          agentId: this.selectedAgent()?.id,
-          activeMode: this.activeMode(),
-        }),
-      );
-    } catch {
-      /* quota */
-    }
+    this.storage.set('ines_dev_agent', {
+      repoName: this.repoName(),
+      repoFiles: this.repoFiles(),
+      agentId: this.selectedAgent()?.id,
+      activeMode: this.activeMode(),
+    });
   }
 
   setMode(mode: Mode) {

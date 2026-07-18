@@ -1,0 +1,35 @@
+<button class="pill-select flex items-center gap-2 w-full" (click)="toggle($event)" type="button">
+  @if (displayIcon()) {
+    <mat-icon [fontIcon]="displayIcon()!" class="text-sm w-3.5 h-3.5 flex-shrink-0"></mat-icon>
+  }
+  <span class="flex-1 text-left truncate">{{ displayLabel() }}</span>
+  <mat-icon
+    fontIcon="expand_more"
+    class="text-sm w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
+    [class.rotate-180]="open()"
+  ></mat-icon>
+</button>
+@if (open()) {
+  <div
+    class="absolute top-full left-0 mt-1.5 z-50 min-w-full w-max max-w-[220px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-1 overflow-hidden"
+  >
+    @for (opt of options(); track opt.value) {
+      <button
+        class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-xs font-mono transition-colors hover:bg-white/5"
+        [class.text-accent-blue]="value() === opt.value"
+        [class.text-zinc-300]="value() !== opt.value"
+        (click)="select(opt, $event)"
+        type="button"
+      >
+        @if (opt.icon) {
+          <mat-icon
+            [fontIcon]="opt.icon"
+            class="text-sm w-3.5 h-3.5 flex-shrink-0"
+            [class.text-accent-blue]="value() === opt.value"
+          ></mat-icon>
+        }
+        <span>{{ opt.label }}</span>
+      </button>
+    }
+  </div>
+}

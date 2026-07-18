@@ -1,4 +1,5 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { StorageService } from './storage.service';
 
 export interface Todo {
   id: number;
@@ -11,14 +12,15 @@ const STORAGE_KEY = 'localai_todos';
 
 @Injectable({ providedIn: 'root' })
 export class TodoService {
-  readonly todos = signal<Todo[]>(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+  private readonly storage = inject(StorageService);
+
+  readonly todos = signal<Todo[]>(this.storage.get<Todo[]>(STORAGE_KEY) ?? []);
   private nextId = 0;
 
   constructor() {
     this.nextId = this.todos().reduce((max, t) => Math.max(max, t.id), 0) + 1;
-    // Persist to localStorage whenever todos change
     effect(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.todos()));
+      this.storage.set(STORAGE_KEY, this.todos());
     });
   }
 

@@ -890,3 +890,115 @@ body.theme-light .tab-btn.active {
   background: rgba(0, 0, 0, 0.05) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
+
+/* ── Light theme: message bubbles ── */
+body.theme-light .message.ai .msg-bubble {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-light .message.user .msg-bubble {
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.15) !important;
+}
+
+body.theme-light .msg-content code {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .msg-content pre {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ── Light theme: code blocks & dark panels ── */
+body.theme-light app-coding-tab .bg-\[\#08090c\],
+body.theme-light app-coding-tab .bg-\[\#0c0e14\],
+body.theme-light app-coding-tab [style*='background: #08090c'],
+body.theme-light app-dev-agent-tab .bg-\[\#08090c\],
+body.theme-light app-dev-agent-tab .bg-\[\#0c0e14\] {
+  background-color: #f5f6f8 !important;
+}
+
+body.theme-light app-coding-tab .bg-\[rgba\(13\,16\,23\,0\.45\)\] {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.theme-light app-vision-tab .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-light app-vision-tab .bg-black\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body.theme-light app-learning-tab .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light app-learning-tab .bg-black\/60 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.theme-light app-presentation-tab .bg-\[\#000000\],
+body.theme-light app-presentation-tab [style*='background:#000'] {
+  background-color: #f5f6f8 !important;
+}
+
+/* ── Light theme: presentation tab ── */
+body.theme-light app-presentation-tab .left-panel,
+body.theme-light app-presentation-tab [style*='background: rgba(13, 16, 23'] {
+  background: rgba(255, 255, 255, 0.7) !important;
+  color: #111827 !important;
+}
+
+body.theme-light app-presentation-tab .bg-\[\#000000\] {
+  background-color: #f5f6f8 !important;
+}
+
+/* ── Light theme: learning tab ── */
+body.theme-light app-learning-tab .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light app-learning-tab .bg-zinc-950\/60 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #111827 !important;
+}
+
+body.theme-light app-learning-tab .text-white {
+  color: #111827 !important;
+}
+
+body.theme-light app-learning-tab .text-zinc-300 {
+  color: #374151 !important;
+}
+
+body.theme-light app-learning-tab .text-purple-300 {
+  color: #7c3aed !important;
+}
+
+body.theme-light app-learning-tab .text-amber-300 {
+  color: #d97706 !important;
+}
+
+body.theme-light app-learning-tab .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light app-learning-tab .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ── Light theme: learning tab chat input ── */
+body.theme-light app-learning-tab .bg-zinc-950\/40 {
+  background-color: #f0f2f5 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #111827 !important;
+}
+
+body.theme-light app-learning-tab .bg-zinc-950\/40::placeholder {
+  color: #9ca3af !important;
+}

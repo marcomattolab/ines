@@ -123,13 +123,39 @@
         @if (brandingOpen()) {
           <div class="branding-body">
             <label class="branding-label">
-              Logo
+              Logo Text
               <input
                 class="branding-input"
                 [value]="logo()"
                 (input)="logo.set($any($event.target).value)"
                 placeholder="✦ INES"
               />
+            </label>
+
+            <label class="branding-label">
+              Logo Image
+              <div class="logo-upload-row">
+                <input
+                  type="file"
+                  (change)="onLogoImageSelected($event)"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                @if (logoImage()) {
+                  <div class="logo-preview-chip">
+                    <img [src]="logoImage()" class="logo-thumb" alt="Logo preview" />
+                    <span class="logo-img-name">{{ logoImageName() }}</span>
+                    <button class="clear-btn" (click)="clearLogoImage()">
+                      <mat-icon fontIcon="close" class="!text-xs"></mat-icon>
+                    </button>
+                  </div>
+                } @else {
+                  <div class="logo-upload-placeholder">
+                    <mat-icon fontIcon="image" class="text-zinc-500"></mat-icon>
+                    <span>Upload PNG, JPG, SVG</span>
+                  </div>
+                }
+              </div>
             </label>
             <label class="branding-label">
               Author
@@ -250,7 +276,17 @@
           className="!w-7 !h-7 !p-0"
           title="Download HTML"
         >
-          <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+          <mat-icon fontIcon="code" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!generatedHtml()"
+          (onClick)="downloadPptx()"
+          className="!w-7 !h-7 !p-0"
+          title="Download PPTX"
+        >
+          <mat-icon fontIcon="slideshow" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
       </div>
     </div>
@@ -267,6 +303,20 @@
           <div class="text-[var(--text-2)] text-sm max-w-[350px] text-center">
             Describe the topic, customize your branding, and click Generate to create a slide deck.
           </div>
+        </div>
+      }
+      @if (generating()) {
+        <div class="empty-state">
+          <div class="generating-spinner"></div>
+          <div class="text-[var(--text-1)] font-bold text-lg">Generating Presentation</div>
+          <div class="text-[var(--text-2)] text-sm max-w-[350px] text-center">
+            Crafting slides with on-device AI — this may take a moment for longer decks.
+          </div>
+          @if (slideCount() > 0) {
+            <div class="text-accent-amber font-[var(--font-mono)] text-sm animate-pulse">
+              {{ slideCount() }} slides built so far...
+            </div>
+          }
         </div>
       }
       <iframe

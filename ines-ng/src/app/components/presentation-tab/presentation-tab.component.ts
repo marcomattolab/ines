@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
+import PptxGenJS from 'pptxgenjs';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
@@ -25,22 +26,22 @@ const COLOR_THEMES: Record<ColorTheme, { primary: string; secondary: string; acc
   monochrome: { primary: '#94a3b8', secondary: '#0f111a', accent: '#cbd5e1' },
 };
 
-const SYSTEM_PPT = `You are an expert presentation designer. Generate a complete, self-contained HTML slide deck that looks professional and modern.
+const SYSTEM_PPT = `You are an expert presentation designer. Generate a complete HTML slide deck — modern, visually stunning, and highly readable.
 
 ═══════════════════════════════
-CRITICAL OUTPUT FORMAT RULES
+CRITICAL OUTPUT RULES
 ═══════════════════════════════
 1. Output ONLY valid HTML — no markdown fences, no intro text, no closing remarks.
-2. The HTML must start with <!DOCTYPE html> and contain <html><head><style>...</style></head><body>...
-3. Every slide is <section class="slide" data-slide-number="N"> where N starts at 1.
-4. ALL slides must have data-nav buttons AND page indicator (see SECTION below).
-5. Absolutely no JavaScript — navigation is injected externally.
+2. Start with <!DOCTYPE html> → <html><head><style>...</style></head><body>...
+3. Every slide is <section class="slide" data-slide-number="N"> (N starts at 1).
+4. ALL slides MUST include nav buttons and page indicator at the bottom.
+5. NO JavaScript — navigation is injected externally.
 
 ═══════════════════════════════
-SLIDE STRUCTURE TEMPLATES
+SLIDE TEMPLATES (mix these for variety)
 ═══════════════════════════════
 
-SLIDE 1 — TITLE SLIDE:
+TITLE SLIDE (slide 1):
 <section class="slide hero" data-slide-number="1">
   <div class="slide-content center">
     <div class="logo">{LOGO}</div>
@@ -50,54 +51,89 @@ SLIDE 1 — TITLE SLIDE:
   </div>
 </section>
 
-CONTENT SLIDE (use for slides 2 through N-1):
+STANDARD CONTENT (most common):
 <section class="slide" data-slide-number="N">
   <div class="slide-content">
     <h2 class="slide-heading">Slide Title</h2>
     <div class="grid-2">
-      <div><p>Point one or body text</p></div>
+      <div>
+        <p>Body text or explanation</p>
+        <div class="stat-card"><span class="stat-number">75%</span><span class="stat-label">Key Metric</span></div>
+      </div>
       <div>
         <ul class="bullet-list">
-          <li><strong>Key point:</strong> description</li>
-          <li><strong>Key point:</strong> description</li>
+          <li><strong>Key point:</strong> concise description</li>
+          <li><strong>Key point:</strong> concise description</li>
         </ul>
       </div>
     </div>
   </div>
 </section>
 
-SECTION DIVIDER SLIDE (optional, every 4-5 slides):
-<section class="slide divider" data-slide-number="N">
-  <div class="slide-content center">
-    <h2 class="section-title">New Section Title</h2>
-    <p class="section-subtitle">Brief section description</p>
+BULLET-FOCUS SLIDE (for dense info):
+<section class="slide" data-slide-number="N">
+  <div class="slide-content">
+    <h2 class="slide-heading">Slide Title</h2>
+    <div class="cards-row">
+      <div class="glass-card"><h3>Point 1</h3><p>Explanation or detail text supporting this point.</p></div>
+      <div class="glass-card"><h3>Point 2</h3><p>Explanation or detail text supporting this point.</p></div>
+      <div class="glass-card"><h3>Point 3</h3><p>Explanation or detail text supporting this point.</p></div>
+    </div>
   </div>
 </section>
 
-LAST SLIDE — THANK YOU / CONTACT:
-<section class="slide hero" data-slide-number="N">
+STATS / DATA SLIDE (use at least once):
+<section class="slide" data-slide-number="N">
+  <div class="slide-content">
+    <h2 class="slide-heading">Key Insights</h2>
+    <div class="stats-grid">
+      <div class="stat-card large"><span class="stat-number">3.2x</span><span class="stat-label">Growth Rate</span></div>
+      <div class="stat-card large"><span class="stat-number">$12B</span><span class="stat-label">Market Size</span></div>
+      <div class="stat-card large"><span class="stat-number">94%</span><span class="stat-label">Adoption</span></div>
+    </div>
+  </div>
+</section>
+
+QUOTE / EMPHASIS SLIDE (for impact):
+<section class="slide quote-slide" data-slide-number="N">
+  <div class="slide-content center">
+    <blockquote class="big-quote">"The memorable quote or key takeaway that deserves its own slide."</blockquote>
+    <cite class="quote-author">— Source or Attribution</cite>
+  </div>
+</section>
+
+SECTION DIVIDER (every 4-5 slides):
+<section class="slide divider" data-slide-number="N">
+  <div class="slide-content center">
+    <h2 class="section-title">Section Name</h2>
+    <p class="section-subtitle">Brief transition description</p>
+  </div>
+</section>
+
+THANK YOU / CLOSING (last slide):
+<section class="slide hero closing" data-slide-number="N">
   <div class="slide-content center">
     <h2 class="title">Thank You</h2>
     <p class="subtitle">{CONTACT}</p>
     <p class="author">{AUTHOR}</p>
+    <p class="closing-cta">Let's build the future together</p>
   </div>
 </section>
 
 ═══════════════════════════════
-MANDATORY ELEMENTS ON EVERY SLIDE
+NAVIGATION (in EVERY slide, at the BOTTOM)
 ═══════════════════════════════
-Every <section class="slide"> MUST include at the BOTTOM:
   <div class="slide-nav">
-    <button class="nav-btn prev-btn" data-nav="prev">⬅ Previous</button>
+    <button class="nav-btn prev-btn" data-nav="prev" aria-label="Previous slide">&larr; Previous</button>
     <span class="page-indicator"><span data-page="current">N</span> / <span data-page="total">TOTAL</span></span>
-    <button class="nav-btn next-btn" data-nav="next">Next ➡</button>
+    <button class="nav-btn next-btn" data-nav="next" aria-label="Next slide">Next &rarr;</button>
   </div>
 
 ═══════════════════════════════
-DESIGN SYSTEM
+DESIGN SYSTEM — MUST INCLUDE IN <style>
 ═══════════════════════════════
 
-COLORS — embed these CSS variables in :root:
+:root {
   --color-primary: {PRIMARY};
   --color-secondary: {SECONDARY};
   --color-accent: {ACCENT};
@@ -106,110 +142,116 @@ COLORS — embed these CSS variables in :root:
   --color-text: #f0f2f8;
   --color-text-dim: #8b92a8;
   --color-border: rgba(255, 255, 255, 0.08);
+}
 
-GLOBAL RESET (MUST include these in <style>):
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    height: 100%;
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    overflow: hidden;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-TYPOGRAPHY:
-  --font-heading: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--color-text); }
-  p, li, span { color: var(--color-text); }
-  h1 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; line-height: 1.15; }
-  h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 700; line-height: 1.2; }
-  h3 { font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: 600; }
-  p, li { font-size: clamp(1rem, 2vw, 1.15rem); line-height: 1.7; color: var(--color-text); }
+html, body {
+  height: 100%; background: var(--color-bg); color: var(--color-text);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow: hidden;
+}
 
-LAYOUT:
-  .slide { 
-    display: flex; flex-direction: column; justify-content: center;
-    min-height: 100vh; padding: 60px 80px; position: relative;
-    background: var(--color-bg);
-    color: var(--color-text);
-    overflow: hidden;
-  }
-  .slide-content { max-width: 1100px; margin: 0 auto; width: 100%; }
-  .center { text-align: center; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+h1, h2, h3, h4 { font-weight: 700; color: var(--color-text); }
+h1 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; line-height: 1.15; }
+h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.2; }
+h3 { font-size: clamp(1.2rem, 3vw, 1.5rem); }
+p, li { font-size: clamp(1rem, 2vw, 1.15rem); line-height: 1.7; color: var(--color-text); }
 
-GLASS EFFECTS (apply to cards, panels):
-  background: var(--color-surface);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 24px 28px;
-  color: var(--color-text);
+.slide {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: 100vh; padding: 60px 80px; position: relative;
+  background: var(--color-bg); color: var(--color-text); overflow: hidden;
+}
+.slide-content { max-width: 1100px; margin: 0 auto; width: 100%; }
+.center { text-align: center; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+
+/* Glass cards */
+.glass-card, .stat-card {
+  background: var(--color-surface); backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px); border: 1px solid var(--color-border);
+  border-radius: 20px; padding: 24px 28px; color: var(--color-text);
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
 
-DECORATIVE ELEMENTS — use pseudo-elements for visual interest:
-  .hero::before { content:''; position:absolute; width:600px; height:600px; 
-    background:radial-gradient(circle, var(--color-primary) 0%, transparent 60%); 
-    opacity:0.12; top:-200px; right:-200px; border-radius:50%; pointer-events:none; }
-  .hero::after { content:''; position:absolute; width:400px; height:400px; 
-    background:radial-gradient(circle, var(--color-accent) 0%, transparent 60%); 
-    opacity:0.08; bottom:-150px; left:-150px; border-radius:50%; pointer-events:none; }
+/* Stat cards */
+.stat-number { display: block; font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800;
+  color: var(--color-primary); line-height: 1.1; margin-bottom: 8px; }
+.stat-label { display: block; font-size: 0.95rem; color: var(--color-text-dim); text-transform: uppercase;
+  letter-spacing: 0.06em; font-weight: 600; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
-NAVIGATION BUTTONS:
-  .slide-nav { display:flex; justify-content:space-between; align-items:center; 
-    padding-top:24px; margin-top:auto; }
-  .nav-btn { background:var(--color-surface); backdrop-filter:blur(12px); 
-    border:1px solid var(--color-border); border-radius:12px; padding:10px 20px;
-    color:var(--color-text); font-family:var(--font-body); font-size:0.9rem;
-    cursor:pointer; transition:all 0.25s; }
-  .nav-btn:hover { background:var(--color-primary); border-color:var(--color-primary); 
-    transform:translateY(-2px); box-shadow:0 4px 16px rgba(59,130,246,0.3); }
-  .page-indicator { color:var(--color-text-dim); font-size:0.85rem; 
-    font-family:monospace; }
+/* Quote slide */
+.quote-slide { background: var(--color-secondary); }
+.big-quote { font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: 600; font-style: italic;
+  line-height: 1.5; color: var(--color-text); max-width: 800px; margin: 0 auto 24px; }
+.quote-author { font-size: 1.1rem; color: var(--color-text-dim); font-style: normal; }
+
+/* Decorative blobs on hero slides */
+.hero::before { content:''; position:absolute; width:600px; height:600px;
+  background:radial-gradient(circle, var(--color-primary) 0%, transparent 60%);
+  opacity:0.12; top:-200px; right:-200px; border-radius:50%; pointer-events:none; }
+.hero::after { content:''; position:absolute; width:400px; height:400px;
+  background:radial-gradient(circle, var(--color-accent) 0%, transparent 60%);
+  opacity:0.08; bottom:-150px; left:-150px; border-radius:50%; pointer-events:none; }
+
+/* Divider slide */
+.divider { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-bg) 100%); }
+.section-title { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.section-subtitle { font-size: 1.1rem; color: var(--color-text-dim); margin-top: 12px; }
+
+/* Bullet list styling */
+.bullet-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.bullet-list li { position: relative; padding-left: 24px; }
+.bullet-list li::before { content:''; position:absolute; left:0; top:10px; width:8px; height:8px;
+  border-radius:50%; background:var(--color-primary); }
+
+/* Closing slide */
+.closing-cta { font-size: 1rem; color: var(--color-text-dim); margin-top: 32px; opacity: 0.7; }
+
+/* Navigation */
+.slide-nav { display:flex; justify-content:space-between; align-items:center;
+  padding-top:24px; margin-top:auto; }
+.nav-btn { background:var(--color-surface); backdrop-filter:blur(12px);
+  border:1px solid var(--color-border); border-radius:12px; padding:10px 24px;
+  color:var(--color-text); font-family:inherit; font-size:0.9rem;
+  cursor:pointer; transition:all 0.25s; }
+.nav-btn:hover { background:var(--color-primary); border-color:var(--color-primary);
+  transform:translateY(-2px); box-shadow:0 4px 16px rgba(59,130,246,0.3); }
+.page-indicator { color:var(--color-text-dim); font-size:0.85rem; font-family:monospace; }
 
 ═══════════════════════════════
-CONTENT QUALITY RULES
+CONTENT RULES
 ═══════════════════════════════
-- Maximum 5-7 bullet points per slide — less is more
-- Each bullet should be 10-15 words max — concise key phrases
-- Use visual hierarchy: title → subtitle → key points → supporting detail
-- Alternate between text-heavy and visual slides
-- Section dividers every 4-5 slides to break up pacing
-- Include at least one data/stats slide with a emphasized numbers or a simple visual
-- Title slide: 30% height decorative, 70% content
-- Last slide: include all contact info and a clear call-to-action
+- 3-6 bullet points per slide — every word must earn its place
+- Each bullet: one clear idea, 8-15 words
+- Every slide has ONE main message — don't mix unrelated topics
+- Alternate content types: text → visuals → stats → quote → divider
+- Use glass cards for grouped points; use stat cards for numbers/metrics
+- Section dividers every 4-5 slides for pacing
+- Every slide title should be a headline that tells the slide's point
+- Use concrete numbers, dates, and names — never vague generalizations
+- The closing slide must have a clear call-to-action
 
-CRITICAL — COLOR & VISIBILITY:
-- ALL text MUST use light colors (var(--color-text) = #f0f2f8) on dark background
-- NEVER use black, #000, or dark gray text — the background is #0a0b14 (almost black)
-- Every element that renders text MUST have: color: var(--color-text);
-- Do NOT set color: inherit on elements that don't have a parent with var(--color-text)
-- Cards/pills MUST have: background: var(--color-surface); color: var(--color-text);
-- The body and every slide MUST have: background: var(--color-bg); color: var(--color-text);
-- NEVER use 'color: initial' or rely on browser default text color
+CRITICAL — COLOR:
+- ALL text must use light colors on the dark background (#0a0b14)
+- NEVER use black, #000, or dark text colors
+- Every text element: color: var(--color-text);
+- Cards: background: var(--color-surface); color: var(--color-text);
 
-ACCESSIBILITY:
-- Ensure WCAG AA contrast (4.5:1 for normal text, 3:1 for large text)
-- Use semantic HTML (h1-h4, ul, p, section)
-- Add aria-label to navigation buttons
+{STYLE_GUIDE}
 
 ═══════════════════════════════
 PRESENTATION: {SLIDE_COUNT} slides, style: {STYLE}
 ═══════════════════════════════
 
-Branding:
-- Logo: {LOGO}
-- Author: {AUTHOR}
-- Contact: {CONTACT}
-- Primary: {PRIMARY}
-- Secondary: {SECONDARY}
-- Accent: {ACCENT}
-
+Branding — Logo: {LOGO} | Author: {AUTHOR} | Contact: {CONTACT}
+{LOGO_IMAGE}
+Colors — Primary: {PRIMARY} | Secondary: {SECONDARY} | Accent: {ACCENT}
 Topic: {TOPIC}
 
 {SLIDE_COUNT_GUIDE}
@@ -246,6 +288,8 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   style = signal<'modern' | 'minimal' | 'bold' | 'corporate'>('modern');
 
   logo = signal('✦ INES');
+  logoImage = signal<string | null>(null);
+  logoImageName = signal<string | null>(null);
   author = signal('Marco Martorana');
   contact = signal('hello@ines.ai · ines.ai');
   colorTheme = signal<ColorTheme>('professional');
@@ -324,6 +368,24 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     this.toast.show('🗑️ File cleared');
   }
 
+  onLogoImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.logoImage.set(reader.result as string);
+      this.logoImageName.set(file.name);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearLogoImage() {
+    this.logoImage.set(null);
+    this.logoImageName.set(null);
+  }
+
   async generate() {
     if (this.generating()) return;
     if (!this.llm.isReady()) {
@@ -359,16 +421,22 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
 
     const styleGuide =
       this.style() === 'minimal'
-        ? 'Use extreme whitespace, minimal text, large typography, very clean layout.'
+        ? 'STYLE: MINIMAL — Use extreme whitespace. Large hero typography. Max 20 words per slide. Very clean, airy layouts with generous padding. Subtle accent touches only.'
         : this.style() === 'bold'
-          ? 'Use strong colors, bold typography, high contrast, dramatic layouts. Make it energetic.'
+          ? 'STYLE: BOLD — Use strong saturated colors, oversized typography, dramatic scale contrasts, high-energy layouts. Make a statement on every slide. Dark gradients, neon accent glows.'
           : this.style() === 'corporate'
-            ? 'Use structured layouts, data/charts focus, professional tone, muted accents.'
-            : 'Use modern glassmorphism, rounded cards, gradients, balanced text/visual ratio.';
+            ? 'STYLE: CORPORATE — Structured grid layouts, data-driven, professional tone. Use stats cards heavily. Clean sans-serif, muted accents, lots of white space. Boardroom-ready polish.'
+            : 'STYLE: MODERN — Glassmorphism cards, smooth gradients, rounded corners, soft shadows. Balanced text-to-visual ratio. Refined and contemporary.';
 
     const systemPrompt = SYSTEM_PPT.replace(/\{LOGO\}/g, this.logo())
       .replace(/\{AUTHOR\}/g, this.author())
       .replace(/\{CONTACT\}/g, this.contact())
+      .replace(
+        /\{LOGO_IMAGE\}/g,
+        this.logoImage()
+          ? `Logo image (data URL, embed via <img src="..."> where appropriate): ${this.logoImage()}`
+          : '',
+      )
       .replace(/\{PRIMARY\}/g, colors.primary)
       .replace(/\{SECONDARY\}/g, colors.secondary)
       .replace(/\{ACCENT\}/g, colors.accent)
@@ -390,20 +458,24 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
       let full = '';
       await this.llm.generate(prompt, (_, done, fullText) => {
         full = fullText;
-        const cleaned = fullText
-          .replace(/```html\s*/gi, '')
-          .replace(/```\s*$/g, '')
-          .trim();
+        const cleaned = this.sanitizeDarkColors(
+          fullText
+            .replace(/```html\s*/gi, '')
+            .replace(/```\s*$/g, '')
+            .trim(),
+        );
         this.generatedHtml.set(this.injectNavigationScript(cleaned));
 
         const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
         this.slideCount.set(count);
       });
 
-      const cleaned = full
-        .replace(/```html\s*/gi, '')
-        .replace(/```\s*$/g, '')
-        .trim();
+      const cleaned = this.sanitizeDarkColors(
+        full
+          .replace(/```html\s*/gi, '')
+          .replace(/```\s*$/g, '')
+          .trim(),
+      );
       this.generatedHtml.set(this.injectNavigationScript(cleaned));
       const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
       this.slideCount.set(count);
@@ -436,6 +508,14 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   }
 
   private injectNavigationScript(html: string): string {
+    const colorFix =
+      '<style>body,p,li,h1,h2,h3,h4,h5,h6,span,div,blockquote,cite,td,th,label{color:#f0f2f8}</style>';
+
+    const headIdx = html.lastIndexOf('</head>');
+    if (headIdx !== -1) {
+      html = html.slice(0, headIdx) + colorFix + html.slice(headIdx);
+    }
+
     const script =
       '<script>' +
       'try{(function(){' +
@@ -472,6 +552,34 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     return html + script;
   }
 
+  private sanitizeDarkColors(html: string): string {
+    const darkColors = [
+      '#000',
+      '#000000',
+      '#111',
+      '#111111',
+      '#222',
+      '#222222',
+      '#333',
+      '#333333',
+      '#444',
+      '#444444',
+      '#555',
+      '#555555',
+      'black',
+    ];
+    let result = html;
+    for (const dc of darkColors) {
+      const regex = new RegExp(`(?<![a-z-])color\\s*:\\s*${dc}\\b`, 'gi');
+      result = result.replace(regex, 'color: #f0f2f8');
+    }
+    result = result.replace(
+      /(?<![a-z-])color\s*:\s*rgb\(\s*0+\s*,\s*0+\s*,\s*0+\s*\)/gi,
+      'color: #f0f2f8',
+    );
+    return result;
+  }
+
   downloadHtml() {
     if (!this.generatedHtml()) return;
     const blob = new Blob([this.generatedHtml()], { type: 'text/html' });
@@ -482,6 +590,202 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     a.click();
     URL.revokeObjectURL(url);
     this.toast.show('💾 Presentation downloaded!');
+  }
+
+  async downloadPptx() {
+    if (!this.generatedHtml()) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(this.generatedHtml(), 'text/html');
+    const slides = Array.from(doc.querySelectorAll('section.slide'));
+
+    if (slides.length === 0) {
+      this.toast.show('⚠️ No slides found in the presentation');
+      return;
+    }
+
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE';
+    pptx.author = this.author();
+
+    for (const slide of slides) {
+      const heading = slide.querySelector('h1, h2, .slide-heading, .section-title, .title');
+      const paragraphs = slide.querySelectorAll(
+        'p:not(.author):not(.subtitle):not(.section-subtitle)',
+      );
+      const bulletItems = slide.querySelectorAll('.bullet-list li');
+      const statCards = slide.querySelectorAll('.stat-card');
+      const hasHero = slide.classList.contains('hero');
+      const hasDivider = slide.classList.contains('divider');
+      const hasQuote = slide.classList.contains('quote-slide');
+
+      const headingText = heading?.textContent?.trim() || '';
+
+      if (hasHero || hasDivider) {
+        const titleSlide = pptx.addSlide();
+        titleSlide.background = { fill: '#0a0b14' };
+        const subtitle = slide.querySelector('.subtitle, .section-subtitle');
+        const authorEl = slide.querySelector('.author');
+
+        titleSlide.addText(headingText || 'Title', {
+          x: 0.5,
+          y: 1.8,
+          w: 9,
+          h: 1.4,
+          fontSize: 36,
+          bold: true,
+          color: 'FFFFFF',
+          align: 'center',
+        });
+
+        if (subtitle?.textContent?.trim()) {
+          titleSlide.addText(subtitle.textContent.trim(), {
+            x: 1,
+            y: 3.2,
+            w: 8,
+            h: 0.8,
+            fontSize: 16,
+            color: 'CCCCCC',
+            align: 'center',
+          });
+        }
+
+        if (authorEl?.textContent?.trim()) {
+          titleSlide.addText(authorEl.textContent.trim(), {
+            x: 1,
+            y: 4.2,
+            w: 8,
+            h: 0.6,
+            fontSize: 12,
+            color: '999999',
+            align: 'center',
+          });
+        }
+      } else if (hasQuote) {
+        const quoteSlide = pptx.addSlide();
+        quoteSlide.background = { fill: '#0a0b14' };
+        const quoteEl = slide.querySelector('blockquote, .big-quote');
+        const citeEl = slide.querySelector('cite, .quote-author');
+
+        if (quoteEl?.textContent?.trim()) {
+          quoteSlide.addText(quoteEl.textContent.trim(), {
+            x: 1,
+            y: 2,
+            w: 8,
+            h: 2,
+            fontSize: 24,
+            italic: true,
+            color: 'FFFFFF',
+            align: 'center',
+          });
+        }
+
+        if (citeEl?.textContent?.trim()) {
+          quoteSlide.addText(citeEl.textContent.trim(), {
+            x: 1,
+            y: 4.2,
+            w: 8,
+            h: 0.6,
+            fontSize: 14,
+            color: '999999',
+            align: 'center',
+          });
+        }
+      } else if (statCards.length > 0) {
+        const statSlide = pptx.addSlide();
+        statSlide.background = { fill: '#0a0b14' };
+
+        if (headingText) {
+          statSlide.addText(headingText, {
+            x: 0.5,
+            y: 0.4,
+            w: 9,
+            h: 0.8,
+            fontSize: 24,
+            bold: true,
+            color: 'FFFFFF',
+          });
+        }
+
+        const statTexts: string[] = [];
+        statCards.forEach((card) => {
+          const num = card.querySelector('.stat-number')?.textContent?.trim();
+          const label = card.querySelector('.stat-label')?.textContent?.trim();
+          if (num && label) statTexts.push(`${num} — ${label}`);
+          else if (num) statTexts.push(num);
+        });
+
+        if (statTexts.length > 0) {
+          statSlide.addText(
+            statTexts.map((s) => ({ text: s, options: { bullet: true, breakLine: true } })),
+            {
+              x: 1,
+              y: 1.6,
+              w: 8,
+              h: 3.5,
+              fontSize: 18,
+              color: 'FFFFFF',
+              bullet: true,
+            },
+          );
+        }
+      } else {
+        const contentSlide = pptx.addSlide();
+        contentSlide.background = { fill: '#0a0b14' };
+
+        if (headingText) {
+          contentSlide.addText(headingText, {
+            x: 0.5,
+            y: 0.4,
+            w: 9,
+            h: 0.8,
+            fontSize: 24,
+            bold: true,
+            color: 'FFFFFF',
+          });
+        }
+
+        const contentTexts: { text: string; options: object }[] = [];
+
+        if (bulletItems.length > 0) {
+          bulletItems.forEach((li) => {
+            const text = li.textContent?.trim();
+            if (text)
+              contentTexts.push({
+                text,
+                options: { bullet: true, breakLine: true, fontSize: 16, color: 'FFFFFF' },
+              });
+          });
+        } else if (paragraphs.length > 0) {
+          paragraphs.forEach((p) => {
+            const text = p.textContent?.trim();
+            if (text && text.length > 5)
+              contentTexts.push({
+                text,
+                options: { bullet: true, breakLine: true, fontSize: 16, color: 'FFFFFF' },
+              });
+          });
+        }
+
+        const textItems = contentTexts.map((item) => ({
+          text: item.text,
+          options: { bullet: true, breakLine: true, fontSize: 16, color: 'FFFFFF' },
+        }));
+
+        if (textItems.length > 0) {
+          contentSlide.addText(textItems as any, {
+            x: 0.7,
+            y: 1.5,
+            w: 8.6,
+            h: 4,
+            valign: 'top',
+          });
+        }
+      }
+    }
+
+    await pptx.writeFile({ fileName: 'presentation.pptx' });
+    this.toast.show('📊 PPTX downloaded!');
   }
 
   setColorTheme(theme: ColorTheme) {

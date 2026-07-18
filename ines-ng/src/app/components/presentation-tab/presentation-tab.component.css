@@ -366,3 +366,66 @@
   z-index: 1;
   pointer-events: none;
 }
+
+.generating-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--accent-amber);
+  border-radius: 50%;
+  animation: ppt-spin 0.8s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes ppt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logo-upload-row {
+  position: relative;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  transition: border-color 0.15s;
+  min-height: 52px;
+}
+
+.logo-upload-row:hover {
+  border-color: var(--border-active);
+}
+
+.logo-upload-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text-2);
+  font-size: 11px;
+  font-family: var(--font-ui);
+}
+
+.logo-preview-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.logo-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.logo-img-name {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

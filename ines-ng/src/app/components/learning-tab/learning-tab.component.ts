@@ -33,7 +33,9 @@ mermaid.initialize({
     `
       #mermaidContainer svg {
         max-width: 100%;
+        max-height: 100%;
         height: auto;
+        width: auto;
       }
     `,
   ],
@@ -348,26 +350,39 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     this.isGenerating.set(true);
     this.activeSubTab.set('mindmap');
 
-    const systemPrompt = `You are a mindmap generator. Based on the context provided, generate a Mermaid.js mindmap outlining the key concepts and their sub-topics.
-    
-    CRITICAL RULES:
-    1. Start directly with the word "mindmap" on the first line.
-    2. Use spaces for indentation to define hierarchy.
-    3. Every node text containing spaces or special characters MUST be wrapped in parentheses, e.g. (My Node Title).
-    4. Do NOT output any bullet points (like -, *, +), numbered lists (like 1., 2.), or explanations. Output ONLY valid Mermaid.js mindmap syntax.
-    
-    Example format:
-    mindmap
-      root((Main Topic))
-        (Sub-topic A)
-          (Detail A1)
-          (Detail A2)
-        (Sub-topic B)
-          (Detail B1)
+    const systemPrompt = `You are a mind map generator. Based on the context provided, generate a comprehensive Mermaid.js mindmap capturing the full depth of the content.
 
-    Context:
-    ${this.rag.getRelevantChunks('main topics and key concepts', 10)}
-    `;
+     CRITICAL RULES:
+     1. Start directly with the word "mindmap" on the first line.
+     2. Use 2 spaces per indentation level for hierarchy.
+     3. Every node text containing spaces or special characters MUST be wrapped in parentheses, e.g. (My Node Title).
+     4. Do NOT output any bullet points, numbered lists, markdown, or explanations. Output ONLY valid Mermaid.js mindmap syntax.
+     5. Create a deep, thorough map: 5-8 main branches from root, each with 2-4 sub-branches, and supporting details as leaf nodes where useful.
+     6. Use full descriptive node names — extract the actual concepts, facts, and terminology from the documents.
+
+     Example format:
+     mindmap
+       root((Document Overview))
+         (Major Topic A)
+           (Core Idea 1)
+             (Supporting Fact)
+             (Key Detail)
+           (Core Idea 2)
+             (Important Point)
+         (Major Topic B)
+           (Main Concept)
+             (Specific Detail)
+             (Related Info)
+           (Secondary Concept)
+         (Major Topic C)
+           (Essential Point)
+             (Detail)
+             (Example)
+           (Another Point)
+
+     Context:
+     ${this.rag.getRelevantChunks('key concepts main topics important facts details terminology', 15, 2000)}
+     `;
 
     try {
       const fullPrompt = this.llm.buildPrompt(

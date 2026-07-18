@@ -22,6 +22,7 @@ export class LoaderOverlayComponent implements OnInit {
   dragging = false;
   dropText = 'Drag and drop the model file here or click to select';
   cachedModelAvailable = signal(false);
+  showSettings = signal(false);
 
   async ngOnInit() {
     this.cachedModelAvailable.set(await this.llm.hasCachedModel());

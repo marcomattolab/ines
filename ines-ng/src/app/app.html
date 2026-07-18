@@ -52,67 +52,249 @@
       @defer (when activeTab() === 'chat') {
         <app-chat-tab [hidden]="activeTab() !== 'chat'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'email'; prefetch on idle) {
         <app-email-tab [hidden]="activeTab() !== 'email'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'meeting'; prefetch on idle) {
         <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'translate'; prefetch on idle) {
         <app-translate-tab [hidden]="activeTab() !== 'translate'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'todo'; prefetch on idle) {
         <app-todo-tab [hidden]="activeTab() !== 'todo'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'coding'; prefetch on idle) {
         <app-coding-tab [hidden]="activeTab() !== 'coding'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'agents'; prefetch on idle) {
         <app-agents-tab [hidden]="activeTab() !== 'agents'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'vision'; prefetch on idle) {
         <app-vision-tab [hidden]="activeTab() !== 'vision'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'presentation'; prefetch on idle) {
         <app-presentation-tab [hidden]="activeTab() !== 'presentation'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'knowledge'; prefetch on idle) {
         <app-knowledge-manager-tab [hidden]="activeTab() !== 'knowledge'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'project'; prefetch on idle) {
         <app-project-tab [hidden]="activeTab() !== 'project'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'dev-agent'; prefetch on idle) {
         <app-dev-agent-tab [hidden]="activeTab() !== 'dev-agent'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
       @defer (when activeTab() === 'learning'; prefetch on idle) {
         <app-learning-tab [hidden]="activeTab() !== 'learning'" />
       } @placeholder {
-        <div class="tab-skeleton"></div>
+        <div class="tab-skeleton">
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble wide"></div>
+          </div>
+          <div class="tab-skeleton-item right"><div class="tab-skeleton-bubble short"></div></div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble"></div>
+          </div>
+          <div class="tab-skeleton-item">
+            <div class="tab-skeleton-avatar"></div>
+            <div class="tab-skeleton-bubble short"></div>
+          </div>
+        </div>
       }
     </main>
   </div>

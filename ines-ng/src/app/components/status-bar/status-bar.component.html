@@ -37,6 +37,18 @@
         }
       }
     </span>
+    <app-button
+      [variant]="isDictating() ? 'danger' : 'secondary'"
+      size="sm"
+      (onClick)="toggleDictation()"
+      [title]="isDictating() ? 'Stop dictation' : 'Start dictation'"
+    >
+      <mat-icon
+        [fontIcon]="isDictating() ? 'mic_off' : 'mic'"
+        class="text-sm w-3.5 h-3.5"
+        [class.text-accent-rose]="isDictating()"
+      ></mat-icon>
+    </app-button>
     <app-button variant="secondary" size="sm" (onClick)="openLoader.emit()">
       <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
       Load Model

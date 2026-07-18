@@ -113,6 +113,7 @@ export class AppComponent implements OnInit {
   commandPaletteOpen = signal(false);
   commandQuery = signal('');
   isOnline = signal(navigator.onLine);
+  isLightTheme = signal(false);
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
 
@@ -193,6 +194,15 @@ export class AppComponent implements OnInit {
     this.commandQuery.set('');
     try {
       sessionStorage.setItem('ines_active_tab', tab);
+    } catch {
+      /* best effort */
+    }
+  }
+
+  toggleTheme() {
+    this.isLightTheme.update((v) => !v);
+    try {
+      sessionStorage.setItem('ines_light_theme', String(this.isLightTheme()));
     } catch {
       /* best effort */
     }

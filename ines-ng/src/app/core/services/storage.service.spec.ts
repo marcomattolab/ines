@@ -1,12 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { Injector } from '@angular/core';
+import { PrivacyService } from './privacy.service';
 import { StorageService } from './storage.service';
 
 describe('StorageService', () => {
   let service: StorageService;
+  let privacy: PrivacyService;
 
   beforeEach(() => {
     localStorage.clear();
-    service = new StorageService();
+    const injector = Injector.create({
+      providers: [PrivacyService, StorageService],
+    });
+    service = injector.get(StorageService);
+    privacy = injector.get(PrivacyService);
+    privacy.enabled.set(false);
   });
 
   describe('get', () => {

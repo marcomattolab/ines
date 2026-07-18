@@ -664,3 +664,46 @@ select:focus-visible,
 .resize-active-y * {
   cursor: row-resize !important;
 }
+
+.theme-light {
+  --bg-0: #f5f7fa;
+  --bg-1: rgba(255, 255, 255, 0.92);
+  --bg-2: rgba(248, 250, 252, 0.94);
+  --bg-3: rgba(236, 240, 246, 0.96);
+  --bg-glass: rgba(255, 255, 255, 0.78);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-active: rgba(59, 130, 246, 0.45);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+
+  --text-0: #111827;
+  --text-1: #374151;
+  --text-2: #6b7280;
+
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --accent-purple: #7c3aed;
+
+  --tab-chat: #2563eb;
+  --tab-email: #059669;
+  --tab-meeting: #e11d48;
+  --tab-translate: #d97706;
+  --tab-todo: #7c3aed;
+  --tab-coding: #0891b2;
+  --tab-agents: #4f46e5;
+  --tab-vision: #db2777;
+  --tab-learning: #ea580c;
+  --tab-presentation: #dc2626;
+  --tab-knowledge: #2563eb;
+  --tab-project: #7c3aed;
+  --tab-dev-agent: #8b5cf6;
+
+  --font-ui: 'IBM Plex Sans', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}

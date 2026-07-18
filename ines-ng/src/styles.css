@@ -1002,3 +1002,104 @@ body.theme-light app-learning-tab .bg-zinc-950\/40 {
 body.theme-light app-learning-tab .bg-zinc-950\/40::placeholder {
   color: #9ca3af !important;
 }
+
+/* ── Light theme: agents tab ── */
+body.theme-light app-agents-tab input:not([type]),
+body.theme-light app-agents-tab textarea {
+  background: #f5f6f8 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #111827 !important;
+}
+
+body.theme-light app-agents-tab .text-white,
+body.theme-light app-agents-tab [class*='text-white'] {
+  color: #111827 !important;
+}
+
+/* ── Light theme: coding tab extra ── */
+body.theme-light app-coding-tab .bg-\[rgba\(13\,16\,23\,0\.35\)\] {
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ── Light theme: learning tab extra ── */
+body.theme-light app-learning-tab .panel-title,
+body.theme-light app-learning-tab .text-white {
+  color: #111827 !important;
+}
+
+body.theme-light app-learning-tab .text-zinc-400 {
+  color: #6b7280 !important;
+}
+
+body.theme-light app-learning-tab .bg-zinc-950\/20 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.theme-light app-learning-tab .bg-zinc-900\/90 {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light app-learning-tab .bg-blue-600 {
+  background: #2563eb !important;
+}
+
+/* ── Light theme: info modal ── */
+body.theme-light app-info-modal .bg-black\/70 {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Light theme: dev agent extra ── */
+body.theme-light app-dev-agent-tab .file-viewer-content,
+body.theme-light app-dev-agent-tab .file-viewer-editor {
+  background: #f5f6f8 !important;
+  color: #111827 !important;
+}
+
+body.theme-light app-dev-agent-tab .file-viewer-lines {
+  color: #9ca3af !important;
+}
+
+body.theme-light app-dev-agent-tab .search-results {
+  background: #f5f6f8 !important;
+}
+
+body.theme-light app-dev-agent-tab .search-result-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light app-dev-agent-tab .mode-btn.active {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ── Light theme: loader overlay inputs ── */
+body.theme-light app-loader-overlay input[type='number'] {
+  background: #f5f6f8 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #111827 !important;
+}
+
+/* ── Light theme: global white text fix ── */
+body.theme-light .text-zinc-300 {
+  color: #374151 !important;
+}
+
+body.theme-light .text-zinc-400 {
+  color: #6b7280 !important;
+}
+
+body.theme-light .hover\:text-white:hover {
+  color: #111827 !important;
+}
+
+body.theme-light .hover\:text-zinc-200:hover {
+  color: #111827 !important;
+}
+
+body.theme-light .hover\:bg-white\/10:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-light .hover\:bg-white\/5:hover {
+  background: rgba(0, 0, 0, 0.03) !important;
+}

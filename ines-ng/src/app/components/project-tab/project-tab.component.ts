@@ -9,6 +9,7 @@ import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 const SYSTEM_PROJECT = `You are an expert Technical Project Assistant with access to the user's project documentation. Your role is to help analyze, understand, and answer questions about the project based on the provided context.
 
@@ -38,6 +39,7 @@ PROJECT CONTEXT
   selector: 'app-project-tab',
   standalone: true,
   imports: [
+    ConfirmDialogComponent,
     DatePipe,
     DecimalPipe,
     FormsModule,
@@ -57,6 +59,7 @@ export class ProjectTabComponent implements OnInit {
   private readonly dom = inject(DomUtilsService);
 
   activeSubTab = signal<'input' | 'output'>('input');
+  showClearConfirm = signal(false);
   userInput = signal('');
   messages = signal<ChatMessage[]>([]);
   msgSources = signal<string[]>([]);

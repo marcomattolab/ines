@@ -85,7 +85,10 @@ export class MeetingTabComponent implements OnDestroy {
         this.summary.set(full + (done ? '' : ' ▋')),
       );
     } catch (e: any) {
-      this.summary.set('❌ ' + e.message);
+      const msg = e.message?.includes('INVALID_ARGUMENT')
+        ? 'Transcript too long for the model.'
+        : e.message;
+      this.summary.set(msg);
     }
   }
 

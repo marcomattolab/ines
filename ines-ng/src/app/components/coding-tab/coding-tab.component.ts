@@ -20,6 +20,7 @@ import { StorageService } from '../../core/services/storage.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 interface UiMessage {
   id: number;
@@ -187,7 +188,13 @@ SECTION 7 — CODE OUTPUT RULES (STRICT)
 @Component({
   selector: 'app-coding-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
+  imports: [
+    MessageBubbleComponent,
+    TypingIndicatorComponent,
+    MatIconModule,
+    ButtonComponent,
+    ConfirmDialogComponent,
+  ],
   templateUrl: './coding-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
   styleUrl: './coding-tab.css',
@@ -246,6 +253,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   private nextId = 1;
   private shouldScroll = false;
   showScrollBtn = signal(false);
+  showClearConfirm = signal(false);
 
   ngOnInit() {
     const stored = this.storage.get<CodeFile[]>('ines_coding_files');

@@ -15,6 +15,7 @@ import { StorageService } from '../../core/services/storage.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 
 interface UiMessage {
@@ -41,7 +42,13 @@ interface StoredChat {
 @Component({
   selector: 'app-chat-tab',
   standalone: true,
-  imports: [MessageBubbleComponent, TypingIndicatorComponent, MatIconModule, ButtonComponent],
+  imports: [
+    MessageBubbleComponent,
+    TypingIndicatorComponent,
+    MatIconModule,
+    ButtonComponent,
+    ConfirmDialogComponent,
+  ],
   templateUrl: './chat-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
@@ -65,6 +72,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   generating = signal(false);
   tokenInfo = signal('');
   editingMessageId = signal<number | null>(null);
+  showClearConfirm = signal(false);
 
   private history: ChatMessage[] = [];
   private nextId = 1;

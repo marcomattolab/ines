@@ -7,7 +7,7 @@
       </div>
       <div class="panel-desc">AI on-device · private · offline</div>
     </div>
-    <app-button variant="danger" size="sm" (onClick)="clear()">
+    <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
       <mat-icon fontIcon="delete" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
       Clear
     </app-button>
@@ -87,3 +87,14 @@
     </app-button>
   </div>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear conversation"
+    message="This will permanently delete all messages in this conversation."
+    confirmLabel="Clear"
+    [danger]="true"
+    (confirm)="clear(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

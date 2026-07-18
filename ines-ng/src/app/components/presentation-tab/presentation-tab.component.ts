@@ -267,6 +267,13 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     this.generating.set(false);
   }
 
+  onPromptKey(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.generate();
+    }
+  }
+
   prevSlide() {
     this.currentSlide.update((c) => Math.max(1, c - 1));
     this.postSlideCommand();

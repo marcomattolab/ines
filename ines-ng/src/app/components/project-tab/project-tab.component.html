@@ -65,7 +65,7 @@
           <mat-icon class="scale-75">file_upload</mat-icon>
         </button>
         <button
-          (click)="clearAll()"
+          (click)="showClearConfirm.set(true)"
           class="btn-tertiary"
           title="Clear all documents"
           [disabled]="project.documents().length === 0"
@@ -385,3 +385,14 @@
     }
   </main>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear project memory"
+    message="This will permanently remove all indexed documents. Chat history will also be cleared."
+    confirmLabel="Clear All"
+    [danger]="true"
+    (confirm)="clearAll(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

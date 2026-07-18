@@ -274,7 +274,7 @@
             </app-button>
           }
           @if (messages().length > 0) {
-            <app-button variant="danger" size="sm" (onClick)="clearChat()">
+            <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
               <mat-icon class="scale-75" fontIcon="delete"></mat-icon>
               Clear
             </app-button>
@@ -623,3 +623,14 @@
     }
   </main>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear chat"
+    message="This will delete all messages and history."
+    confirmLabel="Clear"
+    [danger]="true"
+    (confirm)="clearChat(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

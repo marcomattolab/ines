@@ -165,6 +165,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
 
   async sendMessage() {
     const text = this.userInput().trim();
+    if (!this.llm.isReady()) {
+      this.toast.show('Load the model first!');
+      return;
+    }
     if (!text || this.isGenerating()) return;
 
     const context = this.rag.getRelevantChunks(text);
@@ -337,6 +341,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   async generateMindMap() {
+    if (!this.llm.isReady()) {
+      this.toast.error('Load the model first!');
+      return;
+    }
     if (!this.rag.hasContext()) {
       this.toast.error('Please upload documents first.');
       return;
@@ -438,6 +446,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
   }
 
   async generateQuiz() {
+    if (!this.llm.isReady()) {
+      this.toast.error('Load the model first!');
+      return;
+    }
     if (!this.rag.hasContext()) {
       this.toast.error('Please upload documents first.');
       return;
@@ -449,6 +461,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy {
     this.quizScore.set(0);
     this.currentQuizIndex.set(0);
 
+    if (!this.llm.isReady()) {
+      this.toast.error('Load the model first!');
+      return;
+    }
     const numQuestions = Math.max(1, Math.min(15, Number(this.numQuizQuestions()) || 5));
     const numOpts = Math.max(2, Math.min(6, Number(this.numQuizOptions()) || 4));
     const context = this.rag.getRelevantChunks('important facts', 5, 400);

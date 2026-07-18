@@ -134,7 +134,11 @@ export class AgentsTabComponent implements AfterViewChecked {
       this.typing.set(false);
       this.messages.update((m) => [
         ...m,
-        { id: this.nextId++, role: 'ai', text: '❌ ' + e.message },
+        {
+          id: this.nextId++,
+          role: 'ai',
+          text: e.message?.includes('INVALID_ARGUMENT') ? 'Conversation too long.' : e.message,
+        },
       ]);
     }
     this.generating.set(false);

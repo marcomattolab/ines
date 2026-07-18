@@ -13,7 +13,7 @@
         Knowledge Base
       </h3>
       <button
-        (click)="clearAll()"
+        (click)="showClearConfirm.set(true)"
         class="btn-tertiary"
         title="Clear all documents"
         [disabled]="km.documents().length === 0"
@@ -350,3 +350,14 @@
     }
   </main>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear knowledge base"
+    message="This will permanently remove all documents and Q&As."
+    confirmLabel="Clear All"
+    [danger]="true"
+    (confirm)="clearAll(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

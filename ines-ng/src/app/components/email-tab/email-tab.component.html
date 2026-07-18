@@ -31,6 +31,7 @@
       class="flex-1 bg-[var(--bg-2)] border-none border-b border-[var(--border)] p-4 px-[22px] text-[var(--text-0)] font-[var(--font-body)] text-[13.5px] resize-none outline-none leading-[1.7] overflow-y-auto scrollbar-thin placeholder:text-[var(--text-2)]"
       #emailInput
       placeholder="Paste the email to improve or process here..."
+      (keydown)="onEmailKey($event)"
     ></textarea>
     <div class="flex flex-col flex-1 overflow-hidden">
       <div

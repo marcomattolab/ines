@@ -103,7 +103,10 @@ export class TranslateTabComponent implements OnDestroy {
         this.translating.set(!done);
       });
     } catch (e: any) {
-      this.result.set('❌ ' + e.message);
+      const msg = e.message?.includes('INVALID_ARGUMENT')
+        ? 'Text too long for the model.'
+        : e.message;
+      this.result.set(msg);
       this.translating.set(false);
     }
   }

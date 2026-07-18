@@ -6,6 +6,7 @@ import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 
@@ -17,7 +18,14 @@ interface ChunkRef {
 @Component({
   selector: 'app-knowledge-manager-tab',
   standalone: true,
-  imports: [DatePipe, FormsModule, MatIconModule, MessageBubbleComponent, TypingIndicatorComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    MatIconModule,
+    MessageBubbleComponent,
+    TypingIndicatorComponent,
+    ConfirmDialogComponent,
+  ],
   templateUrl: './knowledge-manager-tab.component.html',
   styleUrl: './knowledge-manager-tab.component.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0 h-full' },
@@ -29,6 +37,7 @@ export class KnowledgeManagerTabComponent implements OnInit {
   private readonly dom = inject(DomUtilsService);
 
   activeSubTab = signal<'chat' | 'saved'>('chat');
+  showClearConfirm = signal(false);
   userInput = signal('');
   messages = signal<ChatMessage[]>([]);
   msgSources = signal<string[]>([]);

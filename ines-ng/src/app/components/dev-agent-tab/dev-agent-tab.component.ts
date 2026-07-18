@@ -20,6 +20,7 @@ import { SyntaxHighlightService } from '../../core/services/syntax-highlight.ser
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 declare global {
   interface Window {
@@ -115,6 +116,7 @@ RULES
   selector: 'app-dev-agent-tab',
   standalone: true,
   imports: [
+    ConfirmDialogComponent,
     FormsModule,
     MatIconModule,
     MessageBubbleComponent,
@@ -154,6 +156,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   activeMode = signal<Mode>('chat');
   codePatches = signal<CodePatch[]>([]);
   showPatchesPanel = signal(false);
+  showClearConfirm = signal(false);
 
   showFileTree = signal(true);
   expandedFolders = signal<Set<string>>(new Set());

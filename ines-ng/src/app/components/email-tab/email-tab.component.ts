@@ -82,9 +82,19 @@ export class EmailTabComponent implements OnDestroy {
     try {
       await this.llm.generate(prompt, (_, _done, full) => this.result.set(full));
     } catch (e: any) {
-      this.result.set('❌ ' + e.message);
+      const msg = e.message?.includes('INVALID_ARGUMENT')
+        ? 'Conversation too long. Try shorter text.'
+        : e.message;
+      this.result.set(msg);
     }
     this.processing.set(false);
+  }
+
+  onEmailKey(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.process();
+    }
   }
 
   copy() {

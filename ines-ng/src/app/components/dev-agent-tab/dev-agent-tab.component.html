@@ -97,7 +97,25 @@
           }
         </div>
 
-        <!-- File tree -->
+        <!-- Search bar -->
+        <div class="px-3 pb-1.5">
+          <div
+            class="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/5 focus-within:border-[var(--border-active)] transition-colors"
+          >
+            <mat-icon class="scale-50 text-[var(--text-2)]">search</mat-icon>
+            <input
+              class="flex-1 bg-transparent border-none outline-none text-[10px] text-[var(--text-0)] placeholder:text-[var(--text-2)] font-mono"
+              placeholder="Search files..."
+              [value]="searchQuery()"
+              (input)="onSearchInput($any($event.target).value)"
+            />
+            @if (isSearching()) {
+              <div
+                class="animate-spin h-2.5 w-2.5 border border-[var(--accent-blue)] border-t-transparent rounded-full"
+              ></div>
+            }
+          </div>
+        </div>
         <div class="flex-1 overflow-y-auto p-1.5">
           @for (key of getFolderKeys(folderTree()); track key) {
             @if (isFolder(folderTree()[key])) {
@@ -137,21 +155,23 @@
                               track fileKey
                             ) {
                               @if (folderTree()[key][childKey][fileKey]._file; as file) {
-                                <div
-                                  class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]"
+                                <button
+                                  (click)="openFile(file)"
+                                  class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
                                 >
                                   <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
                                     fileIcon(file.type)
                                   }}</mat-icon>
                                   <span class="truncate">{{ file.name }}</span>
-                                </div>
+                                </button>
                               }
                             }
                           </div>
                         }
                       } @else if (folderTree()[key][childKey]._file; as file) {
-                        <div
-                          class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]"
+                        <button
+                          (click)="openFile(file)"
+                          class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
                         >
                           <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
                             fileIcon(file.type)
@@ -160,14 +180,17 @@
                           <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
                             formatSize(file.size)
                           }}</span>
-                        </div>
+                        </button>
                       }
                     }
                   </div>
                 }
               </div>
             } @else if (folderTree()[key]._file; as file) {
-              <div class="flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)]">
+              <button
+                (click)="openFile(file)"
+                class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
+              >
                 <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
                   fileIcon(file.type)
                 }}</mat-icon>
@@ -175,7 +198,7 @@
                 <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
                   formatSize(file.size)
                 }}</span>
-              </div>
+              </button>
             }
           }
         </div>
@@ -368,10 +391,10 @@
                   >Sources:</span
                 >
                 @for (src of msgSources(); track src) {
-                  <span class="source-chip">
+                  <button class="source-chip" (click)="openSourceFile(src)">
                     <mat-icon class="scale-50" fontIcon="article"></mat-icon>
                     {{ src }}
-                  </span>
+                  </button>
                 }
               </div>
             }
@@ -382,6 +405,78 @@
               </button>
             }
           </div>
+
+          <!-- Search Results -->
+          @if (searchResults().length > 0 && searchQuery()) {
+            <div class="search-results shrink-0">
+              <div class="search-results-header">
+                {{ searchResults().length }} results for "{{ searchQuery() }}"
+              </div>
+              <div class="search-results-body">
+                @for (result of searchResults(); track $index) {
+                  <button (click)="jumpToSearchResult(result)" class="search-result-item">
+                    <span class="search-result-line">:{{ result.line }}</span>
+                    <span class="search-result-text">{{ result.text }}</span>
+                    <span class="search-result-file">{{ result.file.name }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- File Viewer Panel -->
+          @if (openedFile(); as file) {
+            <div class="file-viewer shrink-0">
+              <div class="file-viewer-header">
+                <div class="file-viewer-title">
+                  <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
+                    fileIcon(file.type)
+                  }}</mat-icon>
+                  <span class="file-viewer-path">{{ file.path }}</span>
+                  <span class="file-viewer-size">{{ formatSize(file.size) }}</span>
+                </div>
+                <div class="file-viewer-actions">
+                  @if (hasWriteAccess()) {
+                    @if (isEditingFile()) {
+                      <app-button variant="primary" size="sm" (onClick)="saveFileEdits()">
+                        <mat-icon class="scale-50">save</mat-icon> Save
+                      </app-button>
+                      <app-button variant="secondary" size="sm" (onClick)="cancelEditFile()"
+                        >Cancel</app-button
+                      >
+                    } @else {
+                      <app-button variant="secondary" size="sm" (onClick)="startEditFile()">
+                        <mat-icon class="scale-50">edit</mat-icon> Edit
+                      </app-button>
+                    }
+                  }
+                  <button (click)="closeFile()" class="btn-tertiary !w-7 !h-7" title="Close file">
+                    <mat-icon class="scale-50">close</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="file-viewer-body" #fileViewerScroll>
+                @if (isEditingFile()) {
+                  <textarea
+                    class="file-viewer-editor"
+                    [value]="editedFileContent()"
+                    (input)="editedFileContent.set($any($event.target).value)"
+                  ></textarea>
+                } @else {
+                  <div class="file-viewer-content">
+                    <div class="file-viewer-lines">
+                      @for (l of openedFileContent().split('\n'); track $index) {
+                        <span>{{ $index + 1 }}</span>
+                      }
+                    </div>
+                    <pre
+                      class="file-viewer-code"
+                    ><code [innerHTML]="openedFileHighlighted()"></code></pre>
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
           <!-- Input -->
           <div class="input-zone">

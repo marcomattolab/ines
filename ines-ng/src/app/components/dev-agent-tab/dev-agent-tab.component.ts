@@ -16,6 +16,7 @@ import { AgentService, Agent, Skill } from '../../core/services/agent.service';
 import { ProjectService } from '../../core/services/project.service';
 import { StorageService } from '../../core/services/storage.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { SyntaxHighlightService } from '../../core/services/syntax-highlight.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -131,10 +132,12 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   readonly project = inject(ProjectService);
   private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
+  private readonly highlight = inject(SyntaxHighlightService);
 
   readonly chatArea = viewChild<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild<ElementRef<HTMLTextAreaElement>>('inputEl');
   readonly dirInput = viewChild<ElementRef<HTMLInputElement>>('dirInput');
+  readonly fileViewerScroll = viewChild<ElementRef<HTMLDivElement>>('fileViewerScroll');
 
   selectedAgent = signal<Agent | null>(null);
   repoFiles = signal<RepoFile[]>([]);
@@ -155,6 +158,16 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   showFileTree = signal(true);
   expandedFolders = signal<Set<string>>(new Set());
 
+  openedFile = signal<RepoFile | null>(null);
+  openedFileContent = signal('');
+  openedFileHighlighted = signal('');
+  isEditingFile = signal(false);
+  editedFileContent = signal('');
+
+  searchQuery = signal('');
+  searchResults = signal<{ file: RepoFile; line: number; text: string }[]>([]);
+  isSearching = signal(false);
+
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
@@ -164,6 +177,13 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   private fileHandles = new Map<string, FileSystemFileHandle>();
 
   readonly hasWriteAccess = computed(() => this.dirHandle !== null);
+
+  readonly modifiedFiles = computed(() => {
+    const names = this.codePatches()
+      .filter((p) => p.fileName && p.applied)
+      .map((p) => p.fileName);
+    return [...new Set(names)];
+  });
 
   readonly MODE_LABELS = MODE_LABELS;
   readonly MODE_ICONS = MODE_ICONS;
@@ -844,6 +864,122 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       () => this.toast.show('Code copied to clipboard'),
       () => this.toast.show('Failed to copy'),
     );
+  }
+
+  async openFile(file: RepoFile) {
+    this.openedFile.set(file);
+    this.isEditingFile.set(false);
+    try {
+      const fileHandle = this.fileHandles.get(file.path);
+      if (fileHandle) {
+        const fsFile = await fileHandle.getFile();
+        const content = await fsFile.text();
+        this.openedFileContent.set(content);
+        this.openedFileHighlighted.set(this.highlight.highlight(content, file.type));
+      } else {
+        this.openedFileContent.set('[File not accessible — folder was opened without write API]');
+        this.openedFileHighlighted.set(this.openedFileContent());
+      }
+    } catch (err: any) {
+      this.openedFileContent.set('Error reading file: ' + err.message);
+      this.openedFileHighlighted.set(this.openedFileContent());
+    }
+  }
+
+  closeFile() {
+    this.openedFile.set(null);
+    this.openedFileContent.set('');
+    this.openedFileHighlighted.set('');
+    this.isEditingFile.set(false);
+  }
+
+  startEditFile() {
+    this.editedFileContent.set(this.openedFileContent());
+    this.isEditingFile.set(true);
+  }
+
+  cancelEditFile() {
+    this.isEditingFile.set(false);
+    this.editedFileContent.set('');
+  }
+
+  async saveFileEdits() {
+    const file = this.openedFile();
+    if (!file) return;
+    const handle = this.fileHandles.get(file.path);
+    if (!handle) {
+      this.toast.show('No write access to this file');
+      return;
+    }
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(this.editedFileContent());
+      await writable.close();
+      this.openedFileContent.set(this.editedFileContent());
+      this.openedFileHighlighted.set(this.highlight.highlight(this.editedFileContent(), file.type));
+      this.isEditingFile.set(false);
+      this.toast.success(`Saved: ${file.name}`);
+    } catch (err: any) {
+      this.toast.error('Failed to save: ' + err.message);
+    }
+  }
+
+  onSearchInput(value: string) {
+    this.searchQuery.set(value);
+    if (!value.trim()) {
+      this.searchResults.set([]);
+      return;
+    }
+    this.performSearch();
+  }
+
+  private async performSearch() {
+    const query = this.searchQuery().toLowerCase().trim();
+    if (!query || this.repoFiles().length === 0) return;
+
+    this.isSearching.set(true);
+    const results: { file: RepoFile; line: number; text: string }[] = [];
+
+    for (const file of this.repoFiles().slice(0, 100)) {
+      const handle = this.fileHandles.get(file.path);
+      if (!handle) continue;
+      try {
+        const fsFile = await handle.getFile();
+        if (fsFile.size > 512 * 1024) continue;
+        const content = await fsFile.text();
+        const lines = content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(query)) {
+            results.push({ file, line: i + 1, text: lines[i].trim().substring(0, 120) });
+            if (results.length >= 30) break;
+          }
+        }
+      } catch {
+        /* skip unreadable files */
+      }
+      if (results.length >= 30) break;
+    }
+
+    this.searchResults.set(results);
+    this.isSearching.set(false);
+  }
+
+  jumpToSearchResult(result: { file: RepoFile; line: number; text: string }) {
+    this.openFile(result.file);
+  }
+
+  openSourceFile(sourceName: string) {
+    const file = this.repoFiles().find((f) => f.name === sourceName);
+    if (file) this.openFile(file);
+  }
+
+  async openFileFromMessage(fileName: string) {
+    const file = this.repoFiles().find((f) => f.path === fileName || f.name === fileName);
+    if (file) {
+      await this.openFile(file);
+    } else {
+      this.toast.show(`File not found: ${fileName}`);
+    }
   }
 
   ngOnDestroy() {

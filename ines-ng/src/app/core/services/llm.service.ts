@@ -47,10 +47,10 @@ export class LlmService {
           this.setProgress(60, 'Loading model into GPU (30–90 s)...');
           this.llm = await LlmInference.createFromOptions(genai, {
             baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
-            maxTokens: 8192,
-            topK: 40,
-            temperature: 0.8,
-            randomSeed: 101,
+            maxTokens: this.modelMaxTokens(),
+            topK: this.topK(),
+            temperature: this.temperature(),
+            randomSeed: this.randomSeed(),
           });
           loadedViaBuffer = true;
 
@@ -193,6 +193,9 @@ export class LlmService {
   }
 
   readonly modelMaxTokens = signal(8192);
+  readonly temperature = signal(0.8);
+  readonly randomSeed = signal(101);
+  readonly topK = signal(40);
 
   static estimateTokens(text: string): number {
     return Math.ceil(text.length / 4);
@@ -251,12 +254,25 @@ export class LlmService {
   }
 
   buildPrompt(system: string, userMsg: string, history: ChatMessage[] = []): string {
+    const safeUser = LlmService.sanitizePromptInput(userMsg);
     let p = `<start_of_turn>user\n[SYSTEM]: ${system}\n\n`;
     for (const h of history) {
-      p += `[PREVIOUS ${h.role.toUpperCase()}]: ${h.content}\n`;
+      p += `[PREVIOUS ${h.role.toUpperCase()}]: ${LlmService.sanitizePromptInput(h.content)}\n`;
     }
-    p += `[USER]: ${userMsg}<end_of_turn>\n<start_of_turn>model\n`;
+    p += `[USER]: ${safeUser}<end_of_turn>\n<start_of_turn>model\n`;
     return p;
+  }
+
+  static sanitizePromptInput(text: string): string {
+    return text
+      .replace(/<\|endoftext\|>/gi, '')
+      .replace(/<start_of_turn>/gi, '')
+      .replace(/<end_of_turn>/gi, '')
+      .replace(/<\|im_start\|>/gi, '')
+      .replace(/<\|im_end\|>/gi, '')
+      .replace(/<\|user\|>/gi, '')
+      .replace(/<\|assistant\|>/gi, '')
+      .replace(/<\|system\|>/gi, '');
   }
 
   private setProgress(pct: number, label: string) {

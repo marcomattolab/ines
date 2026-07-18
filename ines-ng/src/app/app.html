@@ -1,5 +1,13 @@
 <app-status-bar (openLoader)="overlayOpen.set(true)" (openInfo)="infoOpen.set(true)" />
 
+@if (!isOnline()) {
+  <div
+    class="fixed top-0 left-0 right-0 z-[300] bg-accent-amber/90 text-black text-xs font-semibold text-center py-1.5 px-4 font-mono"
+  >
+    You are offline — AI model still works locally, but remote features are unavailable
+  </div>
+}
+
 <app-loader-overlay [visible]="overlayOpen()" (closed)="overlayOpen.set(false)" />
 
 <app-info-modal [visible]="infoOpen()" (closed)="infoOpen.set(false)" />
@@ -19,7 +27,9 @@
         [class.active]="activeTab() === tab.id"
         [style.--tab-color]="tab.color"
         (click)="activeTab.set(tab.id)"
-        title="{{ tab.label }}"
+        [attr.title]="tab.label"
+        [attr.aria-label]="tab.label + ' tab' + (activeTab() === tab.id ? ', selected' : '')"
+        [attr.aria-current]="activeTab() === tab.id ? 'page' : undefined"
       >
         <span class="tab-icon inline-flex items-center justify-center">
           <mat-icon

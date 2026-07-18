@@ -108,14 +108,17 @@ const TABS: TabDef[] = [
 export class AppComponent implements OnInit {
   tabs = TABS;
   activeTab = signal<Tab>('chat');
-  overlayOpen = signal(true); // show on load
+  overlayOpen = signal(true);
   infoOpen = signal(false);
   commandPaletteOpen = signal(false);
   commandQuery = signal('');
+  isOnline = signal(navigator.onLine);
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
 
   ngOnInit() {
+    window.addEventListener('online', () => this.isOnline.set(true));
+    window.addEventListener('offline', () => this.isOnline.set(false));
     // 1. Try to load from IndexedDB cache first
     this.llm
       .initModelFromCache()

@@ -8,6 +8,7 @@ import { SpeechService } from '../../core/services/speech.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 interface AiChat {
   id: number;
@@ -39,6 +40,7 @@ Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "norma
     MatIconModule,
     ButtonComponent,
     DragDropModule,
+    ConfirmDialogComponent,
   ],
   templateUrl: './todo-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
@@ -55,6 +57,7 @@ export class TodoTabComponent implements OnDestroy {
   aiMessages = signal<AiChat[]>([]);
   rightPanelWidth = signal(320);
   inputAreaHeight = signal(200);
+  showClearConfirm = signal(false);
 
   private nextId = 0;
   private isResizing = false;

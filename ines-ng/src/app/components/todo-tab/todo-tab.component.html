@@ -14,7 +14,7 @@
       <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]"
         >{{ todoSvc.doneCount() }}/{{ todoSvc.total() }} completed</span
       >
-      <app-button variant="danger" size="sm" (onClick)="todoSvc.clearDone()">
+      <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
         <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
         Remove completed
       </app-button>
@@ -161,3 +161,14 @@
     </div>
   </div>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Remove completed tasks"
+    message="This will permanently remove all completed tasks. This action can be undone."
+    confirmLabel="Remove"
+    [danger]="true"
+    (confirm)="todoSvc.clearDone(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

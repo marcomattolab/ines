@@ -1,0 +1,13 @@
+<div
+  class="bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+  (click)="onContentClick($event)"
+>
+  <h3 class="text-lg font-bold mb-2">{{ title() }}</h3>
+  <p class="text-sm text-[var(--text-2)] mb-6">{{ message() }}</p>
+  <div class="flex justify-end gap-3">
+    <button class="btn-secondary" (click)="cancel.emit()">{{ cancelLabel() }}</button>
+    <button [class]="danger() ? 'btn-danger' : 'btn-primary'" (click)="confirm.emit()">
+      {{ confirmLabel() }}
+    </button>
+  </div>
+</div>

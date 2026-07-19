@@ -11,33 +11,62 @@
 
   <!-- Left Sidebar -->
   <aside
-    class="w-64 border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md shrink-0"
+    class="border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md shrink-0 relative select-none"
+    [style.width.px]="sidebarWidth()"
   >
+    <!-- Drag handle -->
+    <div
+      class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-10 hover:bg-[var(--accent-purple)]/30 transition-colors"
+      [class.bg-[var(--accent-purple)]/20]="isResizing()"
+      (mousedown)="startResize($event)"
+    ></div>
     <!-- Agent selector -->
-    <div class="p-4 border-b border-[var(--border)]">
-      <h2
-        class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-purple)] mb-3 flex items-center gap-1.5"
+    <div class="border-b border-[var(--border)] shrink-0">
+      <button
+        class="w-full p-3 flex items-center justify-between gap-2 hover:bg-white/[0.03] transition-colors"
+        (click)="showAgentsList.update((v) => !v)"
       >
-        <mat-icon class="scale-75" fontIcon="smart_toy"></mat-icon>
-        Agent
-      </h2>
-      <div class="space-y-1">
-        @for (agent of agentSvc.agents(); track agent.id) {
-          <button
-            (click)="selectAgent(agent)"
-            class="w-full text-left p-2.5 rounded-lg transition-all flex flex-col gap-0.5 text-xs"
-            [class.bg-accent-purple\/15]="selectedAgent()?.id === agent.id"
-            [class.border]="selectedAgent()?.id === agent.id"
-            [class.border-accent-purple\/30]="selectedAgent()?.id === agent.id"
-            [class.hover:bg-white\/5]="selectedAgent()?.id !== agent.id"
-          >
-            <span class="font-semibold text-[var(--text-1)]">{{ agent.name }}</span>
-            <span class="text-[10px] text-[var(--text-2)] line-clamp-1">{{
-              agent.description
+        <div class="flex items-center gap-2 min-w-0">
+          <mat-icon
+            class="scale-75 text-[var(--accent-purple)] shrink-0"
+            fontIcon="smart_toy"
+          ></mat-icon>
+          @if (showAgentsList()) {
+            <span
+              class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-purple)]"
+              >Agent</span
+            >
+          } @else if (selectedAgent()) {
+            <span class="text-xs font-semibold text-[var(--text-1)] truncate">{{
+              selectedAgent()!.name
             }}</span>
-          </button>
-        }
-      </div>
+          } @else {
+            <span class="text-xs text-[var(--text-2)]">No agent</span>
+          }
+        </div>
+        <mat-icon class="scale-50 text-[var(--text-2)] shrink-0">
+          {{ showAgentsList() ? 'expand_less' : 'expand_more' }}
+        </mat-icon>
+      </button>
+      @if (showAgentsList()) {
+        <div class="px-3 pb-3 space-y-1 max-h-48 overflow-y-auto">
+          @for (agent of agentSvc.agents(); track agent.id) {
+            <button
+              (click)="selectAgent(agent)"
+              class="w-full text-left p-2.5 rounded-lg transition-all flex flex-col gap-0.5 text-xs"
+              [class.bg-accent-purple\/15]="selectedAgent()?.id === agent.id"
+              [class.border]="selectedAgent()?.id === agent.id"
+              [class.border-accent-purple\/30]="selectedAgent()?.id === agent.id"
+              [class.hover:bg-white\/5]="selectedAgent()?.id !== agent.id"
+            >
+              <span class="font-semibold text-[var(--text-1)]">{{ agent.name }}</span>
+              <span class="text-[10px] text-[var(--text-2)] line-clamp-1">{{
+                agent.description
+              }}</span>
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <!-- Repo section -->
@@ -96,6 +125,90 @@
             <span>{{ totalChunks() }} chunks</span>
           }
         </div>
+
+        <!-- Project Overview -->
+        @if (projectSummary(); as summary) {
+          <div class="project-overview border-b border-[var(--border)]">
+            <button class="project-overview-header" (click)="showProjectOverview.update((v) => !v)">
+              <div class="flex items-center gap-1.5">
+                <mat-icon class="scale-50 text-[var(--accent-purple)]">info</mat-icon>
+                <span
+                  class="text-[10px] font-bold uppercase tracking-wider text-[var(--accent-purple)] font-[var(--font-ui)]"
+                  >Overview</span
+                >
+              </div>
+              <mat-icon class="scale-50 text-[var(--text-2)]">
+                {{ showProjectOverview() ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </button>
+            @if (showProjectOverview()) {
+              <div class="project-overview-body">
+                <div class="overview-row">
+                  <span class="overview-label">Framework</span>
+                  <span class="overview-value text-[var(--accent-cyan)]">{{
+                    summary.framework
+                  }}</span>
+                </div>
+                <div class="overview-row">
+                  <span class="overview-label">Language</span>
+                  <span class="overview-value">{{ summary.language }}</span>
+                </div>
+                <div class="overview-row">
+                  <span class="overview-label">Build</span>
+                  <span class="overview-value">{{ summary.buildTool }}</span>
+                </div>
+                @if (summary.testTool !== 'None') {
+                  <div class="overview-row">
+                    <span class="overview-label">Test</span>
+                    <span class="overview-value">{{ summary.testTool }}</span>
+                  </div>
+                }
+                @if (hasGit()) {
+                  <div class="overview-row">
+                    <span class="overview-label">Git</span>
+                    <span class="overview-value text-[var(--accent-green)]">&#10003; detected</span>
+                  </div>
+                }
+                <div class="overview-row">
+                  <span class="overview-label">Source files</span>
+                  <span class="overview-value"
+                    >{{ summary.sourceFiles }} / {{ summary.totalFiles }}</span
+                  >
+                </div>
+                <div class="overview-row">
+                  <span class="overview-label">Tests</span>
+                  <span class="overview-value"
+                    >{{ summary.hasTests ? '&#10003; yes' : '—' }}
+                    @if (summary.hasE2E) {
+                      + E2E
+                    }
+                  </span>
+                </div>
+                @if (summary.keyScripts.length > 0) {
+                  <div class="overview-scripts">
+                    <span class="overview-label block mb-1">Scripts</span>
+                    @for (s of summary.keyScripts; track s.name) {
+                      <div class="overview-script-row">
+                        <code class="overview-script-name">npm run {{ s.name }}</code>
+                        <span class="overview-script-cmd truncate">{{ s.command }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+                @if (summary.configFiles.length > 0) {
+                  <div class="overview-configs">
+                    <span class="overview-label block mb-1">Configs</span>
+                    <div class="flex flex-wrap gap-1">
+                      @for (cfg of summary.configFiles; track cfg) {
+                        <span class="overview-config-chip">{{ cfg }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
 
         <!-- Search bar -->
         <div class="px-3 pb-1.5">
@@ -303,51 +416,127 @@
           <div class="chat-area" #chatArea (scroll)="onScroll()">
             @if (messages().length === 0) {
               <div class="empty-state">
-                <mat-icon
-                  class="empty-icon text-[var(--accent-purple)]"
-                  [fontIcon]="activeModeIcon()"
-                ></mat-icon>
-                <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">
-                  {{ agent.name }}
-                  <span class="text-[var(--text-2)] font-normal text-sm">
-                    — {{ activeModeLabel() }}</span
-                  >
-                </h3>
-                <p class="empty-text">
-                  @if (activeMode() === 'review') {
-                    I'll perform a thorough code review. Ask me about a specific file, module, or
-                    the entire codebase — I'll check for bugs, security issues, performance
-                    problems, and style violations.
-                  } @else if (activeMode() === 'modify') {
-                    Tell me what you want to change — I'll output the complete modified files with a
-                    summary of changes. You can copy the code from the Patches panel.
-                  } @else if (activeMode() === 'explain') {
-                    Ask me to explain any part of the codebase — architecture, data flow,
-                    algorithms, or design decisions. I'll provide clear, detailed explanations.
-                  } @else {
-                    @if (repoFiles().length > 0) {
-                      Ask me about the codebase. I can analyze, explain, review, and modify code
-                      based on the project context.
+                <!-- Project Dashboard when repo loaded -->
+                @if (repoFiles().length > 0 && projectSummary(); as summary) {
+                  <div class="project-dashboard">
+                    <div class="dashboard-header">
+                      <mat-icon class="scale-90 text-[var(--accent-green)]"
+                        >folder_special</mat-icon
+                      >
+                      <div class="min-w-0">
+                        <h3
+                          class="text-sm font-bold text-[var(--text-0)] font-[var(--font-ui)] truncate"
+                        >
+                          {{ repoName() }}
+                        </h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="dashboard-badge dashboard-badge-framework">
+                            {{ summary.framework }}
+                          </span>
+                          <span class="dashboard-badge dashboard-badge-lang">{{
+                            summary.language
+                          }}</span>
+                          @if (hasGit()) {
+                            <span class="dashboard-badge dashboard-badge-git">
+                              <mat-icon class="!text-[8px] !w-3 !h-3">code</mat-icon>
+                              git
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="dashboard-stats">
+                      <div class="dashboard-stat">
+                        <span class="dashboard-stat-value">{{ summary.totalFiles }}</span>
+                        <span class="dashboard-stat-label">files</span>
+                      </div>
+                      <div class="dashboard-stat">
+                        <span class="dashboard-stat-value">{{ summary.sourceFiles }}</span>
+                        <span class="dashboard-stat-label">source</span>
+                      </div>
+                      <div class="dashboard-stat">
+                        <span class="dashboard-stat-value">{{ totalChunks() }}</span>
+                        <span class="dashboard-stat-label">chunks</span>
+                      </div>
+                      <div class="dashboard-stat">
+                        <span class="dashboard-stat-value">{{ summary.buildTool }}</span>
+                        <span class="dashboard-stat-label">build</span>
+                      </div>
+                    </div>
+
+                    @if (summary.keyScripts.length > 0) {
+                      <div class="dashboard-scripts">
+                        <span class="dashboard-label">Scripts</span>
+                        <div class="flex flex-wrap gap-1.5">
+                          @for (s of summary.keyScripts; track s.name) {
+                            <span class="dashboard-script-chip">
+                              <code class="dashboard-script-name">npm run {{ s.name }}</code>
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    @if (summary.configFiles.length > 0) {
+                      <div class="dashboard-configs">
+                        <span class="dashboard-label">Config</span>
+                        <div class="flex flex-wrap gap-1">
+                          @for (cfg of summary.configFiles; track cfg) {
+                            <span class="dashboard-config-chip">{{ cfg }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <div class="dashboard-shortcuts">
+                      <span class="dashboard-label">Shortcuts</span>
+                      <div class="flex flex-wrap gap-1.5">
+                        <span class="dashboard-kbd-hint"><kbd>Cmd+P</kbd> Open file</span>
+                        <span class="dashboard-kbd-hint"><kbd>Cmd+K</kbd> Command palette</span>
+                      </div>
+                    </div>
+                  </div>
+                } @else if (repoFiles().length === 0) {
+                  <mat-icon
+                    class="empty-icon text-[var(--accent-purple)]"
+                    [fontIcon]="activeModeIcon()"
+                  ></mat-icon>
+                  <h3 class="text-base font-bold font-[var(--font-ui)] text-[var(--text-0)]">
+                    {{ agent.name }}
+                    <span class="text-[var(--text-2)] font-normal text-sm">
+                      — {{ activeModeLabel() }}</span
+                    >
+                  </h3>
+                  <p class="empty-text">
+                    @if (activeMode() === 'review') {
+                      I'll perform a thorough code review. Ask me about a specific file, module, or
+                      the entire codebase — I'll check for bugs, security issues, performance
+                      problems, and style violations.
+                    } @else if (activeMode() === 'modify') {
+                      Tell me what you want to change — I'll output the complete modified files with
+                      a summary of changes. You can copy the code from the Patches panel.
+                    } @else if (activeMode() === 'explain') {
+                      Ask me to explain any part of the codebase — architecture, data flow,
+                      algorithms, or design decisions. I'll provide clear, detailed explanations.
                     } @else {
                       Select a project folder in the sidebar, then ask me to analyze, explain, or
                       improve the code.
                     }
-                  }
-                </p>
+                  </p>
+                  <app-button variant="primary" (onClick)="openDirPicker()" className="mt-4">
+                    <mat-icon fontIcon="folder_open" class="scale-75"></mat-icon>
+                    Open Folder
+                  </app-button>
+                }
                 @if (repoFiles().length > 0) {
                   <div class="flex flex-wrap justify-center gap-1.5 mt-4 max-w-lg">
-                    @for (chip of suggestionChips; track chip) {
+                    @for (chip of suggestionChips(); track chip) {
                       <button class="suggestion-chip" (click)="useSuggestion(chip)">
                         {{ chip }}
                       </button>
                     }
                   </div>
-                }
-                @if (repoFiles().length === 0) {
-                  <app-button variant="primary" (onClick)="openDirPicker()" className="mt-4">
-                    <mat-icon fontIcon="folder_open" class="scale-75"></mat-icon>
-                    Open Folder
-                  </app-button>
                 }
               </div>
             }
@@ -623,6 +812,51 @@
     }
   </main>
 </div>
+
+<!-- Quick File Open overlay -->
+@if (quickOpenVisible()) {
+  <div class="quick-open-overlay" (click)="closeQuickOpen()">
+    <div class="quick-open-panel" (click)="$event.stopPropagation()">
+      <div class="quick-open-header">
+        <mat-icon class="scale-75 text-[var(--text-2)]">search</mat-icon>
+        <input
+          #quickOpenInput
+          class="quick-open-input"
+          placeholder="Search files by name or path..."
+          [value]="quickOpenQuery()"
+          (input)="quickOpenQuery.set($any($event.target).value); quickOpenSelectedIdx.set(0)"
+          (keydown)="quickOpenKeydown($event)"
+          autofocus
+        />
+        <kbd class="quick-open-kbd">esc</kbd>
+      </div>
+      <div class="quick-open-body">
+        @if (quickOpenResults().length === 0) {
+          <div class="quick-open-empty">No files found</div>
+        }
+        @for (file of quickOpenResults(); track file.path; let i = $index) {
+          <button
+            class="quick-open-item"
+            [class.quick-open-item-active]="i === quickOpenSelectedIdx()"
+            (click)="quickOpenSelect(file)"
+            (mouseenter)="quickOpenSelectedIdx.set(i)"
+          >
+            <mat-icon class="scale-50 shrink-0" [style.color]="fileColor(file.type)">
+              {{ fileIcon(file.type) }}
+            </mat-icon>
+            <span class="quick-open-name">{{ file.name }}</span>
+            <span class="quick-open-path">{{ file.path }}</span>
+          </button>
+        }
+      </div>
+      <div class="quick-open-footer">
+        <span class="quick-open-hint"><kbd>&#8593;&#8595;</kbd> navigate</span>
+        <span class="quick-open-hint"><kbd>&#8629;</kbd> open</span>
+        <span class="quick-open-hint"><kbd>esc</kbd> close</span>
+      </div>
+    </div>
+  </div>
+}
 
 @if (showClearConfirm()) {
   <app-confirm-dialog

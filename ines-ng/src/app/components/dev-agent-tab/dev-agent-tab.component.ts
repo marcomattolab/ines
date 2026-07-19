@@ -7,6 +7,7 @@ import {
   viewChild,
   OnInit,
   OnDestroy,
+  HostListener,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,6 +54,28 @@ interface CodePatch {
   language: string;
   code: string;
   applied: boolean;
+}
+
+interface PackageJson {
+  name?: string;
+  version?: string;
+  scripts: Record<string, string>;
+  dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
+}
+
+interface ProjectSummary {
+  framework: string;
+  language: string;
+  buildTool: string;
+  testTool: string;
+  srcDir: string;
+  hasTests: boolean;
+  hasE2E: boolean;
+  totalFiles: number;
+  sourceFiles: number;
+  configFiles: string[];
+  keyScripts: { name: string; command: string }[];
 }
 
 const MODE_LABELS: Record<Mode, string> = {
@@ -171,6 +194,37 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   searchResults = signal<{ file: RepoFile; line: number; text: string }[]>([]);
   isSearching = signal(false);
 
+  // Project analysis
+  projectSummary = signal<ProjectSummary | null>(null);
+  packageJson = signal<PackageJson | null>(null);
+  gitBranch = signal('');
+  hasGit = signal(false);
+  showProjectOverview = signal(false);
+
+  // Collapsible sections
+  showAgentsList = signal(true);
+
+  // Quick file open
+  quickOpenVisible = signal(false);
+  quickOpenQuery = signal('');
+  quickOpenSelectedIdx = signal(0);
+
+  readonly quickOpenResults = computed(() => {
+    const q = this.quickOpenQuery().toLowerCase();
+    if (!q) return this.repoFiles().slice(0, 15);
+    return this.repoFiles()
+      .filter((f) => f.path.toLowerCase().includes(q) || f.name.toLowerCase().includes(q))
+      .slice(0, 15);
+  });
+
+  // Resizable sidebar
+  sidebarWidth = signal(this.storage.get<number>('ines_dev_sidebar_w') ?? 280);
+  isResizing = signal(false);
+  private resizeStartX = 0;
+  private resizeStartW = 0;
+  private boundMouseMove: ((e: MouseEvent) => void) | null = null;
+  private boundMouseUp: (() => void) | null = null;
+
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
@@ -178,6 +232,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
 
   private dirHandle: FileSystemDirectoryHandle | null = null;
   private fileHandles = new Map<string, FileSystemFileHandle>();
+  private fallbackFiles = new Map<string, File>();
 
   readonly hasWriteAccess = computed(() => this.dirHandle !== null);
 
@@ -191,14 +246,36 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   readonly MODE_LABELS = MODE_LABELS;
   readonly MODE_ICONS = MODE_ICONS;
 
-  readonly suggestionChips = [
-    'Summarize the project architecture',
-    'What dependencies does this project use?',
-    'Explain how to run this project',
-    'Find potential bugs or improvements',
-    'How is authentication handled?',
-    'Explain the main entry point',
-  ];
+  readonly suggestionChips = computed(() => {
+    const summary = this.projectSummary();
+    if (!summary) {
+      return [
+        'Summarize the project architecture',
+        'What dependencies does this project use?',
+        'Explain how to run this project',
+        'Find potential bugs or improvements',
+        'How is authentication handled?',
+        'Explain the main entry point',
+      ];
+    }
+    const chips = ['Summarize the project architecture'];
+    if (summary.framework !== 'Unknown') {
+      chips.push(`Explain the ${summary.framework} project structure`);
+      chips.push(`How are ${summary.framework} components organized?`);
+    }
+    if (summary.keyScripts.length > 0) {
+      const script = summary.keyScripts[0];
+      chips.push(`How does "${script.name}" (${script.command}) work?`);
+    }
+    chips.push(
+      ...[
+        'What dependencies does this project use?',
+        'Find potential bugs or improvements',
+        'Explain the main entry point',
+      ],
+    );
+    return chips.slice(0, 6);
+  });
 
   readonly quickActions: { mode: Mode; label: string; prompt: string }[] = [
     { mode: 'review', label: 'Code Review', prompt: MODE_PROMPTS.review },
@@ -305,12 +382,184 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     }
   }
 
+  startResize(e: MouseEvent) {
+    e.preventDefault();
+    this.resizeStartX = e.clientX;
+    this.resizeStartW = this.sidebarWidth();
+    this.isResizing.set(true);
+    this.boundMouseMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - this.resizeStartX;
+      const w = Math.max(200, Math.min(600, this.resizeStartW + delta));
+      this.sidebarWidth.set(w);
+    };
+    this.boundMouseUp = () => {
+      this.isResizing.set(false);
+      document.removeEventListener('mousemove', this.boundMouseMove!);
+      document.removeEventListener('mouseup', this.boundMouseUp!);
+      this.boundMouseMove = null;
+      this.boundMouseUp = null;
+      this.storage.set('ines_dev_sidebar_w', this.sidebarWidth());
+    };
+    document.addEventListener('mousemove', this.boundMouseMove);
+    document.addEventListener('mouseup', this.boundMouseUp);
+  }
+
   private persistState() {
     this.storage.set('ines_dev_agent', {
       repoName: this.repoName(),
       repoFiles: this.repoFiles(),
       agentId: this.selectedAgent()?.id,
       activeMode: this.activeMode(),
+    });
+  }
+
+  private async analyzeProject(files: RepoFile[]) {
+    try {
+      this.tryDetectGit(files);
+      await this.tryReadPackageJson(files);
+      this.buildProjectSummary(files);
+    } catch {
+      /* analysis is best-effort */
+    }
+  }
+
+  private tryDetectGit(files: RepoFile[]) {
+    const gitHead = files.find((f) => f.path.endsWith('.git/HEAD'));
+    if (gitHead) {
+      this.hasGit.set(true);
+      // We can't read the file contents easily from FileList, but we know git exists
+    }
+  }
+
+  private async tryReadPackageJson(files: RepoFile[]) {
+    const pkgFile = files.find(
+      (f) =>
+        f.name === 'package.json' &&
+        (f.path === 'package.json' || f.path.endsWith('/package.json')),
+    );
+    if (!pkgFile) return;
+
+    try {
+      const handle = this.fileHandles.get(pkgFile.path);
+      if (!handle) return;
+      const fsFile = await handle.getFile();
+      const text = await fsFile.text();
+      const pkg = JSON.parse(text) as PackageJson;
+      this.packageJson.set({
+        name: pkg.name || '',
+        version: pkg.version || '',
+        scripts: pkg.scripts || {},
+        dependencies: pkg.dependencies || {},
+        devDependencies: pkg.devDependencies || {},
+      });
+    } catch {
+      /* parse error — non-critical */
+    }
+  }
+
+  private buildProjectSummary(files: RepoFile[]) {
+    const pkg = this.packageJson();
+    const pathSet = new Set(files.map((f) => f.path));
+
+    // Detect framework
+    let framework = 'Unknown';
+    let language = 'Unknown';
+    let buildTool = 'Unknown';
+    let testTool = 'None';
+    let srcDir = 'src/';
+
+    if (pkg) {
+      const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+      if (allDeps['@angular/core']) {
+        framework = 'Angular';
+        buildTool = 'Angular CLI (ng)';
+        testTool = allDeps['cypress'] ? 'Jasmine + Cypress' : 'Jasmine/Karma';
+      } else if (allDeps['react']) {
+        framework = allDeps['next'] ? 'Next.js' : 'React';
+        buildTool = allDeps['vite'] ? 'Vite' : allDeps['webpack'] ? 'Webpack' : 'CRA';
+        testTool = allDeps['vitest'] ? 'Vitest' : allDeps['jest'] ? 'Jest' : 'None';
+      } else if (allDeps['vue']) {
+        framework = 'Vue';
+        buildTool = allDeps['vite'] ? 'Vite' : 'Vue CLI';
+        testTool = allDeps['vitest'] ? 'Vitest' : 'None';
+      } else if (pkg.scripts?.['start'] || allDeps['express']) {
+        framework = 'Node.js';
+        buildTool = 'npm scripts';
+      }
+
+      if (allDeps['typescript'] || allDeps['@types/node']) {
+        language = 'TypeScript';
+      } else if (pkg.scripts?.['start'] || allDeps['express']) {
+        language = 'JavaScript';
+      }
+    }
+
+    // Detect language from file extensions if not found
+    if (language === 'Unknown') {
+      const tsCount = files.filter((f) => f.type === 'ts' || f.type === 'tsx').length;
+      const jsCount = files.filter((f) => f.type === 'js' || f.type === 'jsx').length;
+      if (tsCount > jsCount) language = 'TypeScript';
+      else if (jsCount > 0) language = 'JavaScript';
+    }
+
+    // Detect test framework
+    if (testTool === 'None' && pkg) {
+      const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+      if (allDeps['vitest']) testTool = 'Vitest';
+      else if (allDeps['jest']) testTool = 'Jest';
+      else if (allDeps['cypress']) testTool = 'Cypress';
+    }
+
+    // Detect src directory
+    if (pathSet.has('src/main.ts')) srcDir = 'src/';
+    else if (pathSet.has('app/')) srcDir = 'app/';
+    else if (pathSet.has('lib/')) srcDir = 'lib/';
+
+    // Config files
+    const configFiles = files
+      .filter(
+        (f) =>
+          f.name.includes('.config.') ||
+          f.name.includes('rc') ||
+          f.name === 'angular.json' ||
+          f.name === 'tsconfig.json' ||
+          f.name === 'package.json' ||
+          f.name === 'Dockerfile' ||
+          f.name === 'Makefile' ||
+          f.name === '.gitignore' ||
+          f.name === '.env.example',
+      )
+      .map((f) => f.name);
+
+    // Source files
+    const sourceFiles = files.filter((f) => this.fileExtensions.has(f.type)).length;
+
+    // Key scripts
+    const keyScriptNames = ['start', 'dev', 'build', 'test', 'lint', 'e2e'];
+    const keyScripts = pkg?.scripts
+      ? keyScriptNames
+          .filter((n) => pkg.scripts[n])
+          .map((n) => ({ name: n, command: pkg.scripts[n] }))
+      : [];
+
+    this.projectSummary.set({
+      framework,
+      language,
+      buildTool,
+      testTool,
+      srcDir,
+      hasTests: files.some(
+        (f) =>
+          f.path.includes('.spec.') || f.path.includes('.test.') || f.path.includes('__tests__'),
+      ),
+      hasE2E: files.some(
+        (f) =>
+          f.path.includes('cypress/') || f.path.includes('e2e/') || f.name === 'cypress.config.ts',
+      ),
+      totalFiles: files.length,
+      sourceFiles,
+      configFiles,
+      keyScripts,
     });
   }
 
@@ -385,6 +634,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       this.totalChunks.set(0);
     }
 
+    await this.analyzeProject(fileList);
+
     this.isLoadingDir.set(false);
   }
 
@@ -421,6 +672,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     this.isLoadingDir.set(true);
     this.dirHandle = null;
     this.fileHandles.clear();
+    this.fallbackFiles.clear();
     this.repoFiles.set([]);
     this.repoName.set('');
 
@@ -441,6 +693,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
         size: file.size,
         type: ext,
       });
+
+      this.fallbackFiles.set(relativePath, file);
 
       if (this.fileExtensions.has(ext) && file.size < 1024 * 1024) {
         processQueue.push(file);
@@ -467,6 +721,8 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       this.totalChunks.set(0);
     }
 
+    await this.analyzeProject(fileList);
+
     this.isLoadingDir.set(false);
     input.value = '';
   }
@@ -475,9 +731,14 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     this.project.clearAll();
     this.dirHandle = null;
     this.fileHandles.clear();
+    this.fallbackFiles.clear();
     this.repoFiles.set([]);
     this.repoName.set('');
     this.totalChunks.set(0);
+    this.projectSummary.set(null);
+    this.packageJson.set(null);
+    this.gitBranch.set('');
+    this.hasGit.set(false);
     this.clearChat();
     this.persistState();
   }
@@ -590,6 +851,12 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   private async reindexFile(fileName: string, fileHandle: FileSystemFileHandle) {
     const file = await fileHandle.getFile();
     try {
+      // Delete old document with same name first, then re-add
+      const docs = this.project.documents();
+      const oldDoc = docs.find((d) => d.name === file.name);
+      if (oldDoc) {
+        await this.project.deleteDocument(oldDoc.id);
+      }
       await this.project.processFile(file);
       await this.project.loadDocuments();
       this.totalChunks.set(await this.project.countChunks());
@@ -708,6 +975,46 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     el.style.height = Math.min(el.scrollHeight, 140) + 'px';
   }
 
+  private buildProjectContext(): string {
+    const summary = this.projectSummary();
+    const pkg = this.packageJson();
+    if (!summary && !pkg) return '';
+
+    let ctx = 'PROJECT OVERVIEW:\n';
+    if (summary) {
+      ctx += `- Framework: ${summary.framework}\n`;
+      ctx += `- Language: ${summary.language}\n`;
+      ctx += `- Build Tool: ${summary.buildTool}\n`;
+      ctx += `- Test Tool: ${summary.testTool}\n`;
+      ctx += `- Source Dir: ${summary.srcDir}\n`;
+      ctx += `- Files: ${summary.totalFiles} total, ${summary.sourceFiles} source files indexed\n`;
+      if (summary.configFiles.length > 0) {
+        ctx += `- Config files: ${summary.configFiles.join(', ')}\n`;
+      }
+      if (summary.hasTests) ctx += '- Has unit tests\n';
+      if (summary.hasE2E) ctx += '- Has E2E tests\n';
+    }
+
+    if (this.hasGit()) {
+      ctx += '- Git repository detected\n';
+    }
+
+    if (pkg && summary && summary.keyScripts.length > 0) {
+      ctx += '\nAVAILABLE SCRIPTS:\n';
+      for (const s of summary.keyScripts) {
+        ctx += `  npm run ${s.name}  → ${s.command}\n`;
+      }
+    }
+
+    if (pkg) {
+      const deps = Object.keys(pkg.dependencies || {}).length;
+      const devDeps = Object.keys(pkg.devDependencies || {}).length;
+      ctx += `\nDEPENDENCIES: ${deps} runtime, ${devDeps} dev\n`;
+    }
+
+    return ctx;
+  }
+
   clearChat() {
     this.messages.set([]);
     this.history = [];
@@ -760,29 +1067,34 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     systemPrompt = systemPrompt.replace('{MODE}', MODE_LABELS[mode]);
     systemPrompt = systemPrompt.replace('{MODE_INSTRUCTIONS}', MODE_PROMPTS[mode]);
 
+    const projectContext = this.buildProjectContext();
+    let ragContext = '';
+
     if (this.repoFiles().length > 0 && this.totalChunks() > 0) {
       try {
         const chunks = await this.project.getRelevantChunks(text, 5, 600);
         if (chunks.length > 0) {
           const sourceNames = [...new Set(chunks.map((c) => c.docName))];
           this.msgSources.set(sourceNames);
-          const context = chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
-          systemPrompt = systemPrompt.replace('{CONTEXT}', context);
-        } else {
-          systemPrompt = systemPrompt.replace(
-            '{CONTEXT}',
-            'No relevant code found in the indexed repository. The user may need to select a folder with source files.',
-          );
+          ragContext = chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
         }
       } catch {
-        systemPrompt = systemPrompt.replace('{CONTEXT}', 'Error retrieving project context.');
+        /* proceed without RAG */
       }
-    } else {
-      systemPrompt = systemPrompt.replace(
-        '{CONTEXT}',
-        'No repository loaded. Ask the user to select a project folder first.',
-      );
     }
+
+    const fullContext = [
+      projectContext,
+      ragContext ||
+        (this.repoFiles().length > 0 ? 'No specific relevant code found for this query.' : ''),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    systemPrompt = systemPrompt.replace(
+      '{CONTEXT}',
+      fullContext || 'No repository loaded. Ask the user to select a project folder first.',
+    );
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
     const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
@@ -880,8 +1192,19 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
         this.openedFileContent.set(content);
         this.openedFileHighlighted.set(this.highlight.highlight(content, file.type));
       } else {
-        this.openedFileContent.set('[File not accessible — folder was opened without write API]');
-        this.openedFileHighlighted.set(this.openedFileContent());
+        const fallback = this.fallbackFiles.get(file.path);
+        if (fallback) {
+          const content = await fallback.text();
+          this.openedFileContent.set(content);
+          this.openedFileHighlighted.set(this.highlight.highlight(content, file.type));
+        } else {
+          this.openedFileContent.set(
+            this.repoFiles().length > 0
+              ? '[Session expired — re-open the folder to view files]'
+              : '[File not accessible — folder was opened without write API]',
+          );
+          this.openedFileHighlighted.set(this.openedFileContent());
+        }
       }
     } catch (err: any) {
       this.openedFileContent.set('Error reading file: ' + err.message);
@@ -921,6 +1244,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       this.openedFileContent.set(this.editedFileContent());
       this.openedFileHighlighted.set(this.highlight.highlight(this.editedFileContent(), file.type));
       this.isEditingFile.set(false);
+      this.reindexFile(file.path, handle);
       this.toast.success(`Saved: ${file.name}`);
     } catch (err: any) {
       this.toast.error('Failed to save: ' + err.message);
@@ -985,8 +1309,54 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Quick File Open (Cmd+P) ──
+
+  openQuickOpen() {
+    if (this.repoFiles().length === 0) return;
+    this.quickOpenVisible.set(true);
+    this.quickOpenQuery.set('');
+    this.quickOpenSelectedIdx.set(0);
+  }
+
+  closeQuickOpen() {
+    this.quickOpenVisible.set(false);
+  }
+
+  quickOpenSelect(file: RepoFile) {
+    this.closeQuickOpen();
+    this.openFile(file);
+  }
+
+  quickOpenKeydown(e: KeyboardEvent) {
+    const results = this.quickOpenResults();
+    if (e.key === 'Escape') {
+      this.closeQuickOpen();
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.quickOpenSelectedIdx.update((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.quickOpenSelectedIdx.update((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const idx = this.quickOpenSelectedIdx();
+      if (results[idx]) this.quickOpenSelect(results[idx]);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleQuickOpenKey(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      e.preventDefault();
+      this.openQuickOpen();
+    }
+  }
+
   ngOnDestroy() {
     this.persistState();
+    if (this.boundMouseMove) document.removeEventListener('mousemove', this.boundMouseMove);
+    if (this.boundMouseUp) document.removeEventListener('mouseup', this.boundMouseUp);
   }
 
   html(text: string) {

@@ -1,34 +1,27 @@
-<div class="tab-panel-inner">
-  <!-- Header -->
+<div class="flex flex-col flex-1 overflow-hidden h-full">
   <div class="panel-header">
     <div class="flex items-center gap-3">
       <mat-icon class="text-blue-400 scale-110">school</mat-icon>
       <div>
         <div class="panel-title text-white">Learning Center</div>
-        <div class="panel-desc text-zinc-400">RAG-powered analysis, Mind Maps & Quizzes</div>
+        <div class="panel-desc text-zinc-400">
+          RAG-powered analysis, Mind Maps, Quizzes & Exercises
+        </div>
       </div>
     </div>
-    <app-button variant="danger" (onClick)="clearAll()">
-      <mat-icon class="scale-90">delete_outline</mat-icon>
-      Clear
+    <app-button variant="danger" (onClick)="showClearConfirm.set(true)">
+      <mat-icon class="scale-90">delete_outline</mat-icon> Clear
     </app-button>
   </div>
 
   <div class="flex flex-1 overflow-hidden">
-    <!-- Left Sidebar: Document Management & Controls -->
+    <!-- Left Sidebar -->
     <aside
-      class="w-64 border-r border-zinc-200/10 dark:border-zinc-800/30 p-4 flex flex-col gap-6 overflow-y-auto"
-      style="
-        background: var(--bg-1);
-        backdrop-filter: blur(28px);
-        border-right: 1px solid var(--border);
-      "
+      class="w-60 border-r border-[var(--border)] flex flex-col shrink-0"
+      style="background: var(--bg-1); backdrop-filter: blur(28px)"
     >
-      <!-- Upload Section -->
-      <section>
-        <h3 class="text-sm font-medium text-zinc-200 mb-3 flex items-center gap-2">
-          <mat-icon class="text-blue-400 scale-75">upload_file</mat-icon> Documents
-        </h3>
+      <!-- Upload -->
+      <div class="p-4 border-b border-[var(--border)]">
         <div class="relative group">
           <input
             type="file"
@@ -38,486 +31,755 @@
             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
           <div
-            class="border-2 border-dashed border-white/10 rounded-xl p-6 text-center group-hover:border-blue-400/50 transition-colors bg-white/5"
+            class="border-2 border-dashed border-[var(--border)] rounded-xl p-4 text-center group-hover:border-blue-400/50 transition-colors bg-[var(--bg-2)]"
           >
-            <mat-icon class="text-zinc-400 mb-2">add_circle_outline</mat-icon>
-            <p class="text-xs text-zinc-400">Upload PDF, HTML, TXT or MD</p>
+            <mat-icon class="text-[var(--text-2)] mb-1 scale-90">add_circle_outline</mat-icon>
+            <p class="text-[10px] text-[var(--text-2)]">Upload PDF, HTML, TXT, MD</p>
           </div>
         </div>
-
-        <!-- File List -->
-        <div class="mt-4 space-y-2">
-          @for (file of files(); track file.name) {
-            <div class="flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5">
-              <mat-icon class="text-zinc-400 scale-75">description</mat-icon>
-              <span class="text-xs text-zinc-200 truncate flex-1">{{ file.name }}</span>
-              <mat-icon class="text-green-500 scale-50">check_circle</mat-icon>
-            </div>
-          }
-          @if (isProcessing()) {
-            <div class="flex items-center gap-2 p-2">
-              <div
-                class="animate-spin h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full"
-              ></div>
-              <span class="text-xs text-zinc-400">Processing...</span>
-            </div>
-          }
-        </div>
-      </section>
-
-      <!-- Learning Tools -->
-      <section class="space-y-3">
-        <h3 class="text-sm font-medium text-zinc-200 flex items-center gap-2">
-          <mat-icon class="text-purple-400 scale-75">auto_awesome</mat-icon> Tools
-        </h3>
-        <button
-          (click)="generateMindMap()"
-          [disabled]="!rag.hasContext() || isGenerating()"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/20 transition-colors disabled:opacity-30 disabled:grayscale"
-        >
-          <mat-icon>account_tree</mat-icon>
-          <div class="text-left">
-            <div class="text-sm font-semibold">Mind Map</div>
-            <div class="text-[10px] opacity-70">Visualize connections</div>
+        @if (km.isProcessing()) {
+          <div class="flex items-center gap-2 p-2 mt-2 text-xs text-[var(--text-2)]">
+            <div
+              class="animate-spin h-3 w-3 border-2 border-blue-400 border-t-transparent rounded-full"
+            ></div>
+            {{ km.processingStatus() }}
           </div>
-        </button>
-
-        <div class="space-y-2">
-          <button
-            (click)="generateQuiz()"
-            [disabled]="!rag.hasContext() || isGenerating()"
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-colors disabled:opacity-30 disabled:grayscale"
-          >
-            <mat-icon>quiz</mat-icon>
-            <div class="text-left">
-              <div class="text-sm font-semibold">Test Knowledge</div>
-              <div class="text-[10px] opacity-70">Generate random quiz</div>
-            </div>
-          </button>
-          <div class="flex items-center justify-between px-2">
-            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Questions:</span>
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                (click)="decrementQuestions()"
-                [disabled]="numQuizQuestions() <= 1"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">remove</mat-icon>
-              </button>
-              <input
-                type="number"
-                [value]="numQuizQuestions()"
-                (input)="setQuestions($any($event.target).value)"
-                min="1"
-                max="15"
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
-              />
-              <button
-                type="button"
-                (click)="incrementQuestions()"
-                [disabled]="numQuizQuestions() >= 15"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">add</mat-icon>
-              </button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-2">
-            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold"
-              >Timer (min):</span
-            >
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                (click)="decrementTimer()"
-                [disabled]="quizTimerDuration() <= 1"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">remove</mat-icon>
-              </button>
-              <input
-                type="number"
-                [value]="quizTimerDuration()"
-                (input)="setTimer($any($event.target).value)"
-                min="1"
-                max="60"
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
-              />
-              <button
-                type="button"
-                (click)="incrementTimer()"
-                [disabled]="quizTimerDuration() >= 60"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">add</mat-icon>
-              </button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-2">
-            <span class="text-xs text-zinc-300 uppercase tracking-wider font-bold">Options:</span>
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                (click)="decrementOptions()"
-                [disabled]="numQuizOptions() <= 2"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">remove</mat-icon>
-              </button>
-              <input
-                type="number"
-                [value]="numQuizOptions()"
-                (input)="setOptions($any($event.target).value)"
-                min="2"
-                max="6"
-                class="w-12 bg-zinc-950/60 border border-white/10 rounded-lg text-xs py-1 text-center text-white focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-semibold font-mono"
-              />
-              <button
-                type="button"
-                (click)="incrementOptions()"
-                [disabled]="numQuizOptions() >= 6"
-                class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <mat-icon class="scale-75">add</mat-icon>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col bg-transparent relative">
-      <!-- Sub-tab Navigation -->
-      <nav
-        class="flex items-center justify-between px-6"
-        style="border-bottom: 1px solid var(--border)"
-      >
-        <div class="flex">
-          <button
-            (click)="selectSubTab('chat')"
-            [class.border-blue-500]="activeSubTab() === 'chat'"
-            [class.text-blue-400]="activeSubTab() === 'chat'"
-            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            Chat Analysis
-          </button>
-          <button
-            (click)="selectSubTab('mindmap')"
-            [class.border-blue-500]="activeSubTab() === 'mindmap'"
-            [class.text-blue-400]="activeSubTab() === 'mindmap'"
-            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            Visual Map
-          </button>
-          <button
-            (click)="selectSubTab('quiz')"
-            [class.border-blue-500]="activeSubTab() === 'quiz'"
-            [class.text-blue-400]="activeSubTab() === 'quiz'"
-            class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            Quiz
-          </button>
-        </div>
-
-        <!-- Split View Toggle Button -->
-        @if (rag.hasContext()) {
-          <button
-            (click)="toggleDockMindMap()"
-            [class.text-purple-400]="showMindMapOnRight()"
-            [class.border-purple-500]="showMindMapOnRight()"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/10 transition-colors"
-            [title]="
-              showMindMapOnRight() ? 'Hide Split View' : 'Split View: Show Mind Map on Right'
-            "
-          >
-            <mat-icon class="scale-75">view_sidebar</mat-icon>
-            <span>{{ showMindMapOnRight() ? 'Hide Split' : 'Split View' }}</span>
-          </button>
         }
-      </nav>
-
-      <!-- Content Views -->
-      <div class="flex-1 flex overflow-hidden relative">
-        <!-- Left Side: Chat or Quiz -->
         <div
-          class="flex-1 h-full flex flex-col min-w-0"
-          [class.hidden]="activeSubTab() === 'mindmap'"
+          class="flex items-center gap-2 text-[10px] font-[var(--font-mono)] text-[var(--text-2)] mt-3"
         >
-          <!-- Chat View -->
-          <div [hidden]="activeSubTab() !== 'chat'" class="h-full flex flex-col">
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-              @if (messages().length === 0) {
-                <div
-                  class="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-4"
-                >
-                  <div
-                    class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-blue-400"
-                  >
-                    <mat-icon class="scale-150">auto_stories</mat-icon>
-                  </div>
-                  <h3 class="text-lg font-semibold text-white">Ask your documents anything</h3>
-                  <p class="text-sm text-zinc-400">
-                    Upload documents on the left and I'll answer questions based specifically on
-                    their content.
-                  </p>
-                </div>
-              }
-
-              <div class="space-y-4">
-                @for (msg of messages(); track $index) {
-                  <app-message-bubble
-                    [role]="msg.role === 'assistant' ? 'ai' : 'user'"
-                    [text]="msg.content"
-                  />
-                }
-              </div>
-            </div>
-
-            <!-- Input Area -->
-            <div
-              class="p-6 border-t border-white/5"
-              style="
-                background: var(--bg-1);
-                backdrop-filter: blur(28px);
-                border-top: 1px solid var(--border);
-              "
-            >
-              <div class="relative flex items-center">
-                <input
-                  type="text"
-                  [value]="userInput()"
-                  (input)="userInput.set($any($event.target).value)"
-                  (keyup.enter)="sendMessage()"
-                  placeholder="Ask about the content..."
-                  [disabled]="!llm.isReady() || isGenerating()"
-                  class="w-full bg-zinc-950/40 text-white border border-white/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all disabled:opacity-50"
-                />
-                <button
-                  (click)="sendMessage()"
-                  [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()"
-                  class="absolute right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  <mat-icon>send</mat-icon>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quiz View -->
-          <div [hidden]="activeSubTab() !== 'quiz'" class="h-full overflow-y-auto p-6">
-            @if (quizQuestions().length > 0 && !showQuizResults()) {
-              <div class="max-w-5xl mx-auto space-y-8">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-blue-400 uppercase tracking-widest"
-                    >Question {{ currentQuizIndex() + 1 }} of {{ quizQuestions().length }}</span
-                  >
-
-                  <!-- Countdown Timer -->
-                  <div
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-sm font-semibold"
-                  >
-                    <mat-icon class="scale-75 text-red-400">timer</mat-icon>
-                    <span>{{ formatTime(quizSecondsLeft()) }}</span>
-                  </div>
-
-                  <div class="h-1.5 w-32 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      class="h-full bg-blue-600 transition-all duration-300"
-                      [style.width.%]="((currentQuizIndex() + 1) / quizQuestions().length) * 100"
-                    ></div>
-                  </div>
-                </div>
-
-                <h2 class="text-xl font-bold text-white">
-                  {{ quizQuestions()[currentQuizIndex()].question }}
-                </h2>
-
-                <div class="grid gap-3">
-                  @for (
-                    option of quizQuestions()[currentQuizIndex()].options;
-                    track $index;
-                    let i = $index
-                  ) {
-                    <button
-                      (click)="selectAnswer(i)"
-                      [class.border-blue-500]="selectedAnswers()[currentQuizIndex()] === i"
-                      [class.bg-blue-500/10]="selectedAnswers()[currentQuizIndex()] === i"
-                      [class.border-white/5]="selectedAnswers()[currentQuizIndex()] !== i"
-                      [class.bg-white/5]="selectedAnswers()[currentQuizIndex()] !== i"
-                      class="w-full text-left px-6 py-4 rounded-xl border-2 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group"
-                    >
-                      <div class="flex items-center gap-4">
-                        <span
-                          [class.bg-blue-600]="selectedAnswers()[currentQuizIndex()] === i"
-                          [class.bg-white/10]="selectedAnswers()[currentQuizIndex()] !== i"
-                          [class.text-white]="selectedAnswers()[currentQuizIndex()] === i"
-                          [class.text-zinc-400]="selectedAnswers()[currentQuizIndex()] !== i"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
-                        >
-                          {{ ['A', 'B', 'C', 'D', 'E', 'F'][i] }}
-                        </span>
-                        <span class="text-zinc-200 group-hover:text-white font-medium">{{
-                          option
-                        }}</span>
-                      </div>
-                    </button>
-                  }
-                </div>
-
-                <!-- Navigation and Submit Controls -->
-                <div class="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
-                  <button
-                    (click)="prevQuestion()"
-                    [disabled]="currentQuizIndex() === 0"
-                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-300 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
-                  >
-                    <mat-icon class="scale-90">arrow_back</mat-icon>
-                    <span>Previous</span>
-                  </button>
-
-                  <button
-                    (click)="submitEntireQuiz()"
-                    class="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all shadow-lg shadow-green-900/20"
-                  >
-                    Submit Quiz
-                  </button>
-
-                  <button
-                    (click)="nextQuestion()"
-                    [disabled]="currentQuizIndex() === quizQuestions().length - 1"
-                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-300 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
-                  >
-                    <span>Next</span>
-                    <mat-icon class="scale-90">arrow_forward</mat-icon>
-                  </button>
-                </div>
-              </div>
-            }
-
-            @if (showQuizResults()) {
-              <div class="max-w-2xl mx-auto text-center py-12 space-y-6">
-                <div
-                  class="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 mx-auto"
-                >
-                  <mat-icon class="scale-[2]">emoji_events</mat-icon>
-                </div>
-                <div>
-                  <h2 class="text-2xl font-black text-white">Quiz Completed!</h2>
-                  <p class="text-zinc-400 mt-2">
-                    You scored {{ quizScore() }} out of {{ quizQuestions().length }}
-                  </p>
-                </div>
-                <div class="text-4xl font-black text-blue-400">
-                  {{ (quizScore() / quizQuestions().length) * 100 | number: '1.0-0' }}%
-                </div>
-                <app-button variant="primary" (onClick)="generateQuiz()">Retake Quiz</app-button>
-              </div>
-            }
-
-            @if (quizQuestions().length === 0 && !isGenerating()) {
-              <div
-                class="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4"
-              >
-                <mat-icon class="scale-[2] text-zinc-500">lightbulb_outline</mat-icon>
-                <p class="text-sm text-zinc-400">
-                  Ready to test your knowledge? Click "Test Knowledge" on the left to generate a
-                  custom quiz from your documents.
-                </p>
-              </div>
-            }
-          </div>
+          <span>{{ km.documents().length }} docs</span>
+          <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+          <span>{{ totalChunks() }} chunks</span>
         </div>
+      </div>
 
-        <!-- Right Side / Mind Map Panel: full width OR 50% split view -->
+      <!-- Search -->
+      <div class="px-3 pt-2">
         <div
-          [class.hidden]="activeSubTab() !== 'mindmap' && !showMindMapOnRight()"
-          [class.w-full]="activeSubTab() === 'mindmap'"
-          [class.w-[50%]]="activeSubTab() !== 'mindmap' && showMindMapOnRight()"
-          [class.border-l]="activeSubTab() !== 'mindmap' && showMindMapOnRight()"
-          class="h-full flex flex-col border-white/5 relative bg-zinc-950/20 backdrop-blur-md"
+          class="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 border border-white/5 focus-within:border-[var(--border-active)]"
         >
-          <!-- Mind Map Container (with pan and zoom) -->
-          <div
-            class="flex-1 overflow-hidden p-6 min-h-0 relative select-none"
-            [style.cursor]="isDragging ? 'grabbing' : 'grab'"
-            (pointerdown)="onMindMapPointerDown($event)"
-            (pointermove)="onMindMapPointerMove($event)"
-            (pointerup)="onMindMapPointerUp()"
-            (pointerleave)="onMindMapPointerUp()"
-            (wheel)="onMindMapWheel($event)"
-          >
-            <div
-              #mermaidContainer
-              id="mermaidContainer"
-              [style.transform]="
-                'translate(' + panX() + 'px, ' + panY() + 'px) scale(' + zoomLevel() + ')'
-              "
-              class="origin-center flex items-center justify-center w-full h-full"
-              [class.transition-transform]="!isDragging"
-              [class.duration-200]="!isDragging"
-            >
-              <!-- Mermaid SVG will be injected here -->
-            </div>
-          </div>
-
-          <!-- Floating Zoom Controls -->
-          <div
-            class="absolute bottom-4 right-4 flex items-center gap-1 bg-zinc-900/90 border border-white/10 rounded-xl p-1.5 shadow-lg backdrop-blur-sm z-10"
-          >
-            <button
-              (click)="zoomOut()"
-              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-              title="Zoom Out"
-            >
-              <mat-icon class="scale-90">remove</mat-icon>
-            </button>
-            <span class="text-[10px] font-mono text-zinc-400 min-w-[40px] text-center"
-              >{{ zoomLevel() * 100 | number: '1.0-0' }}%</span
-            >
-            <button
-              (click)="zoomIn()"
-              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-              title="Zoom In"
-            >
-              <mat-icon class="scale-90">add</mat-icon>
-            </button>
-            <div class="h-4 w-px bg-white/10 mx-1"></div>
-            <button
-              (click)="zoomReset()"
-              class="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-              title="Reset Zoom"
-            >
-              <mat-icon class="scale-90">restart_alt</mat-icon>
-            </button>
-          </div>
-
-          <div class="p-4 bg-white/5 border-t border-white/5 text-center">
-            <p class="text-xs text-zinc-400">
-              Mind maps are generated using MediaPipe LLM and rendered with Mermaid.js
-            </p>
-          </div>
+          <mat-icon class="scale-50 text-[var(--text-2)]">search</mat-icon>
+          <input
+            class="flex-1 bg-transparent border-none outline-none text-[10px] text-[var(--text-0)] placeholder:text-[var(--text-2)] font-mono"
+            placeholder="Filter docs..."
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+          />
         </div>
+      </div>
 
-        <!-- Loading Overlay for generation -->
-        @if (isGenerating()) {
+      <!-- Doc list -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-1 min-h-0">
+        @if (km.documents().length === 0) {
+          <div class="text-center py-6 text-[10px] text-[var(--text-2)]">No documents yet</div>
+        }
+        @for (doc of filteredDocs(); track doc.id) {
           <div
-            class="absolute inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4"
+            class="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-2)] border border-[var(--border)] group hover:border-[var(--border-active)] transition-colors text-xs"
+            [class.border-blue-400/40]="selectedDocId() === doc.id"
+            (click)="selectedDocId.set(selectedDocId() === doc.id ? null : doc.id)"
           >
-            <div class="relative w-16 h-16">
-              <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
-              <div
-                class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"
-              ></div>
-            </div>
-            <div class="text-center">
-              <p class="font-bold text-white">AI is thinking...</p>
-              <p class="text-xs text-zinc-400 mt-1">Generating response using on-device LLM</p>
-            </div>
+            <mat-icon class="scale-50 text-cyan-400 shrink-0">description</mat-icon>
+            <span class="flex-1 truncate text-[var(--text-1)]">{{ doc.name }}</span>
+            <button
+              (click)="deleteDoc($event, doc.id)"
+              class="opacity-0 group-hover:opacity-100 text-[var(--text-2)] hover:text-red-400 transition-all"
+            >
+              <mat-icon class="scale-50">close</mat-icon>
+            </button>
           </div>
         }
       </div>
+
+      <!-- Tools nav -->
+      <div class="border-t border-[var(--border)] p-3 space-y-1">
+        <span class="text-[9px] font-bold uppercase tracking-widest text-[var(--text-2)] block mb-2"
+          >Learning Tools</span
+        >
+        @for (item of toolNav; track item.id) {
+          <button
+            (click)="selectSubTab(item.id)"
+            class="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors"
+            [class.bg-white/8]="activeSubTab() === item.id"
+            [class.text-[var(--text-0)]]="activeSubTab() === item.id"
+            [class.text-[var(--text-2)]]="activeSubTab() !== item.id"
+            [class.hover:bg-white/5]="activeSubTab() !== item.id"
+          >
+            <mat-icon class="scale-50 {{ item.color }}">{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </button>
+        }
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- ── Chat ── -->
+      @if (activeSubTab() === 'chat') {
+        <div class="flex-1 flex flex-col min-h-0">
+          <div class="chat-area flex-1">
+            @if (messages().length === 0) {
+              <div class="empty-state">
+                <mat-icon class="empty-icon scale-150 text-blue-400">school</mat-icon>
+                <h3 class="text-base font-bold font-[var(--font-ui)]">
+                  Ask your learning materials
+                </h3>
+                <p class="empty-text">
+                  Upload documents and ask questions. The AI will answer using RAG context from your
+                  study materials.
+                </p>
+                @if (km.documents().length === 0) {
+                  <p class="text-[11px] text-amber-400 mt-2">
+                    Upload documents on the left to get started.
+                  </p>
+                }
+              </div>
+            }
+            @for (msg of messages(); track $index) {
+              <app-message-bubble
+                [role]="msg.role === 'assistant' ? 'ai' : 'user'"
+                [text]="msg.content"
+              />
+              @if (
+                msg.role === 'assistant' && $index === messages().length - 1 && !isGenerating()
+              ) {
+                <button
+                  class="ml-3 text-[10px] text-[var(--text-2)] hover:text-blue-400 transition-colors flex items-center gap-1"
+                  (click)="speak(msg.content)"
+                >
+                  <mat-icon class="scale-50">volume_up</mat-icon> Listen
+                </button>
+              }
+            }
+            @if (isGenerating()) {
+              <app-typing-indicator />
+            }
+          </div>
+          <div class="input-zone">
+            <textarea
+              class="input-field"
+              [value]="userInput()"
+              (input)="userInput.set($any($event.target).value)"
+              (keydown.enter)="$event.preventDefault(); sendMessage()"
+              placeholder="Ask about your study materials..."
+              [disabled]="!llm.isReady() || isGenerating()"
+              rows="1"
+            ></textarea>
+            <button
+              class="send-btn"
+              (click)="sendMessage()"
+              [disabled]="!userInput().trim() || !llm.isReady() || isGenerating()"
+            >
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Mindmap ── -->
+      @if (activeSubTab() === 'mindmap') {
+        <div class="flex-1 flex flex-col min-h-0 relative">
+          <div class="flex items-center gap-1 px-4 py-2 border-b border-[var(--border)] shrink-0">
+            <button
+              (click)="zoomOut()"
+              class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 flex items-center justify-center"
+            >
+              <mat-icon class="scale-50">remove</mat-icon>
+            </button>
+            <span class="text-[10px] font-[var(--font-mono)] text-[var(--text-2)] w-12 text-center"
+              >{{ (zoomLevel() * 100).toFixed(0) }}%</span
+            >
+            <button
+              (click)="zoomIn()"
+              class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 flex items-center justify-center"
+            >
+              <mat-icon class="scale-50">add</mat-icon>
+            </button>
+            <button
+              (click)="zoomReset()"
+              class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 flex items-center justify-center ml-2"
+            >
+              <mat-icon class="scale-50">center_focus_strong</mat-icon>
+            </button>
+            <div class="flex-1"></div>
+            @if (isMindMapPlaceholder) {
+              <button
+                (click)="generateMindMap()"
+                [disabled]="isGenerating()"
+                class="text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                <mat-icon class="scale-50">auto_awesome</mat-icon> Generate
+              </button>
+            } @else {
+              <button
+                (click)="generateMindMap()"
+                [disabled]="isGenerating()"
+                class="text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                <mat-icon class="scale-50">refresh</mat-icon> Regenerate
+              </button>
+            }
+          </div>
+          <div
+            class="flex-1 overflow-hidden"
+            (pointerdown)="onPanDown($event)"
+            (pointermove)="onPanMove($event)"
+            (pointerup)="onPanUp()"
+            (wheel)="onPanWheel($event)"
+            style="cursor: grab"
+          >
+            <div
+              [style.transform]="
+                'translate(' + panX() + 'px,' + panY() + 'px) scale(' + zoomLevel() + ')'
+              "
+              style="transform-origin: center center"
+            >
+              <div #mermaidContainer class="mermaid-container"></div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ── Quiz ── -->
+      @if (activeSubTab() === 'quiz') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (quizQuestions().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-amber-400">quiz</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Test Your Knowledge</h3>
+              <p class="empty-text">Generate a multiple-choice quiz from your documents.</p>
+              <div class="flex items-center gap-2 mt-4 text-xs text-[var(--text-2)]">
+                <span>Questions:</span>
+                <button
+                  (click)="decQuestions()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  −
+                </button>
+                <span class="font-mono w-6 text-center">{{ numQuizQuestions() }}</span>
+                <button
+                  (click)="incQuestions()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  +
+                </button>
+                <span class="ml-3">Timer (min):</span>
+                <button
+                  (click)="decTimer()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  −
+                </button>
+                <span class="font-mono w-6 text-center">{{ quizTimerMin() }}</span>
+                <button
+                  (click)="incTimer()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  +
+                </button>
+              </div>
+              <app-button
+                variant="primary"
+                (onClick)="generateQuiz()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Quiz</app-button
+              >
+            </div>
+          } @else if (showQuizResults()) {
+            <div class="animate-in fade-in duration-300 max-w-xl mx-auto space-y-4">
+              <div class="text-center">
+                <div
+                  class="text-4xl font-bold font-[var(--font-mono)]"
+                  [class.text-green-400]="quizScore() >= quizQuestions().length * 0.7"
+                  [class.text-amber-400]="
+                    quizScore() < quizQuestions().length * 0.7 &&
+                    quizScore() >= quizQuestions().length * 0.4
+                  "
+                  [class.text-red-400]="quizScore() < quizQuestions().length * 0.4"
+                >
+                  {{ quizScore() }}/{{ quizQuestions().length }}
+                </div>
+                <p class="text-sm text-[var(--text-2)] mt-1">
+                  {{ ((quizScore() / quizQuestions().length) * 100).toFixed(0) }}% correct
+                </p>
+              </div>
+              @for (q of quizQuestions(); track $index; let i = $index) {
+                <div
+                  class="p-4 rounded-xl border"
+                  [class.border-green-500/30]="selectedAnswers()[i] === q.answer"
+                  [class.border-red-500/30]="selectedAnswers()[i] !== q.answer"
+                  [class.bg-green-500/5]="selectedAnswers()[i] === q.answer"
+                  [class.bg-red-500/5]="selectedAnswers()[i] !== q.answer"
+                  [class.border-white/10]="true"
+                >
+                  <p class="text-sm font-semibold">{{ i + 1 }}. {{ q.question }}</p>
+                  <div class="mt-2 space-y-1">
+                    @for (opt of q.options; track $index; let oi = $index) {
+                      <p
+                        class="text-xs pl-2"
+                        [class.text-green-400]="oi === q.answer"
+                        [class.text-red-400]="selectedAnswers()[i] === oi && oi !== q.answer"
+                        [class.text-[var(--text-2)]]="
+                          oi !== q.answer && selectedAnswers()[i] !== oi
+                        "
+                      >
+                        {{ oi === q.answer ? '✓' : selectedAnswers()[i] === oi ? '✗' : '○' }}
+                        {{ opt }}
+                      </p>
+                    }
+                  </div>
+                  @if (q.explanation) {
+                    <p class="text-[10px] text-[var(--text-2)] mt-2 italic">{{ q.explanation }}</p>
+                  }
+                </div>
+              }
+              <div class="flex gap-2 justify-center">
+                <app-button
+                  variant="secondary"
+                  (onClick)="
+                    activeSubTab.set('quiz'); showQuizResults.set(false); quizQuestions.set([])
+                  "
+                  >New Quiz</app-button
+                >
+                <button
+                  class="text-[10px] text-[var(--text-2)] hover:text-blue-400 transition-colors flex items-center gap-1"
+                  (click)="speak('You scored ' + quizScore() + ' out of ' + quizQuestions().length)"
+                >
+                  <mat-icon class="scale-50">volume_up</mat-icon> Speak result
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-[var(--font-mono)] text-[var(--text-2)]"
+                  >Question {{ currentQuizIdx() + 1 }}/{{ quizQuestions().length }}</span
+                >
+                <span
+                  class="text-xs font-[var(--font-mono)] text-amber-400"
+                  [class.text-red-400]="quizSecondsLeft() < 30"
+                  >{{ formatTime(quizSecondsLeft()) }}</span
+                >
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-1">
+                <div
+                  class="bg-blue-400 h-1 rounded-full transition-all"
+                  [style.width.%]="((currentQuizIdx() + 1) / quizQuestions().length) * 100"
+                ></div>
+              </div>
+              @if (quizQuestions()[currentQuizIdx()]; as q) {
+                <div
+                  class="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-1)] space-y-4"
+                >
+                  <p class="text-sm font-semibold leading-relaxed">{{ q.question }}</p>
+                  <div class="space-y-2">
+                    @for (opt of q.options; track $index; let oi = $index) {
+                      <button
+                        (click)="selectAnswer(oi)"
+                        class="w-full text-left p-3 rounded-xl border transition-all text-xs"
+                        [class.border-blue-400/40]="selectedAnswers()[currentQuizIdx()] === oi"
+                        [class.bg-blue-400/10]="selectedAnswers()[currentQuizIdx()] === oi"
+                        [class.border-[var(--border)]]="selectedAnswers()[currentQuizIdx()] !== oi"
+                        [class.bg-[var(--bg-2)]]="selectedAnswers()[currentQuizIdx()] !== oi"
+                        [class.hover:border-[var(--border-active)]]="true"
+                      >
+                        <span class="font-mono text-[var(--text-2)] mr-2"
+                          >{{ optionLetter(oi) }}.</span
+                        >{{ opt }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+              <div class="flex justify-between">
+                <button
+                  (click)="prevQuestion()"
+                  [disabled]="currentQuizIdx() === 0"
+                  class="btn-secondary text-xs"
+                >
+                  ← Prev
+                </button>
+                @if (currentQuizIdx() < quizQuestions().length - 1) {
+                  <button (click)="nextQuestion()" class="btn-secondary text-xs">Next →</button>
+                } @else {
+                  <button
+                    (click)="submitQuiz()"
+                    class="text-xs px-4 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30"
+                  >
+                    Submit Quiz
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Flashcards ── -->
+      @if (activeSubTab() === 'flashcards') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (!flashcardsText()) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-green-400">style</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Flashcards</h3>
+              <p class="empty-text">Generate Anki-compatible flashcards from your documents.</p>
+              <app-button
+                variant="primary"
+                (onClick)="generateFlashcards()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-2xl mx-auto">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold font-[var(--font-ui)]">Generated Flashcards</h3>
+                <app-button variant="primary" size="sm" (onClick)="downloadFlashcards()"
+                  >Download CSV</app-button
+                >
+              </div>
+              <div class="space-y-2">
+                @for (
+                  line of flashcardsText()
+                    .split('\n')
+                    .filter((l) => l.includes('","'));
+                  track $index
+                ) {
+                  @if (line.split('","').length >= 2) {
+                    <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-1)]">
+                      <p class="text-xs font-semibold text-blue-400">
+                        Q: {{ line.split('","')[0].replace(/^"/, '') }}
+                      </p>
+                      <p class="text-xs text-[var(--text-1)] mt-2">
+                        A: {{ line.split('","')[1].replace(/"$/, '') }}
+                      </p>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Study Plan ── -->
+      @if (activeSubTab() === 'plan') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (!studyPlan()) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-cyan-400">calendar_month</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Study Plan</h3>
+              <p class="empty-text">
+                Generate a structured study plan with timeline and milestones.
+              </p>
+              <app-button
+                variant="primary"
+                (onClick)="generateStudyPlan()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Plan</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-3xl mx-auto">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold font-[var(--font-ui)]">Your Study Plan</h3>
+                <div class="flex gap-2">
+                  <button
+                    (click)="speak(studyPlan())"
+                    class="text-[10px] text-[var(--text-2)] hover:text-blue-400 flex items-center gap-1"
+                  >
+                    <mat-icon class="scale-50">volume_up</mat-icon> Listen
+                  </button>
+                  <button
+                    (click)="generateStudyPlan()"
+                    [disabled]="isGenerating()"
+                    class="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  >
+                    <mat-icon class="scale-50">refresh</mat-icon> Regenerate
+                  </button>
+                </div>
+              </div>
+              <app-message-bubble role="ai" [text]="studyPlan()" />
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Summary ── -->
+      @if (activeSubTab() === 'summary') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (!summaryText()) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-rose-400">summarize</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Document Summary</h3>
+              <p class="empty-text">Generate a comprehensive summary of all uploaded documents.</p>
+              <app-button
+                variant="primary"
+                (onClick)="generateSummary()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Summary</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-3xl mx-auto">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold font-[var(--font-ui)]">Summary</h3>
+                <div class="flex gap-2">
+                  <button
+                    (click)="speak(summaryText())"
+                    class="text-[10px] text-[var(--text-2)] hover:text-blue-400 flex items-center gap-1"
+                  >
+                    <mat-icon class="scale-50">volume_up</mat-icon> Listen
+                  </button>
+                  <button
+                    (click)="generateSummary()"
+                    [disabled]="isGenerating()"
+                    class="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1"
+                  >
+                    <mat-icon class="scale-50">refresh</mat-icon> Regenerate
+                  </button>
+                </div>
+              </div>
+              <app-message-bubble role="ai" [text]="summaryText()" />
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Fill-in-the-blanks ── -->
+      @if (activeSubTab() === 'fillblanks') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (fillBlanks().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-orange-400">edit_note</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Fill in the Blanks</h3>
+              <p class="empty-text">Practice key concepts with cloze exercises.</p>
+              <app-button
+                variant="primary"
+                (onClick)="generateFillBlanks()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Exercises</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-xl mx-auto space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold font-[var(--font-ui)]">Fill in the Blanks</h3>
+                @if (fillBlankScore() > 0) {
+                  <span class="text-xs font-[var(--font-mono)] text-green-400"
+                    >Score: {{ fillBlankScore() }}/{{ fillBlanks().length }}</span
+                  >
+                }
+              </div>
+              @for (fb of fillBlanks(); track $index; let i = $index) {
+                <div
+                  class="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-1)] space-y-3"
+                >
+                  <p class="text-sm leading-relaxed">
+                    @if (fillBlankRevealed()[i]) {
+                      {{ fb.text.replace('___', fb.answer) }}
+                      <span class="text-green-400 font-semibold">✓</span>
+                    } @else {
+                      {{ fb.text.replace('___', '＿＿＿＿') }}
+                    }
+                  </p>
+                  @if (!fillBlankRevealed()[i]) {
+                    <div class="flex gap-2">
+                      <input
+                        class="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-blue-400/40"
+                        placeholder="Your answer..."
+                        [value]="fillBlankAnswers()[i]"
+                        (input)="updateFillAnswer(i, $any($event.target).value)"
+                      />
+                      @if (fb.hint) {
+                        <span
+                          class="text-[10px] text-[var(--text-2)] italic self-center"
+                          [title]="fb.hint"
+                          >💡</span
+                        >
+                      }
+                    </div>
+                  }
+                </div>
+              }
+              <div class="flex gap-2">
+                <app-button
+                  variant="primary"
+                  (onClick)="checkFillBlanks()"
+                  [disabled]="isGenerating()"
+                  >Check Answers</app-button
+                >
+                <app-button variant="secondary" (onClick)="revealBlanks()">Reveal All</app-button>
+                <app-button
+                  variant="secondary"
+                  (onClick)="generateFillBlanks()"
+                  [disabled]="isGenerating()"
+                  >New Set</app-button
+                >
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Matching ── -->
+      @if (activeSubTab() === 'matching') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (matchingPairs().length === 0) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-indigo-400">compare_arrows</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Matching Exercise</h3>
+              <p class="empty-text">Match terms with their correct definitions.</p>
+              <app-button
+                variant="primary"
+                (onClick)="generateMatching()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Pairs</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-2xl mx-auto space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold font-[var(--font-ui)]">Match Terms → Definitions</h3>
+                <span class="text-xs font-[var(--font-mono)] text-green-400"
+                  >Matched: {{ matchingMatched().size }}/{{ matchingPairs().length }}</span
+                >
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <p class="text-[10px] font-bold uppercase text-[var(--text-2)] mb-2">Terms</p>
+                  @for (pair of matchingPairs(); track $index; let i = $index) {
+                    <button
+                      (click)="clickMatchingTerm(i)"
+                      class="w-full text-left p-3 rounded-xl border text-xs transition-all"
+                      [class.border-indigo-400/50]="
+                        matchingSelected()?.termIdx === i && matchingSelected()?.defIdx === -1
+                      "
+                      [class.border-green-500/40]="matchingMatched().has(i)"
+                      [class.bg-green-500/10]="matchingMatched().has(i)"
+                      [class.border-[var(--border)]]="
+                        !matchingMatched().has(i) && matchingSelected()?.termIdx !== i
+                      "
+                      [class.bg-[var(--bg-1)]]="!matchingMatched().has(i)"
+                      [class.line-through]="matchingMatched().has(i)"
+                      [disabled]="matchingMatched().has(i)"
+                    >
+                      {{ pair.term }}
+                    </button>
+                  }
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] font-bold uppercase text-[var(--text-2)] mb-2">
+                    Definitions
+                  </p>
+                  @for (pair of matchingPairs(); track $index; let i = $index) {
+                    <button
+                      (click)="clickMatchingDef(i)"
+                      class="w-full text-left p-3 rounded-xl border text-xs transition-all"
+                      [class.border-amber-400/50]="matchingSelected()?.defIdx === i"
+                      [class.border-green-500/40]="matchingMatched().has(i)"
+                      [class.bg-green-500/10]="matchingMatched().has(i)"
+                      [class.border-[var(--border)]]="
+                        !matchingMatched().has(i) && matchingSelected()?.defIdx !== i
+                      "
+                      [class.bg-[var(--bg-1)]]="!matchingMatched().has(i)"
+                      [class.line-through]="matchingMatched().has(i)"
+                      [disabled]="matchingMatched().has(i)"
+                    >
+                      {{ pair.definition }}
+                    </button>
+                  }
+                </div>
+              </div>
+              <app-button
+                variant="secondary"
+                (onClick)="generateMatching()"
+                [disabled]="isGenerating()"
+                >New Set</app-button
+              >
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Open-ended Q&A ── -->
+      @if (activeSubTab() === 'openq') {
+        <div class="flex-1 overflow-y-auto p-6">
+          @if (!openQuestion()) {
+            <div class="empty-state">
+              <mat-icon class="empty-icon scale-150 text-emerald-400">question_answer</mat-icon>
+              <h3 class="text-base font-bold font-[var(--font-ui)]">Open-Ended Question</h3>
+              <p class="empty-text">
+                Practice with thought-provoking questions and get AI feedback on your answers.
+              </p>
+              <app-button
+                variant="primary"
+                (onClick)="generateOpenQuestion()"
+                [disabled]="isGenerating()"
+                className="mt-4"
+                >Generate Question</app-button
+              >
+            </div>
+          } @else {
+            <div class="max-w-2xl mx-auto space-y-4">
+              <div class="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+                <p class="text-sm font-semibold">{{ openQuestion() }}</p>
+              </div>
+              <textarea
+                class="w-full bg-[var(--bg-1)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-emerald-400/40 resize-none min-h-[120px]"
+                placeholder="Write your answer here..."
+                [value]="openAnswer()"
+                (input)="openAnswer.set($any($event.target).value)"
+              ></textarea>
+              <div class="flex gap-2">
+                <app-button
+                  variant="primary"
+                  (onClick)="evaluateOpenAnswer()"
+                  [disabled]="!openAnswer().trim() || isGenerating()"
+                >
+                  <mat-icon class="scale-75">rate_review</mat-icon> Get Feedback
+                </app-button>
+                <app-button
+                  variant="secondary"
+                  (onClick)="generateOpenQuestion()"
+                  [disabled]="isGenerating()"
+                  >New Question</app-button
+                >
+              </div>
+              @if (openFeedback() && openFeedback() !== openQuestion()) {
+                <div class="p-4 rounded-xl border border-blue-400/20 bg-blue-400/5">
+                  <p class="text-[10px] font-bold uppercase text-blue-400 mb-2">AI Feedback</p>
+                  <app-message-bubble role="ai" [text]="openFeedback()" />
+                  <button
+                    (click)="speak(openFeedback())"
+                    class="mt-2 text-[10px] text-[var(--text-2)] hover:text-blue-400 flex items-center gap-1"
+                  >
+                    <mat-icon class="scale-50">volume_up</mat-icon> Listen
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
     </main>
   </div>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear all"
+    message="Remove all documents, messages, and Q&As?"
+    confirmLabel="Clear All"
+    [danger]="true"
+    (confirm)="clearAll(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

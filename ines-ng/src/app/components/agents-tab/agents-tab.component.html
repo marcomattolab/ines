@@ -51,6 +51,13 @@
             <mat-icon fontIcon="chat" class="text-sm"></mat-icon> Chat
           </app-button>
           <app-button
+            [variant]="activeMode() === 'kb' ? 'primary' : 'secondary'"
+            size="sm"
+            (onClick)="activeMode.set('kb')"
+          >
+            <mat-icon fontIcon="auto_stories" class="text-sm"></mat-icon> Knowledge
+          </app-button>
+          <app-button
             [variant]="activeMode() === 'edit' ? 'primary' : 'secondary'"
             size="sm"
             (onClick)="activeMode.set('edit')"
@@ -67,6 +74,12 @@
             <div class="empty-state">
               <mat-icon fontIcon="smart_toy" class="empty-icon"></mat-icon>
               <div class="empty-text">I am {{ agent.name }}. How can I assist you today?</div>
+              @if (totalChunks() > 0) {
+                <p class="text-[11px] text-[var(--accent-green)] mt-2">
+                  Knowledge base loaded: {{ km.documents().length }} docs,
+                  {{ totalChunks() }} chunks
+                </p>
+              }
             </div>
           }
           @for (msg of messages(); track msg.id) {
@@ -81,6 +94,20 @@
                 [text]="msg.text"
                 [streaming]="!!msg.streaming"
               />
+            }
+            @if (msg.role === 'ai' && msg.sources?.length) {
+              <div class="flex flex-wrap gap-1.5 pl-12 pb-2">
+                @for (src of msg.sources; track $index) {
+                  <span
+                    class="source-chip"
+                    [title]="'Click to view: ' + src"
+                    (click)="showSourcePreview(src)"
+                  >
+                    <mat-icon class="scale-50">article</mat-icon>
+                    {{ src }}
+                  </span>
+                }
+              </div>
             }
           }
           @if (typing()) {
@@ -108,6 +135,203 @@
           >
             <mat-icon fontIcon="send" class="text-lg"></mat-icon>
           </app-button>
+        </div>
+      </div>
+
+      <!-- Knowledge Mode -->
+      <div [hidden]="activeMode() !== 'kb'" class="flex flex-1 overflow-hidden">
+        <aside
+          class="w-72 border-r border-[var(--border)] p-4 flex flex-col gap-4 overflow-y-auto shrink-0"
+          style="background: var(--bg-1); backdrop-filter: blur(28px)"
+        >
+          <div class="flex items-center justify-between">
+            <h3
+              class="text-sm font-bold text-[var(--text-0)] flex items-center gap-2 font-[var(--font-ui)]"
+            >
+              <mat-icon class="scale-90 text-[var(--accent-blue)]">library_books</mat-icon>
+              Knowledge Base
+            </h3>
+            <div class="flex gap-1">
+              <button
+                (click)="showClearConfirm.set(true)"
+                class="btn-tertiary"
+                title="Clear all"
+                [disabled]="km.documents().length === 0"
+              >
+                <mat-icon class="scale-75">delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="flex items-center gap-3 text-[10px] font-[var(--font-mono)] text-[var(--text-2)]"
+          >
+            <span>{{ km.documents().length }} docs</span>
+            <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+            <span>{{ totalChunks() }} chunks</span>
+          </div>
+
+          <div class="relative">
+            <input
+              type="text"
+              [value]="searchQuery()"
+              (input)="searchQuery.set($any($event.target).value)"
+              placeholder="Search documents..."
+              class="input-field w-full text-xs py-2 pl-8 pr-3"
+            />
+            <mat-icon class="absolute left-2 top-1/2 -translate-y-1/2 scale-75 text-[var(--text-2)]"
+              >search</mat-icon
+            >
+          </div>
+
+          <div class="flex flex-col gap-1.5 flex-1 overflow-y-auto min-h-0">
+            @if (km.documents().length === 0) {
+              <div class="empty-state py-8">
+                <mat-icon class="empty-icon scale-150 text-[var(--text-2)]">folder_open</mat-icon>
+                <p class="empty-text">No documents yet. Upload MD, TXT, HTML or PDF files.</p>
+              </div>
+            }
+
+            @for (doc of filteredDocs(); track doc.id) {
+              <div
+                class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] group hover:border-[var(--border-active)] transition-all cursor-pointer"
+                [class.border-[var(--accent-blue)]!]="selectedDocId() === doc.id"
+                (click)="selectDoc(doc.id)"
+              >
+                <mat-icon class="scale-75 text-[var(--accent-cyan)] shrink-0">description</mat-icon>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-[var(--text-0)] truncate font-medium">{{ doc.name }}</p>
+                  <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
+                    {{ doc.date | date: 'mediumDate' }}
+                  </p>
+                </div>
+                <button
+                  (click)="deleteDoc($event, doc.id)"
+                  class="btn-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Remove document"
+                >
+                  <mat-icon class="scale-75">close</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-[var(--border)]">
+            <div class="relative group">
+              <input
+                type="file"
+                (change)="onFileSelected($event)"
+                multiple
+                accept=".pdf,.html,.txt,.md"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div
+                class="border-2 border-dashed border-[var(--border)] rounded-xl p-4 text-center group-hover:border-[var(--accent-blue)]/50 transition-colors bg-[var(--bg-2)]"
+              >
+                <mat-icon class="scale-100 text-[var(--text-2)] mb-1">add_circle_outline</mat-icon>
+                <p class="text-[10px] text-[var(--text-2)]">Upload PDF, HTML, TXT, MD</p>
+              </div>
+            </div>
+
+            @if (km.isProcessing()) {
+              <div class="flex items-center gap-2 p-2 text-xs text-[var(--text-2)]">
+                <div
+                  class="animate-spin h-3 w-3 border-2 border-[var(--accent-blue)] border-t-transparent rounded-full"
+                ></div>
+                <span>{{ km.processingStatus() }}</span>
+              </div>
+            }
+
+            <div class="relative group">
+              <input
+                type="file"
+                (change)="onImportFile($event)"
+                accept=".ines-knowledge,.json"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <button class="btn-secondary w-full text-xs py-2">
+                <mat-icon class="scale-75">file_download</mat-icon>
+                Import .ines-knowledge
+              </button>
+            </div>
+
+            <button
+              (click)="exportKB()"
+              [disabled]="km.documents().length === 0"
+              class="btn-secondary w-full text-xs py-2"
+            >
+              <mat-icon class="scale-75">file_upload</mat-icon>
+              Export Knowledge Base
+            </button>
+          </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-w-0 relative">
+          @if (showPreview()) {
+            <div class="absolute inset-0 z-20 flex flex-col bg-[var(--bg-1)]">
+              <header
+                class="flex items-center justify-between px-6 py-3 border-b border-[var(--border)] shrink-0"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  <button (click)="closePreview()" class="btn-tertiary !p-1" title="Back">
+                    <mat-icon class="scale-90">arrow_back</mat-icon>
+                  </button>
+                  <mat-icon class="scale-90 text-[var(--accent-cyan)]">description</mat-icon>
+                  <h3 class="text-sm font-bold text-[var(--text-0)] truncate font-[var(--font-ui)]">
+                    {{ previewDocName() }}
+                  </h3>
+                </div>
+                <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]"
+                  >{{ previewChunks().length }} chunks</span
+                >
+              </header>
+              <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                @for (chunk of previewChunks(); track chunk.position) {
+                  <div class="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
+                    <div
+                      class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-2 pb-2 border-b border-[var(--border)]"
+                    >
+                      Position {{ chunk.position }}
+                    </div>
+                    <pre
+                      class="text-sm text-[var(--text-1)] leading-relaxed whitespace-pre-wrap font-[var(--font-ui)]"
+                      >{{ chunk.text }}</pre
+                    >
+                  </div>
+                }
+                @if (previewChunks().length === 0) {
+                  <div class="empty-state py-12">
+                    <mat-icon class="empty-icon scale-150 text-[var(--text-2)]"
+                      >description</mat-icon
+                    >
+                    <p class="empty-text">No chunk data available for this document.</p>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="empty-state flex-1">
+              <mat-icon class="empty-icon scale-150 text-[var(--accent-blue)]"
+                >auto_stories</mat-icon
+              >
+              <h3 class="text-base font-bold text-[var(--text-0)] font-[var(--font-ui)]">
+                Agent Knowledge Base
+              </h3>
+              <p class="empty-text">
+                Upload documentation, procedures, and references. The agent will use these documents
+                to provide context-aware answers in chat.
+              </p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-[var(--accent-amber)] mt-2">
+                  Upload documents using the panel on the left to get started.
+                </p>
+              } @else {
+                <p class="text-[11px] text-[var(--accent-green)] mt-2">
+                  Select a document on the left to preview its content.
+                </p>
+              }
+            </div>
+          }
         </div>
       </div>
 
@@ -246,3 +470,14 @@
     }
   </main>
 </div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    title="Clear knowledge base"
+    message="This will permanently remove all documents and Q&As."
+    confirmLabel="Clear All"
+    [danger]="true"
+    (confirm)="clearAll(); showClearConfirm.set(false)"
+    (cancel)="showClearConfirm.set(false)"
+  />
+}

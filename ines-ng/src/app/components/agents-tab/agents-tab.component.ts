@@ -1,13 +1,24 @@
-import { Component, inject, signal, ElementRef, viewChild, AfterViewChecked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  ElementRef,
+  viewChild,
+  AfterViewChecked,
+  OnInit,
+} from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AgentService, Agent, Skill } from '../../core/services/agent.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
 
 interface UiMessage {
@@ -15,6 +26,15 @@ interface UiMessage {
   role: 'user' | 'ai';
   text: string;
   streaming?: boolean;
+  sources?: string[];
+}
+
+interface KnowledgeQA {
+  id: string;
+  question: string;
+  answer: string;
+  sources: { docName: string; text: string }[];
+  date: number;
 }
 
 @Component({
@@ -22,23 +42,27 @@ interface UiMessage {
   standalone: true,
   imports: [
     CommonModule,
+    DatePipe,
     MatIconModule,
     ButtonComponent,
     MessageBubbleComponent,
     TypingIndicatorComponent,
+    ConfirmDialogComponent,
     FormsModule,
   ],
   templateUrl: './agents-tab.component.html',
+  styleUrl: './agents-tab.component.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
-export class AgentsTabComponent implements AfterViewChecked {
+export class AgentsTabComponent implements AfterViewChecked, OnInit {
   readonly agentSvc = inject(AgentService);
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);
+  readonly km = inject(KnowledgeManagerService);
 
   selectedAgent = signal<Agent | null>(this.agentSvc.agents()[0] || null);
-  activeMode = signal<'chat' | 'edit'>('chat');
+  activeMode = signal<'chat' | 'edit' | 'kb'>('chat');
   editingSkill = signal<Skill | null>(null);
 
   // Chat state
@@ -52,6 +76,20 @@ export class AgentsTabComponent implements AfterViewChecked {
   readonly chatArea = viewChild<ElementRef<HTMLDivElement>>('chatArea');
   readonly inputEl = viewChild<ElementRef<HTMLTextAreaElement>>('inputEl');
 
+  // Knowledge base state
+  totalChunks = signal(0);
+  searchQuery = signal('');
+  selectedDocId = signal<string | null>(null);
+  showPreview = signal(false);
+  previewDocName = signal('');
+  previewChunks = signal<{ text: string; position: number }[]>([]);
+  showClearConfirm = signal(false);
+
+  async ngOnInit() {
+    await this.km.loadDocuments();
+    this.totalChunks.set(await this.km.countChunks());
+  }
+
   ngAfterViewChecked() {
     if (this.shouldScroll) {
       const el = this.chatArea()?.nativeElement;
@@ -59,6 +97,8 @@ export class AgentsTabComponent implements AfterViewChecked {
       this.shouldScroll = false;
     }
   }
+
+  // ── Agent management ──
 
   selectAgent(agent: Agent) {
     this.selectedAgent.set(agent);
@@ -99,6 +139,8 @@ export class AgentsTabComponent implements AfterViewChecked {
     this.nextId = 1;
   }
 
+  // ── Chat ──
+
   onKey(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -135,7 +177,30 @@ export class AgentsTabComponent implements AfterViewChecked {
     this.typing.set(true);
     this.shouldScroll = true;
 
-    const systemPrompt = this.agentSvc.getAgentFullPrompt(agent);
+    let systemPrompt = this.agentSvc.getAgentFullPrompt(agent);
+    let sourceNames: string[] = [];
+
+    // RAG: add knowledge base context if available
+    if (this.totalChunks() > 0) {
+      try {
+        const chunks = await this.km.getRelevantChunks(text, 3, 300);
+        if (chunks.length > 0) {
+          sourceNames = [...new Set(chunks.map((c) => c.docName))];
+          const context = chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
+          systemPrompt = `You are an expert assistant with access to a personal knowledge base. Use the provided context from uploaded documents to answer the question. If the context doesn't contain the answer, use your own knowledge but mention that it's not from the documents. Always cite the source document name when referencing context.
+
+Context from knowledge base documents:
+${context}
+
+---
+
+${systemPrompt}`;
+        }
+      } catch {
+        /* proceed without RAG context */
+      }
+    }
+
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
     const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
     const aiId = this.nextId++;
@@ -148,11 +213,15 @@ export class AgentsTabComponent implements AfterViewChecked {
           this.typing.set(false);
           this.messages.update((m) => [
             ...m,
-            { id: aiId, role: 'ai', text: fullText, streaming: true },
+            { id: aiId, role: 'ai', text: fullText, streaming: true, sources: sourceNames },
           ]);
         } else {
           this.messages.update((m) =>
-            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
+            m.map((msg) =>
+              msg.id === aiId
+                ? { ...msg, text: fullText, streaming: !done, sources: sourceNames }
+                : msg,
+            ),
           );
         }
         this.shouldScroll = true;
@@ -172,7 +241,109 @@ export class AgentsTabComponent implements AfterViewChecked {
     this.generating.set(false);
   }
 
-  // Edit Mode Logic
+  // ── Knowledge Base ──
+
+  readonly filteredDocs = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q) return this.km.documents();
+    return this.km.documents().filter((d) => d.name.toLowerCase().includes(q));
+  });
+
+  async onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    if (!files.length) return;
+
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await this.km.processFile(files[i]);
+        this.toast.success(`"${files[i].name}" added to knowledge base`);
+      } catch (err: any) {
+        if (err.message?.includes('Duplicate')) {
+          this.toast.show(err.message);
+        } else {
+          this.toast.error(`Error processing "${files[i].name}": ${err.message}`);
+        }
+      }
+    }
+
+    await this.km.loadDocuments();
+    this.totalChunks.set(await this.km.countChunks());
+    event.target.value = '';
+  }
+
+  async onImportFile(event: any) {
+    const file: File = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await this.km.importKnowledgeBase(file);
+      this.totalChunks.set(await this.km.countChunks());
+      this.toast.success(
+        `Import complete: ${result.docsAdded} docs, ${result.chunksAdded} chunks, ` +
+          `${result.qasAdded} Q&As added` +
+          (result.duplicates > 0 ? `, ${result.duplicates} duplicates skipped` : ''),
+      );
+    } catch (err: any) {
+      this.toast.error('Import failed: ' + err.message);
+    }
+    event.target.value = '';
+  }
+
+  async exportKB() {
+    try {
+      const blob = await this.km.exportKnowledgeBase();
+      this.dom.downloadBlob(
+        blob,
+        `ines-knowledge-${new Date().toISOString().slice(0, 10)}.ines-knowledge`,
+      );
+      this.toast.success('Knowledge base exported');
+    } catch (err: any) {
+      this.toast.error('Export failed: ' + err.message);
+    }
+  }
+
+  async clearAll() {
+    if (this.km.documents().length === 0) return;
+    await this.km.clearAll();
+    this.messages.set([]);
+    this.totalChunks.set(0);
+    this.selectedDocId.set(null);
+    this.showPreview.set(false);
+    this.toast.show('Knowledge base cleared');
+  }
+
+  selectDoc(id: string) {
+    if (this.selectedDocId() === id) {
+      this.selectedDocId.set(null);
+      this.showPreview.set(false);
+      return;
+    }
+    this.selectedDocId.set(id);
+    const doc = this.km.documents().find((d) => d.id === id);
+    if (doc) this.showSourcePreview(doc.name);
+  }
+
+  async deleteDoc(event: MouseEvent, id: string) {
+    event.stopPropagation();
+    await this.km.deleteDocument(id);
+    await this.km.loadDocuments();
+    this.totalChunks.set(await this.km.countChunks());
+    this.toast.show('Document removed from knowledge base');
+  }
+
+  async showSourcePreview(docName: string) {
+    this.previewDocName.set(docName);
+    const chunks = await this.km.getChunksByDocName(docName);
+    this.previewChunks.set(chunks);
+    this.showPreview.set(true);
+  }
+
+  closePreview() {
+    this.showPreview.set(false);
+  }
+
+  // ── Edit Mode Logic ──
+
   isSkillSelected(skillId: string): boolean {
     return this.selectedAgent()?.skillIds.includes(skillId) ?? false;
   }
@@ -213,7 +384,8 @@ export class AgentsTabComponent implements AfterViewChecked {
     }
   }
 
-  // Skill Editor logic
+  // ── Skill Editor logic ──
+
   addNewSkill() {
     this.editingSkill.set({
       id: '',

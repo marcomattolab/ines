@@ -18,3 +18,20 @@
 .overlay-grid-item:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* Snapshot flash */
+.animate-flash {
+  animation: flashOut 0.35s ease-out forwards;
+}
+
+@keyframes flashOut {
+  0% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}

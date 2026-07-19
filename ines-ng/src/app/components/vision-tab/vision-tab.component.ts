@@ -358,8 +358,10 @@ export class VisionTabComponent implements OnDestroy {
   aiInsightLoading = signal(false);
   faceOverlayType = signal<FaceOverlayType | null>(null);
   showOverlayPicker = signal(false);
+  backgroundBlur = signal(false);
   showHandOverlay = signal(false);
   showPoseOverlay = signal(false);
+  snapshotFlash = signal(false);
   notifications = signal<{ id: number; icon: string; msg: string; type: string; time: string }[]>(
     [],
   );
@@ -431,7 +433,10 @@ export class VisionTabComponent implements OnDestroy {
     // Start/stop draw loop when any overlay is active
     effect(() => {
       const hasFaceOverlay =
-        this.faceOverlayType() || this.faceImageEnabled() || this.cyberpunkFilter();
+        this.faceOverlayType() ||
+        this.faceImageEnabled() ||
+        this.cyberpunkFilter() ||
+        this.backgroundBlur();
       const shouldDraw =
         this.showFaceMesh() || hasFaceOverlay || this.showHandOverlay() || this.showPoseOverlay();
       if (shouldDraw && !this.drawRaf) {
@@ -581,6 +586,36 @@ export class VisionTabComponent implements OnDestroy {
     this.faceFileInput()?.nativeElement.click();
   }
 
+  captureSnapshot() {
+    const video = this.videoEl()?.nativeElement;
+    if (!video || !this.vision.isRunning()) return;
+    const canvas = document.createElement('canvas');
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -w, 0, w, h);
+    ctx.restore();
+    const mesh = this.meshCanvas()?.nativeElement;
+    if (mesh && mesh.width > 0) ctx.drawImage(mesh, 0, 0, w, h);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ines-vision-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.snapshotFlash.set(true);
+      setTimeout(() => this.snapshotFlash.set(false), 350);
+      this.toast.success('Snapshot saved');
+    }, 'image/png');
+  }
+
   onFaceImageSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -658,6 +693,9 @@ export class VisionTabComponent implements OnDestroy {
     ctx.translate(-w, 0);
 
     if (hasFace) {
+      if (this.backgroundBlur()) {
+        this.drawBackgroundBlur(ctx, lm, w, h);
+      }
       if (this.showFaceMesh()) {
         this.drawFaceMesh(ctx, lm, w, h);
       }
@@ -679,6 +717,75 @@ export class VisionTabComponent implements OnDestroy {
     if (this.showPoseOverlay()) {
       this.drawPoseSkeleton(ctx);
     }
+  }
+
+  private blurOffscreen: HTMLCanvasElement | null = null;
+  private blurOffCtx: CanvasRenderingContext2D | null = null;
+
+  private drawBackgroundBlur(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {
+    const video = this.videoEl()?.nativeElement;
+    if (!video) return;
+
+    const oval = FACE_OVAL.map((i) => lm[i]).filter((p) => !!p);
+    if (oval.length < 3) return;
+
+    if (!this.blurOffscreen || this.blurOffscreen.width !== w || this.blurOffscreen.height !== h) {
+      this.blurOffscreen = document.createElement('canvas');
+      this.blurOffscreen.width = w;
+      this.blurOffscreen.height = h;
+      this.blurOffCtx = this.blurOffscreen.getContext('2d');
+    }
+    const off = this.blurOffCtx;
+    if (!off) return;
+
+    off.save();
+    off.scale(-1, 1);
+    off.drawImage(video, -w, 0, w, h);
+    off.restore();
+    off.save();
+    off.filter = 'blur(10px) brightness(0.65)';
+    off.drawImage(this.blurOffscreen!, 0, 0);
+    off.filter = 'none';
+    off.restore();
+
+    ctx.drawImage(this.blurOffscreen!, 0, 0, w, h);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(oval[0].x * w, oval[0].y * h);
+    for (let i = 1; i < oval.length; i++) ctx.lineTo(oval[i].x * w, oval[i].y * h);
+    ctx.closePath();
+    const botY = Math.max(...oval.map((p) => p.y)) * h;
+    const lX = Math.min(...oval.map((p) => p.x)) * w;
+    const rX = Math.max(...oval.map((p) => p.x)) * w;
+    ctx.lineTo(rX + 100, botY + 120);
+    ctx.lineTo(rX + 140, h + 60);
+    ctx.lineTo(lX - 140, h + 60);
+    ctx.lineTo(lX - 100, botY + 120);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -w, 0, w, h);
+    ctx.restore();
+    ctx.restore();
+
+    const cx = oval.reduce((s, p) => s + p.x, 0) / oval.length;
+    const cy = oval.reduce((s, p) => s + p.y, 0) / oval.length;
+    const g = ctx.createRadialGradient(
+      cx * w,
+      cy * h,
+      Math.max(rX - lX, 1) * 0.5,
+      cx * w,
+      cy * h,
+      w * 0.8,
+    );
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0.3)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
   }
 
   private drawFaceOverlay(ctx: CanvasRenderingContext2D, lm: any[], w: number, h: number) {

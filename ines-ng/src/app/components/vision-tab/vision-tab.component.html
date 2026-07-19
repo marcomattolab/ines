@@ -82,11 +82,25 @@
           </div>
 
           <!-- Top-right FPS -->
-          <div
-            class="absolute top-4 right-4 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md font-[var(--font-mono)] text-[10px] text-[var(--text-2)]"
-          >
-            {{ vision.fps() }} FPS
+          <div class="absolute top-4 right-4 flex items-center gap-2">
+            <button
+              (click)="captureSnapshot()"
+              class="w-7 h-7 bg-black/60 backdrop-blur-md rounded-md hover:bg-white/15 transition-colors flex items-center justify-center"
+              title="Take snapshot"
+            >
+              <mat-icon fontIcon="camera_alt" class="!text-xs text-white/70"></mat-icon>
+            </button>
+            <div
+              class="px-2 py-1 bg-black/60 backdrop-blur-md rounded-md font-[var(--font-mono)] text-[10px] text-[var(--text-2)]"
+            >
+              {{ vision.fps() }} FPS
+            </div>
           </div>
+
+          <!-- Snapshot flash -->
+          @if (snapshotFlash()) {
+            <div class="absolute inset-0 z-30 bg-white animate-flash pointer-events-none"></div>
+          }
 
           <!-- Bottom-left gaze -->
           @if (vision.gaze() !== 'Center') {
@@ -156,6 +170,34 @@
           >
             @if (cyberpunkFilter()) {
               <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Bokeh Blur -->
+        <div
+          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+          [class.bg-violet-500/10]="backgroundBlur()"
+          [class.border-violet-500/30]="backgroundBlur()"
+          [class.border-white/10]="!backgroundBlur()"
+          [class.bg-white/5]="!backgroundBlur()"
+          (click)="backgroundBlur.update((v) => !v)"
+          style="cursor: pointer"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+              <mat-icon fontIcon="blur_on" class="text-violet-400"></mat-icon>
+            </div>
+            <div>
+              <div class="text-sm font-bold">Bokeh Blur</div>
+              <div class="text-[10px] text-[var(--text-2)] uppercase">Portrait background blur</div>
+            </div>
+          </div>
+          <div
+            class="w-4 h-4 rounded-full border-2 border-violet-500 flex items-center justify-center"
+          >
+            @if (backgroundBlur()) {
+              <div class="w-2 h-2 bg-violet-500 rounded-full"></div>
             }
           </div>
         </div>

@@ -9,7 +9,6 @@ import {
   OnInit,
   computed,
 } from '@angular/core';
-import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
@@ -58,8 +57,6 @@ interface MatchingPair {
   selector: 'app-learning-tab',
   standalone: true,
   imports: [
-    DecimalPipe,
-    DatePipe,
     FormsModule,
     MatIconModule,
     ButtonComponent,

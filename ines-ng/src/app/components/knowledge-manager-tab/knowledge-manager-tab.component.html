@@ -48,7 +48,7 @@
       @if (km.documents().length === 0) {
         <div class="empty-state py-8">
           <mat-icon class="empty-icon scale-150 text-[var(--text-2)]">folder_open</mat-icon>
-          <p class="empty-text">No documents yet. Upload PDF, HTML, TXT or MD files.</p>
+          <p class="empty-text">No documents yet. Upload PDF, DOCX, PPTX, HTML, TXT or MD files.</p>
         </div>
       }
 
@@ -84,14 +84,14 @@
           type="file"
           (change)="onFileSelected($event)"
           multiple
-          accept=".pdf,.html,.txt,.md"
+          accept=".pdf,.docx,.pptx,.html,.htm,.txt,.md"
           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />
         <div
           class="border-2 border-dashed border-[var(--border)] rounded-xl p-4 text-center group-hover:border-[var(--accent-blue)]/50 transition-colors bg-[var(--bg-2)]"
         >
           <mat-icon class="scale-100 text-[var(--text-2)] mb-1">add_circle_outline</mat-icon>
-          <p class="text-[10px] text-[var(--text-2)]">Upload PDF, HTML, TXT, MD</p>
+          <p class="text-[10px] text-[var(--text-2)]">Upload PDF, DOCX, PPTX, HTML, TXT, MD</p>
         </div>
       </div>
 

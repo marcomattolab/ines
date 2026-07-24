@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  HostListener,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -146,6 +147,27 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     return this.km.documents().filter((d) => d.name.toLowerCase().includes(q));
   });
 
+  @HostListener('window:lm-regen')
+  onMindMapRegen() {
+    this.generateMindMap();
+  }
+
+  @HostListener('dragover', ['$event'])
+  onDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    if (files?.length) {
+      this.onFileSelected({ target: { files, value: '' } });
+    }
+  }
+
   async ngOnInit() {
     await this.km.loadDocuments();
     this.totalChunks.set(await this.km.countChunks());
@@ -244,7 +266,13 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
         await this.km.processFile(files[i]);
         this.toast.success(`"${files[i].name}" added`);
       } catch (err: any) {
-        if (!err.message?.includes('Duplicate')) this.toast.error(err.message);
+        const msg = err?.message || String(err);
+        console.error(`Learning Center: failed to process "${files[i].name}"`, err);
+        if (msg.includes('Duplicate')) {
+          this.toast.show(msg);
+        } else {
+          this.toast.error(`Error: ${msg}`);
+        }
       }
     }
     await this.km.loadDocuments();
@@ -374,13 +402,17 @@ Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
 
     try {
-      const prompt = this.llm.buildPrompt(system, 'Generate a mindmap.');
+      const trimmed = this.llm.trimConversation(system, 'Generate a mindmap.', []);
+      const prompt = this.llm.buildPrompt(system, 'Generate a mindmap.', trimmed);
       const result = await this.llm.generate(prompt, () => {});
       const code = this.cleanMermaidCode(result);
       await this.renderMindMap(code);
       this.isMindMapPlaceholder = false;
     } catch (err: any) {
-      this.toast.error('Error: ' + err.message);
+      this.isMindMapPlaceholder = true;
+      this.toast.error(
+        'Mind map generation failed — try again or upload more documents for better context.',
+      );
     }
     this.isGenerating.set(false);
   }
@@ -498,7 +530,8 @@ Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
 
     try {
-      const prompt = this.llm.buildPrompt(system, `Generate ${nq} quiz questions.`);
+      const trimmed = this.llm.trimConversation(system, `Generate ${nq} quiz questions.`, []);
+      const prompt = this.llm.buildPrompt(system, `Generate ${nq} quiz questions.`, trimmed);
       const result = await this.llm.generate(prompt, () => {});
       const parsed = this.jsonParser.parseArray<any>(result);
       if (!parsed?.length) throw new Error('No questions parsed');
@@ -516,7 +549,10 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       this.quizQuestions.set(norm);
       this.startQuizTimer();
     } catch (err: any) {
-      this.toast.error('Quiz failed: ' + (err.message || 'try again'));
+      this.quizQuestions.set([]);
+      this.toast.error(
+        'Quiz generation failed — the model produced invalid output. Try again or reduce the number of questions.',
+      );
     }
     this.isGenerating.set(false);
   }

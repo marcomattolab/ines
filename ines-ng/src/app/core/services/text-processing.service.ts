@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+import JSZip from 'jszip';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
@@ -472,15 +474,103 @@ export class TextProcessingService {
     return doc.body.textContent || '';
   }
 
+  async extractTextFromDocx(file: File): Promise<string> {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  }
+
+  async extractTextFromPptx(file: File): Promise<string> {
+    const arrayBuffer = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    const slideFiles = Object.keys(zip.files)
+      .filter((name) => name.startsWith('ppt/slides/slide') && name.endsWith('.xml'))
+      .sort((a, b) => {
+        const na = parseInt(a.match(/slide(\d+)/)?.[1] || '0', 10);
+        const nb = parseInt(b.match(/slide(\d+)/)?.[1] || '0', 10);
+        return na - nb;
+      });
+
+    if (slideFiles.length === 0) {
+      throw new Error(
+        'No slides found in PPTX file — the file may be corrupted or in an unsupported format',
+      );
+    }
+
+    const slides: string[] = [];
+
+    for (const slideFile of slideFiles) {
+      try {
+        const xmlText = await zip.files[slideFile].async('text');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlText, 'text/xml');
+
+        const shapes = doc.getElementsByTagNameNS('*', 'sp');
+        const slideLines: string[] = [];
+
+        for (let i = 0; i < shapes.length; i++) {
+          const shape = shapes[i];
+          const paragraphs = shape.getElementsByTagNameNS('*', 'p');
+          for (let j = 0; j < paragraphs.length; j++) {
+            const p = paragraphs[j];
+            const runs = p.getElementsByTagNameNS('*', 'r');
+            const textParts: string[] = [];
+            for (let k = 0; k < runs.length; k++) {
+              const tElements = runs[k].getElementsByTagNameNS('*', 't');
+              for (let l = 0; l < tElements.length; l++) {
+                if (tElements[l].textContent) {
+                  textParts.push(tElements[l].textContent!.trim());
+                }
+              }
+            }
+            const line = textParts.join('');
+            if (line) slideLines.push(line);
+          }
+        }
+
+        if (slideLines.length > 0) {
+          const num = slideFiles.indexOf(slideFile) + 1;
+          const title = slideLines[0];
+          const body = slideLines.slice(1).join('\n');
+          slides.push(`## Slide ${num}: ${title}\n\n${body}`);
+        }
+      } catch (err) {
+        console.warn(`Failed to extract text from PPTX slide ${slideFile}:`, err);
+      }
+    }
+
+    if (slides.length === 0) {
+      throw new Error('Could not extract any text from PPTX slides');
+    }
+
+    console.log(`PPTX: extracted ${slides.length} slides (${slideFiles.length} XML files processed)`);
+    return slides.join('\n\n---\n\n');
+  }
+
   async extractTextFromFile(file: File): Promise<string> {
     const extension = file.name.split('.').pop()?.toLowerCase();
-    if (file.type === 'application/pdf' || extension === 'pdf') {
+    const mime = file.type;
+
+    if (mime === 'application/pdf' || extension === 'pdf') {
       return this.extractTextFromPdf(file);
     }
-    if (file.type === 'text/html' || extension === 'html' || extension === 'htm') {
+    if (
+      mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      extension === 'docx'
+    ) {
+      return this.extractTextFromDocx(file);
+    }
+    if (
+      mime === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+      extension === 'pptx'
+    ) {
+      return this.extractTextFromPptx(file);
+    }
+    if (mime === 'text/html' || extension === 'html' || extension === 'htm') {
       return this.extractTextFromHtml(file);
     }
-    if (file.type === 'text/plain' || extension === 'txt' || extension === 'md') {
+    if (mime === 'text/plain' || extension === 'txt' || extension === 'md') {
       return file.text();
     }
     throw new Error(`Unsupported file type: ${extension}`);

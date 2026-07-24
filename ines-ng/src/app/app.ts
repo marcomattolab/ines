@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, HostListener, computed, effect } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
@@ -104,6 +104,9 @@ const TABS: TabDef[] = [
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  host: {
+    '(document:keydown)': 'handleKeyboard($event)',
+  },
 })
 export class AppComponent implements OnInit {
   tabs = TABS;
@@ -174,7 +177,6 @@ export class AppComponent implements OnInit {
     return this.tabs.filter((t) => t.label.toLowerCase().includes(q));
   });
 
-  @HostListener('document:keydown', ['$event'])
   handleKeyboard(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();

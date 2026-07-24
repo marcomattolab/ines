@@ -213,9 +213,8 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
     if (this.docFetch.docsLoaded() && this.km.documents().length > 0) {
       try {
-        const chunks = await this.km.getRelevantChunks(text, 2, 200);
-        if (chunks.length > 0) {
-          const context = chunks.map((c) => c.text).join('\n\n---\n\n');
+        const context = await this.km.getRagContext(text, 2, 200);
+        if (context) {
           systemPrompt += `\n\nANGULAR DOCS CONTEXT (use these APIs/precise signatures from official docs):\n${context}`;
         }
       } catch {

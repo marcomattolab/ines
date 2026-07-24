@@ -244,6 +244,12 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
     return result;
   }
 
+  async getRagContext(query: string, topK = 3, maxWords = 800): Promise<string> {
+    const chunks = await this.getRelevantChunks(query, topK, maxWords);
+    if (chunks.length === 0) return '';
+    return chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
+  }
+
   async deleteDocument(id: string): Promise<void> {
     const db = await this.ensureDB();
     const tx = db.transaction([this.documentStore, this.chunkStore], 'readwrite');

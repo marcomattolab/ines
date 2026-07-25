@@ -73,10 +73,19 @@ export class TodoService {
     return true;
   }
 
-  add(text: string, priority: 'normal' | 'priority' = 'normal'): void {
+  add(
+    text: string,
+    priority: 'normal' | 'priority' = 'normal',
+    category: Todo['category'] = 'work',
+    dueDate?: string,
+  ): void {
     const id = this.nextId++;
-    this.todos.update((t) => [...t, { id, text, priority, done: false }]);
+    this.todos.update((t) => [...t, { id, text, priority, done: false, category, dueDate }]);
     this.pushUndo({ type: 'add', ids: [id] });
+  }
+
+  updateText(id: number, text: string): void {
+    this.todos.update((list) => list.map((t) => (t.id === id ? { ...t, text } : t)));
   }
 
   toggle(index: number): void {
@@ -108,7 +117,7 @@ export class TodoService {
     this.pushUndo({ type: 'reorder', from: fromIndex, to: toIndex });
   }
 
-  addMany(items: { text: string; priority: string }[]): void {
+  addMany(items: { text: string; priority: string; category?: string }[]): void {
     const ids: number[] = [];
     const mapped: Todo[] = items.map((i) => {
       const id = this.nextId++;
@@ -117,6 +126,9 @@ export class TodoService {
         id,
         text: i.text,
         priority: (i.priority === 'priority' ? 'priority' : 'normal') as Todo['priority'],
+        category: (['work', 'personal', 'health', 'other'].includes(i.category || '')
+          ? i.category
+          : 'other') as Todo['category'],
         done: false,
       };
     });

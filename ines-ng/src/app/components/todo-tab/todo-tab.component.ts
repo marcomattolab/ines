@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, effect } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
-import { TodoService } from '../../core/services/todo.service';
+import { TodoService, Todo } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -10,6 +11,8 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
+
+type FilterTab = 'all' | 'active' | 'completed';
 
 interface AiChat {
   id: number;
@@ -24,18 +27,20 @@ Your task is to generate a list of tasks for the day based on what the user desc
 Respond ONLY with a JSON object (nothing else, no markdown, no backticks) in this format:
 {
   "tasks": [
-    {"text": "Task description", "priority": "normal"},
-    {"text": "Urgent task description", "priority": "priority"}
+    {"text": "Task description", "priority": "normal", "category": "work"},
+    {"text": "Urgent task description", "priority": "priority", "category": "personal"}
   ],
   "message": "Brief motivational message (1 sentence)"
 }
 
-Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "normal" or "priority".`;
+Generate 4 to 8 concrete, specific and realistic tasks. "priority" can be "normal" or "priority".
+"category" can be "work", "personal", "health", or "other".`;
 
 @Component({
   selector: 'app-todo-tab',
   standalone: true,
   imports: [
+    FormsModule,
     MessageBubbleComponent,
     TypingIndicatorComponent,
     MatIconModule,
@@ -60,6 +65,84 @@ export class TodoTabComponent implements OnDestroy {
   rightPanelWidth = signal(320);
   inputAreaHeight = signal(200);
   showClearConfirm = signal(false);
+  filterTab = signal<FilterTab>('all');
+  editingId = signal<number | null>(null);
+  editText = signal('');
+  newCategory = signal<Todo['category']>('work');
+  newDueDate = signal('');
+
+  readonly categories = [
+    { value: 'work' as const, label: 'Work', color: 'text-blue-400', bg: 'bg-blue-400/10' },
+    {
+      value: 'personal' as const,
+      label: 'Personal',
+      color: 'text-purple-400',
+      bg: 'bg-purple-400/10',
+    },
+    { value: 'health' as const, label: 'Health', color: 'text-green-400', bg: 'bg-green-400/10' },
+    { value: 'other' as const, label: 'Other', color: 'text-zinc-400', bg: 'bg-zinc-400/10' },
+  ];
+
+  readonly filterOptions: { value: FilterTab; label: string; icon: string }[] = [
+    { value: 'all', label: 'All', icon: 'list' },
+    { value: 'active', label: 'Active', icon: 'radio_button_unchecked' },
+    { value: 'completed', label: 'Done', icon: 'check_circle' },
+  ];
+
+  readonly activeCount = computed(() => this.todoSvc.todos().filter((t) => !t.done).length);
+  readonly progressPercent = computed(() => {
+    const t = this.todoSvc.total();
+    if (t === 0) return 0;
+    return Math.round((this.todoSvc.doneCount() / t) * 100);
+  });
+
+  readonly filteredTodos = computed(() => {
+    const f = this.filterTab();
+    return this.todoSvc.todos().filter((t) => {
+      if (f === 'active') return !t.done;
+      if (f === 'completed') return t.done;
+      return true;
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      const editing = this.editingId();
+      if (editing !== null) {
+        this.editText.set(this.todoSvc.todos().find((t) => t.id === editing)?.text || '');
+      }
+    });
+  }
+
+  getCategoryClass(cat?: Todo['category']) {
+    const c = this.categories.find((x) => x.value === (cat || 'other'));
+    return c ? `${c.color} ${c.bg}` : 'text-zinc-400 bg-zinc-400/10';
+  }
+
+  getCategoryLabel(cat?: Todo['category']) {
+    const c = this.categories.find((x) => x.value === (cat || 'other'));
+    return c ? c.label : 'Other';
+  }
+
+  formatDate(date?: string): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    d.setHours(0, 0, 0, 0);
+    if (d.getTime() === today.getTime()) return 'Today';
+    if (d.getTime() === tomorrow.getTime()) return 'Tomorrow';
+    const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff > 0 && diff <= 7) return `${diff}d`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  isOverdue(date?: string): boolean {
+    if (!date) return false;
+    return new Date(date).getTime() < new Date().setHours(0, 0, 0, 0);
+  }
 
   private nextId = 0;
   private isResizing = false;
@@ -95,7 +178,7 @@ export class TodoTabComponent implements OnDestroy {
 
   private doHResize = (e: MouseEvent) => {
     if (!this.isHResizing) return;
-    const newHeight = window.innerHeight - e.clientY - 28; // Subtracting footer height approx
+    const newHeight = window.innerHeight - e.clientY - 28;
     if (newHeight >= 100 && newHeight <= window.innerHeight - 200) {
       this.inputAreaHeight.set(newHeight);
     }
@@ -111,12 +194,46 @@ export class TodoTabComponent implements OnDestroy {
     this.todoSvc.reorder(event.previousIndex, event.currentIndex);
   }
 
-  addManual(input: HTMLInputElement, selEl?: HTMLSelectElement) {
+  addManual(
+    input: HTMLInputElement,
+    selEl?: HTMLSelectElement,
+    catSel?: HTMLSelectElement,
+    dateEl?: HTMLInputElement,
+  ) {
     const text = input.value.trim();
     if (!text) return;
     const priority = (selEl?.value ?? 'normal') as 'normal' | 'priority';
-    this.todoSvc.add(text, priority);
+    const category = (catSel?.value ?? 'work') as Todo['category'];
+    const dueDate = dateEl?.value || undefined;
+    this.todoSvc.add(text, priority, category, dueDate);
     input.value = '';
+    if (dateEl) dateEl.value = '';
+  }
+
+  startEdit(todo: Todo) {
+    this.editingId.set(todo.id);
+    this.editText.set(todo.text);
+  }
+
+  saveEdit(id: number) {
+    const text = this.editText().trim();
+    if (text) {
+      this.todoSvc.updateText(id, text);
+    }
+    this.editingId.set(null);
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+  }
+
+  onEditKey(e: KeyboardEvent, id: number) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.saveEdit(id);
+    } else if (e.key === 'Escape') {
+      this.cancelEdit();
+    }
   }
 
   onAiKey(e: KeyboardEvent, el: HTMLTextAreaElement) {
@@ -185,7 +302,7 @@ export class TodoTabComponent implements OnDestroy {
       });
 
       const data = this.jsonParser.parseObject<{
-        tasks: { text: string; priority: string }[];
+        tasks: { text: string; priority: string; category?: string }[];
         message: string;
       }>(fullText);
       if (data?.tasks) {
@@ -206,6 +323,14 @@ export class TodoTabComponent implements OnDestroy {
           msg.id === typingId ? { ...msg, typing: false, text: '❌ ' + e.message } : msg,
         ),
       );
+    }
+  }
+
+  undoLast() {
+    if (!this.todoSvc.undo()) {
+      this.toast.show('Nothing to undo');
+    } else {
+      this.toast.show('Undo!');
     }
   }
 

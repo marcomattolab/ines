@@ -1,118 +1,282 @@
 <div class="tab-panel-inner">
   <div class="panel-header">
-    <div>
-      <div class="panel-title">
-        <mat-icon
-          fontIcon="check_box"
-          class="text-accent-purple text-lg w-[18px] h-[18px]"
-        ></mat-icon>
-        Daily Planner
+    <div class="flex items-center gap-3">
+      <mat-icon fontIcon="check_box" class="text-purple-400 scale-110"></mat-icon>
+      <div>
+        <div class="panel-title text-white">Daily Planner</div>
+        <div class="panel-desc text-zinc-400">
+          Organize your day with AI-powered task management
+        </div>
       </div>
-      <div class="panel-desc">Organize your day with the help of the AI</div>
     </div>
     <div class="flex items-center gap-2">
-      <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]"
-        >{{ todoSvc.doneCount() }}/{{ todoSvc.total() }} completed</span
-      >
+      @if (todoSvc.canUndo()) {
+        <app-button variant="ghost" size="sm" (onClick)="undoLast()" title="Undo last action">
+          <mat-icon fontIcon="undo" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Undo
+        </app-button>
+      }
       <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
         <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
-        Remove completed
+        Clear done
       </app-button>
     </div>
   </div>
 
   <div class="todo-layout">
+    <!-- Left: Task List -->
     <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Progress Bar -->
+      @if (todoSvc.total() > 0) {
+        <div class="px-4 pt-3 pb-1 shrink-0">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-2)]"
+                >Progress</span
+              >
+              <span class="text-[10px] font-[var(--font-mono)] text-[var(--text-2)]"
+                >{{ todoSvc.doneCount() }}/{{ todoSvc.total() }} · {{ progressPercent() }}%</span
+              >
+            </div>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500 ease-out"
+              [style.width.%]="progressPercent()"
+              [class.bg-green-400]="progressPercent() === 100"
+              [class.bg-purple-400]="progressPercent() > 0 && progressPercent() < 100"
+            ></div>
+          </div>
+        </div>
+      }
+
+      <!-- Filter Tabs -->
+      <div class="flex items-center gap-1 px-4 py-2 border-b border-[var(--border)] shrink-0">
+        @for (opt of filterOptions; track opt.value) {
+          <button
+            (click)="filterTab.set(opt.value)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
+            [class.bg-white/10]="filterTab() === opt.value"
+            [class.text-[var(--text-0)]]="filterTab() === opt.value"
+            [class.text-[var(--text-2)]]="filterTab() !== opt.value"
+            [class.hover:bg-white/5]="filterTab() !== opt.value"
+          >
+            <mat-icon class="scale-50">{{ opt.icon }}</mat-icon>
+            {{ opt.label }}
+            @if (opt.value === 'active' && activeCount() > 0) {
+              <span class="text-[9px] font-mono text-purple-400/70 ml-0.5">{{
+                activeCount()
+              }}</span>
+            }
+          </button>
+        }
+        <div class="flex-1"></div>
+        <span class="text-[10px] font-[var(--font-mono)] text-[var(--text-2)]"
+          >{{ activeCount() }} remaining</span
+        >
+      </div>
+
+      <!-- Task List (scrollable) -->
       <div
-        class="flex-1 overflow-y-auto p-[14px] px-4 flex flex-col gap-1.5 scrollbar-thin"
+        class="flex-1 overflow-y-auto p-3 px-4 flex flex-col gap-1.5 scrollbar-thin"
         cdkDropList
         (cdkDropListDropped)="drop($event)"
       >
-        @if (todoSvc.todos().length === 0) {
+        @if (filteredTodos().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">
-              <mat-icon
-                fontIcon="check_box"
-                class="text-4xl w-9 h-9"
-                style="font-size: 36px; width: 36px; height: 36px"
-              ></mat-icon>
-            </div>
-            <div class="empty-text">No tasks. Add one manually or ask the AI to plan your day!</div>
+            <mat-icon
+              fontIcon="check_box"
+              class="text-4xl w-9 h-9"
+              style="font-size: 36px; width: 36px; height: 36px"
+            ></mat-icon>
+            <h3 class="text-sm font-bold font-[var(--font-ui)] mt-3">
+              @if (filterTab() === 'all') {
+                No tasks yet
+              } @else if (filterTab() === 'active') {
+                All done!
+              } @else {
+                Nothing completed yet
+              }
+            </h3>
+            <p class="empty-text">
+              @if (filterTab() === 'all') {
+                Add a task manually or ask the AI to plan your day
+              } @else if (filterTab() === 'active') {
+                Great work! Check completed tab or add new tasks
+              } @else {
+                Complete some tasks to see them here
+              }
+            </p>
           </div>
         }
-        @for (todo of todoSvc.todos(); track todo.id) {
+
+        @for (todo of filteredTodos(); track todo.id; let i = $index) {
           <div
-            class="todo-item flex items-start gap-2.5 p-[10px] px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-2)] transition-all hover:border-white/10 [&.done]:opacity-45 [&.done_.todo-text]:line-through [&.done_.todo-text]:text-[var(--text-2)]"
+            class="todo-item flex items-start gap-2.5 p-2.5 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] transition-all hover:border-white/10 [&.done]:opacity-50 [&.done_.todo-text]:line-through [&.done_.todo-text]:text-[var(--text-2)]"
             [class.done]="todo.done"
             cdkDrag
           >
+            <!-- Drag handle -->
             <mat-icon
               cdkDragHandle
               fontIcon="drag_indicator"
-              class="mt-0.5 text-base w-4 h-4 text-[var(--text-2)] cursor-grab active:cursor-grabbing select-none inline-flex items-center justify-center"
+              class="mt-0.5 text-sm w-4 h-4 text-[var(--text-2)] cursor-grab active:cursor-grabbing shrink-0"
             ></mat-icon>
+
+            <!-- Checkbox -->
             <div
-              class="w-4 h-4 rounded border-2 border-[var(--border-active)] cursor-pointer flex items-center justify-center shrink-0 mt-0.5 transition-all [&.checked]:bg-[var(--accent-purple)] [&.checked]:border-[var(--accent-purple)] [&.checked]:after:content-['✓'] [&.checked]:after:text-black [&.checked]:after:text-[10px] [&.checked]:after:font-bold"
-              [class.checked]="todo.done"
-              (click)="todoSvc.toggle($index)"
-            ></div>
-            <div
-              class="todo-text flex-1 text-[13.5px] text-[var(--text-0)] leading-[1.5] break-words"
+              class="w-[18px] h-[18px] rounded-md border-2 cursor-pointer flex items-center justify-center shrink-0 mt-0.5 transition-all duration-200"
+              [class.border-[var(--border-active)]]="!todo.done"
+              [class.bg-purple-500]="todo.done"
+              [class.border-purple-500]="todo.done"
+              (click)="todoSvc.toggle(i)"
+              title="Toggle done"
             >
-              {{ todo.text }}
+              @if (todo.done) {
+                <mat-icon
+                  class="text-[10px] w-[10px] h-[10px] text-white"
+                  style="font-size: 12px; width: 12px; height: 12px"
+                  >check</mat-icon
+                >
+              }
             </div>
+
+            <!-- Text / Edit -->
+            <div class="flex-1 min-w-0">
+              @if (editingId() === todo.id) {
+                <input
+                  class="w-full bg-[var(--bg-1)] border border-purple-400/30 rounded-lg px-2 py-0.5 text-[13px] text-[var(--text-0)] outline-none font-[var(--font-body)]"
+                  [value]="editText()"
+                  (input)="editText.set($any($event.target).value)"
+                  (keydown)="onEditKey($event, todo.id)"
+                  (blur)="saveEdit(todo.id)"
+                  autofocus
+                />
+              } @else {
+                <div
+                  class="todo-text text-[13px] text-[var(--text-0)] leading-[1.5] break-words cursor-pointer hover:text-[var(--text-0)] transition-colors"
+                  (dblclick)="startEdit(todo)"
+                  title="Double-click to edit"
+                >
+                  {{ todo.text }}
+                </div>
+              }
+            </div>
+
+            <!-- Category badge -->
             <span
-              class="text-[10px] font-[var(--font-mono)] px-[7px] py-0.5 rounded-full shrink-0 mt-0.5 [&.priority]:bg-accent-rose/15 [&.priority]:text-accent-rose [&.normal]:bg-accent-blue/10 [&.normal]:text-accent-blue"
-              [class]="todo.priority"
+              class="text-[9px] font-medium px-1.5 py-0.5 rounded-md shrink-0 mt-0.5 {{
+                getCategoryClass(todo.category)
+              }}"
+              >{{ getCategoryLabel(todo.category) }}</span
             >
-              {{ todo.priority === 'priority' ? '🔥 priority' : '·' }}
-            </span>
-            <app-button
-              variant="ghost"
-              size="sm"
-              (onClick)="todoSvc.delete($index)"
-              className="!w-6 !h-6 !p-0 !text-text-2 hover:!text-accent-rose"
-              title="Remove"
+
+            <!-- Due date -->
+            @if (todo.dueDate) {
+              <span
+                class="text-[9px] font-[var(--font-mono)] px-1.5 py-0.5 rounded-md shrink-0 mt-0.5"
+                [class.bg-red-400/10]="isOverdue(todo.dueDate) && !todo.done"
+                [class.text-red-400]="isOverdue(todo.dueDate) && !todo.done"
+                [class.bg-white/5]="!isOverdue(todo.dueDate) || todo.done"
+                [class.text-[var(--text-2)]]="!isOverdue(todo.dueDate) || todo.done"
+                >{{ formatDate(todo.dueDate) }}</span
+              >
+            }
+
+            <!-- Priority -->
+            @if (todo.priority === 'priority') {
+              <span
+                class="text-[9px] px-1.5 py-0.5 rounded-md bg-rose-400/10 text-rose-400 font-medium shrink-0 mt-0.5"
+                >High</span
+              >
+            }
+
+            <!-- Delete -->
+            <button
+              (click)="todoSvc.delete(i)"
+              class="opacity-0 group-hover:opacity-100 text-[var(--text-2)] hover:text-red-400 transition-all shrink-0 mt-0.5"
+              title="Delete"
             >
-              <mat-icon
-                fontIcon="close"
-                class="text-xs w-3 h-3"
-                style="font-size: 12px; width: 12px; height: 12px"
-              ></mat-icon>
-            </app-button>
+              <mat-icon class="scale-50">close</mat-icon>
+            </button>
           </div>
         }
       </div>
-      <div class="flex gap-2 p-3 px-4 border-t border-[var(--border)] shrink-0 bg-[var(--bg-1)]">
-        <input
-          class="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-3 py-2 text-[var(--text-0)] font-[var(--font-body)] text-[13px] outline-none transition-colors focus:border-[var(--border-active)] placeholder:text-[var(--text-2)]"
-          #manualInput
-          placeholder="Add a task manually..."
-          (keydown.enter)="addManual(manualInput)"
-        />
-        <select class="pill-select" #prioritySel>
-          <option value="normal">normal</option>
-          <option value="priority">🔥 priority</option>
-        </select>
-        <app-button variant="primary" size="sm" (onClick)="addManual(manualInput, prioritySel)">
+
+      <!-- Add Task Bar -->
+      <div
+        class="flex items-end gap-2 p-3 px-4 border-t border-[var(--border)] shrink-0 bg-[var(--bg-1)]"
+      >
+        <div class="flex-1 flex flex-col gap-1.5">
+          <input
+            class="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-0)] font-[var(--font-body)] text-[13px] outline-none transition-colors focus:border-purple-400/30 placeholder:text-[var(--text-2)]"
+            #manualInput
+            placeholder="Add a task..."
+            (keydown.enter)="addManual(manualInput, prioritySel, catSel, dueDateInput)"
+          />
+          <div class="flex items-center gap-1.5">
+            <select
+              #catSel
+              class="text-[10px] bg-[var(--bg-2)] border border-[var(--border)] rounded-md px-2 py-1 text-[var(--text-1)] outline-none cursor-pointer font-[var(--font-mono)]"
+            >
+              @for (cat of categories; track cat.value) {
+                <option [value]="cat.value">{{ cat.label }}</option>
+              }
+            </select>
+            <input
+              #dueDateInput
+              type="date"
+              class="text-[10px] bg-[var(--bg-2)] border border-[var(--border)] rounded-md px-2 py-1 text-[var(--text-1)] outline-none cursor-pointer font-[var(--font-mono)] [color-scheme:dark]"
+            />
+            <select
+              #prioritySel
+              class="text-[10px] bg-[var(--bg-2)] border border-[var(--border)] rounded-md px-2 py-1 text-[var(--text-1)] outline-none cursor-pointer font-[var(--font-mono)]"
+            >
+              <option value="normal">Normal</option>
+              <option value="priority">High</option>
+            </select>
+          </div>
+        </div>
+        <app-button
+          variant="primary"
+          size="sm"
+          (onClick)="addManual(manualInput, prioritySel, catSel, dueDateInput)"
+          className="!h-[38px]"
+        >
           <mat-icon fontIcon="add" class="text-sm w-3.5 h-3.5"></mat-icon>
           Add
         </app-button>
       </div>
     </div>
 
+    <!-- Resizer -->
     <div class="resizer" (mousedown)="startResize($event)"></div>
 
+    <!-- Right: AI Panel -->
     <div
       class="min-w-[280px] flex flex-col overflow-hidden shrink-0"
       [style.width.px]="rightPanelWidth()"
     >
       <div
-        class="px-4 py-[10px] font-[var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--text-2)] uppercase border-b border-[var(--border)] shrink-0"
+        class="px-4 py-2.5 font-[var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--text-2)] uppercase border-b border-[var(--border)] shrink-0"
       >
-        🤖 GENERATE WITH AI
+        🤖 AI PLANNER
       </div>
       <div class="chat-area" #aiChat>
+        @if (aiMessages().length === 0) {
+          <div class="empty-state">
+            <mat-icon
+              fontIcon="auto_awesome"
+              class="text-3xl w-8 h-8 text-purple-400"
+              style="font-size: 30px; width: 30px; height: 30px"
+            ></mat-icon>
+            <h3 class="text-sm font-bold font-[var(--font-ui)] mt-2">Let AI plan your day</h3>
+            <p class="empty-text">
+              Describe your tasks and goals. The AI will generate a structured plan with priorities
+              and categories.
+            </p>
+          </div>
+        }
         @for (msg of aiMessages(); track msg.id) {
           @if (msg.typing) {
             <div class="message ai">
@@ -132,9 +296,10 @@
         [style.height.px]="inputAreaHeight()"
       >
         <textarea
-          class="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-3 py-[9px] text-[var(--text-0)] font-[var(--font-body)] text-[12.5px] resize-none min-h-[40px] outline-none transition-colors leading-[1.5] focus:border-[var(--border-active)] placeholder:text-[var(--text-2)]"
+          class="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-0)] font-[var(--font-body)] text-[12.5px] resize-none min-h-[40px] outline-none transition-colors leading-[1.5] focus:border-purple-400/30 placeholder:text-[var(--text-2)]"
           #aiInput
-          placeholder="Describe your day or ask to plan activities...&#10;Example: 'I have a demo at 3 PM, code review and team call'"
+          placeholder="Describe your day or ask to plan activities...
+Example: 'I have a demo at 3 PM, code review and team call'"
           (keydown)="onAiKey($event, aiInput)"
         ></textarea>
 
@@ -146,7 +311,7 @@
               (click)="toggleRecording(aiInput)"
             >
               <div class="record-dot"></div>
-              <span>{{ recording() ? 'Stop Recording' : 'Record' }}</span>
+              <span>{{ recording() ? 'Stop' : 'Record' }}</span>
             </button>
             <span class="font-[var(--font-mono)] text-[11px] text-accent-rose tabular-nums">{{
               timerText()
@@ -154,7 +319,7 @@
           </div>
           <app-button variant="primary" (onClick)="generate(aiInput)">
             <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
-            Generate Plan
+            Plan
           </app-button>
         </div>
       </div>
@@ -165,7 +330,7 @@
 @if (showClearConfirm()) {
   <app-confirm-dialog
     title="Remove completed tasks"
-    message="This will permanently remove all completed tasks. This action can be undone."
+    message="This will permanently remove all completed tasks. You can undo this action."
     confirmLabel="Remove"
     [danger]="true"
     (confirm)="todoSvc.clearDone(); showClearConfirm.set(false)"

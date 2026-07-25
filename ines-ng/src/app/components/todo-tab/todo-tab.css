@@ -11,6 +11,8 @@
   overflow: hidden;
 }
 
+/* ── Resizers ── */
+
 .resizer {
   width: 4px;
   background: transparent;
@@ -24,21 +26,6 @@
 .resizer:active {
   background: var(--accent-blue);
   box-shadow: 0 0 8px rgba(99, 179, 255, 0.4);
-}
-
-.todo-item {
-  animation: msgIn 0.2s ease;
-}
-
-@keyframes msgIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .h-resizer {
@@ -55,6 +42,39 @@
   background: var(--accent-blue);
   box-shadow: 0 0 8px rgba(99, 179, 255, 0.4);
 }
+
+/* ── Todo Items ── */
+
+.todo-item {
+  animation: todoIn 0.25s ease;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    opacity 0.3s;
+}
+
+.todo-item.done {
+  transition:
+    opacity 0.4s ease,
+    border-color 0.3s;
+}
+
+.todo-item.done .todo-text {
+  transition: all 0.3s ease;
+}
+
+@keyframes todoIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Record Button ── */
 
 .record-btn {
   background: var(--bg-3);
@@ -114,9 +134,11 @@
   }
 }
 
+/* ── CDK Drag Drop ── */
+
 .cdk-drag-preview {
   box-sizing: border-box;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   border: 1px solid var(--border-active);
   background: var(--bg-3) !important;
   box-shadow:
@@ -132,8 +154,9 @@
 
 .cdk-drag-placeholder {
   opacity: 0.15;
-  border: 1px dashed var(--accent-blue);
+  border: 1px dashed var(--accent-purple);
   background: transparent;
+  border-radius: 12px;
 }
 
 .cdk-drag-animating {

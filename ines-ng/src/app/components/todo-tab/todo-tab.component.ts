@@ -1,4 +1,12 @@
-import { Component, inject, signal, computed, OnDestroy, effect } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnDestroy,
+  effect,
+  HostListener,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -68,6 +76,8 @@ export class TodoTabComponent implements OnDestroy {
   filterTab = signal<FilterTab>('all');
   editingId = signal<number | null>(null);
   editText = signal('');
+  popoverId = signal<number | null>(null);
+  popoverType = signal<'priority' | 'category' | null>(null);
   newCategory = signal<Todo['category']>('work');
   newDueDate = signal('');
 
@@ -225,6 +235,35 @@ export class TodoTabComponent implements OnDestroy {
 
   cancelEdit() {
     this.editingId.set(null);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.closePopover();
+  }
+
+  togglePopover(todoId: number, type: 'priority' | 'category') {
+    if (this.popoverId() === todoId && this.popoverType() === type) {
+      this.closePopover();
+    } else {
+      this.popoverId.set(todoId);
+      this.popoverType.set(type);
+    }
+  }
+
+  closePopover() {
+    this.popoverId.set(null);
+    this.popoverType.set(null);
+  }
+
+  setPriority(todo: Todo, priority: Todo['priority']) {
+    this.todoSvc.updatePriority(todo.id, priority);
+    this.closePopover();
+  }
+
+  setCategory(todo: Todo, category: Todo['category']) {
+    this.todoSvc.updateCategory(todo.id, category);
+    this.closePopover();
   }
 
   onEditKey(e: KeyboardEvent, id: number) {

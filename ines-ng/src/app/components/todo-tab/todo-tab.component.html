@@ -165,11 +165,37 @@
 
             <!-- Category badge -->
             <span
-              class="text-[9px] font-medium px-1.5 py-0.5 rounded-md shrink-0 mt-0.5 {{
+              (click)="togglePopover(todo.id, 'category'); $event.stopPropagation()"
+              class="text-[9px] font-medium px-1.5 py-0.5 rounded-md shrink-0 mt-0.5 cursor-pointer hover:brightness-125 transition-all select-none relative {{
                 getCategoryClass(todo.category)
               }}"
-              >{{ getCategoryLabel(todo.category) }}</span
-            >
+              title="Change category"
+              >{{ getCategoryLabel(todo.category) }}
+              @if (popoverId() === todo.id && popoverType() === 'category') {
+                <span
+                  class="absolute top-full left-0 mt-1 bg-[var(--bg-1)] border border-[var(--border)] rounded-lg shadow-xl z-50 py-1 min-w-[80px]"
+                  (click)="$event.stopPropagation()"
+                >
+                  @for (cat of categories; track cat.value) {
+                    <button
+                      (click)="setCategory(todo, cat.value)"
+                      class="w-full text-left px-3 py-1.5 text-[10px] hover:bg-white/5 transition-colors flex items-center gap-1.5"
+                      [class.text-[var(--text-0)]]="cat.value === todo.category"
+                      [class.text-[var(--text-2)]]="cat.value !== todo.category"
+                    >
+                      <span
+                        class="w-1.5 h-1.5 rounded-full"
+                        [class]="'bg-' + cat.color.split('-')[1] + '-400'"
+                      ></span>
+                      {{ cat.label }}
+                      @if (cat.value === todo.category) {
+                        <mat-icon class="scale-50 ml-auto">check</mat-icon>
+                      }
+                    </button>
+                  }
+                </span>
+              }
+            </span>
 
             <!-- Due date -->
             @if (todo.dueDate) {
@@ -184,12 +210,47 @@
             }
 
             <!-- Priority -->
-            @if (todo.priority === 'priority') {
-              <span
-                class="text-[9px] px-1.5 py-0.5 rounded-md bg-rose-400/10 text-rose-400 font-medium shrink-0 mt-0.5"
-                >High</span
-              >
-            }
+            <span
+              (click)="togglePopover(todo.id, 'priority'); $event.stopPropagation()"
+              class="text-[9px] px-1.5 py-0.5 rounded-md shrink-0 mt-0.5 cursor-pointer hover:brightness-125 transition-all font-medium select-none relative"
+              [class.bg-rose-400/10]="todo.priority === 'priority'"
+              [class.text-rose-400]="todo.priority === 'priority'"
+              [class.bg-white/5]="todo.priority === 'normal'"
+              [class.text-[var(--text-2)]]="todo.priority === 'normal'"
+              title="Change priority"
+              >{{ todo.priority === 'priority' ? 'High' : 'Normal' }}
+              @if (popoverId() === todo.id && popoverType() === 'priority') {
+                <span
+                  class="absolute top-full right-0 mt-1 bg-[var(--bg-1)] border border-[var(--border)] rounded-lg shadow-xl z-50 py-1 min-w-[80px]"
+                  (click)="$event.stopPropagation()"
+                >
+                  <button
+                    (click)="setPriority(todo, 'normal')"
+                    class="w-full text-left px-3 py-1.5 text-[10px] hover:bg-white/5 transition-colors flex items-center gap-1.5"
+                    [class.text-[var(--text-0)]]="todo.priority === 'normal'"
+                    [class.text-[var(--text-2)]]="todo.priority !== 'normal'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                    Normal
+                    @if (todo.priority === 'normal') {
+                      <mat-icon class="scale-50 ml-auto">check</mat-icon>
+                    }
+                  </button>
+                  <button
+                    (click)="setPriority(todo, 'priority')"
+                    class="w-full text-left px-3 py-1.5 text-[10px] hover:bg-white/5 transition-colors flex items-center gap-1.5"
+                    [class.text-[var(--text-0)]]="todo.priority === 'priority'"
+                    [class.text-[var(--text-2)]]="todo.priority !== 'priority'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    High
+                    @if (todo.priority === 'priority') {
+                      <mat-icon class="scale-50 ml-auto">check</mat-icon>
+                    }
+                  </button>
+                </span>
+              }
+            </span>
 
             <!-- Delete -->
             <button

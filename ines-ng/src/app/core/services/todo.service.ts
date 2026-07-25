@@ -88,6 +88,18 @@ export class TodoService {
     this.todos.update((list) => list.map((t) => (t.id === id ? { ...t, text } : t)));
   }
 
+  updatePriority(id: number, priority: Todo['priority']): void {
+    this.todos.update((list) => list.map((t) => (t.id === id ? { ...t, priority } : t)));
+  }
+
+  updateCategory(id: number, category: Todo['category']): void {
+    this.todos.update((list) => list.map((t) => (t.id === id ? { ...t, category } : t)));
+  }
+
+  updateDueDate(id: number, dueDate: string | undefined): void {
+    this.todos.update((list) => list.map((t) => (t.id === id ? { ...t, dueDate } : t)));
+  }
+
   toggle(index: number): void {
     this.todos.update((list) => list.map((t, i) => (i === index ? { ...t, done: !t.done } : t)));
     this.pushUndo({ type: 'toggle', index });

@@ -14,3 +14,21 @@
   height: auto;
   width: auto;
 }
+
+/* Collapsible sidebar section header */
+.section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-header:hover {
+  background: rgb(255 255 255 / 0.03);
+}
+
+.chevron-icon {
+  transition: transform 150ms ease;
+}
+
+.chevron-icon.open {
+  transform: rotate(90deg);
+}

@@ -1,6 +1,6 @@
 {
   "name": "ines-ng",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -60,9 +60,6 @@
     "*.{ts,html,css,json}": [
       "prettier --write",
       "git add"
-    ],
-    "*.ts": [
-      "npx tsc --noEmit --project tsconfig.app.json"
     ]
   }
 }

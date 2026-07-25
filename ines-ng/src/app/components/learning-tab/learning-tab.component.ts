@@ -140,6 +140,8 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   private dragStart = { x: 0, y: 0, px: 0, py: 0 };
 
   searchQuery = signal('');
+  collapsedDocs = signal(false);
+  collapsedTools = signal(false);
 
   readonly filteredDocs = computed(() => {
     const q = this.searchQuery().toLowerCase();

@@ -138,7 +138,7 @@ export class SpeechService {
         if (e.results[i].isFinal) final += t + ' ';
         else interim += t;
       }
-      if (final) this.recordingBaseText += final;
+      if (final) this.recordingBaseText += this.normalizePunctuation(final);
       const displayText = this.recordingBaseText + (interim ? `[${interim}]` : '');
       this.recordingCallback?.(displayText);
     };
@@ -204,17 +204,83 @@ export class SpeechService {
   }
   private stripMarkdownAndHtml(text: string): string {
     if (!text) return '';
-    // Strip HTML elements
     let result = text.replace(/<\/?[^>]+(>|$)/g, '');
-
-    // Strip common code blocks
     result = result.replace(/```[\s\S]*?```/g, '[Code block omitted]');
-
-    // Strip other markdown syntaxes like **bold** or *italic*
     result = result.replace(/\*\*([^*]+)\*\*/g, '$1');
     result = result.replace(/\*([^*]+)\*/g, '$1');
     result = result.replace(/`([^`]+)`/g, '$1');
-
     return result;
+  }
+
+  private normalizePunctuation(text: string): string {
+    const rules: [RegExp, string][] = [
+      [/\bcomma\b/gi, ','],
+      [/\bperiod\b/gi, '.'],
+      [/\bdot\b/gi, '.'],
+      [/\bfull stop\b/gi, '.'],
+      [/\bquestion mark\b/gi, '?'],
+      [/\bexclamation point\b/gi, '!'],
+      [/\bexclamation mark\b/gi, '!'],
+      [/\bnew line\b/gi, '\n'],
+      [/\bnewline\b/gi, '\n'],
+      [/\bnext line\b/gi, '\n'],
+      [/\bcolon\b/gi, ':'],
+      [/\bsemicolon\b/gi, ';'],
+      [/\bopen paren\b/gi, '('],
+      [/\bopen parenthesis\b/gi, '('],
+      [/\bclose paren\b/gi, ')'],
+      [/\bclose parenthesis\b/gi, ')'],
+      [/\bdash\b/gi, '-'],
+      [/\bhyphen\b/gi, '-'],
+      [/\bslash\b/gi, '/'],
+      [/\bforward slash\b/gi, '/'],
+      [/\bbackslash\b/gi, '\\'],
+      [/\basterisk\b/gi, '*'],
+      [/\bhash\b/gi, '#'],
+      [/\bhashtag\b/gi, '#'],
+      [/\bat sign\b/gi, '@'],
+      [/\bampersand\b/gi, '&'],
+      [/\bpercent\b/gi, '%'],
+      [/\bdollar sign\b/gi, '$'],
+      [/\beuro sign\b/gi, '€'],
+      [/\bdouble quote\b/gi, '"'],
+      [/\bsingle quote\b/gi, "'"],
+    ];
+
+    let result = text;
+    for (const [regex, replacement] of rules) {
+      result = result.replace(regex, replacement);
+    }
+
+    return this.cleanPunctuationSpaces(result);
+  }
+
+  private cleanPunctuationSpaces(text: string): string {
+    return text
+      .replace(/\s+,/g, ',')
+      .replace(/\s+\./g, '.')
+      .replace(/\s+\?/g, '?')
+      .replace(/\s+!/g, '!')
+      .replace(/\s+:/g, ':')
+      .replace(/\s+;/g, ';')
+      .replace(/\s+\)/g, ')')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+-/g, '-')
+      .replace(/\s+\//g, '/')
+      .replace(/\s+@/g, '@')
+      .replace(/\s+#/g, '#')
+      .replace(/\s+&/g, '&')
+      .replace(/\s+\*/g, '*')
+      .replace(/\s+\\/g, '\\')
+      .replace(/\s+\$/g, '$')
+      .replace(/\s+%/g, '%')
+      .replace(/\s+"/g, '"')
+      .replace(/\s+'/g, "'")
+      .replace(/\n\s+/g, '\n')
+      .replace(/\s+(?=\n)/g, '')
+      .replace(/\.\s*\./g, '.')
+      .replace(/,\s*\./g, '.')
+      .replace(/,\s+,/g, ',')
+      .replace(/[^\S\n]{2,}/g, ' ');
   }
 }

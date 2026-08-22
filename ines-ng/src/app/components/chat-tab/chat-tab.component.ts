@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { StorageService } from '../../core/services/storage.service';
+import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -24,6 +25,7 @@ interface UiMessage {
   role: 'user' | 'ai';
   text: string;
   streaming?: boolean;
+  sources?: string[];
 }
 
 const SYSTEM_CHAT = `You're a general AI assistant, helpful, precise, and friendly.
@@ -60,6 +62,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
+  readonly km = inject(KnowledgeManagerService);
   private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
 
@@ -181,8 +184,21 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.typing.set(true);
     this.shouldScroll = true;
 
-    const trimmed = this.llm.trimConversation(SYSTEM_CHAT, text, this.history.slice(-6, -1));
-    const prompt = this.llm.buildPrompt(SYSTEM_CHAT, text, trimmed);
+    let systemPrompt = SYSTEM_CHAT;
+    let sourceNames: string[] = [];
+    try {
+      const chunks = await this.km.getRelevantChunks(text, 3, 300);
+      if (chunks.length > 0) {
+        sourceNames = [...new Set(chunks.map((c) => c.docName))];
+        const context = chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
+        systemPrompt += `\n\nYou also have access to the user's personal knowledge base. Use the provided context when it is relevant and cite the source document name. If the context doesn't contain the answer, answer from your own knowledge.\n\nContext from knowledge base documents:\n${context}`;
+      }
+    } catch {
+      /* RAG is best-effort */
+    }
+
+    const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
+    const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
     const aiId = this.nextId++;
 
     try {
@@ -195,12 +211,14 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
             this.typing.set(false);
             this.messages.update((m) => [
               ...m,
-              { id: aiId, role: 'ai', text: fullText, streaming: true },
+              { id: aiId, role: 'ai', text: fullText, streaming: true, sources: sourceNames },
             ]);
           } else {
             this.messages.update((m) =>
               m.map((msg) =>
-                msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg,
+                msg.id === aiId
+                  ? { ...msg, text: fullText, streaming: !done, sources: sourceNames }
+                  : msg,
               ),
             );
           }

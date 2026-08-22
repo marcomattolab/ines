@@ -36,6 +36,16 @@
           (onEdit)="editMessage(msg)"
         />
       }
+      @if (msg.role === 'ai' && msg.sources?.length) {
+        <div class="flex flex-wrap gap-1.5 pl-12 pb-2">
+          @for (src of msg.sources; track $index) {
+            <span
+              class="text-[10px] text-[var(--text-2)] px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--bg-2)] flex items-center gap-1"
+              ><mat-icon class="text-[12px]">article</mat-icon>{{ src }}</span
+            >
+          }
+        </div>
+      }
     }
     @if (typing()) {
       <div class="message ai">

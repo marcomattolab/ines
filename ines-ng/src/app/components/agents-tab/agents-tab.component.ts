@@ -64,7 +64,7 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   readonly km = inject(KnowledgeManagerService);
 
   selectedAgent = signal<Agent | null>(this.agentSvc.agents()[0] || null);
-  activeMode = signal<'chat' | 'edit' | 'kb'>('chat');
+  activeMode = signal<'chat' | 'edit' | 'kb' | 'skills'>('chat');
   editingSkill = signal<Skill | null>(null);
 
   // Chat state
@@ -88,6 +88,27 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   showClearConfirm = signal(false);
   deleteAgentId = signal<string | null>(null);
   deleteSkillId = signal<string | null>(null);
+
+  // Skills library state
+  skillSearch = signal('');
+  skillCategory = signal('');
+  readonly skillCategories = computed(() => {
+    const cats = new Set(this.agentSvc.skills().map((s) => s.category || 'General'));
+    return [...cats].sort();
+  });
+  readonly filteredSkills = computed(() => {
+    const q = this.skillSearch().toLowerCase();
+    const cat = this.skillCategory();
+    return this.agentSvc.skills().filter((s) => {
+      if (cat && (s.category || 'General') !== cat) return false;
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q) ||
+        s.instructions.toLowerCase().includes(q)
+      );
+    });
+  });
 
   async ngOnInit() {
     await this.km.loadDocuments();
@@ -389,6 +410,8 @@ ${systemPrompt}`;
       name: 'New Skill',
       description: 'Skill description',
       instructions: 'How the agent should behave with this skill.',
+      category: 'General',
+      icon: 'auto_awesome',
     });
   }
 
@@ -421,6 +444,42 @@ ${systemPrompt}`;
       this.toast.show('Skill deleted');
     }
     this.deleteSkillId.set(null);
+  }
+
+  agentsUsingSkill(skillId: string): Agent[] {
+    return this.agentSvc.agents().filter((a) => a.skillIds.includes(skillId));
+  }
+
+  exportSkillsLibrary() {
+    this.dom.downloadText(
+      this.agentSvc.exportSkillsLibrary(),
+      `ines-skills-${new Date().toISOString().slice(0, 10)}.ines-skills.json`,
+    );
+    this.toast.success('Skills library exported');
+  }
+
+  exportSkill(skill: Skill) {
+    this.dom.downloadText(
+      this.agentSvc.exportSkill(skill),
+      `${skill.name.toLowerCase().replace(/\s+/g, '-')}.ines-skill.json`,
+    );
+    this.toast.success('Skill exported');
+  }
+
+  async importSkillsFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const result = this.agentSvc.importSkills(text);
+      this.toast.success(
+        `Skills imported: ${result.added} added, ${result.updated} updated, ${result.skipped} skipped`,
+      );
+    } catch (err: any) {
+      this.toast.error('Import failed: ' + (err?.message || 'invalid file'));
+    }
+    input.value = '';
   }
 
   html(text: string) {

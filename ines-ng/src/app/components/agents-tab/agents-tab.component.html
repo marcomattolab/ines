@@ -58,6 +58,13 @@
             <mat-icon fontIcon="auto_stories" class="text-sm"></mat-icon> Knowledge
           </app-button>
           <app-button
+            [variant]="activeMode() === 'skills' ? 'primary' : 'secondary'"
+            size="sm"
+            (onClick)="activeMode.set('skills')"
+          >
+            <mat-icon fontIcon="extension" class="text-sm"></mat-icon> Skills
+          </app-button>
+          <app-button
             [variant]="activeMode() === 'edit' ? 'primary' : 'secondary'"
             size="sm"
             (onClick)="activeMode.set('edit')"
@@ -419,47 +426,140 @@
             }
           </div>
         </section>
+      </div>
 
-        <!-- Skill Editor (Conditional) -->
-        @if (editingSkill(); as skill) {
-          <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          >
-            <div
-              class="bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl"
-            >
-              <h3 class="text-lg font-bold font-[var(--font-ui)]">Edit Skill</h3>
-              <div class="space-y-3">
-                <div class="space-y-1">
-                  <label class="text-[10px] uppercase text-[var(--text-2)]">Name</label>
-                  <input
-                    [(ngModel)]="skill.name"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] uppercase text-[var(--text-2)]">Description</label>
-                  <input
-                    [(ngModel)]="skill.description"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] uppercase text-[var(--text-2)]">Instructions</label>
-                  <textarea
-                    [(ngModel)]="skill.instructions"
-                    rows="4"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"
-                  ></textarea>
-                </div>
+      <!-- Skills Library Mode -->
+      <div [hidden]="activeMode() !== 'skills'" class="flex-1 overflow-y-auto p-6 space-y-6">
+        <section class="space-y-4">
+          <div class="flex justify-between items-center flex-wrap gap-3">
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-widest text-accent-purple">
+                Skills Library
+              </h3>
+              <p class="text-xs text-[var(--text-2)] mt-1">
+                {{ agentSvc.skills().length }} skills · assign them to agents to change how they
+                behave.
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <div class="relative">
+                <input
+                  type="file"
+                  (change)="importSkillsFile($event)"
+                  accept=".json,.ines-skill,.ines-skills"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <app-button variant="secondary" size="sm">
+                  <mat-icon fontIcon="file_download" class="text-sm"></mat-icon> Import
+                </app-button>
               </div>
-              <div class="flex justify-end gap-2">
-                <app-button variant="secondary" (onClick)="cancelEditSkill()">Cancel</app-button>
-                <app-button variant="primary" (onClick)="saveSkill(skill)">Save Skill</app-button>
-              </div>
+              <app-button variant="secondary" size="sm" (onClick)="exportSkillsLibrary()">
+                <mat-icon fontIcon="file_upload" class="text-sm"></mat-icon> Export Library
+              </app-button>
+              <app-button variant="primary" size="sm" (onClick)="addNewSkill()">
+                <mat-icon fontIcon="add" class="text-sm"></mat-icon> New Skill
+              </app-button>
             </div>
           </div>
-        }
+
+          <div class="flex items-start gap-3 flex-wrap">
+            <div class="relative flex-1 min-w-[200px] max-w-sm">
+              <input
+                type="text"
+                [value]="skillSearch()"
+                (input)="skillSearch.set($any($event.target).value)"
+                placeholder="Search skills..."
+                class="input-field w-full text-xs py-2 pl-8 pr-3"
+              />
+              <mat-icon
+                class="absolute left-2 top-1/2 -translate-y-1/2 scale-75 text-[var(--text-2)]"
+                >search</mat-icon
+              >
+            </div>
+            <div class="flex gap-1.5 flex-wrap">
+              <button
+                (click)="skillCategory.set('')"
+                [class.bg-white/10]="!skillCategory()"
+                class="text-[10px] px-2.5 py-1 rounded-full border border-[var(--border)] hover:bg-white/5 transition-colors"
+              >
+                All
+              </button>
+              @for (cat of skillCategories(); track cat) {
+                <button
+                  (click)="skillCategory.set(skillCategory() === cat ? '' : cat)"
+                  [class.bg-white/10]="skillCategory() === cat"
+                  class="text-[10px] px-2.5 py-1 rounded-full border border-[var(--border)] hover:bg-white/5 transition-colors"
+                >
+                  {{ cat }}
+                </button>
+              }
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          @for (skill of filteredSkills(); track skill.id) {
+            <div
+              class="p-4 border border-[var(--border)] rounded-xl bg-[var(--bg-2)] flex flex-col gap-2 group/skill"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <mat-icon class="scale-90 text-[var(--accent-purple)]">{{
+                    skill.icon || 'auto_awesome'
+                  }}</mat-icon>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-sm truncate">{{ skill.name }}</p>
+                    <span class="text-[10px] text-[var(--text-2)]">{{
+                      skill.category || 'General'
+                    }}</span>
+                  </div>
+                </div>
+                <div class="flex gap-1 opacity-0 group-hover/skill:opacity-100 transition-opacity">
+                  <button
+                    (click)="exportSkill(skill)"
+                    class="text-[var(--text-2)] hover:text-white"
+                    title="Export skill"
+                  >
+                    <mat-icon fontIcon="download" class="text-xs w-4 h-4"></mat-icon>
+                  </button>
+                  <button
+                    (click)="editSkill(skill)"
+                    class="text-[var(--text-2)] hover:text-white"
+                    title="Edit"
+                  >
+                    <mat-icon fontIcon="edit" class="text-xs w-4 h-4"></mat-icon>
+                  </button>
+                  <button (click)="deleteSkill(skill.id)" class="text-accent-rose" title="Delete">
+                    <mat-icon fontIcon="delete" class="text-xs w-4 h-4"></mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <p class="text-xs text-[var(--text-1)] line-clamp-2">{{ skill.description }}</p>
+              <p
+                class="text-[11px] text-[var(--text-2)] line-clamp-3 whitespace-pre-wrap font-[var(--font-mono)]"
+              >
+                {{ skill.instructions }}
+              </p>
+
+              <div class="mt-auto pt-2 border-t border-[var(--border)]">
+                @if (agentsUsingSkill(skill.id).length > 0) {
+                  <div class="flex flex-wrap gap-1 items-center">
+                    <span class="text-[10px] text-[var(--text-2)] mr-1">Used by:</span>
+                    @for (a of agentsUsingSkill(skill.id); track a.id) {
+                      <span
+                        class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-1)] border border-[var(--border)]"
+                        >{{ a.name }}</span
+                      >
+                    }
+                  </div>
+                } @else {
+                  <span class="text-[10px] text-[var(--text-2)]">Not assigned to any agent</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
       </div>
     } @else {
       <div class="empty-state">
@@ -470,6 +570,63 @@
     }
   </main>
 </div>
+
+@if (editingSkill(); as skill) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div
+      class="bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl"
+    >
+      <h3 class="text-lg font-bold font-[var(--font-ui)]">
+        {{ skill.id ? 'Edit Skill' : 'New Skill' }}
+      </h3>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[10px] uppercase text-[var(--text-2)]">Name</label>
+            <input
+              [(ngModel)]="skill.name"
+              class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] uppercase text-[var(--text-2)]">Category</label>
+            <input
+              [(ngModel)]="skill.category"
+              class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+            />
+          </div>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase text-[var(--text-2)]">Icon</label>
+          <input
+            [(ngModel)]="skill.icon"
+            placeholder="Material icon name (e.g. code, lightbulb)"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+          />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase text-[var(--text-2)]">Description</label>
+          <input
+            [(ngModel)]="skill.description"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
+          />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase text-[var(--text-2)]">Instructions</label>
+          <textarea
+            [(ngModel)]="skill.instructions"
+            rows="4"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"
+          ></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <app-button variant="secondary" (onClick)="cancelEditSkill()">Cancel</app-button>
+        <app-button variant="primary" (onClick)="saveSkill(skill)">Save Skill</app-button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (showClearConfirm()) {
   <app-confirm-dialog

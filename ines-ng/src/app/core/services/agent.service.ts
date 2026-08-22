@@ -6,6 +6,28 @@ export interface Skill {
   name: string;
   description: string;
   instructions: string;
+  category?: string;
+  icon?: string;
+}
+
+export interface SkillLibraryPayload {
+  version: 1;
+  date: number;
+  skills: Skill[];
+}
+
+export interface SkillImportResult {
+  added: number;
+  updated: number;
+  skipped: number;
+}
+
+function normalizeSkill(skill: Skill): Skill {
+  return {
+    ...skill,
+    category: skill.category || 'General',
+    icon: skill.icon || 'auto_awesome',
+  };
 }
 
 export interface Agent {
@@ -26,12 +48,16 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Provides advanced coding advice and follows best practices.',
     instructions:
       'Always use modern ES6+ syntax for JavaScript. Provide clear explanations for complex logic. Suggest unit tests where appropriate.',
+    category: 'Coding',
+    icon: 'code',
   },
   {
     id: 'skill-concise',
     name: 'Brevity',
     description: 'Ensures responses are short and to the point.',
     instructions: 'Keep responses under 3 sentences unless explicitly asked for detail.',
+    category: 'Communication',
+    icon: 'short_text',
   },
   {
     id: 'skill-step-by-step',
@@ -39,6 +65,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Breaks down complex tasks into logical, numbered steps.',
     instructions:
       'Always break down your answer into clear, numbered steps. Start with a high-level summary and end with a "Next Action" recommendation.',
+    category: 'Productivity',
+    icon: 'format_list_numbered',
   },
   {
     id: 'skill-empathy',
@@ -46,6 +74,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Provides supportive and emotionally intelligent responses.',
     instructions:
       "Acknowledge the user's feelings and use a warm, supportive tone. Avoid being overly clinical or robotic.",
+    category: 'Coaching',
+    icon: 'favorite',
   },
   {
     id: 'skill-writing-editor',
@@ -53,6 +83,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Reviews and improves text for clarity, grammar, tone, and structure.',
     instructions:
       "Edit the user's text for clarity, grammar, conciseness, and tone. Provide the revised version along with brief explanations of key changes. Offer suggestions rather than rewrites when appropriate.",
+    category: 'Writing',
+    icon: 'edit_note',
   },
   {
     id: 'skill-formal-tone',
@@ -60,6 +92,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Maintains a polished, business-appropriate tone.',
     instructions:
       'Use a professional, polished tone suitable for business communication. Avoid slang, contractions, and overly casual language. Prioritize clarity and precision.',
+    category: 'Writing',
+    icon: 'business',
   },
   {
     id: 'skill-summarizer',
@@ -67,6 +101,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Extracts key points and creates concise summaries.',
     instructions:
       'Extract the most important points from the provided text. Structure summaries with a one-sentence TL;DR followed by 3-5 bullet points. Omit minor details and examples unless asked.',
+    category: 'Productivity',
+    icon: 'summarize',
   },
   {
     id: 'skill-decision-framework',
@@ -74,6 +110,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Weighs pros, cons, trade-offs, and recommends a path forward.',
     instructions:
       'Structure your analysis with: Context, Options, Pros/Cons per option, and a Recommendation. Highlight key trade-offs and risks. End with a clear, actionable recommendation.',
+    category: 'Analysis',
+    icon: 'account_tree',
   },
   {
     id: 'skill-brainstorming',
@@ -81,6 +119,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Generates creative ideas and explores possibilities.',
     instructions:
       'Generate diverse ideas without judging feasibility too early. Aim for quantity first, then help the user refine. Use lateral thinking: combine, reverse, exaggerate, or adapt existing concepts. Organize ideas into themes or categories.',
+    category: 'Analysis',
+    icon: 'lightbulb',
   },
   {
     id: 'skill-code-review',
@@ -89,6 +129,8 @@ const DEFAULT_SKILLS: Skill[] = [
       'Thorough programmer code review — bugs, style, security, performance, and architecture.',
     instructions:
       'Conduct a rigorous code review. Check for: logical errors, edge cases, null/undefined handling, race conditions, memory leaks, security vulnerabilities (XSS, injection, auth bypass), performance bottlenecks, and adherence to project conventions. For each issue found, cite the file and line reference, explain the problem, and suggest a concrete fix. Rate severity: Critical / Major / Minor / Nit. End with an overall assessment.',
+    category: 'Coding',
+    icon: 'rate_review',
   },
   {
     id: 'skill-code-change',
@@ -96,6 +138,8 @@ const DEFAULT_SKILLS: Skill[] = [
     description: 'Modifies source code — refactors, adds features, fixes bugs, writes patches.',
     instructions:
       'You are a code modification specialist. When asked to change source code, output the complete modified file content in a markdown code block with the file path comment. Always show a brief diff summary before the code: list what was added, removed, or changed. Preserve all existing code not related to the change. Match the existing indentation, naming, and style conventions. Never truncate files — output them fully.',
+    category: 'Coding',
+    icon: 'build',
   },
   {
     id: 'skill-dev-agent',
@@ -104,6 +148,8 @@ const DEFAULT_SKILLS: Skill[] = [
       'Core skill for the DevAgent — enables repository-aware analysis and code assistance.',
     instructions:
       'You are operating as a DevAgent embedded in a developer workspace. You have access to the project repository context. Use it to ground your answers. When suggesting code changes, show the full file with modifications. When reviewing, cite specific files. Be concise, actionable, and follow project conventions.',
+    category: 'Coding',
+    icon: 'smart_toy',
   },
 ];
 
@@ -191,7 +237,7 @@ export class AgentService {
     this.storage.get<Agent[]>(AGENTS_STORAGE_KEY) ?? DEFAULT_AGENTS,
   );
   readonly skills = signal<Skill[]>(
-    this.storage.get<Skill[]>(SKILLS_STORAGE_KEY) ?? DEFAULT_SKILLS,
+    (this.storage.get<Skill[]>(SKILLS_STORAGE_KEY) ?? DEFAULT_SKILLS).map(normalizeSkill),
   );
 
   constructor() {
@@ -244,5 +290,78 @@ export class AgentService {
     const agentSkills = this.skills().filter((s) => agent.skillIds.includes(s.id));
     const skillInstructions = agentSkills.map((s) => s.instructions).join('\n');
     return `${agent.systemPrompt}\n\nAdditional Instructions:\n${skillInstructions}`;
+  }
+
+  // ── Skill export / import ──
+
+  exportSkillsLibrary(): string {
+    const payload: SkillLibraryPayload = {
+      version: 1,
+      date: Date.now(),
+      skills: this.skills(),
+    };
+    return JSON.stringify(payload, null, 2);
+  }
+
+  exportSkill(skill: Skill): string {
+    return JSON.stringify(skill, null, 2);
+  }
+
+  importSkills(text: string): SkillImportResult {
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('Invalid skills file (not valid JSON)');
+    }
+
+    let incoming: Skill[];
+    if (Array.isArray(data)) {
+      incoming = data as Skill[];
+    } else if (
+      data &&
+      typeof data === 'object' &&
+      Array.isArray((data as SkillLibraryPayload).skills)
+    ) {
+      incoming = (data as SkillLibraryPayload).skills;
+    } else if (data && typeof data === 'object' && (data as Skill).name) {
+      incoming = [data as Skill];
+    } else {
+      throw new Error('Invalid skills file format');
+    }
+
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    this.skills.update((list) => {
+      const next = [...list];
+      for (const raw of incoming) {
+        if (!raw?.name || !raw?.instructions) {
+          skipped++;
+          continue;
+        }
+        const skill = normalizeSkill(raw as Skill);
+        const byId = next.findIndex((x) => x.id === raw.id);
+        if (byId >= 0) {
+          next[byId] = { ...next[byId], ...skill, id: next[byId].id };
+          updated++;
+          continue;
+        }
+        const byName = next.findIndex(
+          (x) => x.name.trim().toLowerCase() === skill.name.trim().toLowerCase(),
+        );
+        if (byName >= 0) {
+          next[byName] = { ...next[byName], ...skill, id: next[byName].id };
+          updated++;
+          continue;
+        }
+        next.push({ ...skill, id: raw.id || crypto.randomUUID() });
+        added++;
+      }
+      return next;
+    });
+
+    return { added, updated, skipped };
   }
 }

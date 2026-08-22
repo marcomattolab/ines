@@ -446,7 +446,7 @@
                 <input
                   type="file"
                   (change)="importSkillsFile($event)"
-                  accept=".json,.ines-skill,.ines-skills"
+                  accept=".json,.md,.ines-skill,.ines-skills"
                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
                 <app-button variant="secondary" size="sm">
@@ -539,7 +539,7 @@
               <p
                 class="text-[11px] text-[var(--text-2)] line-clamp-3 whitespace-pre-wrap font-[var(--font-mono)]"
               >
-                {{ skill.instructions }}
+                {{ skill.body }}
               </p>
 
               <div class="mt-auto pt-2 border-t border-[var(--border)]">
@@ -608,16 +608,23 @@
           <label class="text-[10px] uppercase text-[var(--text-2)]">Description</label>
           <input
             [(ngModel)]="skill.description"
+            placeholder="What it does and when to use it"
             class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none"
           />
+          <p class="text-[10px] text-[var(--text-2)]">
+            Routing hint — describe both what the skill does and when the agent should apply it.
+          </p>
         </div>
         <div class="space-y-1">
-          <label class="text-[10px] uppercase text-[var(--text-2)]">Instructions</label>
+          <label class="text-[10px] uppercase text-[var(--text-2)]">Body (Markdown)</label>
           <textarea
-            [(ngModel)]="skill.instructions"
-            rows="4"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"
+            [(ngModel)]="skill.body"
+            rows="8"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none resize-none font-[var(--font-mono)] text-xs"
           ></textarea>
+          <p class="text-[10px] text-[var(--text-2)]">
+            Use sections like ## When to use, ## Guidelines, ## Workflow, ## Examples.
+          </p>
         </div>
       </div>
       <div class="flex justify-end gap-2">

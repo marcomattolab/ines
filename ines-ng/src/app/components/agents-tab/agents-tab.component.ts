@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { AgentService, Agent, Skill } from '../../core/services/agent.service';
+import { AgentService, Agent, Skill, slugifySkill } from '../../core/services/agent.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
@@ -105,7 +105,7 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
       return (
         s.name.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q) ||
-        s.instructions.toLowerCase().includes(q)
+        s.body.toLowerCase().includes(q)
       );
     });
   });
@@ -408,8 +408,12 @@ ${systemPrompt}`;
     this.editingSkill.set({
       id: '',
       name: 'New Skill',
-      description: 'Skill description',
-      instructions: 'How the agent should behave with this skill.',
+      description: 'Describe what this skill does and when to use it.',
+      body: `## When to use
+Describe when the agent should apply this skill.
+
+## Guidelines
+- Add concrete instructions here.`,
       category: 'General',
       icon: 'auto_awesome',
     });
@@ -459,11 +463,8 @@ ${systemPrompt}`;
   }
 
   exportSkill(skill: Skill) {
-    this.dom.downloadText(
-      this.agentSvc.exportSkill(skill),
-      `${skill.name.toLowerCase().replace(/\s+/g, '-')}.ines-skill.json`,
-    );
-    this.toast.success('Skill exported');
+    this.dom.downloadText(this.agentSvc.exportSkill(skill), `${slugifySkill(skill.name)}.skill.md`);
+    this.toast.success('Skill exported as SKILL.md');
   }
 
   async importSkillsFile(event: Event) {

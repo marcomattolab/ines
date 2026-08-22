@@ -131,6 +131,14 @@ export class AppComponent implements OnInit {
     } catch {
       /* best effort */
     }
+    try {
+      const savedTab = sessionStorage.getItem('ines_active_tab');
+      if (savedTab && this.tabs.some((t) => t.id === savedTab)) {
+        this.activeTab.set(savedTab as Tab);
+      }
+    } catch {
+      /* best effort */
+    }
     // 1. Try to load from IndexedDB cache first
     this.llm
       .initModelFromCache()

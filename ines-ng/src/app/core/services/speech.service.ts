@@ -30,7 +30,6 @@ export class SpeechService {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    console.log('langOrName: ', langOrName);
     if (langOrName) {
       const locale = this.getLanguageCode(langOrName);
       utterance.lang = locale;

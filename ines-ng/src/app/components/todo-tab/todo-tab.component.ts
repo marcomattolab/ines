@@ -19,6 +19,7 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
+import { trackDragResize } from '../../shared/resize.util';
 
 type FilterTab = 'all' | 'active' | 'completed';
 
@@ -155,50 +156,28 @@ export class TodoTabComponent implements OnDestroy {
   }
 
   private nextId = 0;
-  private isResizing = false;
-  private isHResizing = false;
+  private disposeResize: (() => void) | null = null;
+  private disposeHResize: (() => void) | null = null;
 
   startResize(e: MouseEvent) {
-    this.isResizing = true;
-    e.preventDefault();
-    document.addEventListener('mousemove', this.doResize);
-    document.addEventListener('mouseup', this.stopResize);
+    this.disposeResize?.();
+    this.disposeResize = trackDragResize(e, (ev) => {
+      const newWidth = window.innerWidth - ev.clientX;
+      if (newWidth >= 280 && newWidth <= window.innerWidth - 300) {
+        this.rightPanelWidth.set(newWidth);
+      }
+    });
   }
-
-  private doResize = (e: MouseEvent) => {
-    if (!this.isResizing) return;
-    const newWidth = window.innerWidth - e.clientX;
-    if (newWidth >= 280 && newWidth <= window.innerWidth - 300) {
-      this.rightPanelWidth.set(newWidth);
-    }
-  };
-
-  private stopResize = () => {
-    this.isResizing = false;
-    document.removeEventListener('mousemove', this.doResize);
-    document.removeEventListener('mouseup', this.stopResize);
-  };
 
   startHResize(e: MouseEvent) {
-    this.isHResizing = true;
-    e.preventDefault();
-    document.addEventListener('mousemove', this.doHResize);
-    document.addEventListener('mouseup', this.stopHResize);
+    this.disposeHResize?.();
+    this.disposeHResize = trackDragResize(e, (ev) => {
+      const newHeight = window.innerHeight - ev.clientY - 28;
+      if (newHeight >= 100 && newHeight <= window.innerHeight - 200) {
+        this.inputAreaHeight.set(newHeight);
+      }
+    });
   }
-
-  private doHResize = (e: MouseEvent) => {
-    if (!this.isHResizing) return;
-    const newHeight = window.innerHeight - e.clientY - 28;
-    if (newHeight >= 100 && newHeight <= window.innerHeight - 200) {
-      this.inputAreaHeight.set(newHeight);
-    }
-  };
-
-  private stopHResize = () => {
-    this.isHResizing = false;
-    document.removeEventListener('mousemove', this.doHResize);
-    document.removeEventListener('mouseup', this.stopHResize);
-  };
 
   drop(event: CdkDragDrop<string[]>) {
     this.todoSvc.reorder(event.previousIndex, event.currentIndex);
@@ -374,8 +353,8 @@ export class TodoTabComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.stopResize();
-    this.stopHResize();
+    this.disposeResize?.();
+    this.disposeHResize?.();
     this.speech.abortRecording();
   }
 }

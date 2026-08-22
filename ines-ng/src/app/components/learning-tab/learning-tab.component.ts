@@ -269,7 +269,6 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
         this.toast.success(`"${files[i].name}" added`);
       } catch (err: any) {
         const msg = err?.message || String(err);
-        console.error(`Learning Center: failed to process "${files[i].name}"`, err);
         if (msg.includes('Duplicate')) {
           this.toast.show(msg);
         } else {

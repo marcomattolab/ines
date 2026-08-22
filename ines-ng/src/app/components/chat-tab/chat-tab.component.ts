@@ -17,6 +17,7 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { ChatInputDirective } from '../../shared/chat-input.directive';
 
 interface UiMessage {
   id: number;
@@ -48,6 +49,7 @@ interface StoredChat {
     MatIconModule,
     ButtonComponent,
     ConfirmDialogComponent,
+    ChatInputDirective,
   ],
   templateUrl: './chat-tab.component.html',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
@@ -144,19 +146,6 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
   }
 
-  onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      this.send();
-    }
-  }
-
-  autoResize(e: Event) {
-    const el = e.target as HTMLTextAreaElement;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-  }
-
   async send() {
     if (this.generating()) return;
     const text = this.inputEl().nativeElement.value.trim();
@@ -244,12 +233,18 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const msgs = this.messages();
     const lastUser = [...msgs].reverse().find((m) => m.role === 'user');
     if (!lastUser) return;
-    this.messages.update((m) =>
-      m.filter(
-        (msg) => msg.role !== 'ai' || m.indexOf(msg) < m.findIndex((x) => x.id === lastUser.id),
-      ),
-    );
-    this.history = this.history.filter((h) => h.role === 'user');
+    this.messages.update((m) => {
+      const idx = m.findIndex((x) => x.id === lastUser.id);
+      return idx >= 0 ? m.slice(0, idx) : m;
+    });
+    let cutIdx = -1;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      if (this.history[i].role === 'user') {
+        cutIdx = i;
+        break;
+      }
+    }
+    this.history = cutIdx >= 0 ? this.history.slice(0, cutIdx) : [];
     const el = this.inputEl()?.nativeElement;
     if (el) {
       el.value = lastUser.text;

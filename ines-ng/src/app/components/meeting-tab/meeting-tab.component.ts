@@ -42,6 +42,8 @@ export class MeetingTabComponent implements OnDestroy {
   readonly recording = this.speech.recording;
   readonly timerText = this.speech.recordingTimer;
 
+  private summarizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
   toggleSpeakTranscript() {
     this.speech.toggle('meet-trans', this.transcript());
   }
@@ -55,6 +57,10 @@ export class MeetingTabComponent implements OnDestroy {
   }
 
   startRecording() {
+    if (this.summarizeTimeout) {
+      clearTimeout(this.summarizeTimeout);
+      this.summarizeTimeout = null;
+    }
     const ok = this.speech.startRecording(this.transcript(), (text) => this.transcript.set(text));
     if (!ok) {
       this.toast.show('Web Speech API not supported in this browser');
@@ -64,7 +70,10 @@ export class MeetingTabComponent implements OnDestroy {
   stopRecording() {
     this.speech.stopRecording();
     if (this.transcript().trim() && this.llm.isReady()) {
-      setTimeout(() => this.summarize(), 500);
+      this.summarizeTimeout = setTimeout(() => {
+        this.summarizeTimeout = null;
+        this.summarize();
+      }, 500);
     }
   }
 
@@ -129,6 +138,10 @@ export class MeetingTabComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.summarizeTimeout) {
+      clearTimeout(this.summarizeTimeout);
+      this.summarizeTimeout = null;
+    }
     this.speech.abortRecording();
   }
 }

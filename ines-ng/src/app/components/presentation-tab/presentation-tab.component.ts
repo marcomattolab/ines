@@ -15,6 +15,7 @@ import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { trackDragResize } from '../../shared/resize.util';
 
 type ColorTheme = 'professional' | 'ocean' | 'forest' | 'sunset' | 'monochrome';
 
@@ -65,7 +66,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
 
   readonly safeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.generatedHtml()));
 
-  private isResizing = false;
+  private disposeResize: (() => void) | null = null;
 
   readonly themeColors = COLOR_THEMES;
   readonly themes: ColorTheme[] = ['professional', 'ocean', 'forest', 'sunset', 'monochrome'];
@@ -174,6 +175,12 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith('image/') || file.type.includes('svg')) {
+      this.toast.error('Please choose a PNG, JPG, WebP or GIF image');
+      input.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -694,32 +701,20 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   }
 
   startResize(e: MouseEvent) {
-    this.isResizing = true;
-    e.preventDefault();
-    document.addEventListener('mousemove', this.doResize);
-    document.addEventListener('mouseup', this.stopResize);
+    this.disposeResize?.();
+    this.disposeResize = trackDragResize(e, (ev) => {
+      const el = this.previewFrame()?.nativeElement.parentElement;
+      if (!el) return;
+      const parent = el.parentElement;
+      if (!parent) return;
+      const w = parent.clientWidth - ev.clientX;
+      if (w >= 350 && w <= parent.clientWidth - 280) {
+        el.style.width = w + 'px';
+      }
+    });
   }
 
-  private doResize = (e: MouseEvent) => {
-    if (!this.isResizing) return;
-    const el = this.previewFrame()?.nativeElement.parentElement;
-    if (!el) return;
-    const parent = el.parentElement;
-    if (!parent) return;
-    const w = parent.clientWidth - e.clientX;
-    if (w >= 350 && w <= parent.clientWidth - 280) {
-      el.style.width = w + 'px';
-    }
-  };
-
-  private readonly stopResize = () => {
-    this.isResizing = false;
-    document.removeEventListener('mousemove', this.doResize);
-    document.removeEventListener('mouseup', this.stopResize);
-  };
-
   private removeResizeListeners() {
-    document.removeEventListener('mousemove', this.doResize);
-    document.removeEventListener('mouseup', this.stopResize);
+    this.disposeResize?.();
   }
 }

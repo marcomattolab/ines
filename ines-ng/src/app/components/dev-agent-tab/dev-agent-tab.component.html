@@ -682,8 +682,8 @@
                       : 'Ask ' + agent.name + ' about the codebase...'
               "
               rows="1"
-              (keydown)="onKey($event)"
-              (input)="autoResize($event)"
+              appChatInput
+              (send)="send()"
             ></textarea>
             <app-button
               variant="primary"

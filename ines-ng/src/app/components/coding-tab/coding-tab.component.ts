@@ -17,6 +17,7 @@ import { KnowledgeManagerService } from '../../core/services/knowledge-manager.s
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { SyntaxHighlightService } from '../../core/services/syntax-highlight.service';
 import { StorageService } from '../../core/services/storage.service';
+import { trackDragResize } from '../../shared/resize.util';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -146,36 +147,27 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     }
   }
 
+  private disposeResize: (() => void) | null = null;
+  private disposeHResize: (() => void) | null = null;
+
   startResize(e: MouseEvent) {
-    e.preventDefault();
-    const doResize = (ev: MouseEvent) => {
+    this.disposeResize?.();
+    this.disposeResize = trackDragResize(e, (ev) => {
       const newWidth = window.innerWidth - ev.clientX;
       if (newWidth >= 300 && newWidth <= window.innerWidth - 380) {
         this.rightPanelWidth.set(newWidth);
       }
-    };
-    const stopResize = () => {
-      document.removeEventListener('mousemove', doResize);
-      document.removeEventListener('mouseup', stopResize);
-    };
-    document.addEventListener('mousemove', doResize);
-    document.addEventListener('mouseup', stopResize);
+    });
   }
 
   startHResize(e: MouseEvent) {
-    e.preventDefault();
-    const doResize = (ev: MouseEvent) => {
+    this.disposeHResize?.();
+    this.disposeHResize = trackDragResize(e, (ev) => {
       const newHeight = window.innerHeight - ev.clientY - 32;
       if (newHeight >= 60 && newHeight <= window.innerHeight - 150) {
         this.inputAreaHeight.set(newHeight);
       }
-    };
-    const stopResize = () => {
-      document.removeEventListener('mousemove', doResize);
-      document.removeEventListener('mouseup', stopResize);
-    };
-    document.addEventListener('mousemove', doResize);
-    document.addEventListener('mouseup', stopResize);
+    });
   }
 
   onKey(e: KeyboardEvent) {
@@ -183,12 +175,6 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
       e.preventDefault();
       this.send();
     }
-  }
-
-  autoResize(e: Event) {
-    const el = e.target as HTMLTextAreaElement;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
   }
 
   async send() {
@@ -375,12 +361,18 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     const lastUser = [...msgs].reverse().find((m) => m.role === 'user');
     if (!lastUser) return;
 
-    this.messages.update((m) =>
-      m.filter(
-        (msg) => msg.role !== 'ai' || m.indexOf(msg) < m.findIndex((x) => x.id === lastUser.id),
-      ),
-    );
-    this.history = this.history.filter((h) => h.role !== 'assistant');
+    this.messages.update((m) => {
+      const idx = m.findIndex((x) => x.id === lastUser.id);
+      return idx >= 0 ? m.slice(0, idx) : m;
+    });
+    let cutIdx = -1;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      if (this.history[i].role === 'user') {
+        cutIdx = i;
+        break;
+      }
+    }
+    this.history = cutIdx >= 0 ? this.history.slice(0, cutIdx) : [];
 
     const el = this.inputEl()?.nativeElement;
     if (el) {
@@ -435,6 +427,8 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   }
 
   ngOnDestroy() {
+    this.disposeResize?.();
+    this.disposeHResize?.();
     this.persistFiles();
   }
 }

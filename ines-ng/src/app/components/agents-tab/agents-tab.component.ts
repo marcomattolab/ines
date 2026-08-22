@@ -20,6 +20,7 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
+import { ChatInputDirective } from '../../shared/chat-input.directive';
 
 interface UiMessage {
   id: number;
@@ -49,6 +50,7 @@ interface KnowledgeQA {
     TypingIndicatorComponent,
     ConfirmDialogComponent,
     FormsModule,
+    ChatInputDirective,
   ],
   templateUrl: './agents-tab.component.html',
   styleUrl: './agents-tab.component.css',
@@ -84,6 +86,8 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   previewDocName = signal('');
   previewChunks = signal<{ text: string; position: number }[]>([]);
   showClearConfirm = signal(false);
+  deleteAgentId = signal<string | null>(null);
+  deleteSkillId = signal<string | null>(null);
 
   async ngOnInit() {
     await this.km.loadDocuments();
@@ -140,19 +144,6 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   }
 
   // ── Chat ──
-
-  onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      this.send();
-    }
-  }
-
-  autoResize(e: Event) {
-    const el = e.target as HTMLTextAreaElement;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-  }
 
   async send() {
     const agent = this.selectedAgent();
@@ -378,10 +369,16 @@ ${systemPrompt}`;
   }
 
   deleteAgent(id: string) {
-    if (confirm('Are you sure you want to delete this agent?')) {
+    this.deleteAgentId.set(id);
+  }
+
+  confirmDeleteAgent() {
+    const id = this.deleteAgentId();
+    if (id) {
       this.agentSvc.deleteAgent(id);
       this.selectedAgent.set(this.agentSvc.agents()[0] || null);
     }
+    this.deleteAgentId.set(null);
   }
 
   // ── Skill Editor logic ──
@@ -414,12 +411,16 @@ ${systemPrompt}`;
   }
 
   deleteSkill(id: string) {
-    if (
-      confirm('Are you sure you want to delete this skill? It will be removed from all agents.')
-    ) {
+    this.deleteSkillId.set(id);
+  }
+
+  confirmDeleteSkill() {
+    const id = this.deleteSkillId();
+    if (id) {
       this.agentSvc.deleteSkill(id);
       this.toast.show('Skill deleted');
     }
+    this.deleteSkillId.set(null);
   }
 
   html(text: string) {

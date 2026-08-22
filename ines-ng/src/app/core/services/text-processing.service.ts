@@ -544,7 +544,6 @@ export class TextProcessingService {
       throw new Error('Could not extract any text from PPTX slides');
     }
 
-    console.log(`PPTX: extracted ${slides.length} slides (${slideFiles.length} XML files processed)`);
     return slides.join('\n\n---\n\n');
   }
 

@@ -222,6 +222,8 @@ export class LlmService {
     this.isBusy.set(true);
     this.lastRequestTime = now;
 
+    let emittedTokens = false;
+
     const doGenerate = (): Promise<string> =>
       new Promise((resolve, reject) => {
         let full = '';
@@ -237,6 +239,7 @@ export class LlmService {
         signal?.addEventListener('abort', onAbort, { once: true });
         try {
           this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
+            if (partial) emittedTokens = true;
             full += partial;
             onToken(partial, done, full);
             if (done) {
@@ -252,10 +255,14 @@ export class LlmService {
         }
       });
 
-    return this.withRetry(doGenerate, signal);
+    return this.withRetry(doGenerate, signal, () => emittedTokens);
   }
 
-  private async withRetry(fn: () => Promise<string>, signal?: AbortSignal): Promise<string> {
+  private async withRetry(
+    fn: () => Promise<string>,
+    signal?: AbortSignal,
+    shouldAbortRetry?: () => boolean,
+  ): Promise<string> {
     const maxRetries = 2;
     let lastError: unknown;
 
@@ -266,6 +273,7 @@ export class LlmService {
       } catch (err) {
         lastError = err;
         if (err instanceof DOMException && err.name === 'AbortError') throw err;
+        if (shouldAbortRetry?.()) throw err;
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 800;
           await new Promise((r) => setTimeout(r, delay));

@@ -22,6 +22,8 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { trackDragResize } from '../../shared/resize.util';
+import { ChatInputDirective } from '../../shared/chat-input.directive';
 
 declare global {
   interface Window {
@@ -145,6 +147,7 @@ RULES
     MessageBubbleComponent,
     TypingIndicatorComponent,
     ButtonComponent,
+    ChatInputDirective,
   ],
   templateUrl: './dev-agent-tab.component.html',
   styleUrl: './dev-agent-tab.component.css',
@@ -222,8 +225,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   isResizing = signal(false);
   private resizeStartX = 0;
   private resizeStartW = 0;
-  private boundMouseMove: ((e: MouseEvent) => void) | null = null;
-  private boundMouseUp: (() => void) | null = null;
+  private disposeResize: (() => void) | null = null;
 
   private history: ChatMessage[] = [];
   private nextId = 1;
@@ -383,25 +385,22 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   }
 
   startResize(e: MouseEvent) {
-    e.preventDefault();
+    this.disposeResize?.();
     this.resizeStartX = e.clientX;
     this.resizeStartW = this.sidebarWidth();
     this.isResizing.set(true);
-    this.boundMouseMove = (ev: MouseEvent) => {
-      const delta = ev.clientX - this.resizeStartX;
-      const w = Math.max(200, Math.min(600, this.resizeStartW + delta));
-      this.sidebarWidth.set(w);
-    };
-    this.boundMouseUp = () => {
-      this.isResizing.set(false);
-      document.removeEventListener('mousemove', this.boundMouseMove!);
-      document.removeEventListener('mouseup', this.boundMouseUp!);
-      this.boundMouseMove = null;
-      this.boundMouseUp = null;
-      this.storage.set('ines_dev_sidebar_w', this.sidebarWidth());
-    };
-    document.addEventListener('mousemove', this.boundMouseMove);
-    document.addEventListener('mouseup', this.boundMouseUp);
+    this.disposeResize = trackDragResize(
+      e,
+      (ev) => {
+        const delta = ev.clientX - this.resizeStartX;
+        const w = Math.max(200, Math.min(600, this.resizeStartW + delta));
+        this.sidebarWidth.set(w);
+      },
+      () => {
+        this.isResizing.set(false);
+        this.storage.set('ines_dev_sidebar_w', this.sidebarWidth());
+      },
+    );
   }
 
   private persistState() {
@@ -962,19 +961,6 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      this.send();
-    }
-  }
-
-  autoResize(e: Event) {
-    const el = e.target as HTMLTextAreaElement;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-  }
-
   private buildProjectContext(): string {
     const summary = this.projectSummary();
     const pkg = this.packageJson();
@@ -1355,8 +1341,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.persistState();
-    if (this.boundMouseMove) document.removeEventListener('mousemove', this.boundMouseMove);
-    if (this.boundMouseUp) document.removeEventListener('mouseup', this.boundMouseUp);
+    this.disposeResize?.();
   }
 
   html(text: string) {

@@ -124,8 +124,8 @@
             #inputEl
             [placeholder]="'Message ' + agent.name + '...'"
             rows="1"
-            (keydown)="onKey($event)"
-            (input)="autoResize($event)"
+            appChatInput
+            (send)="send()"
           ></textarea>
           <app-button
             variant="primary"
@@ -479,5 +479,27 @@
     [danger]="true"
     (confirm)="clearAll(); showClearConfirm.set(false)"
     (cancel)="showClearConfirm.set(false)"
+  />
+}
+
+@if (deleteAgentId()) {
+  <app-confirm-dialog
+    title="Delete agent"
+    message="Are you sure you want to delete this agent?"
+    confirmLabel="Delete"
+    [danger]="true"
+    (confirm)="confirmDeleteAgent()"
+    (cancel)="deleteAgentId.set(null)"
+  />
+}
+
+@if (deleteSkillId()) {
+  <app-confirm-dialog
+    title="Delete skill"
+    message="Are you sure you want to delete this skill? It will be removed from all agents."
+    confirmLabel="Delete"
+    [danger]="true"
+    (confirm)="confirmDeleteSkill()"
+    (cancel)="deleteSkillId.set(null)"
   />
 }

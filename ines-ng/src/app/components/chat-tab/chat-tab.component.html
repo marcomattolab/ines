@@ -73,8 +73,8 @@
       #inputEl
       placeholder="Write a message..."
       rows="1"
-      (keydown)="onKey($event)"
-      (input)="autoResize($event)"
+      appChatInput
+      (send)="send()"
     ></textarea>
     <app-button
       variant="primary"

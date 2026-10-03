@@ -417,42 +417,6 @@ No analytics. No telemetry. No accounts. No backend server.
 
 ---
 
-## Roadmap
-
-### Phase 1 — Foundation (Completed)
-
-- [x] First POC in a single-file HTML with vanilla JS
-- [x] Move POC into Angular 22 PWA with standalone components and Signals
-- [x] UI improvements — icons, logo, footer, favicons
-
-### Phase 2 — Core Product Features (Completed)
-
-- [x] RAG pipeline with IndexedDB persistence
-- [x] Learning Center with 9 learning tools
-- [x] Knowledge Manager with import/export
-- [x] DevAgent with file system and terminal
-- [x] Agents with custom system prompts and skills
-- [x] Vision tab with on-device image analysis
-- [x] Presentation/Slides tab with PPTX export
-- [x] Project tab with file management
-- [x] DOCX and PPTX support in knowledge pipeline
-
-### Phase 3 — AI Intelligence Layer
-
-- [ ] Export meeting summary as `.txt` / `.md`
-- [ ] Vector-based RAG embeddings for better retrieval
-- [ ] Multi-model support — load different models for different tasks
-- [ ] Fine-tuned Gemma 3 1B for specialized tasks
-
-### Phase 4 — Platform & Reliability
-
-- [ ] Unit and E2E test coverage for all features
-- [ ] CI/CD pipeline for deployment to GitHub Pages
-- [ ] Landing page to introduce the project
-- [ ] Offline model hosting for air-gapped environments
-
----
-
 ## License
 
 © 2026 All rights reserved.

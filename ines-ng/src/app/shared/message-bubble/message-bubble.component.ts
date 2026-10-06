@@ -6,6 +6,39 @@ import { SpeechService } from '../../core/services/speech.service';
 import { ButtonComponent } from '../components/button/button.component';
 import { MatIconModule } from '@angular/material/icon';
 
+/**
+ * Renders a message as sanitized HTML.
+ *
+ * Extracted from the component so the security-critical pipeline (user text
+ * escaping, markdown parsing, HTML sanitization) can be unit tested directly.
+ * `sanitizeHtml` must strip unsafe HTML — the component passes Angular's
+ * `DomSanitizer.sanitize(SecurityContext.HTML, …)`.
+ */
+export function renderMessageHtml(
+  raw: string,
+  role: 'user' | 'ai',
+  sanitizeHtml: (html: string) => string,
+): string {
+  if (!raw) return '';
+
+  let html: string;
+  if (role === 'user') {
+    // User text is plain text: escape it, then render newlines.
+    html = String(raw)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/\n/g, '<br>');
+  } else {
+    // AI text is markdown: parse it, then sanitize the resulting HTML
+    // before it is bound with [innerHTML]. marked does NOT sanitize.
+    html = marked.parse(raw, { breaks: true }) as string;
+  }
+
+  return sanitizeHtml(html);
+}
+
 @Component({
   selector: 'app-message-bubble',
   standalone: true,
@@ -29,25 +62,11 @@ export class MessageBubbleComponent {
   );
 
   safeHtml(): SafeHtml {
-    const raw = this.text();
-    if (!raw) return '';
-
-    let html: string;
-    if (this.role() === 'user') {
-      // User text is plain text: escape it, then render newlines.
-      html = String(raw)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/\n/g, '<br>');
-    } else {
-      // AI text is markdown: parse it, then sanitize the resulting HTML
-      // before it is bound with [innerHTML]. marked does NOT sanitize.
-      html = marked.parse(raw, { breaks: true }) as string;
-    }
-
-    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+    return renderMessageHtml(
+      this.text(),
+      this.role(),
+      (html) => this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '',
+    );
   }
 
   copy() {

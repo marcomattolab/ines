@@ -12,6 +12,9 @@ export interface ChatMessage {
   content: string;
 }
 
+const MEDIAPIPE_GENAI_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai';
+const MEDIAPIPE_GENAI_WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm';
+
 @Injectable({ providedIn: 'root' })
 export class LlmService {
   readonly modelStatus = signal<ModelStatus>('idle');
@@ -23,72 +26,58 @@ export class LlmService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private llm: any = null;
 
+  /**
+   * Loads the MediaPipe GenAI runtime once and returns the pieces needed to
+   * construct an LlmInference instance. Shared by all model-loading paths.
+   */
+  private async bootstrapWasm(): Promise<{ LlmInference: any; genai: any }> {
+    // Dynamic CDN import at runtime — Function() bypasses TS static analysis
+    const mediapipe = await new Function('url', 'return import(url)')(MEDIAPIPE_GENAI_URL);
+    const { FilesetResolver, LlmInference } = mediapipe;
+    const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_GENAI_WASM_URL);
+    return { LlmInference, genai };
+  }
+
+  private createLlm(LlmInference: any, genai: any, modelBuffer: ArrayBuffer): Promise<any> {
+    return LlmInference.createFromOptions(genai, {
+      baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
+      maxTokens: this.modelMaxTokens(),
+      topK: this.topK(),
+      temperature: this.temperature(),
+      randomSeed: this.randomSeed(),
+    });
+  }
+
+  private markModelReady(fileName: string): void {
+    try {
+      sessionStorage.setItem('model_loaded_previously', 'true');
+    } catch (e) {
+      console.warn('Failed to cache model in sessionStorage:', e);
+    }
+    this.setProgress(100, 'Model ready!');
+    this.modelStatus.set('ready');
+    this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
+  }
+
   async initModel(file: File): Promise<void> {
     this.modelStatus.set('loading');
     this.setProgress(10, 'Initializing WASM runtime...');
 
     try {
-      const mediapipe = await new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
-      );
-      const { FilesetResolver, LlmInference } = mediapipe;
-
-      const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
-      );
+      const { LlmInference, genai } = await this.bootstrapWasm();
       this.setProgress(40, 'WASM ready. Loading model into GPU...');
 
-      const maxBufferSize = 2048 * 1024 * 1024;
-      let loadedViaBuffer = false;
-
-      if (file.size <= maxBufferSize) {
-        try {
-          const modelBuffer = await file.arrayBuffer();
-          this.setProgress(60, 'Loading model into GPU (30–90 s)...');
-          this.llm = await LlmInference.createFromOptions(genai, {
-            baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
-            maxTokens: this.modelMaxTokens(),
-            topK: this.topK(),
-            temperature: this.temperature(),
-            randomSeed: this.randomSeed(),
-          });
-          loadedViaBuffer = true;
-
-          try {
-            await this.saveModelToCache(file.name, modelBuffer);
-          } catch (cacheErr) {
-            console.warn('Failed to cache model in IndexedDB:', cacheErr);
-          }
-        } catch {
-          console.warn('arrayBuffer failed, falling back to blob URL');
-        }
-      }
-
-      if (!loadedViaBuffer) {
-        this.setProgress(60, 'Streaming model into GPU...');
-        const blobUrl = URL.createObjectURL(file);
-        try {
-          this.llm = await LlmInference.createFromModelPath(genai, blobUrl);
-        } finally {
-          URL.revokeObjectURL(blobUrl);
-        }
-        try {
-          const buffer = await file.arrayBuffer();
-          await this.saveModelToCache(file.name, buffer);
-        } catch {
-          /* cache is best-effort */
-        }
-      }
+      const modelBuffer = await file.arrayBuffer();
+      this.setProgress(60, 'Loading model into GPU (30–90 s)...');
+      this.llm = await this.createLlm(LlmInference, genai, modelBuffer);
 
       try {
-        sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {
-        console.warn('Failed to cache model in sessionStorage:', e);
+        await this.saveModelToCache(file.name, modelBuffer);
+      } catch (cacheErr) {
+        console.warn('Failed to cache model in IndexedDB:', cacheErr);
       }
 
-      this.setProgress(100, 'Model ready!');
-      this.modelStatus.set('ready');
-      this.modelName.set(file.name.replace(/\.(task|litertlm|bin)$/, ''));
+      this.markModelReady(file.name);
     } catch (err: any) {
       console.error('Model load error:', err);
       this.modelStatus.set('error');
@@ -102,15 +91,7 @@ export class LlmService {
     this.setProgress(5, 'Connecting to model stream...');
 
     try {
-      // Dynamic CDN import at runtime — Function() bypasses TS static analysis
-      const mediapipe = await new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
-      );
-      const { FilesetResolver, LlmInference } = mediapipe;
-
-      const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
-      );
+      const { LlmInference, genai } = await this.bootstrapWasm();
       this.setProgress(10, 'WASM ready. Fetching model file...');
 
       const response = await fetch(url);
@@ -155,13 +136,7 @@ export class LlmService {
         pos += chunk.length;
       }
 
-      this.llm = await LlmInference.createFromOptions(genai, {
-        baseOptions: { modelAssetBuffer: modelBuffer },
-        maxTokens: 8192,
-        topK: 40,
-        temperature: 0.8,
-        randomSeed: 101,
-      });
+      this.llm = await this.createLlm(LlmInference, genai, modelBuffer.buffer);
 
       this.setProgress(80, 'Caching model in browser storage...');
       try {
@@ -173,18 +148,7 @@ export class LlmService {
         );
       }
 
-      try {
-        sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {
-        console.warn(
-          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
-          e,
-        );
-      }
-
-      this.setProgress(100, 'Model ready!');
-      this.modelStatus.set('ready');
-      this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
+      this.markModelReady(fileName);
     } catch (err: any) {
       this.modelStatus.set('error');
       this.modelName.set('Error: ' + (err?.message ?? err));
@@ -379,36 +343,11 @@ export class LlmService {
     this.setProgress(10, 'Found cached model. Initializing WASM...');
 
     try {
-      const mediapipe = await new Function('url', 'return import(url)')(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai',
-      );
-      const { FilesetResolver, LlmInference } = mediapipe;
-
-      const genai = await FilesetResolver.forGenAiTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm',
-      );
+      const { LlmInference, genai } = await this.bootstrapWasm();
       this.setProgress(40, 'WASM ready. Loading cached model into GPU...');
 
-      this.llm = await LlmInference.createFromOptions(genai, {
-        baseOptions: { modelAssetBuffer: new Uint8Array(cached.buffer) },
-        maxTokens: 8192,
-        topK: 40,
-        temperature: 0.8,
-        randomSeed: 101,
-      });
-
-      try {
-        sessionStorage.setItem('model_loaded_previously', 'true');
-      } catch (e) {
-        console.warn(
-          'Failed to cache model in sessionStorage (likely quota limit in incognito):',
-          e,
-        );
-      }
-
-      this.setProgress(100, 'Model ready!');
-      this.modelStatus.set('ready');
-      this.modelName.set(cached.name.replace(/\.(task|litertlm|bin)$/, ''));
+      this.llm = await this.createLlm(LlmInference, genai, cached.buffer);
+      this.markModelReady(cached.name);
       return true;
     } catch (err: any) {
       this.modelStatus.set('error');

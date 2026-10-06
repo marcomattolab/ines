@@ -399,6 +399,7 @@ Firefox does not support WebGPU by default. Safari has partial WebGPU support; c
 | Knowledge base            | **Stored in IndexedDB** (your device only)                            |
 | The LLM model file        | **Stays in browser memory** — never uploaded                          |
 | CDN requests              | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load) |
+| Vision models             | `storage.googleapis.com` MediaPipe `.task` models (Vision tab only)   |
 | Google Fonts              | `fonts.googleapis.com` for UI fonts                                   |
 
 No analytics. No telemetry. No accounts. No backend server.

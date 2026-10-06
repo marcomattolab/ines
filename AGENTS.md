@@ -25,14 +25,14 @@ No ESLint, no typecheck script — only Prettier for code style.
 - **No tests exist** for components (schematics set `skipTests: true`). You must write test files manually as `*.spec.ts`.
 - Unit tests: Vitest + jsdom, `vitest/globals` enabled (no imports needed for `describe`/`it`/`expect`).
 - E2E: Cypress, `baseUrl: http://localhost:4200`, no support file.
-- Only one test file exists: `src/app/core/services/toast.service.spec.ts` — use it as a pattern.
+- Unit test files live next to services as `*.spec.ts` (e.g. `src/app/core/services/toast.service.spec.ts`, `storage.service.spec.ts`, `text-processing.service.spec.ts`). Use them as a pattern. There are no component tests (schematics set `skipTests: true`).
 
 ## Architecture
 
 - **Entry**: `src/main.ts` → `bootstrapApplication(AppComponent, appConfig)`
 - **LLM**: `LlmService` wraps a single shared `LlmInference` instance (MediaPipe CDN import at runtime via `new Function`). Model passed as `ArrayBuffer` via `modelAssetBuffer`, never as blob URL.
 - **Prompt format**: Gemma instruct format (`<start_of_turn>user\n[SYSTEM]: ...\n[USER]: ...<end_of_turn>\n<start_of_turn>model\n`), built by `LlmService.buildPrompt()`.
-- **RAG**: `RagService` supports PDF/pdfjs-dist, HTML, TXT. Uses keyword scoring, not vector embeddings.
+- **RAG**: `KnowledgeManagerService`/`ProjectService` (both extend `BaseIndexedDbService`) with `TextProcessingService` for PDF (pdfjs-dist), DOCX (Mammoth), PPTX (JSZip), HTML, TXT, and MD. Uses keyword scoring, not vector embeddings.
 - **Todo persistence**: `localStorage` via `effect()` in `TodoService`.
 - **Service worker**: production only (`isDevMode()` guard), registered in `appConfig`.
 - **Model caching**: IndexedDB (`InesModelCacheDB` DB, `models` store, `cached_model` key) + `sessionStorage` flag.

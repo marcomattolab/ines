@@ -1,4 +1,4 @@
-import { Component, inject, input, computed, output } from '@angular/core';
+import { Component, inject, input, computed, output, SecurityContext } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { ToastService } from '../../core/services/toast.service';
@@ -31,18 +31,23 @@ export class MessageBubbleComponent {
   safeHtml(): SafeHtml {
     const raw = this.text();
     if (!raw) return '';
+
+    let html: string;
     if (this.role() === 'user') {
-      return this.sanitizer.bypassSecurityTrustHtml(
-        String(raw)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/\n/g, '<br>'),
-      );
+      // User text is plain text: escape it, then render newlines.
+      html = String(raw)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '<br>');
+    } else {
+      // AI text is markdown: parse it, then sanitize the resulting HTML
+      // before it is bound with [innerHTML]. marked does NOT sanitize.
+      html = marked.parse(raw, { breaks: true }) as string;
     }
-    const html = marked.parse(raw, { breaks: true }) as string;
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
   }
 
   copy() {

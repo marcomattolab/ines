@@ -337,6 +337,40 @@ You are operating on the user's local repository.
     category: 'Coding',
     icon: 'smart_toy',
   },
+  {
+    id: 'skill-angular-developer',
+    name: 'Angular Developer',
+    description:
+      'Writes idiomatic Angular 22+ code — standalone components, Signals, new control flow, and inject(). Use when the user asks for Angular components, services, directives, pipes, or app architecture.',
+    body: `## When to use
+The user asks you to write, review, or modify Angular 22+ code.
+
+## Guidelines
+- Use standalone components only — no NgModules. Declare dependencies in the component's imports array.
+- Prefer Signals: signal(), computed(), effect(), linkedSignal(), resource(). Avoid manual subscriptions where a signal or toSignal() fits.
+- Use signal inputs/outputs: input(), input.required(), output(), model() — not @Input()/@Output() decorators.
+- Use the new control flow: @if, @for (always with track), @switch, @defer. Never use *ngIf / *ngFor.
+- Inject dependencies with inject(); avoid constructor-only injection for readability.
+- Keep components lean: move logic into services, keep templates declarative.
+- Use host: { class: '...' } for host bindings instead of :host CSS selectors.
+- Per-component CSS files (styleUrl) for complex styles; global tokens via CSS custom properties.
+- Zoneless-friendly: prefer provideZonelessChangeDetection(); don't introduce zone.js-specific patterns.
+- Follow the Angular Style Guide (app-* prefix, *Component/*Service suffixes).
+
+## Workflow
+1. Identify the component/service/directive needed.
+2. Explain the approach in 1-2 sentences.
+3. Emit complete standalone files with correct imports.
+4. Note the change-detection and DI strategy used.
+5. Suggest a Vitest unit test.
+
+## Examples
+- "Create a standalone search-bar component with a signal input and output."
+- "Refactor this component from *ngIf to @if and @for with track."
+- "Migrate this service to inject() and add a computed() derived state."`,
+    category: 'Coding',
+    icon: 'code',
+  },
 ];
 
 const DEFAULT_AGENTS: Agent[] = [
@@ -364,6 +398,20 @@ const DEFAULT_AGENTS: Agent[] = [
     systemPrompt:
       'You are an expert at modifying source code. You produce complete, working file revisions that follow project conventions. You show the full modified file, never just diffs.',
     skillIds: ['skill-code-change', 'skill-dev-agent', 'skill-code-expert'],
+  },
+  {
+    id: 'agent-angular-dev',
+    name: 'Angular Developer',
+    description:
+      'Specialized Angular 22+ engineer — standalone components, Signals, and modern control flow.',
+    systemPrompt:
+      'You are an expert Angular 22+ developer. You build modern, zoneless-friendly Angular applications using standalone components, Signals, signal inputs/outputs, and the new control flow. You write clean, testable, idiomatic code and follow the Angular Style Guide.',
+    skillIds: [
+      'skill-angular-developer',
+      'skill-code-expert',
+      'skill-code-change',
+      'skill-dev-agent',
+    ],
   },
   {
     id: 'agent-life-coach',

@@ -4,25 +4,27 @@
 
 | Service | Responsibility |
 | --- | --- |
-| `llm.service.ts` | Single shared MediaPipe `LlmInference`; model init from File, URL, or IndexedDB cache; streaming `generate()` with retry; prompt building + sanitization; token estimation. |
-| `rag.service.ts` | Retrieval over PDF/HTML/TXT with keyword scoring (no embeddings). |
-| `agent.service.ts` | Agent orchestration. |
-| `vision.service.ts` | Vision/image analysis. |
-| `speech.service.ts` | Speech recognition. |
+| `llm.service.ts` | Single shared MediaPipe `LlmInference`; model init from File, URL, or IndexedDB cache (`InesModelCacheDB`); streaming `generate()` with retry; prompt building + sanitization; token estimation. Generation params are signals (`modelMaxTokens`, `topK`, `temperature`, `randomSeed`). |
+| `agent.service.ts` | Agent + skills orchestration, skill export/import (Anthropic-style SKILL.md interop). |
+| `vision.service.ts` | Webcam face/gesture/hand/pose detection. Caches MediaPipe `.task` models in IndexedDB (`InesVisionCacheDB`). |
+| `speech.service.ts` | TTS + speech recognition. |
 | `todo.service.ts` | Todo state persisted to `localStorage` via `effect()`. |
-| `knowledge-manager.service.ts` | Knowledge base management. |
-| `project.service.ts` | Project state. |
-| `storage.service.ts` | General storage abstraction. |
-| `base-indexed-db.service.ts` | IndexedDB base helper (DB `InesModelCacheDB`). |
-| `doc-fetch.service.ts` | Document fetching. |
-| `markdown.service.ts` | Markdown rendering. |
-| `syntax-highlight.service.ts` | Code syntax highlighting. |
-| `text-processing.service.ts` | Text utilities. |
-| `json-parser.service.ts` | JSON parsing helpers. |
-| `dom-utils.service.ts` | DOM utilities. |
-| `privacy.service.ts` | Privacy controls. |
+| `knowledge-manager.service.ts` | Knowledge base: documents, chunks, Q&As, import/export (`.ines-knowledge`). Extends `BaseIndexedDbService`. |
+| `project.service.ts` | File-based project management. Extends `BaseIndexedDbService`. |
+| `storage.service.ts` | `localStorage` abstraction, gated by `PrivacyService`. |
+| `base-indexed-db.service.ts` | Abstract IndexedDB base for documents/chunks + keyword RAG scoring (`getRelevantChunks` / `getRagContext`). |
+| `doc-fetch.service.ts` | Fetches remote docs (Angular guides) into the knowledge base. |
+| `syntax-highlight.service.ts` | Code syntax highlighting (escapes HTML first). |
+| `text-processing.service.ts` | PDF/DOCX/PPTX/HTML/TXT/MD extraction, chunking, keyword extraction, hashing. |
+| `json-parser.service.ts` | Lenient JSON parsing helpers. |
+| `dom-utils.service.ts` | `escapeHtml`, clipboard, download helpers. |
+| `privacy.service.ts` | Privacy mode flag. |
 | `toast.service.ts` | Toast notifications. |
-| `presentation-prompt.ts` | Prompt templates for the presentation/slides tab. |
+| `presentation-prompt.ts` | Prompt template for the slides tab. |
+
+> Note: `rag.service.ts` and `markdown.service.ts` were removed. RAG lives in
+> `BaseIndexedDbService`; markdown rendering lives in the `message-bubble`
+> component (`renderMessageHtml` + `DomSanitizer`).
 
 ## Components (`src/app/components/`)
 
@@ -48,7 +50,8 @@
 ## Shared (`src/app/shared/`)
 
 - `components/button`, `components/confirm-dialog`, `components/dropdown`
-- `message-bubble`, `typing-indicator`
+- `message-bubble` (AI/user message rendering + sanitization + copy/speak)
+- `typing-indicator`
 - `chat-input.directive.ts`, `resize.util.ts`
 
 ## LLM model loading flow
@@ -61,6 +64,25 @@
    `initModelFromUrl()`.
 3. Otherwise idle, waiting for the user to load a model file.
 
-Model params are signals: `maxTokens` (8192), `topK` (40), `temperature` (0.8),
-`randomSeed` (101). `generate()` enforces single-flight via `isBusy` and a
-`requestCooldown` between requests, with exponential backoff retry.
+`initModel(file)` reads the whole file as an `ArrayBuffer` (no 2 GB cap — the old
+blob-URL fallback was removed because the WASM runtime cannot fetch `blob:` URLs).
+All load paths share `bootstrapWasm()`, `createLlm()`, and `markModelReady()`.
+`generate()` enforces single-flight via `isBusy` and a `requestCooldown` between
+requests, with exponential backoff retry.
+
+## Vision model loading flow
+
+`VisionService.initVision()` resolves each MediaPipe `.task` model through
+`getModelBuffer(url)`, which checks `InesVisionCacheDB` first and otherwise
+fetches + caches the model. Face/gesture/hand/pose models are loaded on demand
+(hand/pose only when enabled).
+
+## Test infrastructure
+
+- `src/test-setup.ts`: zoneless `TestBed` (`provideZonelessChangeDetection()`,
+  `provideHttpClient()`, `BrowserTestingModule` + `platformBrowserTesting()`).
+- Service specs use `Injector.create(...)` and are co-located with services.
+- Component spec: `shared/message-bubble/message-bubble.component.spec.ts` uses
+  `ɵresolveComponentResources` to load `templateUrl`/`styleUrl` from disk, then
+  tests the exported pure `renderMessageHtml()` against the real `DomSanitizer`
+  (XSS regression coverage).

@@ -12,7 +12,8 @@ Only code under `ines-ng/src/app/` needs editing.
 |---|---|
 | `npm start` | Dev server at `http://localhost:4200` |
 | `npm run build` | Production build → `dist/ines-ng/browser/` |
-| `npm run vitest` | Run Vitest unit tests |
+| `npm test` | Run Vitest unit tests once (CI-friendly) |
+| `npm run vitest` | Run Vitest in watch mode |
 | `npm run cypress:open` | Open Cypress E2E |
 | `npm run cypress:run` | Run Cypress E2E headless |
 | `npx prettier --check src/` | Format check |

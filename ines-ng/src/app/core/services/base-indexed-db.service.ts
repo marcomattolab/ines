@@ -192,48 +192,53 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
   }
 
   async getRelevantChunks(query: string, topK = 3, maxWords = 800): Promise<RagResult[]> {
-    const allWords = query.toLowerCase().split(/\s+/);
-    const queryWords = allWords.filter(
-      (w) => w.length >= 2 && !TextProcessingService.STOP_WORDS.has(w),
-    );
+    const queryLower = query.toLowerCase();
+    const queryWords = queryLower
+      .split(/\s+/)
+      .filter((w) => w.length >= 2 && !TextProcessingService.STOP_WORDS.has(w));
 
     if (queryWords.length === 0) return [];
+
+    const queryWordSet = new Set(queryWords);
+
+    // Compile regexes once per query instead of once per chunk/word.
+    const wordRegexes = queryWords.map((word) => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`\\b${escaped}\\b`, 'gi');
+    });
 
     const allChunks = await this.getAllFromStore<TChunk>(this.chunkStore);
     if (allChunks.length === 0) return [];
 
-    const queryLower = query.toLowerCase();
+    const scored: ChunkWithScore<TChunk>[] = [];
 
-    const scored: ChunkWithScore<TChunk>[] = allChunks.map((chunk) => {
+    for (const chunk of allChunks) {
       let score = 0;
       const lower = chunk.text.toLowerCase();
 
       if (lower.includes(queryLower)) score += 5;
 
-      for (const word of queryWords) {
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+      for (const regex of wordRegexes) {
         const matches = lower.match(regex);
         if (matches) score += matches.length;
       }
 
-      const docKeywords = chunk.keywords || [];
-      for (const kw of docKeywords) {
-        if (queryWords.includes(kw)) score += 2;
+      // Bonus for pre-computed keyword matches (O(1) set lookup).
+      for (const kw of chunk.keywords || []) {
+        if (queryWordSet.has(kw)) score += 2;
       }
 
       const allFound = queryWords.every((w) => lower.includes(w));
       if (allFound) score += 3;
 
-      return { chunk, score };
-    });
+      if (score > 0) scored.push({ chunk, score });
+    }
 
     const sorted = scored.sort((a, b) => b.score - a.score);
     const result: RagResult[] = [];
     let wordCount = 0;
 
     for (const item of sorted) {
-      if (item.score === 0 && result.length > 0) break;
       if (result.length >= topK) break;
       const chunkWords = item.chunk.text.split(/\s+/).length;
       if (result.length > 0 && wordCount + chunkWords > maxWords) break;

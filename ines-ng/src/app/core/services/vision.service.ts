@@ -1,5 +1,18 @@
 import { Injectable, signal } from '@angular/core';
 
+const VISION_DB_NAME = 'InesVisionCacheDB';
+const VISION_DB_VERSION = 1;
+const VISION_STORE = 'models';
+
+const FACE_LANDMARKER_URL =
+  'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const GESTURE_RECOGNIZER_URL =
+  'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
+const HAND_LANDMARKER_URL =
+  'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+const POSE_LANDMARKER_URL =
+  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+
 export type DetectedEmotion = 'Neutral' | 'Happy' | 'Surprised' | 'Sad' | 'Thinking';
 export type DetectedGesture =
   | 'None'
@@ -80,8 +93,7 @@ export class VisionService {
 
       this.faceLandmarker = await FaceLandmarker.createFromOptions(this.filesetResolver, {
         baseOptions: {
-          modelAssetPath:
-            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          modelAssetBuffer: await this.getModelBuffer(FACE_LANDMARKER_URL),
           delegate: 'GPU',
         },
         outputFaceBlendshapes: true,
@@ -91,8 +103,7 @@ export class VisionService {
 
       this.gestureRecognizer = await GestureRecognizer.createFromOptions(this.filesetResolver, {
         baseOptions: {
-          modelAssetPath:
-            'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',
+          modelAssetBuffer: await this.getModelBuffer(GESTURE_RECOGNIZER_URL),
           delegate: 'GPU',
         },
         runningMode: 'VIDEO',
@@ -113,8 +124,7 @@ export class VisionService {
         const { HandLandmarker } = vision;
         this.handLandmarker = await HandLandmarker.createFromOptions(this.filesetResolver, {
           baseOptions: {
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+            modelAssetBuffer: await this.getModelBuffer(HAND_LANDMARKER_URL),
             delegate: 'GPU',
           },
           runningMode: 'VIDEO',
@@ -141,8 +151,7 @@ export class VisionService {
         const { PoseLandmarker } = vision;
         this.poseLandmarker = await PoseLandmarker.createFromOptions(this.filesetResolver, {
           baseOptions: {
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            modelAssetBuffer: await this.getModelBuffer(POSE_LANDMARKER_URL),
             delegate: 'GPU',
           },
           runningMode: 'VIDEO',
@@ -194,6 +203,72 @@ export class VisionService {
     this.handLandmarks.set([]);
     this.poseLandmarks.set([]);
     this.handedness.set([]);
+  }
+
+  /**
+   * Returns a vision model as a Uint8Array, served from IndexedDB when available
+   * and transparently fetched + cached on first use. This keeps the Vision tab
+   * fully offline after the initial download.
+   */
+  private async getModelBuffer(url: string): Promise<Uint8Array> {
+    const cached = await this.getCachedVisionModel(url);
+    if (cached) return new Uint8Array(cached);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch vision model from ${url} (Status: ${response.status})`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    try {
+      await this.saveVisionModelToCache(url, buffer);
+    } catch (e) {
+      console.warn('Failed to cache vision model in IndexedDB:', e);
+    }
+    return new Uint8Array(buffer);
+  }
+
+  private openVisionDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(VISION_DB_NAME, VISION_DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(VISION_STORE)) {
+          db.createObjectStore(VISION_STORE);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private async getCachedVisionModel(url: string): Promise<ArrayBuffer | null> {
+    try {
+      const db = await this.openVisionDB();
+      const tx = db.transaction(VISION_STORE, 'readonly');
+      const request = tx.objectStore(VISION_STORE).get(url);
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result?.buffer ?? null);
+        request.onerror = () => reject(request.error);
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async saveVisionModelToCache(url: string, buffer: ArrayBuffer): Promise<void> {
+    try {
+      const db = await this.openVisionDB();
+      const tx = db.transaction(VISION_STORE, 'readwrite');
+      tx.objectStore(VISION_STORE).put({ buffer }, url);
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   private predict(): void {

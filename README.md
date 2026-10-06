@@ -380,7 +380,7 @@ Each tab has a dedicated system prompt optimized for its task. Context from the 
 | **RAM**      | 4 GB minimum; 8 GB recommended for 2B+ models                                          |
 | **GPU**      | Any modern integrated or discrete GPU with WebGPU support                              |
 | **HTTPS**    | Required only for the Meeting tab (Web Speech API)                                     |
-| **Internet** | Only for the initial CDN load of `@mediapipe/tasks-genai` — inference is fully offline |
+| **Internet** | Only on first load — `@mediapipe/tasks-genai` (CDN) and Vision `.task` models (cached in IndexedDB). Inference is then fully offline |
 
 Firefox does not support WebGPU by default. Safari has partial WebGPU support; compatibility with MediaPipe is not guaranteed.
 
@@ -399,7 +399,7 @@ Firefox does not support WebGPU by default. Safari has partial WebGPU support; c
 | Knowledge base            | **Stored in IndexedDB** (your device only)                            |
 | The LLM model file        | **Stays in browser memory** — never uploaded                          |
 | CDN requests              | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load) |
-| Vision models             | `storage.googleapis.com` MediaPipe `.task` models (Vision tab only)   |
+| Vision models             | `storage.googleapis.com` MediaPipe `.task` models (Vision tab, cached after first load) |
 | Google Fonts              | `fonts.googleapis.com` for UI fonts                                   |
 
 No analytics. No telemetry. No accounts. No backend server.

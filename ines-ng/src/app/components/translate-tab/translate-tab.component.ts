@@ -143,6 +143,27 @@ export class TranslateTabComponent implements OnDestroy {
     this.dom.copyToClipboard(this.result()).then(() => this.toast.success('Copied!'));
   }
 
+  download() {
+    const translated = this.result().trim();
+    if (!translated) {
+      this.toast.show('No translation to export');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const src = this.fromLang() === 'auto' ? 'Auto-detected' : this.fromLang();
+    const lines = [
+      `Source (${src}):`,
+      this.inputText().trim(),
+      '',
+      `Translation (${this.toLang()}):`,
+      translated,
+      '',
+      'Exported from INES',
+    ];
+    this.dom.downloadText(lines.join('\n'), `translation-${ts}.txt`);
+    this.toast.success('Exported as .txt');
+  }
+
   clear() {
     this.inputText.set('');
     this.result.set('');

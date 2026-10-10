@@ -139,6 +139,20 @@
       <span>{{ recording() ? 'Stop Recording' : 'Start Recording' }}</span>
     </button>
     <span class="font-[var(--font-mono)] text-xs text-[var(--text-2)]">{{ timerText() }}</span>
+    <label class="cursor-pointer" title="Import transcript from file">
+      <input
+        type="file"
+        accept=".txt,.md,.html,.pdf"
+        class="hidden"
+        (change)="onImportTranscript($event)"
+      />
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+      >
+        <mat-icon fontIcon="upload" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Import
+      </span>
+    </label>
     <div class="flex-1"></div>
     <app-button variant="primary" (onClick)="summarize()">
       <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>

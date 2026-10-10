@@ -69,4 +69,9 @@ describe('renderMessageHtml', () => {
     const html = renderMessageHtml('<script>alert(1)</script>', 'ai', sanitize);
     expect(html).not.toContain('<script');
   });
+
+  it('should keep the language-mermaid class so diagrams can be rendered', () => {
+    const html = renderMessageHtml('```mermaid\ngraph TD;\nA-->B;\n```', 'ai', sanitize);
+    expect(html).toContain('language-mermaid');
+  });
 });

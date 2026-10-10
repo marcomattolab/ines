@@ -82,6 +82,16 @@
         >
           <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
         </app-button>
+        <app-button
+          variant="ghost"
+          size="sm"
+          [disabled]="!result().trim()"
+          (onClick)="download()"
+          className="!w-8 !h-8 !p-0"
+          title="Download translation as .txt"
+        >
+          <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+        </app-button>
       </div>
       <div
         class="flex-1 overflow-y-auto p-4 text-[15px] leading-[1.7] text-[var(--text-0)] whitespace-pre-wrap font-[var(--font-body)] scrollbar-thin"

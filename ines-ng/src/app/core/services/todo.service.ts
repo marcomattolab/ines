@@ -129,7 +129,15 @@ export class TodoService {
     this.pushUndo({ type: 'reorder', from: fromIndex, to: toIndex });
   }
 
-  addMany(items: { text: string; priority: string; category?: string }[]): void {
+  addMany(
+    items: {
+      text: string;
+      priority: string;
+      category?: string;
+      dueDate?: string;
+      done?: boolean;
+    }[],
+  ): void {
     const ids: number[] = [];
     const mapped: Todo[] = items.map((i) => {
       const id = this.nextId++;
@@ -141,7 +149,8 @@ export class TodoService {
         category: (['work', 'personal', 'health', 'other'].includes(i.category || '')
           ? i.category
           : 'other') as Todo['category'],
-        done: false,
+        ...(i.dueDate ? { dueDate: i.dueDate } : {}),
+        done: !!i.done,
       };
     });
     this.todos.update((t) => [...t, ...mapped]);

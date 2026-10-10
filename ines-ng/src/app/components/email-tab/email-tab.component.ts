@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
 
@@ -25,6 +26,7 @@ export class EmailTabComponent implements OnDestroy {
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);
+  private readonly textProc = inject(TextProcessingService);
 
   tone = signal('professional');
   action = signal('improve');
@@ -134,6 +136,32 @@ export class EmailTabComponent implements OnDestroy {
 
   copy() {
     this.dom.copyToClipboard(this.result()).then(() => this.toast.success('Copied!'));
+  }
+
+  async onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await this.textProc.extractTextFromFile(file);
+      const el = this.emailInputRef()?.nativeElement;
+      if (el) el.value = text;
+      this.toast.show(`Loaded: ${file.name}`);
+    } catch {
+      this.toast.error('Could not read file. Supported: .txt, .md, .html, .pdf');
+    }
+    input.value = '';
+  }
+
+  download() {
+    const text = this.result().trim();
+    if (!text) {
+      this.toast.show('No result to export');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    this.dom.downloadText(text, `email-${ts}.txt`);
+    this.toast.success('Exported as .txt');
   }
 
   clear() {

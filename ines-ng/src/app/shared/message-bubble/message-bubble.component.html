@@ -7,7 +7,7 @@
     }
   </div>
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
-    <div class="msg-content" [innerHTML]="safeHtml()"></div>
+    <div class="msg-content" #content [innerHTML]="safeHtml()"></div>
     @if (role() === 'user' && text()) {
       <div class="msg-actions">
         <app-button

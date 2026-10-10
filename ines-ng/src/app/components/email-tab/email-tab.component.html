@@ -39,6 +39,19 @@
     }
     <app-dropdown [options]="toneOptions" [(value)]="tone" class="min-w-[120px]" />
     <app-dropdown [options]="actionOptions" [(value)]="action" class="min-w-[120px]" />
+    <label class="cursor-pointer">
+      <input
+        type="file"
+        accept=".txt,.md,.html,.pdf"
+        class="hidden"
+        (change)="onFileSelected($event)"
+      />
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+      >
+        <mat-icon fontIcon="upload" class="text-sm w-3.5 h-3.5"></mat-icon> Upload
+      </span>
+    </label>
     <app-button variant="primary" size="sm" [disabled]="processing()" (onClick)="process()">
       <mat-icon
         [fontIcon]="processing() ? 'hourglass_empty' : 'send'"
@@ -62,10 +75,16 @@
       >
         <span>✦ RESULT</span>
         @if (result()) {
-          <app-button variant="secondary" size="sm" (onClick)="copy()">
-            <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
-            Copy
-          </app-button>
+          <div class="flex items-center gap-1.5">
+            <app-button variant="secondary" size="sm" (onClick)="copy()">
+              <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+              Copy
+            </app-button>
+            <app-button variant="secondary" size="sm" (onClick)="download()">
+              <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+              Download
+            </app-button>
+          </div>
         }
       </div>
       <div

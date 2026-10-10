@@ -7,6 +7,20 @@
       </div>
       <div class="panel-desc">AI on-device · private · offline</div>
     </div>
+    <label class="cursor-pointer" title="Import chat from JSON">
+      <input
+        type="file"
+        accept=".json,application/json"
+        class="hidden"
+        (change)="importChat($event)"
+      />
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+      >
+        <mat-icon fontIcon="upload" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
+        Import
+      </span>
+    </label>
     <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
       <mat-icon fontIcon="delete" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
       Clear
@@ -18,6 +32,11 @@
       title="Export as Markdown"
     >
       <mat-icon fontIcon="download" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
+      MD
+    </app-button>
+    <app-button variant="secondary" size="sm" (onClick)="exportChat('json')" title="Export as JSON">
+      <mat-icon fontIcon="data_object" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
+      JSON
     </app-button>
   </div>
 
@@ -67,6 +86,69 @@
       {{ tokenInfo() }}
     }
   </div>
+
+  <div
+    class="flex gap-2 items-center px-[22px] py-2 border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0 overflow-x-auto scrollbar-thin"
+  >
+    @for (group of groupedTemplates(); track group.category) {
+      <span
+        class="template-cat text-[9px] font-mono uppercase tracking-widest text-[var(--text-2)] shrink-0"
+        >{{ group.category }}</span
+      >
+      @for (tmpl of group.templates; track tmpl.id) {
+        <button
+          class="suggestion-chip text-[10px] whitespace-nowrap shrink-0"
+          (click)="applyTemplate(tmpl)"
+          [attr.title]="tmpl.text"
+        >
+          <mat-icon [fontIcon]="tmpl.icon" class="text-sm w-3 h-3"></mat-icon>
+          {{ tmpl.label }}
+          @if (isCustomTemplate(tmpl.id)) {
+            <mat-icon
+              fontIcon="close"
+              class="text-[12px] w-3 h-3 opacity-60 hover:opacity-100"
+              (click)="removeCustomTemplate(tmpl.id); $event.stopPropagation()"
+            ></mat-icon>
+          }
+        </button>
+      }
+    }
+    <button
+      class="suggestion-chip text-[10px] whitespace-nowrap shrink-0"
+      (click)="showTemplateForm.set(!showTemplateForm())"
+      [attr.title]="showTemplateForm() ? 'Hide form' : 'Create custom template'"
+    >
+      <mat-icon
+        [fontIcon]="showTemplateForm() ? 'close' : 'add'"
+        class="text-sm w-3 h-3"
+      ></mat-icon>
+      Custom
+    </button>
+  </div>
+  @if (showTemplateForm()) {
+    <div
+      class="flex gap-2 items-center px-[22px] py-2 border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0"
+    >
+      <input
+        #templateName
+        placeholder="Name (e.g. Meeting agenda)"
+        class="bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-0)] outline-none placeholder:text-[var(--text-2)] w-44 shrink-0"
+      />
+      <input
+        #templatePrompt
+        placeholder="Prompt (e.g. Create a meeting agenda for...)"
+        class="bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-0)] outline-none placeholder:text-[var(--text-2)] flex-1 min-w-0"
+      />
+      <app-button
+        variant="primary"
+        size="sm"
+        (onClick)="saveCustomTemplate(templateName.value, templatePrompt.value)"
+      >
+        <mat-icon fontIcon="save" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Save
+      </app-button>
+    </div>
+  }
 
   <div class="input-zone">
     @if (editingMessageId()) {

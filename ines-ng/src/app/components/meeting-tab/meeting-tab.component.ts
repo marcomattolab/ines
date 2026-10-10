@@ -4,6 +4,7 @@ import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
@@ -29,6 +30,7 @@ export class MeetingTabComponent implements OnDestroy {
   readonly toast = inject(ToastService);
   readonly speech = inject(SpeechService);
   private readonly dom = inject(DomUtilsService);
+  private readonly textProc = inject(TextProcessingService);
 
   transcript = signal('');
   summary = signal('');
@@ -105,6 +107,20 @@ export class MeetingTabComponent implements OnDestroy {
   clear() {
     this.transcript.set('');
     this.summary.set('');
+  }
+
+  async onImportTranscript(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await this.textProc.extractTextFromFile(file);
+      this.transcript.set(text);
+      this.toast.show(`Imported: ${file.name}`);
+    } catch {
+      this.toast.error('Could not read file. Supported: .txt, .md, .html, .pdf');
+    }
+    input.value = '';
   }
 
   copy(text: string) {

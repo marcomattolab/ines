@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   signal,
+  computed,
   ElementRef,
   AfterViewChecked,
   viewChild,
@@ -33,6 +34,7 @@ Respond concisely but completely. Use the same language as the user.
 Don't mention that you're an open-source AI model unless asked.`;
 
 const CHAT_STORAGE_KEY = 'ines_chat_history';
+const CUSTOM_TEMPLATES_KEY = 'ines_chat_prompt_templates';
 const MAX_STORED_MESSAGES = 50;
 const MAX_HISTORY_LENGTH = 100;
 
@@ -40,6 +42,14 @@ interface StoredChat {
   messages: { id: number; role: 'user' | 'ai'; text: string }[];
   history: ChatMessage[];
   nextId: number;
+}
+
+interface PromptTemplate {
+  id: string;
+  label: string;
+  icon: string;
+  category: string;
+  text: string;
 }
 
 @Component({
@@ -77,6 +87,55 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   generating = signal(false);
   tokenInfo = signal('');
   editingMessageId = signal<number | null>(null);
+
+  readonly builtinTemplates: PromptTemplate[] = [
+    {
+      id: 'summarize',
+      label: 'Summarize',
+      icon: 'summarize',
+      category: 'Writing',
+      text: 'Summarize the key points of:',
+    },
+    {
+      id: 'brainstorm',
+      label: 'Brainstorm',
+      icon: 'lightbulb',
+      category: 'Analysis',
+      text: 'Brainstorm 5 creative ideas for:',
+    },
+    {
+      id: 'code-review',
+      label: 'Code review',
+      icon: 'code',
+      category: 'Development',
+      text: 'Review the following code and suggest concrete improvements:',
+    },
+    {
+      id: 'explain-simple',
+      label: 'Explain simply',
+      icon: 'school',
+      category: 'Learning',
+      text: 'Explain this in simple terms, as if I am a complete beginner:',
+    },
+  ];
+
+  readonly customTemplates = signal<PromptTemplate[]>(
+    this.storage.get<PromptTemplate[]>(CUSTOM_TEMPLATES_KEY) ?? [],
+  );
+  readonly showTemplateForm = signal(false);
+
+  readonly allTemplates = computed(() => [...this.builtinTemplates, ...this.customTemplates()]);
+
+  readonly groupedTemplates = computed(() => {
+    const groups: { category: string; templates: PromptTemplate[] }[] = [];
+    for (const t of this.allTemplates()) {
+      const last = groups[groups.length - 1];
+      if (last && last.category === t.category) last.templates.push(t);
+      else groups.push({ category: t.category, templates: [t] });
+    }
+    return groups;
+  });
+
   showClearConfirm = signal(false);
   private abortController: AbortController | null = null;
 
@@ -147,6 +206,44 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       el.value = '';
       el.style.height = '';
     }
+  }
+
+  applyTemplate(tmpl: PromptTemplate) {
+    const el = this.inputEl()?.nativeElement;
+    if (!el) return;
+    el.value = tmpl.text + '\n\n';
+    el.focus();
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  isCustomTemplate(id: string): boolean {
+    return id.startsWith('custom-');
+  }
+
+  saveCustomTemplate(name: string, prompt: string) {
+    const label = name.trim();
+    const text = prompt.trim();
+    if (!label || !text) {
+      this.toast.show('Both name and prompt are required');
+      return;
+    }
+    const tmpl: PromptTemplate = {
+      id: 'custom-' + Date.now().toString(36),
+      label,
+      icon: 'star',
+      category: 'Custom',
+      text,
+    };
+    this.customTemplates.update((list) => [...list, tmpl]);
+    this.storage.set(CUSTOM_TEMPLATES_KEY, this.customTemplates());
+    this.showTemplateForm.set(false);
+    this.toast.success('Template saved');
+  }
+
+  removeCustomTemplate(id: string) {
+    this.customTemplates.update((list) => list.filter((t) => t.id !== id));
+    this.storage.set(CUSTOM_TEMPLATES_KEY, this.customTemplates());
   }
 
   async send() {
@@ -291,6 +388,39 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       this.dom.downloadText(md, `chat-${ts}.md`);
     }
     this.toast.success(`Exported as .${format}`);
+  }
+
+  async importChat(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const raw = Array.isArray(data) ? data : data?.messages;
+      if (!Array.isArray(raw)) throw new Error('invalid');
+      const imported = raw
+        .filter(
+          (m: any) =>
+            m && typeof m.text === 'string' && ['user', 'ai', 'assistant'].includes(m.role),
+        )
+        .map((m: any) => ({
+          id: this.nextId++,
+          role: m.role === 'assistant' ? 'ai' : m.role,
+          text: m.text,
+        }));
+      if (imported.length === 0) throw new Error('empty');
+      this.messages.set(imported);
+      this.history = imported.map((m) => ({
+        role: m.role === 'ai' ? 'assistant' : 'user',
+        content: m.text,
+      }));
+      this.tokenInfo.set(`${this.history.length} messages in history`);
+      this.persist();
+      this.toast.success(`Imported ${imported.length} messages`);
+    } catch {
+      this.toast.error('Invalid chat JSON file');
+    }
+    input.value = '';
   }
 
   ngOnDestroy() {

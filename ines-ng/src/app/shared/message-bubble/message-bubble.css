@@ -141,6 +141,24 @@
   text-decoration: underline;
 }
 
+.mermaid-diagram {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow-x: auto;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-failed {
+  border-color: rgba(251, 113, 133, 0.4) !important;
+}
+
 .msg-action-btn.speaking {
   color: var(--accent-rose);
   border-color: var(--accent-rose);

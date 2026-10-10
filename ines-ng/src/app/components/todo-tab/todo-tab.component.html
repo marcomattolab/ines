@@ -16,6 +16,47 @@
           Undo
         </app-button>
       }
+      <label class="cursor-pointer" title="Import tasks from JSON or CSV">
+        <input
+          type="file"
+          accept=".json,.csv,application/json,text/csv"
+          class="hidden"
+          (change)="importTodos($event)"
+        />
+        <span
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+        >
+          <mat-icon fontIcon="upload" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Import
+        </span>
+      </label>
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="exportTodos('md')"
+        title="Export tasks as Markdown"
+      >
+        <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+        MD
+      </app-button>
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="exportTodos('json')"
+        title="Export tasks as JSON"
+      >
+        <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+        JSON
+      </app-button>
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="exportTodos('csv')"
+        title="Export tasks as CSV"
+      >
+        <mat-icon fontIcon="table_chart" class="text-sm w-3.5 h-3.5"></mat-icon>
+        CSV
+      </app-button>
       <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
         <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
         Clear done
@@ -28,9 +69,52 @@
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Progress Bar -->
       @if (todoSvc.total() > 0) {
-        <div class="px-4 pt-3 pb-1 shrink-0">
-          <div class="flex items-center justify-between mb-1.5">
-            <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 px-4 pt-3 pb-1 shrink-0">
+          <svg
+            width="38"
+            height="38"
+            viewBox="0 0 36 36"
+            class="shrink-0"
+            role="img"
+            [attr.aria-label]="progressPercent() + '% complete'"
+          >
+            <circle
+              cx="18"
+              cy="18"
+              r="15"
+              fill="none"
+              stroke="rgba(255,255,255,0.08)"
+              stroke-width="4"
+            ></circle>
+            <circle
+              cx="18"
+              cy="18"
+              r="15"
+              fill="none"
+              transform="rotate(-90 18 18)"
+              [style.stroke]="
+                progressPercent() === 100 ? 'var(--accent-green)' : 'var(--accent-purple)'
+              "
+              stroke-width="4"
+              stroke-linecap="round"
+              [attr.stroke-dasharray]="ringCircumference"
+              [attr.stroke-dashoffset]="ringCircumference * (1 - progressPercent() / 100)"
+              class="transition-all duration-500 ease-out"
+            ></circle>
+            <text
+              x="18"
+              y="18"
+              dominant-baseline="central"
+              text-anchor="middle"
+              [style.fill]="'var(--text-0)'"
+              font-size="8"
+              font-family="var(--font-mono)"
+            >
+              {{ progressPercent() }}%
+            </text>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1.5">
               <span class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-2)]"
                 >Progress</span
               >
@@ -38,14 +122,14 @@
                 >{{ todoSvc.doneCount() }}/{{ todoSvc.total() }} · {{ progressPercent() }}%</span
               >
             </div>
-          </div>
-          <div class="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500 ease-out"
-              [style.width.%]="progressPercent()"
-              [class.bg-green-400]="progressPercent() === 100"
-              [class.bg-purple-400]="progressPercent() > 0 && progressPercent() < 100"
-            ></div>
+            <div class="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500 ease-out"
+                [style.width.%]="progressPercent()"
+                [class.bg-green-400]="progressPercent() === 100"
+                [class.bg-purple-400]="progressPercent() > 0 && progressPercent() < 100"
+              ></div>
+            </div>
           </div>
         </div>
       }

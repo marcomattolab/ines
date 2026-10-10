@@ -14,6 +14,7 @@ import { TodoService, Todo } from '../../core/services/todo.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
+import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -67,6 +68,7 @@ export class TodoTabComponent implements OnDestroy {
   readonly toast = inject(ToastService);
   readonly speech = inject(SpeechService);
   private readonly jsonParser = inject(JsonParserService);
+  private readonly dom = inject(DomUtilsService);
   readonly recording = this.speech.recording;
   readonly timerText = this.speech.recordingTimer;
 
@@ -106,6 +108,7 @@ export class TodoTabComponent implements OnDestroy {
     if (t === 0) return 0;
     return Math.round((this.todoSvc.doneCount() / t) * 100);
   });
+  readonly ringCircumference = 2 * Math.PI * 15; // donut radius 15
 
   readonly filteredTodos = computed(() => {
     const f = this.filterTab();
@@ -350,6 +353,154 @@ export class TodoTabComponent implements OnDestroy {
     } else {
       this.toast.show('Undo!');
     }
+  }
+
+  exportTodos(format: 'md' | 'json' | 'csv') {
+    const todos = this.todoSvc.todos();
+    if (todos.length === 0) {
+      this.toast.show('No tasks to export');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    if (format === 'json') {
+      this.dom.downloadText(JSON.stringify(todos, null, 2), `tasks-${ts}.json`);
+    } else if (format === 'csv') {
+      this.dom.downloadText(this.buildCsv(todos), `tasks-${ts}.csv`, 'text/csv');
+    } else {
+      const done = todos.filter((t) => t.done).length;
+      const lines = [
+        `# Daily Planner — ${new Date().toLocaleDateString()}`,
+        '',
+        `Progress: ${done}/${todos.length} completed`,
+        '',
+        '## Active',
+        ...todos
+          .filter((t) => !t.done)
+          .map((t) => {
+            const cat = t.category ? `[${t.category}] ` : '';
+            const due = t.dueDate ? ` · due ${this.formatDate(t.dueDate)}` : '';
+            const pri = t.priority === 'priority' ? ' ⭐' : '';
+            return `- [ ] ${cat}${t.text}${due}${pri}`;
+          }),
+        '',
+        '## Completed',
+        ...todos.filter((t) => t.done).map((t) => `- [x] ${t.text}`),
+        '',
+        '_Exported from INES_',
+      ];
+      this.dom.downloadText(lines.join('\n'), `tasks-${ts}.md`);
+    }
+    this.toast.success(`Exported as .${format}`);
+  }
+
+  private csvCell(value: unknown): string {
+    const s = String(value ?? '');
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  private buildCsv(todos: Todo[]): string {
+    const header = ['text', 'priority', 'category', 'dueDate', 'done'];
+    const rows = todos.map((t) => [
+      t.text,
+      t.priority,
+      t.category ?? 'other',
+      t.dueDate ?? '',
+      t.done ? 'true' : 'false',
+    ]);
+    return [header, ...rows]
+      .map((row) => row.map((cell) => this.csvCell(cell)).join(','))
+      .join('\n');
+  }
+
+  private splitCsvLine(line: string): string[] {
+    const out: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          cur += ch;
+        }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        out.push(cur);
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  private parseCsv(
+    text: string,
+  ): { text: string; priority: string; category: string; dueDate?: string; done?: boolean }[] {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const header = this.splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+    const textIdx = header.indexOf('text');
+    if (textIdx === -1) return [];
+    return lines
+      .slice(1)
+      .map((line) => {
+        const row = this.splitCsvLine(line);
+        const get = (name: string) => {
+          const i = header.indexOf(name);
+          return i >= 0 ? (row[i] ?? '').trim() : '';
+        };
+        return {
+          text: (row[textIdx] ?? '').trim(),
+          priority: get('priority') === 'priority' ? 'priority' : 'normal',
+          category: get('category') || 'other',
+          dueDate: get('duedate') || undefined,
+          done: get('done').toLowerCase() === 'true',
+        };
+      })
+      .filter((r) => r.text);
+  }
+
+  async importTodos(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const raw = await file.text();
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      const mapped = isCsv
+        ? this.parseCsv(raw)
+        : (() => {
+            const data = JSON.parse(raw);
+            const items = Array.isArray(data) ? data : data?.tasks;
+            if (!Array.isArray(items)) throw new Error('empty');
+            return items
+              .filter((t: any) => t && typeof t.text === 'string' && t.text.trim())
+              .map((t: any) => ({
+                text: t.text.trim(),
+                priority: t.priority === 'priority' ? 'priority' : 'normal',
+                category: ['work', 'personal', 'health', 'other'].includes(t.category)
+                  ? t.category
+                  : 'other',
+                dueDate: t.dueDate || undefined,
+                done: !!t.done,
+              }));
+          })();
+      if (!mapped || mapped.length === 0) throw new Error('empty');
+      this.todoSvc.addMany(mapped);
+      this.toast.success(`Imported ${mapped.length} tasks`);
+    } catch {
+      this.toast.error('Invalid file. Use a JSON or CSV export from INES.');
+    }
+    input.value = '';
   }
 
   ngOnDestroy() {

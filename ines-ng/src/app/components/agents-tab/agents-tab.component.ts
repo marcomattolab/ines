@@ -64,7 +64,7 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   readonly km = inject(KnowledgeManagerService);
 
   selectedAgent = signal<Agent | null>(this.agentSvc.agents()[0] || null);
-  activeMode = signal<'chat' | 'edit' | 'kb' | 'skills'>('chat');
+  activeMode = signal<'chat' | 'edit' | 'kb' | 'skills' | 'saved'>('chat');
   editingSkill = signal<Skill | null>(null);
 
   // Chat state
@@ -80,6 +80,7 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
 
   // Knowledge base state
   totalChunks = signal(0);
+  savedQAs = signal<KnowledgeQA[]>([]);
   searchQuery = signal('');
   selectedDocId = signal<string | null>(null);
   showPreview = signal(false);
@@ -113,6 +114,7 @@ export class AgentsTabComponent implements AfterViewChecked, OnInit {
   async ngOnInit() {
     await this.km.loadDocuments();
     this.totalChunks.set(await this.km.countChunks());
+    this.savedQAs.set(await this.km.getQAs());
   }
 
   ngAfterViewChecked() {
@@ -239,6 +241,7 @@ ${systemPrompt}`;
         this.shouldScroll = true;
       });
       this.history.push({ role: 'assistant', content: full });
+      await this.offerSaveQA(text, full, sourceNames);
     } catch (e: any) {
       this.typing.set(false);
       this.messages.update((m) => [
@@ -319,9 +322,25 @@ ${systemPrompt}`;
     await this.km.clearAll();
     this.messages.set([]);
     this.totalChunks.set(0);
+    this.savedQAs.set([]);
     this.selectedDocId.set(null);
     this.showPreview.set(false);
     this.toast.show('Knowledge base cleared');
+  }
+
+  private async offerSaveQA(question: string, answer: string, sources: string[]) {
+    if (!answer.trim()) return;
+    await this.km.saveQA(
+      question,
+      answer,
+      sources.map((docName) => ({ docName, text: '' })),
+    );
+    this.savedQAs.set(await this.km.getQAs());
+  }
+
+  async deleteQA(id: string) {
+    await this.km.deleteQA(id);
+    this.savedQAs.set(await this.km.getQAs());
   }
 
   selectDoc(id: string) {

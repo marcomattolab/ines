@@ -13,7 +13,6 @@ import { CodingTabComponent } from './components/coding-tab/coding-tab.component
 import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { VisionTabComponent } from './components/vision-tab/vision-tab.component';
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
-import { KnowledgeManagerTabComponent } from './components/knowledge-manager-tab/knowledge-manager-tab.component';
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
@@ -30,7 +29,6 @@ type Tab =
   | 'vision'
   | 'learning'
   | 'presentation'
-  | 'knowledge'
   | 'project'
   | 'dev-agent';
 
@@ -68,7 +66,6 @@ const TABS: TabDef[] = [
     category: 'Content',
   },
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
-  { id: 'knowledge', icon: 'auto_stories', label: 'Knowledge', color: 'var(--tab-knowledge)' },
   { id: 'project', icon: 'folder', label: 'Project', color: 'var(--tab-project)' },
   {
     id: 'dev-agent',
@@ -94,7 +91,6 @@ const TABS: TabDef[] = [
     TodoTabComponent,
     CodingTabComponent,
     PresentationTabComponent,
-    KnowledgeManagerTabComponent,
     ProjectTabComponent,
     DevAgentTabComponent,
     LearningTabComponent,

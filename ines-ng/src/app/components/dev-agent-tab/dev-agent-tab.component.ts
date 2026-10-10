@@ -51,11 +51,20 @@ interface RepoFile {
   type: string;
 }
 
+interface TreeItem {
+  type: 'folder' | 'file';
+  name: string;
+  path: string;
+  depth: number;
+  file?: RepoFile;
+}
+
 interface CodePatch {
   fileName: string;
   language: string;
   code: string;
   applied: boolean;
+  originalCode?: string;
 }
 
 interface PackageJson {
@@ -321,6 +330,34 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     return root;
   });
 
+  readonly visibleTreeItems = computed<TreeItem[]>(() => {
+    const items: TreeItem[] = [];
+    const walk = (node: Record<string, any>, prefix: string, depth: number) => {
+      const keys = Object.keys(node)
+        .filter((k) => !k.startsWith('_'))
+        .sort((a, b) => {
+          const aFolder = !node[a]._file;
+          const bFolder = !node[b]._file;
+          if (aFolder !== bFolder) return aFolder ? -1 : 1;
+          return a.localeCompare(b);
+        });
+      for (const key of keys) {
+        const child = node[key];
+        const path = prefix ? prefix + '/' + key : key;
+        if (child._file) {
+          items.push({ type: 'file', name: key, path, depth, file: child._file as RepoFile });
+        } else {
+          items.push({ type: 'folder', name: key, path, depth });
+          if (this.expandedFolders().has(path)) {
+            walk(child, path, depth + 1);
+          }
+        }
+      }
+    };
+    walk(this.folderTree(), '', 0);
+    return items;
+  });
+
   private readonly fileExtensions = new Set([
     'ts',
     'js',
@@ -367,15 +404,14 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   ]);
 
   ngOnInit() {
+    // Note: repoFiles/repoName are intentionally NOT persisted. FileSystemFileHandle
+    // (and File) objects cannot survive a page reload, so restoring only their
+    // metadata would show a stale tree whose files cannot be opened.
     const parsed = this.storage.get<{
-      repoName: string;
-      repoFiles: unknown[];
       agentId: string;
       activeMode: Mode;
     }>('ines_dev_agent');
     if (parsed) {
-      if (parsed.repoName) this.repoName.set(parsed.repoName);
-      if (parsed.repoFiles) this.repoFiles.set(parsed.repoFiles as RepoFile[]);
       if (parsed.agentId) {
         const agent = this.agentSvc.agents().find((a) => a.id === parsed.agentId);
         if (agent) this.selectedAgent.set(agent);
@@ -405,8 +441,6 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
 
   private persistState() {
     this.storage.set('ines_dev_agent', {
-      repoName: this.repoName(),
-      repoFiles: this.repoFiles(),
       agentId: this.selectedAgent()?.id,
       activeMode: this.activeMode(),
     });
@@ -761,12 +795,15 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     }
 
     try {
+      // Capture the original content (once) so we can show a diff and revert.
+      const original = patch.originalCode ?? (await (await fileHandle.getFile()).text());
+
       const writable = await fileHandle.createWritable();
       await writable.write(patch.code);
       await writable.close();
 
       this.codePatches.update((patches) =>
-        patches.map((p, i) => (i === index ? { ...p, applied: true } : p)),
+        patches.map((p, i) => (i === index ? { ...p, applied: true, originalCode: original } : p)),
       );
 
       await this.reindexFile(patch.fileName, fileHandle);
@@ -800,12 +837,14 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       }
 
       try {
+        const original = patches[i].originalCode ?? (await (await fileHandle.getFile()).text());
+
         const writable = await fileHandle.createWritable();
         await writable.write(patches[i].code);
         await writable.close();
 
         this.codePatches.update((list) =>
-          list.map((p, idx) => (idx === i ? { ...p, applied: true } : p)),
+          list.map((p, idx) => (idx === i ? { ...p, applied: true, originalCode: original } : p)),
         );
 
         await this.reindexFile(patches[i].fileName, fileHandle);
@@ -834,16 +873,19 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     if (!fileHandle) return;
 
     try {
-      const originalFile = await fileHandle.getFile();
-      const text = await originalFile.text();
+      const original = patch.originalCode ?? '';
+      const writable = await fileHandle.createWritable();
+      await writable.write(original);
+      await writable.close();
 
       this.codePatches.update((patches) =>
-        patches.map((p, i) => (i === index ? { ...p, applied: false, code: text } : p)),
+        patches.map((p, i) => (i === index ? { ...p, applied: false } : p)),
       );
 
-      this.toast.show(`Reverted "${patch.fileName}" — original content shown above.`);
+      await this.reindexFile(patch.fileName, fileHandle);
+      this.toast.show(`Reverted "${patch.fileName}"`);
     } catch (err: any) {
-      this.toast.show(`Failed to read "${patch.fileName}": ${err.message}`);
+      this.toast.show(`Failed to revert "${patch.fileName}": ${err.message}`);
     }
   }
 
@@ -876,14 +918,6 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       else next.add(path);
       return next;
     });
-  }
-
-  isFolder(node: any): boolean {
-    return node && !node._file;
-  }
-
-  getFolderKeys(node: any): string[] {
-    return Object.keys(node).filter((k) => !k.startsWith('_'));
   }
 
   fileIcon(type: string): string {
@@ -1165,6 +1199,80 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
       () => this.toast.show('Code copied to clipboard'),
       () => this.toast.show('Failed to copy'),
     );
+  }
+
+  /** Minimal line-based diff (LCS) used to preview applied patches. */
+  diffLines(
+    original: string | undefined,
+    updated: string,
+  ): { type: 'same' | 'add' | 'del'; text: string }[] {
+    const a = (original ?? '').split('\n');
+    const b = updated.split('\n');
+    const m = a.length;
+    const n = b.length;
+    const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = m - 1; i >= 0; i--) {
+      for (let j = n - 1; j >= 0; j--) {
+        dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    const out: { type: 'same' | 'add' | 'del'; text: string }[] = [];
+    let i = 0;
+    let j = 0;
+    while (i < m && j < n) {
+      if (a[i] === b[j]) {
+        out.push({ type: 'same', text: a[i] });
+        i++;
+        j++;
+      } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+        out.push({ type: 'del', text: a[i] });
+        i++;
+      } else {
+        out.push({ type: 'add', text: b[j] });
+        j++;
+      }
+    }
+    while (i < m) out.push({ type: 'del', text: a[i++] });
+    while (j < n) out.push({ type: 'add', text: b[j++] });
+    return out;
+  }
+
+  exportChat(format: 'md' | 'json') {
+    const msgs = this.messages()
+      .filter((m) => !m.streaming)
+      .map((m) => ({ role: m.role, text: m.text }));
+    if (msgs.length === 0) {
+      this.toast.show('No messages to export');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    if (format === 'json') {
+      this.dom.downloadText(JSON.stringify(msgs, null, 2), `devagent-${ts}.json`);
+    } else {
+      const md = msgs
+        .map((m) => `### ${m.role === 'user' ? 'You' : 'DevAgent'}\n\n${m.text}\n`)
+        .join('\n');
+      this.dom.downloadText(md, `devagent-${ts}.md`);
+    }
+    this.toast.success(`Exported as .${format}`);
+  }
+
+  downloadPatches() {
+    const patches = this.codePatches();
+    if (patches.length === 0) {
+      this.toast.show('No patches to download');
+      return;
+    }
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const md = patches
+      .map((p, i) => {
+        const title = `## Patch ${i + 1}${p.fileName ? ` — ${p.fileName}` : ''}`;
+        const fence = '```' + (p.language || '') + '\n' + p.code + '\n```';
+        return `${title}\n\n${fence}\n`;
+      })
+      .join('\n');
+    this.dom.downloadText(md, `devagent-patches-${ts}.md`);
+    this.toast.success('Patches exported as .md');
   }
 
   async openFile(file: RepoFile) {

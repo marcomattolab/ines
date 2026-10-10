@@ -286,6 +286,48 @@
   font-size: inherit;
 }
 
+.patch-diff {
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  max-height: 400px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.patch-diff-line {
+  display: flex;
+  gap: 8px;
+  padding: 0 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.patch-diff-line.add {
+  background: rgba(74, 222, 128, 0.14);
+  color: #86efac;
+}
+
+.patch-diff-line.del {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+}
+
+.patch-diff-sign {
+  width: 12px;
+  flex-shrink: 0;
+  user-select: none;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.patch-diff-line code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
 @keyframes slideInRight {
   from {
     transform: translateX(100%);

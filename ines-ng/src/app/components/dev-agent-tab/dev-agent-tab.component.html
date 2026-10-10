@@ -10,326 +10,278 @@
   />
 
   <!-- Left Sidebar -->
-  <aside
-    class="border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md shrink-0 relative select-none"
-    [style.width.px]="sidebarWidth()"
-  >
-    <!-- Drag handle -->
-    <div
-      class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-10 hover:bg-[var(--accent-purple)]/30 transition-colors"
-      [class.bg-[var(--accent-purple)]/20]="isResizing()"
-      (mousedown)="startResize($event)"
-    ></div>
-    <!-- Agent selector -->
-    <div class="border-b border-[var(--border)] shrink-0">
-      <button
-        class="w-full p-3 flex items-center justify-between gap-2 hover:bg-white/[0.03] transition-colors"
-        (click)="showAgentsList.update((v) => !v)"
-      >
-        <div class="flex items-center gap-2 min-w-0">
-          <mat-icon
-            class="scale-75 text-[var(--accent-purple)] shrink-0"
-            fontIcon="smart_toy"
-          ></mat-icon>
-          @if (showAgentsList()) {
-            <span
-              class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-purple)]"
-              >Agent</span
-            >
-          } @else if (selectedAgent()) {
-            <span class="text-xs font-semibold text-[var(--text-1)] truncate">{{
-              selectedAgent()!.name
-            }}</span>
-          } @else {
-            <span class="text-xs text-[var(--text-2)]">No agent</span>
-          }
-        </div>
-        <mat-icon class="scale-50 text-[var(--text-2)] shrink-0">
-          {{ showAgentsList() ? 'expand_less' : 'expand_more' }}
-        </mat-icon>
-      </button>
-      @if (showAgentsList()) {
-        <div class="px-3 pb-3 space-y-1 max-h-48 overflow-y-auto">
-          @for (agent of agentSvc.agents(); track agent.id) {
-            <button
-              (click)="selectAgent(agent)"
-              class="w-full text-left p-2.5 rounded-lg transition-all flex flex-col gap-0.5 text-xs"
-              [class.bg-accent-purple\/15]="selectedAgent()?.id === agent.id"
-              [class.border]="selectedAgent()?.id === agent.id"
-              [class.border-accent-purple\/30]="selectedAgent()?.id === agent.id"
-              [class.hover:bg-white\/5]="selectedAgent()?.id !== agent.id"
-            >
-              <span class="font-semibold text-[var(--text-1)]">{{ agent.name }}</span>
-              <span class="text-[10px] text-[var(--text-2)] line-clamp-1">{{
-                agent.description
-              }}</span>
-            </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Repo section -->
-    <div class="flex-1 flex flex-col min-h-0">
-      <div class="p-4 border-b border-[var(--border)] flex justify-between items-center">
-        <h2
-          class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-green)] flex items-center gap-1.5"
+  @if (showFileTree()) {
+    <aside
+      class="border-r border-[var(--border)] flex flex-col bg-[var(--bg-1)] backdrop-blur-md shrink-0 relative select-none"
+      [style.width.px]="sidebarWidth()"
+    >
+      <!-- Drag handle -->
+      <div
+        class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-10 hover:bg-[var(--accent-purple)]/30 transition-colors"
+        [class.bg-[var(--accent-purple)]/20]="isResizing()"
+        (mousedown)="startResize($event)"
+      ></div>
+      <!-- Agent selector -->
+      <div class="border-b border-[var(--border)] shrink-0">
+        <button
+          class="w-full p-3 flex items-center justify-between gap-2 hover:bg-white/[0.03] transition-colors"
+          (click)="showAgentsList.update((v) => !v)"
         >
-          <mat-icon class="scale-75" fontIcon="folder_special"></mat-icon>
-          Repository
-        </h2>
-        @if (repoFiles().length > 0) {
-          <button (click)="clearRepo()" class="btn-tertiary !w-7 !h-7" title="Clear repo">
-            <mat-icon class="scale-50">delete</mat-icon>
-          </button>
-        }
-      </div>
-
-      @if (repoFiles().length === 0) {
-        <div class="flex-1 flex flex-col items-center justify-center p-4 gap-3 text-center">
-          <mat-icon class="text-4xl text-[var(--text-2)] opacity-40">folder_open</mat-icon>
-          <p class="text-[11px] text-[var(--text-2)] leading-relaxed">
-            Select a local project folder to let the agent analyze your codebase
-          </p>
-          <app-button
-            variant="primary"
-            size="sm"
-            (onClick)="openDirPicker()"
-            [disabled]="isLoadingDir()"
-          >
-            <mat-icon class="scale-75" fontIcon="folder_open"></mat-icon>
-            Open Folder
-          </app-button>
-        </div>
-      } @else {
-        <!-- Loading -->
-        @if (isLoadingDir()) {
-          <div class="flex items-center gap-2 p-4 text-xs text-[var(--text-2)]">
-            <div
-              class="animate-spin h-3 w-3 border-2 border-[var(--accent-green)] border-t-transparent rounded-full"
-            ></div>
-            <span>Indexing files...</span>
-          </div>
-        }
-
-        <!-- Repo info -->
-        <div
-          class="p-3 border-b border-[var(--border)] flex items-center gap-2 text-[10px] text-[var(--text-2)] font-[var(--font-mono)]"
-        >
-          <mat-icon class="scale-50 text-[var(--accent-green)]">folder</mat-icon>
-          <span class="truncate font-semibold text-[var(--text-1)]">{{ repoName() }}</span>
-          <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
-          <span>{{ repoFiles().length }} files</span>
-          @if (totalChunks() > 0) {
-            <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
-            <span>{{ totalChunks() }} chunks</span>
-          }
-        </div>
-
-        <!-- Project Overview -->
-        @if (projectSummary(); as summary) {
-          <div class="project-overview border-b border-[var(--border)]">
-            <button class="project-overview-header" (click)="showProjectOverview.update((v) => !v)">
-              <div class="flex items-center gap-1.5">
-                <mat-icon class="scale-50 text-[var(--accent-purple)]">info</mat-icon>
-                <span
-                  class="text-[10px] font-bold uppercase tracking-wider text-[var(--accent-purple)] font-[var(--font-ui)]"
-                  >Overview</span
-                >
-              </div>
-              <mat-icon class="scale-50 text-[var(--text-2)]">
-                {{ showProjectOverview() ? 'expand_less' : 'expand_more' }}
-              </mat-icon>
-            </button>
-            @if (showProjectOverview()) {
-              <div class="project-overview-body">
-                <div class="overview-row">
-                  <span class="overview-label">Framework</span>
-                  <span class="overview-value text-[var(--accent-cyan)]">{{
-                    summary.framework
-                  }}</span>
-                </div>
-                <div class="overview-row">
-                  <span class="overview-label">Language</span>
-                  <span class="overview-value">{{ summary.language }}</span>
-                </div>
-                <div class="overview-row">
-                  <span class="overview-label">Build</span>
-                  <span class="overview-value">{{ summary.buildTool }}</span>
-                </div>
-                @if (summary.testTool !== 'None') {
-                  <div class="overview-row">
-                    <span class="overview-label">Test</span>
-                    <span class="overview-value">{{ summary.testTool }}</span>
-                  </div>
-                }
-                @if (hasGit()) {
-                  <div class="overview-row">
-                    <span class="overview-label">Git</span>
-                    <span class="overview-value text-[var(--accent-green)]">&#10003; detected</span>
-                  </div>
-                }
-                <div class="overview-row">
-                  <span class="overview-label">Source files</span>
-                  <span class="overview-value"
-                    >{{ summary.sourceFiles }} / {{ summary.totalFiles }}</span
-                  >
-                </div>
-                <div class="overview-row">
-                  <span class="overview-label">Tests</span>
-                  <span class="overview-value"
-                    >{{ summary.hasTests ? '&#10003; yes' : '—' }}
-                    @if (summary.hasE2E) {
-                      + E2E
-                    }
-                  </span>
-                </div>
-                @if (summary.keyScripts.length > 0) {
-                  <div class="overview-scripts">
-                    <span class="overview-label block mb-1">Scripts</span>
-                    @for (s of summary.keyScripts; track s.name) {
-                      <div class="overview-script-row">
-                        <code class="overview-script-name">npm run {{ s.name }}</code>
-                        <span class="overview-script-cmd truncate">{{ s.command }}</span>
-                      </div>
-                    }
-                  </div>
-                }
-                @if (summary.configFiles.length > 0) {
-                  <div class="overview-configs">
-                    <span class="overview-label block mb-1">Configs</span>
-                    <div class="flex flex-wrap gap-1">
-                      @for (cfg of summary.configFiles; track cfg) {
-                        <span class="overview-config-chip">{{ cfg }}</span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Search bar -->
-        <div class="px-3 pb-1.5">
-          <div
-            class="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/5 focus-within:border-[var(--border-active)] transition-colors"
-          >
-            <mat-icon class="scale-50 text-[var(--text-2)]">search</mat-icon>
-            <input
-              class="flex-1 bg-transparent border-none outline-none text-[10px] text-[var(--text-0)] placeholder:text-[var(--text-2)] font-mono"
-              placeholder="Search files..."
-              [value]="searchQuery()"
-              (input)="onSearchInput($any($event.target).value)"
-            />
-            @if (isSearching()) {
-              <div
-                class="animate-spin h-2.5 w-2.5 border border-[var(--accent-blue)] border-t-transparent rounded-full"
-              ></div>
-            }
-          </div>
-        </div>
-        <div class="flex-1 overflow-y-auto p-1.5">
-          @for (key of getFolderKeys(folderTree()); track key) {
-            @if (isFolder(folderTree()[key])) {
-              <div class="text-[11px]">
-                <button
-                  (click)="toggleFolder(key)"
-                  class="w-full text-left px-2 py-1 rounded flex items-center gap-1 hover:bg-white/5 transition-colors text-[var(--text-2)]"
-                >
-                  <mat-icon class="scale-50">
-                    {{ expandedFolders().has(key) ? 'expand_more' : 'chevron_right' }}
-                  </mat-icon>
-                  <mat-icon class="scale-50 text-[var(--accent-amber)]">folder</mat-icon>
-                  <span class="truncate">{{ key }}</span>
-                </button>
-                @if (expandedFolders().has(key)) {
-                  <div class="ml-3 border-l border-[var(--border)] pl-2">
-                    @for (childKey of getFolderKeys(folderTree()[key]); track childKey) {
-                      @if (isFolder(folderTree()[key][childKey])) {
-                        <button
-                          (click)="toggleFolder(key + '/' + childKey)"
-                          class="w-full text-left px-2 py-0.5 rounded flex items-center gap-1 hover:bg-white/5 transition-colors text-[var(--text-2)]"
-                        >
-                          <mat-icon class="scale-50">
-                            {{
-                              expandedFolders().has(key + '/' + childKey)
-                                ? 'expand_more'
-                                : 'chevron_right'
-                            }}
-                          </mat-icon>
-                          <mat-icon class="scale-50 text-[var(--accent-amber)]">folder</mat-icon>
-                          <span class="truncate">{{ childKey }}</span>
-                        </button>
-                        @if (expandedFolders().has(key + '/' + childKey)) {
-                          <div class="ml-3">
-                            @for (
-                              fileKey of getFolderKeys(folderTree()[key][childKey]);
-                              track fileKey
-                            ) {
-                              @if (folderTree()[key][childKey][fileKey]._file; as file) {
-                                <button
-                                  (click)="openFile(file)"
-                                  class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
-                                >
-                                  <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
-                                    fileIcon(file.type)
-                                  }}</mat-icon>
-                                  <span class="truncate">{{ file.name }}</span>
-                                </button>
-                              }
-                            }
-                          </div>
-                        }
-                      } @else if (folderTree()[key][childKey]._file; as file) {
-                        <button
-                          (click)="openFile(file)"
-                          class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
-                        >
-                          <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
-                            fileIcon(file.type)
-                          }}</mat-icon>
-                          <span class="truncate">{{ file.name }}</span>
-                          <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
-                            formatSize(file.size)
-                          }}</span>
-                        </button>
-                      }
-                    }
-                  </div>
-                }
-              </div>
-            } @else if (folderTree()[key]._file; as file) {
-              <button
-                (click)="openFile(file)"
-                class="w-full text-left flex items-center gap-1 px-2 py-0.5 text-[10px] text-[var(--text-2)] hover:bg-white/5 rounded transition-colors"
+          <div class="flex items-center gap-2 min-w-0">
+            <mat-icon
+              class="scale-75 text-[var(--accent-purple)] shrink-0"
+              fontIcon="smart_toy"
+            ></mat-icon>
+            @if (showAgentsList()) {
+              <span
+                class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-purple)]"
+                >Agent</span
               >
-                <mat-icon class="scale-50" [style.color]="fileColor(file.type)">{{
-                  fileIcon(file.type)
-                }}</mat-icon>
-                <span class="truncate">{{ file.name }}</span>
-                <span class="text-[var(--text-2)]/50 ml-auto text-[9px]">{{
-                  formatSize(file.size)
+            } @else if (selectedAgent()) {
+              <span class="text-xs font-semibold text-[var(--text-1)] truncate">{{
+                selectedAgent()!.name
+              }}</span>
+            } @else {
+              <span class="text-xs text-[var(--text-2)]">No agent</span>
+            }
+          </div>
+          <mat-icon class="scale-50 text-[var(--text-2)] shrink-0">
+            {{ showAgentsList() ? 'expand_less' : 'expand_more' }}
+          </mat-icon>
+        </button>
+        @if (showAgentsList()) {
+          <div class="px-3 pb-3 space-y-1 max-h-48 overflow-y-auto">
+            @for (agent of agentSvc.agents(); track agent.id) {
+              <button
+                (click)="selectAgent(agent)"
+                class="w-full text-left p-2.5 rounded-lg transition-all flex flex-col gap-0.5 text-xs"
+                [class.bg-accent-purple\/15]="selectedAgent()?.id === agent.id"
+                [class.border]="selectedAgent()?.id === agent.id"
+                [class.border-accent-purple\/30]="selectedAgent()?.id === agent.id"
+                [class.hover:bg-white\/5]="selectedAgent()?.id !== agent.id"
+              >
+                <span class="font-semibold text-[var(--text-1)]">{{ agent.name }}</span>
+                <span class="text-[10px] text-[var(--text-2)] line-clamp-1">{{
+                  agent.description
                 }}</span>
               </button>
             }
+          </div>
+        }
+      </div>
+
+      <!-- Repo section -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="p-4 border-b border-[var(--border)] flex justify-between items-center">
+          <h2
+            class="font-[var(--font-ui)] font-bold text-xs uppercase tracking-wider text-[var(--accent-green)] flex items-center gap-1.5"
+          >
+            <mat-icon class="scale-75" fontIcon="folder_special"></mat-icon>
+            Repository
+          </h2>
+          @if (repoFiles().length > 0) {
+            <button (click)="clearRepo()" class="btn-tertiary !w-7 !h-7" title="Clear repo">
+              <mat-icon class="scale-50">delete</mat-icon>
+            </button>
           }
         </div>
 
-        <!-- New folder button at bottom -->
-        <div class="p-3 border-t border-[var(--border)]">
-          <button
-            (click)="openDirPicker()"
-            class="w-full btn-secondary text-xs py-2"
-            [disabled]="isLoadingDir()"
+        @if (repoFiles().length === 0) {
+          <div class="flex-1 flex flex-col items-center justify-center p-4 gap-3 text-center">
+            <mat-icon class="text-4xl text-[var(--text-2)] opacity-40">folder_open</mat-icon>
+            <p class="text-[11px] text-[var(--text-2)] leading-relaxed">
+              Select a local project folder to let the agent analyze your codebase
+            </p>
+            <app-button
+              variant="primary"
+              size="sm"
+              (onClick)="openDirPicker()"
+              [disabled]="isLoadingDir()"
+            >
+              <mat-icon class="scale-75" fontIcon="folder_open"></mat-icon>
+              Open Folder
+            </app-button>
+          </div>
+        } @else {
+          <!-- Loading -->
+          @if (isLoadingDir()) {
+            <div class="flex items-center gap-2 p-4 text-xs text-[var(--text-2)]">
+              <div
+                class="animate-spin h-3 w-3 border-2 border-[var(--accent-green)] border-t-transparent rounded-full"
+              ></div>
+              <span>Indexing files...</span>
+            </div>
+          }
+
+          <!-- Repo info -->
+          <div
+            class="p-3 border-b border-[var(--border)] flex items-center gap-2 text-[10px] text-[var(--text-2)] font-[var(--font-mono)]"
           >
-            <mat-icon class="scale-75">folder_open</mat-icon>
-            Change Folder
-          </button>
-        </div>
-      }
-    </div>
-  </aside>
+            <mat-icon class="scale-50 text-[var(--accent-green)]">folder</mat-icon>
+            <span class="truncate font-semibold text-[var(--text-1)]">{{ repoName() }}</span>
+            <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+            <span>{{ repoFiles().length }} files</span>
+            @if (totalChunks() > 0) {
+              <span class="w-1 h-1 rounded-full bg-[var(--text-2)]"></span>
+              <span>{{ totalChunks() }} chunks</span>
+            }
+          </div>
+
+          <!-- Project Overview -->
+          @if (projectSummary(); as summary) {
+            <div class="project-overview border-b border-[var(--border)]">
+              <button
+                class="project-overview-header"
+                (click)="showProjectOverview.update((v) => !v)"
+              >
+                <div class="flex items-center gap-1.5">
+                  <mat-icon class="scale-50 text-[var(--accent-purple)]">info</mat-icon>
+                  <span
+                    class="text-[10px] font-bold uppercase tracking-wider text-[var(--accent-purple)] font-[var(--font-ui)]"
+                    >Overview</span
+                  >
+                </div>
+                <mat-icon class="scale-50 text-[var(--text-2)]">
+                  {{ showProjectOverview() ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+              </button>
+              @if (showProjectOverview()) {
+                <div class="project-overview-body">
+                  <div class="overview-row">
+                    <span class="overview-label">Framework</span>
+                    <span class="overview-value text-[var(--accent-cyan)]">{{
+                      summary.framework
+                    }}</span>
+                  </div>
+                  <div class="overview-row">
+                    <span class="overview-label">Language</span>
+                    <span class="overview-value">{{ summary.language }}</span>
+                  </div>
+                  <div class="overview-row">
+                    <span class="overview-label">Build</span>
+                    <span class="overview-value">{{ summary.buildTool }}</span>
+                  </div>
+                  @if (summary.testTool !== 'None') {
+                    <div class="overview-row">
+                      <span class="overview-label">Test</span>
+                      <span class="overview-value">{{ summary.testTool }}</span>
+                    </div>
+                  }
+                  @if (hasGit()) {
+                    <div class="overview-row">
+                      <span class="overview-label">Git</span>
+                      <span class="overview-value text-[var(--accent-green)]"
+                        >&#10003; detected</span
+                      >
+                    </div>
+                  }
+                  <div class="overview-row">
+                    <span class="overview-label">Source files</span>
+                    <span class="overview-value"
+                      >{{ summary.sourceFiles }} / {{ summary.totalFiles }}</span
+                    >
+                  </div>
+                  <div class="overview-row">
+                    <span class="overview-label">Tests</span>
+                    <span class="overview-value"
+                      >{{ summary.hasTests ? '&#10003; yes' : '—' }}
+                      @if (summary.hasE2E) {
+                        + E2E
+                      }
+                    </span>
+                  </div>
+                  @if (summary.keyScripts.length > 0) {
+                    <div class="overview-scripts">
+                      <span class="overview-label block mb-1">Scripts</span>
+                      @for (s of summary.keyScripts; track s.name) {
+                        <div class="overview-script-row">
+                          <code class="overview-script-name">npm run {{ s.name }}</code>
+                          <span class="overview-script-cmd truncate">{{ s.command }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (summary.configFiles.length > 0) {
+                    <div class="overview-configs">
+                      <span class="overview-label block mb-1">Configs</span>
+                      <div class="flex flex-wrap gap-1">
+                        @for (cfg of summary.configFiles; track cfg) {
+                          <span class="overview-config-chip">{{ cfg }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Search bar -->
+          <div class="px-3 pb-1.5">
+            <div
+              class="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/5 focus-within:border-[var(--border-active)] transition-colors"
+            >
+              <mat-icon class="scale-50 text-[var(--text-2)]">search</mat-icon>
+              <input
+                class="flex-1 bg-transparent border-none outline-none text-[10px] text-[var(--text-0)] placeholder:text-[var(--text-2)] font-mono"
+                placeholder="Search files..."
+                [value]="searchQuery()"
+                (input)="onSearchInput($any($event.target).value)"
+              />
+              @if (isSearching()) {
+                <div
+                  class="animate-spin h-2.5 w-2.5 border border-[var(--accent-blue)] border-t-transparent rounded-full"
+                ></div>
+              }
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-1.5">
+            @for (item of visibleTreeItems(); track item.path) {
+              @if (item.type === 'folder') {
+                <button
+                  (click)="toggleFolder(item.path)"
+                  class="w-full text-left flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5 transition-colors text-[var(--text-2)]"
+                  [style.padding-left.px]="8 + item.depth * 14"
+                >
+                  <mat-icon class="scale-50 shrink-0">
+                    {{ expandedFolders().has(item.path) ? 'expand_more' : 'chevron_right' }}
+                  </mat-icon>
+                  <mat-icon class="scale-50 text-[var(--accent-amber)] shrink-0">folder</mat-icon>
+                  <span class="truncate">{{ item.name }}</span>
+                </button>
+              } @else if (item.file; as file) {
+                <button
+                  (click)="openFile(file)"
+                  class="w-full text-left flex items-center gap-1 px-2 py-0.5 rounded hover:bg-white/5 transition-colors text-[var(--text-2)]"
+                  [style.padding-left.px]="8 + item.depth * 14 + 16"
+                >
+                  <mat-icon class="scale-50 shrink-0" [style.color]="fileColor(file.type)">{{
+                    fileIcon(file.type)
+                  }}</mat-icon>
+                  <span class="truncate">{{ file.name }}</span>
+                  <span class="text-[var(--text-2)]/50 ml-auto text-[9px] shrink-0">{{
+                    formatSize(file.size)
+                  }}</span>
+                </button>
+              }
+            }
+          </div>
+
+          <!-- New folder button at bottom -->
+          <div class="p-3 border-t border-[var(--border)]">
+            <button
+              (click)="openDirPicker()"
+              class="w-full btn-secondary text-xs py-2"
+              [disabled]="isLoadingDir()"
+            >
+              <mat-icon class="scale-75">folder_open</mat-icon>
+              Change Folder
+            </button>
+          </div>
+        }
+      </div>
+    </aside>
+  }
 
   <!-- Main Content -->
   <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg-0)]">
@@ -387,6 +339,24 @@
             </app-button>
           }
           @if (messages().length > 0) {
+            <app-button
+              variant="secondary"
+              size="sm"
+              (onClick)="exportChat('md')"
+              title="Export conversation as Markdown"
+            >
+              <mat-icon class="scale-75" fontIcon="download"></mat-icon>
+              MD
+            </app-button>
+            <app-button
+              variant="secondary"
+              size="sm"
+              (onClick)="exportChat('json')"
+              title="Export conversation as JSON"
+            >
+              <mat-icon class="scale-75" fontIcon="data_object"></mat-icon>
+              JSON
+            </app-button>
             <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
               <mat-icon class="scale-75" fontIcon="delete"></mat-icon>
               Clear
@@ -712,6 +682,13 @@
                     >Read-only</span
                   >
                 }
+                <button
+                  (click)="downloadPatches()"
+                  class="btn-tertiary !w-7 !h-7"
+                  title="Download patches as Markdown"
+                >
+                  <mat-icon class="scale-50">download</mat-icon>
+                </button>
                 <button (click)="togglePatchesPanel()" class="btn-tertiary !w-7 !h-7">
                   <mat-icon class="scale-50">close</mat-icon>
                 </button>
@@ -787,7 +764,24 @@
                       }
                     </div>
                   </div>
-                  <pre class="patch-code"><code>{{ patch.code }}</code></pre>
+                  @if (patch.applied && patch.originalCode) {
+                    <div class="patch-diff">
+                      @for (l of diffLines(patch.originalCode, patch.code); track $index) {
+                        <div
+                          class="patch-diff-line"
+                          [class.add]="l.type === 'add'"
+                          [class.del]="l.type === 'del'"
+                        >
+                          <span class="patch-diff-sign">{{
+                            l.type === 'add' ? '+' : l.type === 'del' ? '-' : ' '
+                          }}</span>
+                          <code>{{ l.text }}</code>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <pre class="patch-code"><code>{{ patch.code }}</code></pre>
+                  }
                 </div>
               }
             </div>

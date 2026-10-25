@@ -76,6 +76,18 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+.orb.wake {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(86, 217, 255, 0.42),
+    rgba(17, 23, 37, 0.92) 70%
+  );
+  box-shadow:
+    var(--shadow-lg),
+    0 0 44px rgba(86, 217, 255, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 .orb-icon {
   font-size: 40px;
   width: 40px;
@@ -95,6 +107,11 @@
 .orb-ring.thinking {
   border-color: rgba(130, 183, 255, 0.45);
   animation-duration: 1.2s;
+}
+
+.orb-ring.wake {
+  border-color: rgba(86, 217, 255, 0.5);
+  animation-duration: 2.6s;
 }
 
 @keyframes ringPulse {
@@ -119,6 +136,11 @@
   border-radius: 50%;
   background: var(--accent-rose);
   animation: recBlink 1s step-end infinite;
+}
+
+.rec-dot.wake-dot {
+  background: var(--accent-cyan);
+  animation-duration: 2s;
 }
 
 @keyframes recBlink {

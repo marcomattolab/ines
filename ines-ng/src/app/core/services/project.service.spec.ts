@@ -7,6 +7,7 @@ vi.mock('pdfjs-dist', () => ({
 
 import { Injector } from '@angular/core';
 import { TextProcessingService } from './text-processing.service';
+import { EmbeddingService } from './embedding.service';
 import { ProjectService, ProjectChunk } from './project.service';
 
 describe('ProjectService', () => {
@@ -14,7 +15,7 @@ describe('ProjectService', () => {
 
   beforeEach(() => {
     const injector = Injector.create({
-      providers: [TextProcessingService, ProjectService],
+      providers: [TextProcessingService, EmbeddingService, ProjectService],
     });
     service = injector.get(ProjectService);
   });

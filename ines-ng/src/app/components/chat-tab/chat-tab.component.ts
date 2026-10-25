@@ -14,6 +14,7 @@ import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { StorageService } from '../../core/services/storage.service';
 import { KnowledgeManagerService } from '../../core/services/knowledge-manager.service';
+import { SecondBrainService } from '../../core/services/second-brain.service';
 import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubble.component';
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -73,6 +74,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   readonly km = inject(KnowledgeManagerService);
+  readonly brain = inject(SecondBrainService);
   private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
 
@@ -283,15 +285,31 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     let systemPrompt = SYSTEM_CHAT;
     let sourceNames: string[] = [];
+    const contextParts: string[] = [];
+
+    // Second brain: saved notes
+    const notes = this.brain.search(text).slice(0, 5);
+    if (notes.length > 0) {
+      sourceNames.push('Brain');
+      contextParts.push('## Saved notes\n' + notes.map((n) => `- ${n.text}`).join('\n'));
+    }
+
+    // Knowledge base: documents
     try {
       const chunks = await this.km.getRelevantChunks(text, 3, 300);
       if (chunks.length > 0) {
-        sourceNames = [...new Set(chunks.map((c) => c.docName))];
-        const context = chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n');
-        systemPrompt += `\n\nYou also have access to the user's personal knowledge base. Use the provided context when it is relevant and cite the source document name. If the context doesn't contain the answer, answer from your own knowledge.\n\nContext from knowledge base documents:\n${context}`;
+        sourceNames.push(...chunks.map((c) => c.docName));
+        contextParts.push(
+          '## Documents\n' + chunks.map((c) => `[${c.docName}]\n${c.text}`).join('\n\n---\n\n'),
+        );
       }
     } catch {
       /* RAG is best-effort */
+    }
+
+    sourceNames = [...new Set(sourceNames)];
+    if (contextParts.length > 0) {
+      systemPrompt += `\n\nYou have access to the user's personal knowledge base and second brain (saved notes and documents). Use the provided context when it is relevant and cite the source. If the context doesn't contain the answer, answer from your own knowledge.\n\nContext:\n${contextParts.join('\n\n')}`;
     }
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));

@@ -7,6 +7,7 @@ vi.mock('pdfjs-dist', () => ({
 
 import { Injector } from '@angular/core';
 import { TextProcessingService } from './text-processing.service';
+import { EmbeddingService } from './embedding.service';
 import { ProjectService } from './project.service';
 import { KnowledgeManagerService } from './knowledge-manager.service';
 import { BaseChunk } from './base-indexed-db.service';
@@ -26,7 +27,7 @@ describe('BaseIndexedDbService (via ProjectService)', () => {
 
   beforeEach(() => {
     const injector = Injector.create({
-      providers: [TextProcessingService, ProjectService],
+      providers: [TextProcessingService, EmbeddingService, ProjectService],
     });
     service = injector.get(ProjectService);
   });
@@ -95,7 +96,7 @@ describe('BaseIndexedDbService (via KnowledgeManagerService)', () => {
 
   beforeEach(() => {
     const injector = Injector.create({
-      providers: [TextProcessingService, KnowledgeManagerService],
+      providers: [TextProcessingService, EmbeddingService, KnowledgeManagerService],
     });
     service = injector.get(KnowledgeManagerService);
   });

@@ -174,6 +174,8 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     await this.km.loadDocuments();
     this.totalChunks.set(await this.km.countChunks());
     this.savedQAs.set(await this.km.getQAs());
+    // Load the semantic embedder and backfill chunk embeddings in the background.
+    void this.km.initEmbeddings();
   }
 
   ngAfterViewInit() {

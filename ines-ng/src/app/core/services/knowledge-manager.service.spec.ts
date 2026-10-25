@@ -7,6 +7,7 @@ vi.mock('pdfjs-dist', () => ({
 
 import { Injector, runInInjectionContext } from '@angular/core';
 import { TextProcessingService } from './text-processing.service';
+import { EmbeddingService } from './embedding.service';
 import { KnowledgeManagerService } from './knowledge-manager.service';
 
 describe('KnowledgeManagerService', () => {
@@ -15,7 +16,7 @@ describe('KnowledgeManagerService', () => {
 
   beforeEach(() => {
     injector = Injector.create({
-      providers: [TextProcessingService, KnowledgeManagerService],
+      providers: [TextProcessingService, EmbeddingService, KnowledgeManagerService],
     });
     service = injector.get(KnowledgeManagerService);
   });

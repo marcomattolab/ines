@@ -461,6 +461,15 @@ const DEFAULT_AGENTS: Agent[] = [
       'You are a meeting assistant. Help prepare agendas with clear goals and timeboxes. During discussions, capture decisions, action items, and owners. Summarize meetings into: Key Decisions, Action Items, Open Questions.',
     skillIds: ['skill-summarizer', 'skill-concise'],
   },
+  {
+    id: 'agent-gmail',
+    name: 'Gmail Inbox Assistant',
+    description:
+      'Summarizes your Gmail inbox into an actionable digest and helps draft clear, professional replies.',
+    systemPrompt:
+      "You are a Gmail assistant. You summarize inbox emails into a concise, actionable digest: key messages, senders, and action items. You also help draft clear, professional email replies. You prioritize clarity and brevity, and you protect the user's privacy by never sharing email content outside the session.",
+    skillIds: ['skill-summarizer', 'skill-concise', 'skill-formal-tone'],
+  },
 ];
 
 @Injectable({ providedIn: 'root' })

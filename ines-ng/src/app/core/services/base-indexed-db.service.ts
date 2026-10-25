@@ -1,5 +1,6 @@
 import { inject, signal } from '@angular/core';
 import { TextProcessingService, TextChunk } from './text-processing.service';
+import { EmbeddingService, cosineSimilarity } from './embedding.service';
 
 export interface BaseDocument {
   id: string;
@@ -8,6 +9,8 @@ export interface BaseDocument {
   date: number;
   size: number;
   hash: string;
+  /** Folder in the second brain filesystem (e.g. "Documents", "Work"). */
+  folder?: string;
 }
 
 export interface BaseChunk {
@@ -18,6 +21,8 @@ export interface BaseChunk {
   position: number;
   keywords: string[];
   hash: string;
+  /** Optional semantic embedding vector (set when the embedder is available). */
+  embedding?: number[];
 }
 
 export interface ChunkWithScore<T extends BaseChunk> {
@@ -32,6 +37,7 @@ export interface RagResult {
 
 export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk extends BaseChunk> {
   protected textProc = inject(TextProcessingService);
+  readonly embeddings = inject(EmbeddingService);
 
   readonly documents = signal<TDoc[]>([]);
   readonly isProcessing = signal(false);
@@ -42,6 +48,7 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
 
   private db: IDBDatabase | null = null;
   private initPromise: Promise<void> | null = null;
+  private embeddingsBackfilled = false;
 
   protected documentStore = 'documents';
   protected chunkStore = 'chunks';
@@ -136,7 +143,7 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
     return this.textProc.chunkText(text, source, docId, chunkSize, overlap);
   }
 
-  async processFile(file: File): Promise<void> {
+  async processFile(file: File, folder?: string): Promise<void> {
     const fileHash = await this.computeHash(`${file.name}${file.size}${file.lastModified}`);
 
     const existing = this.documents().find((d) => d.hash === fileHash);
@@ -157,6 +164,7 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
         date: Date.now(),
         size: file.size,
         hash: fileHash,
+        ...(folder ? { folder } : {}),
       };
 
       this.processingStatus.set(`Chunking "${file.name}"...`);
@@ -175,6 +183,10 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
           id: crypto.randomUUID(),
           ...raw,
           hash: chunkHash,
+          embedding:
+            this.embeddings.status() === 'ready'
+              ? (this.embeddings.embed(raw.text) ?? undefined)
+              : undefined,
         };
         chunkStore.put(chunk);
       }
@@ -191,7 +203,66 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
     }
   }
 
+  /** Loads the embedder once and backfills missing chunk embeddings. */
+  async initEmbeddings(): Promise<void> {
+    if (this.embeddingsBackfilled) return;
+    try {
+      await this.embeddings.init();
+    } catch {
+      return;
+    }
+    this.embeddingsBackfilled = true;
+    const all = await this.getAllFromStore<TChunk>(this.chunkStore);
+    const missing = all.filter((c) => !c.embedding);
+    if (missing.length === 0) return;
+    const db = await this.ensureDB();
+    const tx = db.transaction(this.chunkStore, 'readwrite');
+    const store = tx.objectStore(this.chunkStore);
+    for (const c of missing) {
+      const emb = this.embeddings.embed(c.text);
+      if (emb) store.put({ ...c, embedding: emb });
+    }
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  private async semanticChunks(
+    query: string,
+    topK: number,
+    maxWords: number,
+  ): Promise<RagResult[]> {
+    const queryEmbedding = this.embeddings.embed(query);
+    if (!queryEmbedding) return [];
+    const all = await this.getAllFromStore<TChunk>(this.chunkStore);
+    const scored = all
+      .map((c) => ({ c, score: c.embedding ? cosineSimilarity(c.embedding, queryEmbedding) : 0 }))
+      .filter((x) => x.score > 0.3)
+      .sort((a, b) => b.score - a.score);
+
+    const result: RagResult[] = [];
+    let wordCount = 0;
+    for (const item of scored) {
+      if (result.length >= topK) break;
+      const chunkWords = item.c.text.split(/\s+/).length;
+      if (result.length > 0 && wordCount + chunkWords > maxWords) break;
+      result.push({ text: item.c.text, docName: item.c.docName });
+      wordCount += chunkWords;
+    }
+    return result;
+  }
+
   async getRelevantChunks(query: string, topK = 3, maxWords = 800): Promise<RagResult[]> {
+    // Lazy-load the embedder once; the first query stays on keyword, later ones go semantic.
+    if (this.embeddings.status() === 'idle') {
+      void this.initEmbeddings();
+    }
+    if (this.embeddings.status() === 'ready') {
+      const semantic = await this.semanticChunks(query, topK, maxWords);
+      if (semantic.length > 0) return semantic;
+    }
+
     const queryLower = query.toLowerCase();
     const queryWords = queryLower
       .split(/\s+/)

@@ -1,5 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 
+/** Wake word for the always-listening mode: "INES", "hey INES", "ehi INES", … */
+const WAKE_RE = /\b(?:hey\s+|ehi\s+|ok\s+)?ines\b/i;
+
 @Injectable({ providedIn: 'root' })
 export class SpeechService {
   readonly speaking = signal<boolean>(false);
@@ -7,6 +10,8 @@ export class SpeechService {
 
   readonly recording = signal(false);
   readonly recordingTimer = signal('');
+  readonly wakeListening = signal(false);
+  readonly wakeTranscript = signal('');
 
   private synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
@@ -16,6 +21,13 @@ export class SpeechService {
   private recordingCallback: ((text: string) => void) | null = null;
   private recordingSeconds = 0;
   private recordingIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  private wakeRecognition: any = null;
+  private wakeOnCommand: ((text: string) => void) | null = null;
+  private wakeArmed = false;
+  private wakeAllFinal = '';
+  private wakeCmdFinal = '';
+  private wakeSilenceTimer: ReturnType<typeof setTimeout> | null = null;
 
   speak(id: string, text: string, langOrName?: string): void {
     if (!this.synth) return;
@@ -200,6 +212,105 @@ export class SpeechService {
     this.recordingTimer.set('');
     this.recordingBaseText = '';
     this.recordingCallback = null;
+  }
+
+  /**
+   * Always-listening mode: waits for the wake word ("INES", "hey INES", …),
+   * then captures the following command until a short silence, and calls
+   * `onCommand` with it. Recognition keeps running afterwards.
+   */
+  startWakeListening(onCommand: (text: string) => void): boolean {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return false;
+
+    this.stopWakeListening();
+
+    this.wakeOnCommand = onCommand;
+    this.wakeArmed = false;
+    this.wakeAllFinal = '';
+    this.wakeCmdFinal = '';
+
+    this.wakeRecognition = new SR();
+    this.wakeRecognition.continuous = true;
+    this.wakeRecognition.interimResults = true;
+    this.wakeRecognition.lang = navigator.language || 'en-US';
+
+    this.wakeRecognition.onresult = (e: any) => {
+      let interim = '';
+      let final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t + ' ';
+        else interim += t;
+      }
+
+      if (!this.wakeArmed) {
+        if (final) this.wakeAllFinal += final;
+        const m = this.wakeAllFinal.match(WAKE_RE);
+        if (m) {
+          this.wakeArmed = true;
+          const idx = this.wakeAllFinal.toLowerCase().indexOf(m[0].toLowerCase());
+          const after = this.wakeAllFinal.slice(idx + m[0].length).trim();
+          this.wakeCmdFinal = after ? after + ' ' : '';
+        }
+        this.wakeTranscript.set((this.wakeAllFinal + interim).trim());
+      } else {
+        if (final) this.wakeCmdFinal += final;
+        this.wakeTranscript.set((this.wakeCmdFinal + interim).trim());
+      }
+
+      if (this.wakeArmed) this.resetWakeSilence();
+    };
+
+    this.wakeRecognition.onerror = () => {};
+
+    this.wakeRecognition.onend = () => {
+      if (this.wakeListening() && this.wakeRecognition) {
+        try {
+          this.wakeRecognition.start();
+        } catch {
+          /* browser may reject rapid restarts */
+        }
+      }
+    };
+
+    this.wakeRecognition.start();
+    this.wakeListening.set(true);
+    this.wakeTranscript.set('');
+    return true;
+  }
+
+  stopWakeListening(): void {
+    this.wakeListening.set(false);
+    if (this.wakeSilenceTimer) {
+      clearTimeout(this.wakeSilenceTimer);
+      this.wakeSilenceTimer = null;
+    }
+    if (this.wakeRecognition) {
+      try {
+        this.wakeRecognition.abort();
+      } catch {
+        /* best-effort */
+      }
+      this.wakeRecognition = null;
+    }
+    this.wakeTranscript.set('');
+    this.wakeArmed = false;
+    this.wakeAllFinal = '';
+    this.wakeCmdFinal = '';
+    this.wakeOnCommand = null;
+  }
+
+  private resetWakeSilence(): void {
+    if (this.wakeSilenceTimer) clearTimeout(this.wakeSilenceTimer);
+    this.wakeSilenceTimer = setTimeout(() => {
+      const cmd = this.wakeCmdFinal.trim();
+      this.wakeArmed = false;
+      this.wakeAllFinal = '';
+      this.wakeCmdFinal = '';
+      this.wakeTranscript.set('');
+      if (cmd) this.wakeOnCommand?.(cmd);
+    }, 1600);
   }
   private stripMarkdownAndHtml(text: string): string {
     if (!text) return '';

@@ -19,10 +19,12 @@ import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
 import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
+import { BrainTabComponent } from './components/brain-tab/brain-tab.component';
 
 type Tab =
   | 'assistant'
   | 'chat'
+  | 'brain'
   | 'email'
   | 'meeting'
   | 'translate'
@@ -71,6 +73,7 @@ const TABS: TabDef[] = [
   },
   { id: 'presentation', icon: 'description', label: 'Slides', color: 'var(--tab-presentation)' },
   { id: 'project', icon: 'folder', label: 'Project', color: 'var(--tab-project)' },
+  { id: 'brain', icon: 'psychology', label: 'Brain', color: 'var(--tab-brain)' },
   {
     id: 'dev-agent',
     icon: 'smart_toy',
@@ -87,6 +90,7 @@ const TABS: TabDef[] = [
   imports: [
     StatusBarComponent,
     VoiceTabComponent,
+    BrainTabComponent,
     LoaderOverlayComponent,
     InfoModalComponent,
     ChatTabComponent,
@@ -237,6 +241,12 @@ export class AppComponent implements OnInit {
     if (tab && this.tabs.some((t) => t.id === tab)) {
       this.selectCommandTab(tab as Tab);
       this.assistant.requestedTab.set(null);
+    }
+  });
+
+  private digestEffect = effect(() => {
+    if (this.llm.isReady()) {
+      void this.assistant.maybeRunDailyDigest();
     }
   });
 }

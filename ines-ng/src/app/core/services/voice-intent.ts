@@ -6,7 +6,20 @@
  * is loaded, and they are unit-testable without Angular DI.
  */
 
-export type VoiceTaskType = 'answer' | 'todo' | 'navigate' | 'list-todos';
+export type VoiceTaskType =
+  | 'answer'
+  | 'todo'
+  | 'navigate'
+  | 'list-todos'
+  | 'email'
+  | 'translate'
+  | 'create-agent'
+  | 'summarize-gmail'
+  | 'remember'
+  | 'recall'
+  | 'digest'
+  | 'reminder'
+  | 'consolidate';
 
 export interface ParsedTask {
   type: VoiceTaskType;
@@ -27,6 +40,7 @@ export const TAB_LABELS: Record<string, string> = {
   learning: 'Learning',
   presentation: 'Slides',
   project: 'Project',
+  brain: 'Brain',
   'dev-agent': 'DevAgent',
 };
 
@@ -36,7 +50,7 @@ export const VALID_TABS = new Set(Object.keys(TAB_LABELS));
 export function normalizeType(type?: string): VoiceTaskType | null {
   if (!type) return null;
   const v = type.toLowerCase().replace(/[\s_-]/g, '');
-  if (['todo', 'add', 'addtodo', 'addtask', 'reminder', 'task', 'createtodo'].includes(v)) {
+  if (['todo', 'add', 'addtodo', 'addtask', 'task', 'createtodo'].includes(v)) {
     return 'todo';
   }
   if (
@@ -49,6 +63,46 @@ export function normalizeType(type?: string): VoiceTaskType | null {
   }
   if (['listtodos', 'list', 'readtodos', 'readtasks', 'todos', 'listtasks'].includes(v)) {
     return 'list-todos';
+  }
+  if (['email', 'draftemail', 'composeemail', 'writeemail', 'createemail'].includes(v)) {
+    return 'email';
+  }
+  if (['translate', 'translation', 'translateto'].includes(v)) {
+    return 'translate';
+  }
+  if (['createagent', 'newagent', 'makeagent', 'agent'].includes(v)) {
+    return 'create-agent';
+  }
+  if (
+    [
+      'summarizegmail',
+      'gmail',
+      'gmailemail',
+      'emailsummary',
+      'reademails',
+      'summarizeemails',
+    ].includes(v)
+  ) {
+    return 'summarize-gmail';
+  }
+  if (['remember', 'note', 'capture', 'savenote', 'addnote', 'memorize', 'memo'].includes(v)) {
+    return 'remember';
+  }
+  if (['recall', 'search', 'find', 'searchbrain', 'askbrain', 'memory', 'retrieve'].includes(v)) {
+    return 'recall';
+  }
+  if (['digest', 'dailydigest', 'summarizeday', 'daydigest', 'summarizejourney'].includes(v)) {
+    return 'digest';
+  }
+  if (
+    ['reminder', 'remind', 'remindme', 'setreminder', 'alarm', 'schedulereleminder'].includes(v)
+  ) {
+    return 'reminder';
+  }
+  if (
+    ['consolidate', 'consolidatememory', 'compressnotes', 'distill', 'consolidatenotes'].includes(v)
+  ) {
+    return 'consolidate';
   }
   return null;
 }
@@ -64,6 +118,7 @@ const TAB_KEYWORDS: { pattern: RegExp; tab: string }[] = [
   { pattern: /\b(learning|studio|studi|formazione)\b/i, tab: 'learning' },
   { pattern: /\b(slides|presentation|presentazione|diapositive)\b/i, tab: 'presentation' },
   { pattern: /\b(project|progetto|progetti)\b/i, tab: 'project' },
+  { pattern: /\b(brain|cervello|second\s+brain)\b/i, tab: 'brain' },
   { pattern: /\b(dev\s?agent|sviluppatore)\b/i, tab: 'dev-agent' },
   { pattern: /\b(chat|conversazione)\b/i, tab: 'chat' },
   { pattern: /\b(voice|voce|assistente)\b/i, tab: 'assistant' },
@@ -77,6 +132,37 @@ const LIST_RE =
 
 const TODO_RE =
   /(aggiungi|ricordami|segna|appunta|promemoria|crea\s+(un\s+)?compito|nuovo\s+compito|aggiungi\s+(alla\s+lista|ai\s+compiti|al\s+todo|un\s+compito|il\s+compito))/i;
+
+const CREATE_AGENT_RE =
+  /\b(crea|create|new|nuovo|make|aggiungi)\s+(un\s+|an?\s+|a\s+)?(agente|agent|assistente personalizzato)\b/i;
+
+const GMAIL_VERB_RE =
+  /\b(riassumi|riassumimi|riassuntomi|riassunto|riepiloga|riepilogo|sintetizza|sintesi|sommario|summarize|summarise|summary|leggi|read|check|controlla|search|cerca|find|trova|dimmi|fammi|quali|what)\b/i;
+
+const GMAIL_OBJ_RE = /\b(email|e-mail|emails|mail|gmail|posta|inbox)\b/i;
+
+const EMAIL_DRAFT_RE =
+  /\b(scrivi|scrivimi|write|compose|draft|bozza|prepara|redigi)\s+(un'?|una\s+|una|an?\s+|a\s+|the\s+)?(email|e-mail|mail|message)\b/i;
+
+const TRANSLATE_RE = /\b(traduci|translate|traduzione|translate\s+this)\b/i;
+
+const REMEMBER_RE =
+  /\b(ricorda\s+che|ricordati\s+che|remember\s+that|note\s+that|nota\s+che|scrivi\s+(una\s+|un\s+)?nota|salva\s+(una\s+|un\s+)?nota|nuova\s+nota|take\s+a\s+note|capture|cattura|appunto)\b/i;
+
+const RECALL_RE =
+  /\b(cerca|search|find|trova|ricerca|recall|brain|cosa\s+sai\s+di|cosa\s+ho\s+(detto|scritto|salvato)|what\s+did\s+i\s+(say|write|save)|dove\s+ho\s+scritto)\b/i;
+
+const DIGEST_RE =
+  /\b(daily\s+digest|riassumi\s+(la\s+|my\s+|the\s+)?(giornata|giorno|day)|summarize\s+(my\s+|the\s+)?day|riepilogo\s+(della\s+|del\s+)?(giornata|giorno)|riassumi\s+la\s+mia\s+giornata|come\s+va\s+la\s+giornata)\b/i;
+
+const CONSOLIDATE_RE =
+  /\b(consolida|consolidate|comprimi|compress|distill)\s+(i\s+|my\s+|le\s+|the\s+)?(ricordi|memorie|memories|notes|note|appunti)\b/i;
+
+const REMINDER_RE =
+  /\b(remind\s+me\s+to|remind\s+me|ricordami\s+di|ricordami|ricordati\s+di|ricordati|promemoria|set\s+a\s+reminder)\b/i;
+
+const TIME_PHRASE =
+  /\b(in\s+\d+|tra\s+\d+|at\s+\d|alle\s+\d|mezz'ora|mezzora|half\s+an?\s+hour|\d+\s+(?:min|hour|ora|minut|second|day|giorn))\b/i;
 
 const TODO_STRIP_RE =
   /^(aggiungi|ricordami|segna|appunta|promemoria|crea\s+(un\s+)?compito|nuovo\s+compito|aggiungi\s+(alla\s+lista|ai\s+compiti|al\s+todo|un\s+compito|il\s+compito))\s*[:,\-]?\s*/i;
@@ -112,9 +198,52 @@ export function parseByRules(text: string): ParsedTask[] {
     return [{ type: 'list-todos', text: '' }];
   }
 
+  if (CREATE_AGENT_RE.test(clean)) {
+    return [{ type: 'create-agent', text: clean }];
+  }
+
+  if (GMAIL_VERB_RE.test(clean) && GMAIL_OBJ_RE.test(clean)) {
+    return [{ type: 'summarize-gmail', text: clean }];
+  }
+
+  if (DIGEST_RE.test(clean)) {
+    return [{ type: 'digest', text: '' }];
+  }
+
   if (OPEN_RE.test(clean)) {
     const tab = matchTab(clean);
     if (tab) return [{ type: 'navigate', text: tab }];
+  }
+
+  if (EMAIL_DRAFT_RE.test(clean)) {
+    return [{ type: 'email', text: clean }];
+  }
+
+  if (TRANSLATE_RE.test(clean)) {
+    return [{ type: 'translate', text: clean }];
+  }
+
+  if (REMEMBER_RE.test(clean)) {
+    return [{ type: 'remember', text: clean }];
+  }
+
+  if (RECALL_RE.test(clean)) {
+    return [{ type: 'recall', text: clean }];
+  }
+
+  if (CONSOLIDATE_RE.test(clean)) {
+    return [{ type: 'consolidate', text: '' }];
+  }
+
+  if (REMINDER_RE.test(clean)) {
+    if (TIME_PHRASE.test(clean)) {
+      return [{ type: 'reminder', text: clean }];
+    }
+    const msg = clean
+      .replace(REMINDER_RE, '')
+      .replace(/^\s*(to|di)\s+/i, '')
+      .trim();
+    if (msg) return [{ type: 'todo', text: msg }];
   }
 
   if (TODO_RE.test(clean)) {

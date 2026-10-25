@@ -1,10 +1,11 @@
-import { Component, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ElementRef, viewChild, OnDestroy, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
+import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
 
@@ -21,12 +22,13 @@ Use the language of the original text.`;
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class EmailTabComponent implements OnDestroy {
-  readonly emailInputRef = viewChild.required<ElementRef<HTMLTextAreaElement>>('emailInput');
+  readonly emailInputRef = viewChild<ElementRef<HTMLTextAreaElement>>('emailInput');
 
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);
   private readonly textProc = inject(TextProcessingService);
+  private readonly voice = inject(VoiceAssistantService);
 
   tone = signal('professional');
   action = signal('improve');
@@ -84,6 +86,18 @@ export class EmailTabComponent implements OnDestroy {
     { value: 'reply', label: 'Reply', icon: 'reply' },
     { value: 'summary', label: 'Summary', icon: 'summarize' },
   ];
+
+  constructor() {
+    // Consume voice-generated drafts and prefill the email textarea.
+    effect(() => {
+      const draft = this.voice.emailDraft();
+      if (draft) {
+        const el = this.emailInputRef()?.nativeElement;
+        if (el) el.value = draft;
+        this.voice.emailDraft.set(null);
+      }
+    });
+  }
 
   resultHtml() {
     return this.dom.escapeHtml(this.result());

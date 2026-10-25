@@ -1,0 +1,32 @@
+/* Second Brain — folder chips */
+
+.folder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.folder-chip:hover {
+  color: var(--text-0);
+  border-color: var(--border-active);
+}
+
+.folder-chip-active {
+  color: var(--text-0);
+  border-color: var(--accent-purple);
+  background: rgba(191, 146, 255, 0.14);
+}

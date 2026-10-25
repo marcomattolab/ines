@@ -8,14 +8,14 @@
         ></mat-icon>
         INES Voice
       </div>
-      <div class="panel-desc">Assistente vocale · dettatura e serie di compiti</div>
+      <div class="panel-desc">Voice assistant · dictation &amp; series of tasks</div>
     </div>
     <div class="flex items-center gap-2">
       <select
         class="pill-select"
         [ngModel]="assistant.voiceLang()"
         (ngModelChange)="assistant.voiceLang.set($event)"
-        title="Lingua della voce"
+        title="Voice language"
       >
         @for (l of langs; track l.value) {
           <option [value]="l.value">{{ l.label }}</option>
@@ -25,38 +25,125 @@
         variant="secondary"
         size="sm"
         (onClick)="assistant.voiceEnabled.set(!assistant.voiceEnabled())"
-        [title]="assistant.voiceEnabled() ? 'Disattiva risposta vocale' : 'Attiva risposta vocale'"
+        [title]="assistant.voiceEnabled() ? 'Disable spoken replies' : 'Enable spoken replies'"
       >
         <mat-icon
           [fontIcon]="assistant.voiceEnabled() ? 'volume_up' : 'volume_off'"
           class="text-sm w-3.5 h-3.5"
         ></mat-icon>
       </app-button>
+      <app-button
+        [variant]="assistant.wakeEnabled() ? 'primary' : 'secondary'"
+        size="sm"
+        (onClick)="assistant.toggleWake()"
+        [title]="assistant.wakeEnabled() ? 'Disable wake word' : 'Enable wake word'"
+      >
+        <mat-icon
+          [fontIcon]="assistant.wakeEnabled() ? 'hearing' : 'hearing_disabled'"
+          class="text-sm w-3.5 h-3.5"
+        ></mat-icon>
+        Wake
+      </app-button>
+      <app-button variant="secondary" size="sm" (onClick)="showSettings.set(!showSettings())">
+        <mat-icon fontIcon="settings" class="text-sm w-3.5 h-3.5"></mat-icon>
+      </app-button>
       <app-button variant="danger" size="sm" (onClick)="assistant.clear()">
         <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
-        Pulisci
+        Clear
       </app-button>
     </div>
   </div>
 
+  <!-- Settings -->
+  @if (showSettings()) {
+    <div
+      class="mx-6 mt-4 bg-[var(--bg-2)] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3"
+    >
+      <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)]">
+        Gmail connection
+      </div>
+      <div class="flex items-center gap-2">
+        <input
+          class="flex-1 bg-[var(--bg-3)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--text-0)] outline-none placeholder:text-[var(--text-2)] font-mono"
+          placeholder="Google OAuth Client ID (…apps.googleusercontent.com)"
+          [ngModel]="gmailClientId()"
+          (ngModelChange)="gmailClientId.set($event)"
+        />
+        <app-button variant="primary" size="sm" (onClick)="saveGmailClientId()">
+          <mat-icon fontIcon="save" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Save
+        </app-button>
+        <app-button
+          variant="secondary"
+          size="sm"
+          [disabled]="gmail.connecting()"
+          (onClick)="testGmail()"
+        >
+          <mat-icon
+            [fontIcon]="gmail.connecting() ? 'hourglass_empty' : 'cable'"
+            [class.animate-spin]="gmail.connecting()"
+            class="text-sm w-3.5 h-3.5"
+          ></mat-icon>
+          Test
+        </app-button>
+      </div>
+      <div class="text-[11px] text-[var(--text-2)] leading-relaxed">
+        @switch (gmail.status()) {
+          @case ('ok') {
+            <span class="text-accent-green">✓ Connected. Say “summarize my emails”.</span>
+          }
+          @case ('connecting') {
+            <span class="text-accent-blue">Connecting…</span>
+          }
+          @case ('error') {
+            <span class="text-accent-rose">✗ Failed.</span>
+          }
+          @case ('configured') {
+            <span class="text-accent-green">✓ Client ID saved — press “Test”.</span>
+          }
+          @default {
+            <span class="text-accent-amber">Not configured yet.</span>
+          }
+        }
+        @if (gmail.lastError()) {
+          <div class="mt-1.5 text-accent-rose break-words">{{ gmail.lastError() }}</div>
+        }
+        <div class="mt-1.5">
+          Setup: in Google Cloud Console create an OAuth Client ID (type “Web application”), add
+          <span class="text-[var(--text-0)] font-mono">http://localhost:4200</span> to Authorized
+          JavaScript origins, and enable the Gmail API.
+        </div>
+      </div>
+    </div>
+  }
+
   <div class="flex-1 overflow-y-auto flex flex-col items-center gap-6 px-6 py-8">
     <!-- Mic orb -->
     <div class="orb-wrap">
-      @if (assistant.listening() || assistant.processing()) {
+      @if (assistant.wakeEnabled() || assistant.listening() || assistant.processing()) {
         <span
           class="orb-ring"
-          [class.thinking]="assistant.processing() && !assistant.listening()"
+          [class.thinking]="
+            assistant.processing() && !assistant.listening() && !assistant.wakeEnabled()
+          "
+          [class.wake]="assistant.wakeEnabled() && !assistant.processing()"
         ></span>
       }
       <button
         class="orb"
         [class.listening]="assistant.listening()"
         [class.thinking]="assistant.processing()"
+        [class.wake]="assistant.wakeEnabled()"
         [disabled]="assistant.processing()"
-        (click)="assistant.toggleListening()"
-        [attr.aria-label]="assistant.listening() ? 'Stop listening' : 'Start listening'"
+        (click)="onOrbClick()"
+        [attr.aria-label]="
+          assistant.listening() || assistant.wakeEnabled() ? 'Stop listening' : 'Start listening'
+        "
       >
-        <mat-icon [fontIcon]="assistant.listening() ? 'stop' : 'mic'" class="orb-icon"></mat-icon>
+        <mat-icon
+          [fontIcon]="assistant.listening() || assistant.wakeEnabled() ? 'stop' : 'mic'"
+          class="orb-icon"
+        ></mat-icon>
       </button>
     </div>
 
@@ -64,7 +151,12 @@
     <div
       class="status-line font-[var(--font-mono)] text-xs text-[var(--text-2)] tracking-widest uppercase"
     >
-      @if (assistant.listening()) {
+      @if (assistant.wakeEnabled() && !assistant.processing() && !assistant.speaking()) {
+        <span class="flex items-center gap-2">
+          <span class="rec-dot wake-dot"></span>
+          {{ statusText() }}
+        </span>
+      } @else if (assistant.listening()) {
         <span class="flex items-center gap-2">
           <span class="rec-dot"></span>
           {{ statusText() }}
@@ -87,11 +179,23 @@
       }
     </div>
 
+    <!-- Wake transcript -->
+    @if (assistant.wakeEnabled() && assistant.wakeTranscript()) {
+      <div class="w-full max-w-2xl bg-[var(--bg-2)] border border-[var(--border)] rounded-2xl p-4">
+        <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-1.5">
+          Heard
+        </div>
+        <p class="text-sm text-[var(--text-0)] font-[var(--font-body)]">
+          “{{ assistant.wakeTranscript() }}”
+        </p>
+      </div>
+    }
+
     <!-- Transcript -->
     @if (assistant.transcript()) {
       <div class="w-full max-w-2xl bg-[var(--bg-2)] border border-[var(--border)] rounded-2xl p-4">
         <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-1.5">
-          Hai detto
+          You said
         </div>
         <p class="text-sm text-[var(--text-0)] font-[var(--font-body)]">
           “{{ assistant.transcript() }}”
@@ -104,7 +208,7 @@
       <div class="w-full max-w-2xl">
         <div class="flex items-center justify-between mb-2">
           <span class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)]">
-            Compiti ricevuti ({{ doneCount() }}/{{ assistant.tasks().length }})
+            Tasks received ({{ doneCount() }}/{{ assistant.tasks().length }})
           </span>
         </div>
         <div class="flex flex-col gap-1.5">
@@ -143,7 +247,7 @@
     @if (assistant.log().length) {
       <div class="w-full max-w-2xl">
         <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-2">
-          Conversazione
+          Conversation
         </div>
         <div class="flex flex-col gap-3">
           @for (entry of assistant.log(); track entry.id) {
@@ -172,8 +276,10 @@
 
     <!-- Help hint -->
     <div class="text-[11px] font-mono text-[var(--text-2)] text-center max-w-md leading-relaxed">
-      Esempi: “aggiungi chiamare il cliente, poi preparare le slide” · “apri email” · “che compiti
-      ho?” · “quanto fa 2+2?”
+      Try: “add call the client, then prepare the slides” · “open email” · “what are my tasks?” ·
+      “draft an email to John” · “translate hello into French” · “summarize my emails” · “remember
+      that the meeting is on Monday” · “search my brain for the project” · “summarize my day” ·
+      “remind me to call John in 1 hour”
     </div>
   </div>
 </div>

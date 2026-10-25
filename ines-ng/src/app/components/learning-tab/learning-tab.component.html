@@ -7,6 +7,24 @@
         <div class="panel-desc text-zinc-400">
           RAG-powered analysis, Mind Maps, Quizzes & Exercises
         </div>
+        <div class="text-[10px] font-mono text-[var(--text-2)]">
+          @switch (km.embeddings.status()) {
+            @case ('ready') {
+              <span class="text-accent-green"
+                >● semantic index ({{ km.embeddings.dimension() }}d)</span
+              >
+            }
+            @case ('loading') {
+              <span class="text-accent-amber">● loading semantic index…</span>
+            }
+            @case ('error') {
+              <span class="text-accent-rose">● semantic unavailable — keyword index</span>
+            }
+            @default {
+              <span>● keyword index</span>
+            }
+          }
+        </div>
       </div>
     </div>
     <app-button variant="danger" (onClick)="showClearConfirm.set(true)">

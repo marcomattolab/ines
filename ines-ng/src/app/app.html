@@ -15,35 +15,51 @@
 <div id="app">
   <!-- Sidebar -->
   <nav id="sidebar" class="flex flex-col items-center gap-2.5 shrink-0 z-10">
-    @for (tab of tabs; track tab.id) {
-      @if (tab.dividerBefore) {
+    @for (item of displayItems(); track item.tab.id) {
+      @if (item.divider) {
         <div class="sidebar-divider"></div>
       }
-      @if (tab.category) {
-        <span class="sidebar-header">{{ tab.category }}</span>
+      @if (item.category) {
+        <span class="sidebar-header">{{ item.category }}</span>
       }
       <button
         class="tab-btn cursor-pointer text-[var(--text-2)] flex flex-col items-center justify-center gap-1 relative shrink-0"
-        [class.active]="activeTab() === tab.id"
-        [style.--tab-color]="tab.color"
-        (click)="activeTab.set(tab.id)"
-        [attr.title]="tab.label"
-        [attr.aria-label]="tab.label + ' tab' + (activeTab() === tab.id ? ', selected' : '')"
-        [attr.aria-current]="activeTab() === tab.id ? 'page' : undefined"
+        [class.active]="activeTab() === item.tab.id"
+        [style.--tab-color]="item.tab.color"
+        (click)="activeTab.set(item.tab.id)"
+        [attr.title]="item.tab.label"
+        [attr.aria-label]="
+          item.tab.label + ' tab' + (activeTab() === item.tab.id ? ', selected' : '')
+        "
+        [attr.aria-current]="activeTab() === item.tab.id ? 'page' : undefined"
       >
         <span class="tab-icon inline-flex items-center justify-center">
           <mat-icon
-            [fontIcon]="tab.icon"
+            [fontIcon]="item.tab.icon"
             style="width: 20px; height: 20px; font-size: 20px"
           ></mat-icon>
         </span>
         <span
           class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none"
-          >{{ tab.label }}</span
+          >{{ item.tab.label }}</span
         >
       </button>
     }
     <div class="flex-1"></div>
+    <button
+      class="tab-btn cursor-pointer text-[var(--text-2)] flex flex-col items-center justify-center gap-1 relative shrink-0"
+      (click)="settingsOpen.set(true)"
+      title="Settings"
+      aria-label="Settings"
+    >
+      <span class="tab-icon inline-flex items-center justify-center">
+        <mat-icon fontIcon="settings" style="width: 20px; height: 20px; font-size: 20px"></mat-icon>
+      </span>
+      <span
+        class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none"
+        >Settings</span
+      >
+    </button>
   </nav>
 
   <!-- Main panels -->
@@ -173,6 +189,121 @@
         @if (filteredTabs().length === 0) {
           <div class="px-4 py-3 text-sm text-[var(--text-2)] text-center">No tabs found</div>
         }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Settings -->
+@if (settingsOpen()) {
+  <div
+    class="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] bg-black/70 backdrop-blur-sm"
+    (click)="settingsOpen.set(false)"
+  >
+    <div
+      class="w-full max-w-md bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+        <span class="font-[var(--font-ui)] font-bold text-sm text-[var(--text-0)]">Settings</span>
+        <button
+          class="text-[var(--text-2)] hover:text-[var(--text-0)] transition-colors"
+          (click)="settingsOpen.set(false)"
+          aria-label="Close settings"
+        >
+          <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
+        </button>
+      </div>
+
+      <div class="max-h-[70vh] overflow-y-auto p-3 flex flex-col gap-4">
+        <!-- General -->
+        <div class="flex flex-col gap-2">
+          <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)]">
+            General
+          </div>
+          <label class="flex items-center gap-3 px-1 py-1.5">
+            <span class="flex-1 text-sm text-[var(--text-0)]">Default language</span>
+            <select
+              class="pill-select"
+              [ngModel]="settings.lang()"
+              (ngModelChange)="settings.lang.set($event)"
+            >
+              <option value="en-US">English</option>
+              <option value="it-IT">Italiano</option>
+              <option value="fr-FR">Français</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="es-ES">Español</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-3 px-1 py-1.5 cursor-pointer">
+            <span class="flex-1 text-sm text-[var(--text-0)]">Light theme</span>
+            <input
+              type="checkbox"
+              class="accent-[var(--accent-blue)] w-4 h-4"
+              [checked]="settings.lightTheme()"
+              (change)="settings.lightTheme.set(!settings.lightTheme())"
+            />
+          </label>
+          <label class="flex items-center gap-3 px-1 py-1.5 cursor-pointer">
+            <span class="flex-1 text-sm text-[var(--text-0)]">Enable wake word on startup</span>
+            <input
+              type="checkbox"
+              class="accent-[var(--accent-blue)] w-4 h-4"
+              [checked]="settings.wakeOnStartup()"
+              (change)="settings.wakeOnStartup.set(!settings.wakeOnStartup())"
+            />
+          </label>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-col gap-1">
+          <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-1">
+            Tabs (order &amp; visibility)
+          </div>
+          @for (tab of orderedTabs(); track tab.id) {
+            <div class="flex items-center gap-1 px-1 py-1.5 rounded-xl hover:bg-white/5">
+              <div class="flex flex-col shrink-0">
+                <button
+                  class="text-[var(--text-2)] hover:text-[var(--text-0)] disabled:opacity-30"
+                  [disabled]="orderedTabs()[0].id === tab.id"
+                  (click)="moveTab(tab.id, -1)"
+                  title="Move up"
+                >
+                  <mat-icon fontIcon="arrow_drop_up" class="text-sm w-4 h-4"></mat-icon>
+                </button>
+                <button
+                  class="text-[var(--text-2)] hover:text-[var(--text-0)] disabled:opacity-30"
+                  [disabled]="orderedTabs()[orderedTabs().length - 1].id === tab.id"
+                  (click)="moveTab(tab.id, 1)"
+                  title="Move down"
+                >
+                  <mat-icon fontIcon="arrow_drop_down" class="text-sm w-4 h-4"></mat-icon>
+                </button>
+              </div>
+              <input
+                type="checkbox"
+                class="accent-[var(--accent-blue)] w-4 h-4 shrink-0"
+                [checked]="settings.isVisible(tab.id)"
+                [disabled]="settings.isVisible(tab.id) && visibleTabs().length <= 1"
+                (change)="toggleTab(tab.id)"
+              />
+              <span
+                class="w-6 h-6 flex items-center justify-center rounded"
+                [style.color]="tab.color"
+              >
+                <mat-icon [fontIcon]="tab.icon" class="text-base w-4 h-4"></mat-icon>
+              </span>
+              <span class="flex-1 text-sm text-[var(--text-0)] truncate">{{ tab.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="px-4 py-3 border-t border-[var(--border)] flex justify-end">
+        <button class="btn-secondary" (click)="resetTabs()">
+          <mat-icon fontIcon="restart_alt" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Reset
+        </button>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
@@ -17,6 +18,7 @@ import { ProjectTabComponent } from './components/project-tab/project-tab.compon
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
+import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
 import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
 import { BrainTabComponent } from './components/brain-tab/brain-tab.component';
@@ -105,6 +107,7 @@ const TABS: TabDef[] = [
     LearningTabComponent,
     AgentsTabComponent,
     VisionTabComponent,
+    FormsModule,
     MatIconModule,
   ],
   templateUrl: './app.html',
@@ -121,22 +124,67 @@ export class AppComponent implements OnInit {
   commandPaletteOpen = signal(false);
   commandQuery = signal('');
   isOnline = signal(navigator.onLine);
-  isLightTheme = signal(false);
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
   readonly assistant = inject(VoiceAssistantService);
+  readonly settings = inject(SettingsService);
+
+  settingsOpen = signal(false);
+  readonly isLightTheme = this.settings.lightTheme;
+
+  /** Tabs in the user-configured order (falls back to the default order). */
+  readonly orderedTabs = computed(() => {
+    const order = this.settings.tabOrder();
+    if (!order.length) return this.tabs;
+    const byId = new Map<string, TabDef>(this.tabs.map((t) => [t.id as string, t]));
+    return order.map((id) => byId.get(id)).filter((t): t is TabDef => !!t);
+  });
+
+  /** Only the tabs the user has not hidden (in the configured order). */
+  readonly visibleTabs = computed(() =>
+    this.orderedTabs().filter((t) => this.settings.isVisible(t.id)),
+  );
+
+  /** Visible tabs with computed dividers/categories for the sidebar. */
+  readonly displayItems = computed(() => {
+    const items: { tab: TabDef; divider: boolean; category?: string }[] = [];
+    let lastCategory: string | undefined;
+    for (const t of this.visibleTabs()) {
+      const divider = !!t.category && t.category !== lastCategory;
+      if (divider) lastCategory = t.category;
+      items.push({ tab: t, divider, category: divider ? t.category : undefined });
+    }
+    return items;
+  });
+
+  toggleTab(id: Tab) {
+    if (this.settings.isVisible(id) && this.visibleTabs().length <= 1) {
+      this.toast.show('At least one tab must remain visible');
+      return;
+    }
+    this.settings.toggle(id);
+  }
+
+  moveTab(id: Tab, dir: -1 | 1) {
+    const defaultOrder = this.tabs.map((t) => t.id);
+    const order = this.settings.tabOrder().length ? this.settings.tabOrder() : defaultOrder;
+    const idx = order.indexOf(id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= order.length) return;
+    const next = [...order];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    this.settings.setOrder(next);
+  }
+
+  resetTabs() {
+    this.settings.reset();
+    this.toast.success('Settings reset');
+  }
 
   ngOnInit() {
     window.addEventListener('online', () => this.isOnline.set(true));
     window.addEventListener('offline', () => this.isOnline.set(false));
 
-    try {
-      if (sessionStorage.getItem('ines_light_theme') === 'true') {
-        this.isLightTheme.set(true);
-      }
-    } catch {
-      /* best effort */
-    }
     try {
       const savedTab = sessionStorage.getItem('ines_active_tab');
       if (savedTab && this.tabs.some((t) => t.id === savedTab)) {
@@ -144,6 +192,13 @@ export class AppComponent implements OnInit {
       }
     } catch {
       /* best effort */
+    }
+    if (this.settings.wakeOnStartup()) {
+      try {
+        this.assistant.startWake();
+      } catch {
+        /* mic may require a user gesture */
+      }
     }
     // 1. Try to load from IndexedDB cache first
     this.llm
@@ -187,8 +242,9 @@ export class AppComponent implements OnInit {
 
   filteredTabs = computed(() => {
     const q = this.commandQuery().toLowerCase();
-    if (!q) return this.tabs;
-    return this.tabs.filter((t) => t.label.toLowerCase().includes(q));
+    const vis = this.visibleTabs();
+    if (!q) return vis;
+    return vis.filter((t) => t.label.toLowerCase().includes(q));
   });
 
   handleKeyboard(e: KeyboardEvent) {
@@ -200,9 +256,9 @@ export class AppComponent implements OnInit {
     }
     if (e.ctrlKey || e.metaKey) {
       const idx = parseInt(e.key, 10);
-      if (idx >= 1 && idx <= this.tabs.length) {
+      if (idx >= 1 && idx <= this.visibleTabs().length) {
         e.preventDefault();
-        this.activeTab.set(this.tabs[idx - 1].id);
+        this.activeTab.set(this.visibleTabs()[idx - 1].id);
       }
     }
     if (e.key === 'Escape') {
@@ -225,11 +281,6 @@ export class AppComponent implements OnInit {
 
   toggleTheme() {
     this.isLightTheme.update((v) => !v);
-    try {
-      sessionStorage.setItem('ines_light_theme', String(this.isLightTheme()));
-    } catch {
-      /* best effort */
-    }
   }
 
   private themeEffect = effect(() => {
@@ -247,6 +298,15 @@ export class AppComponent implements OnInit {
   private digestEffect = effect(() => {
     if (this.llm.isReady()) {
       void this.assistant.maybeRunDailyDigest();
+    }
+  });
+
+  /** If the active tab gets hidden, fall back to the first visible one. */
+  private visibilityEffect = effect(() => {
+    const vis = this.visibleTabs();
+    if (vis.length === 0) return;
+    if (!vis.some((t) => t.id === this.activeTab())) {
+      this.selectCommandTab(vis[0].id);
     }
   });
 }

@@ -24,6 +24,7 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
 
 type SubTab =
   | 'chat'
@@ -73,6 +74,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   readonly llm = inject(LlmService);
   readonly km = inject(KnowledgeManagerService);
   readonly toast = inject(ToastService);
+  readonly assistant = inject(VoiceAssistantService);
   private readonly jsonParser = inject(JsonParserService);
   private readonly dom = inject(DomUtilsService);
 
@@ -176,6 +178,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     this.savedQAs.set(await this.km.getQAs());
     // Load the semantic embedder and backfill chunk embeddings in the background.
     void this.km.initEmbeddings();
+  }
+
+  openSecondBrain() {
+    this.assistant.navigateTo('brain');
   }
 
   ngAfterViewInit() {

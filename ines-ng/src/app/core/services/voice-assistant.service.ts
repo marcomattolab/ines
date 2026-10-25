@@ -11,6 +11,7 @@ import { SecondBrainService } from './second-brain.service';
 import { ReminderService } from './reminder.service';
 import { parseReminder } from './reminder-parse';
 import { StorageService } from './storage.service';
+import { SettingsService } from './settings.service';
 import { buildVoiceSystemPrompt } from './harness.service';
 import {
   parseByRules,
@@ -80,6 +81,7 @@ export class VoiceAssistantService {
   readonly brain = inject(SecondBrainService);
   readonly reminders = inject(ReminderService);
   private readonly storage = inject(StorageService);
+  readonly settings = inject(SettingsService);
 
   /** Task queue — the "series of tasks" INES received. */
   readonly tasks = signal<VoiceTask[]>([]);
@@ -94,7 +96,8 @@ export class VoiceAssistantService {
   readonly processing = signal(false);
 
   readonly voiceEnabled = signal(true);
-  readonly voiceLang = signal('en-US');
+  /** Default voice language — sourced from global settings. */
+  readonly voiceLang = this.settings.lang;
 
   /** Wake word ("INES") always-listening mode. */
   readonly wakeEnabled = signal(false);
@@ -155,6 +158,11 @@ export class VoiceAssistantService {
   stopWake(): void {
     this.speech.stopWakeListening();
     this.wakeEnabled.set(false);
+  }
+
+  /** Navigates the app to a tab id (reused by voice commands and other tabs). */
+  navigateTo(tab: string): void {
+    this.requestedTab.set(tab);
   }
 
   clear(): void {

@@ -293,6 +293,46 @@ export class SecondBrainService {
     this.folders.update((list) => [...list, clean]);
   }
 
+  /** Moves a single note to another folder. */
+  moveNote(id: string, folder: string): void {
+    this.notes.update((list) => list.map((n) => (n.id === id ? { ...n, folder } : n)));
+  }
+
+  /** Renames a folder, updating all its notes and nested subfolders. */
+  renameFolder(oldPath: string, newPath: string): void {
+    const prefix = oldPath + '/';
+    this.notes.update((list) =>
+      list.map((n) => {
+        if (n.folder === oldPath) return { ...n, folder: newPath };
+        if (n.folder.startsWith(prefix))
+          return { ...n, folder: newPath + n.folder.slice(oldPath.length) };
+        return n;
+      }),
+    );
+    this.folders.update((list) =>
+      list.map((f) => {
+        if (f === oldPath) return newPath;
+        if (f.startsWith(prefix)) return newPath + f.slice(oldPath.length);
+        return f;
+      }),
+    );
+  }
+
+  /** Deletes a folder, moving its notes (and nested folders) one level up. */
+  deleteFolder(path: string): void {
+    const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    const prefix = path + '/';
+    this.notes.update((list) =>
+      list.map((n) => {
+        if (n.folder === path) return { ...n, folder: parent };
+        if (n.folder.startsWith(prefix))
+          return { ...n, folder: parent + n.folder.slice(path.length) };
+        return n;
+      }),
+    );
+    this.folders.update((list) => list.filter((f) => f !== path && !f.startsWith(prefix)));
+  }
+
   capture(text: string, source: BrainNote['source'] = 'typed', folder = 'Inbox'): BrainNote {
     const clean = text.trim();
     if (!clean) throw new Error('Empty note');

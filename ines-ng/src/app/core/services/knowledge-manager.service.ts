@@ -56,6 +56,57 @@ export class KnowledgeManagerService extends BaseIndexedDbService<
     await this.clearStore(GRAPH_STORE);
   }
 
+  /** Moves a single document to another folder in the second brain filesystem. */
+  async moveDocument(id: string, folder: string): Promise<void> {
+    const doc = this.documents().find((d) => d.id === id);
+    if (!doc) return;
+    await this.putInStore(this.documentStore, { ...doc, folder });
+    this.documents.update((list) => list.map((d) => (d.id === id ? { ...d, folder } : d)));
+  }
+
+  /** Renames a folder, updating every document inside it (including nested ones). */
+  async renameFolder(oldPath: string, newPath: string): Promise<void> {
+    const prefix = oldPath + '/';
+    const changed = this.documents().filter(
+      (d) => (d.folder || 'Documents') === oldPath || (d.folder || '').startsWith(prefix),
+    );
+    for (const d of changed) {
+      const cur = d.folder || 'Documents';
+      const next = cur === oldPath ? newPath : newPath + cur.slice(oldPath.length);
+      await this.putInStore(this.documentStore, { ...d, folder: next });
+    }
+    this.documents.update((list) =>
+      list.map((d) => {
+        const cur = d.folder || 'Documents';
+        if (cur === oldPath) return { ...d, folder: newPath };
+        if (cur.startsWith(prefix)) return { ...d, folder: newPath + cur.slice(oldPath.length) };
+        return d;
+      }),
+    );
+  }
+
+  /** Deletes a folder, moving its documents one level up. */
+  async deleteFolder(path: string): Promise<void> {
+    const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : 'Documents';
+    const prefix = path + '/';
+    const changed = this.documents().filter(
+      (d) => (d.folder || 'Documents') === path || (d.folder || '').startsWith(prefix),
+    );
+    for (const d of changed) {
+      const cur = d.folder || 'Documents';
+      const next = cur === path ? parent : parent + cur.slice(path.length);
+      await this.putInStore(this.documentStore, { ...d, folder: next });
+    }
+    this.documents.update((list) =>
+      list.map((d) => {
+        const cur = d.folder || 'Documents';
+        if (cur === path) return { ...d, folder: parent };
+        if (cur.startsWith(prefix)) return { ...d, folder: parent + cur.slice(path.length) };
+        return d;
+      }),
+    );
+  }
+
   async getChunksByDocName(docName: string): Promise<{ text: string; position: number }[]> {
     const all = await this.getAllFromStore<KnowledgeChunk>('chunks');
     return all

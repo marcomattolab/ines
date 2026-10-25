@@ -39,6 +39,13 @@ export class BrainTabComponent implements OnDestroy, OnInit {
   /** Current folder path in the filesystem navigator ('' = root). */
   readonly currentPath = signal('');
   readonly newFolderName = signal('');
+  readonly movingNoteId = signal<string | null>(null);
+  readonly movingDocId = signal<string | null>(null);
+  readonly renaming = signal(false);
+  readonly renameName = signal('');
+  readonly showDeleteFolderConfirm = signal(false);
+  readonly dragOverFolder = signal<string | null>(null);
+  private dragPayload: { kind: 'note' | 'doc'; id: string } | null = null;
 
   readonly breadcrumb = computed(() => {
     const p = this.currentPath();
@@ -87,6 +94,14 @@ export class BrainTabComponent implements OnDestroy, OnInit {
   readonly captureDest = computed(() => this.currentPath() || 'Inbox');
   readonly uploadDest = computed(() => this.currentPath() || 'Documents');
 
+  /** Every known folder path (valid move destinations). */
+  readonly allFolders = computed(() => {
+    const set = new Set<string>(this.brain.folders());
+    for (const n of this.brain.notes()) set.add(n.folder);
+    for (const d of this.km.documents()) set.add(d.folder || 'Documents');
+    return [...set].sort();
+  });
+
   ngOnInit() {
     void this.brain.initEmbeddings();
     void this.km.initEmbeddings();
@@ -116,6 +131,77 @@ export class BrainTabComponent implements OnDestroy, OnInit {
     this.brain.createFolder(this.subfolderPath(name));
     this.newFolderName.set('');
     this.toast.success(`Folder "${name}" created`);
+  }
+
+  folderName(): string {
+    const p = this.currentPath();
+    return p ? p.split('/').pop() || p : '';
+  }
+
+  startRename() {
+    this.renameName.set(this.folderName());
+    this.renaming.set(true);
+  }
+
+  async confirmRename() {
+    const name = this.renameName().trim();
+    const oldPath = this.currentPath();
+    if (!name || !oldPath) return;
+    const parent = oldPath.includes('/') ? oldPath.slice(0, oldPath.lastIndexOf('/')) : '';
+    const newPath = parent ? `${parent}/${name}` : name;
+    this.brain.renameFolder(oldPath, newPath);
+    await this.km.renameFolder(oldPath, newPath);
+    this.currentPath.set(newPath);
+    this.renaming.set(false);
+    this.toast.success('Folder renamed');
+  }
+
+  async confirmDeleteFolder() {
+    const path = this.currentPath();
+    if (!path) return;
+    const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    this.brain.deleteFolder(path);
+    await this.km.deleteFolder(path);
+    this.currentPath.set(parent);
+    this.showDeleteFolderConfirm.set(false);
+    this.toast.success('Folder deleted — contents moved up');
+  }
+
+  moveNote(id: string, folder: string) {
+    this.brain.moveNote(id, folder);
+    this.movingNoteId.set(null);
+    this.toast.success('Note moved');
+  }
+
+  moveDoc(id: string, folder: string) {
+    void this.km.moveDocument(id, folder);
+    this.movingDocId.set(null);
+    this.toast.success('Document moved');
+  }
+
+  // ── Drag & drop ──
+
+  onDragStart(e: DragEvent, kind: 'note' | 'doc', id: string) {
+    this.dragPayload = { kind, id };
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', id);
+    }
+  }
+
+  onDragOverFolder(e: DragEvent, folderPath: string) {
+    e.preventDefault();
+    if (this.dragOverFolder() !== folderPath) this.dragOverFolder.set(folderPath);
+  }
+
+  onDropFolder(e: DragEvent, folderPath: string) {
+    e.preventDefault();
+    this.dragOverFolder.set(null);
+    const payload = this.dragPayload;
+    this.dragPayload = null;
+    if (!payload) return;
+    if (payload.kind === 'note') this.moveNote(payload.id, folderPath);
+    else this.moveDoc(payload.id, folderPath);
   }
 
   addNote(input: HTMLTextAreaElement) {

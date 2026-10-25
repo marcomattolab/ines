@@ -1,0 +1,179 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="record_voice_over"
+          class="text-accent-cyan w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        INES Voice
+      </div>
+      <div class="panel-desc">Assistente vocale · dettatura e serie di compiti</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <select
+        class="pill-select"
+        [ngModel]="assistant.voiceLang()"
+        (ngModelChange)="assistant.voiceLang.set($event)"
+        title="Lingua della voce"
+      >
+        @for (l of langs; track l.value) {
+          <option [value]="l.value">{{ l.label }}</option>
+        }
+      </select>
+      <app-button
+        variant="secondary"
+        size="sm"
+        (onClick)="assistant.voiceEnabled.set(!assistant.voiceEnabled())"
+        [title]="assistant.voiceEnabled() ? 'Disattiva risposta vocale' : 'Attiva risposta vocale'"
+      >
+        <mat-icon
+          [fontIcon]="assistant.voiceEnabled() ? 'volume_up' : 'volume_off'"
+          class="text-sm w-3.5 h-3.5"
+        ></mat-icon>
+      </app-button>
+      <app-button variant="danger" size="sm" (onClick)="assistant.clear()">
+        <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Pulisci
+      </app-button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto flex flex-col items-center gap-6 px-6 py-8">
+    <!-- Mic orb -->
+    <div class="orb-wrap">
+      @if (assistant.listening() || assistant.processing()) {
+        <span
+          class="orb-ring"
+          [class.thinking]="assistant.processing() && !assistant.listening()"
+        ></span>
+      }
+      <button
+        class="orb"
+        [class.listening]="assistant.listening()"
+        [class.thinking]="assistant.processing()"
+        [disabled]="assistant.processing()"
+        (click)="assistant.toggleListening()"
+        [attr.aria-label]="assistant.listening() ? 'Stop listening' : 'Start listening'"
+      >
+        <mat-icon [fontIcon]="assistant.listening() ? 'stop' : 'mic'" class="orb-icon"></mat-icon>
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div
+      class="status-line font-[var(--font-mono)] text-xs text-[var(--text-2)] tracking-widest uppercase"
+    >
+      @if (assistant.listening()) {
+        <span class="flex items-center gap-2">
+          <span class="rec-dot"></span>
+          {{ statusText() }}
+          @if (assistant.recordingTimer()) {
+            <span class="text-[var(--text-2)]">{{ assistant.recordingTimer() }}</span>
+          }
+        </span>
+      } @else if (assistant.processing()) {
+        <span class="flex items-center gap-2">
+          <mat-icon fontIcon="hourglass_empty" class="animate-spin text-sm w-3.5 h-3.5"></mat-icon>
+          {{ statusText() }}
+        </span>
+      } @else if (assistant.speaking()) {
+        <span class="flex items-center gap-2">
+          <span class="speaking-bars"><i></i><i></i><i></i></span>
+          {{ statusText() }}
+        </span>
+      } @else {
+        {{ statusText() }}
+      }
+    </div>
+
+    <!-- Transcript -->
+    @if (assistant.transcript()) {
+      <div class="w-full max-w-2xl bg-[var(--bg-2)] border border-[var(--border)] rounded-2xl p-4">
+        <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-1.5">
+          Hai detto
+        </div>
+        <p class="text-sm text-[var(--text-0)] font-[var(--font-body)]">
+          “{{ assistant.transcript() }}”
+        </p>
+      </div>
+    }
+
+    <!-- Task queue -->
+    @if (assistant.tasks().length) {
+      <div class="w-full max-w-2xl">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)]">
+            Compiti ricevuti ({{ doneCount() }}/{{ assistant.tasks().length }})
+          </span>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          @for (task of assistant.tasks(); track task.id) {
+            <div
+              class="flex items-center gap-3 bg-[var(--bg-2)] border border-[var(--border)] rounded-xl px-3.5 py-2.5"
+            >
+              <mat-icon
+                [fontIcon]="taskIcon(task.type)"
+                class="text-base w-4 h-4 text-[var(--text-2)] shrink-0"
+              ></mat-icon>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-[var(--text-0)] truncate">
+                  {{ task.text || typeLabel(task.type) }}
+                </div>
+                @if (task.result) {
+                  <div class="text-[11px] text-[var(--text-2)] truncate">{{ task.result }}</div>
+                }
+              </div>
+              <span class="text-[10px] font-mono uppercase tracking-wider shrink-0">
+                {{ typeLabel(task.type) }}
+              </span>
+              <mat-icon
+                [fontIcon]="statusIcon(task.status)"
+                class="text-base w-4 h-4 shrink-0"
+                [class]="statusClass(task.status)"
+                [class.animate-spin]="task.status === 'running'"
+              ></mat-icon>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Conversation log -->
+    @if (assistant.log().length) {
+      <div class="w-full max-w-2xl">
+        <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] mb-2">
+          Conversazione
+        </div>
+        <div class="flex flex-col gap-3">
+          @for (entry of assistant.log(); track entry.id) {
+            <div class="flex gap-3" [class.justify-end]="entry.role === 'user'">
+              @if (entry.role === 'ai') {
+                <div
+                  class="w-7 h-7 rounded-full shrink-0 bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] flex items-center justify-center text-[11px] font-bold text-black"
+                >
+                  I
+                </div>
+              }
+              <div
+                class="max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap"
+                [class]="
+                  entry.role === 'ai'
+                    ? 'bg-[var(--bg-3)] border border-[var(--border)] text-[var(--text-0)]'
+                    : 'bg-[var(--accent-blue)]/15 border border-[var(--border-active)] text-[var(--text-0)]'
+                "
+                [innerHTML]="html(entry.text)"
+              ></div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Help hint -->
+    <div class="text-[11px] font-mono text-[var(--text-2)] text-center max-w-md leading-relaxed">
+      Esempi: “aggiungi chiamare il cliente, poi preparare le slide” · “apri email” · “che compiti
+      ho?” · “quanto fa 2+2?”
+    </div>
+  </div>
+</div>

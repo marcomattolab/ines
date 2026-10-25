@@ -1,0 +1,172 @@
+/* INES Voice — mic orb and status animations */
+
+.orb-wrap {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.orb {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(86, 217, 255, 0.28),
+    rgba(17, 23, 37, 0.9) 70%
+  );
+  color: var(--text-0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    var(--shadow-lg),
+    0 0 32px rgba(86, 217, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.3s var(--spring-easing),
+    box-shadow 0.3s var(--spring-easing),
+    background 0.3s var(--spring-easing);
+}
+
+.orb:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 44px rgba(86, 217, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.orb:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.orb:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.orb.listening {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(255, 122, 168, 0.4),
+    rgba(17, 23, 37, 0.92) 70%
+  );
+  box-shadow:
+    var(--shadow-lg),
+    0 0 44px rgba(255, 122, 168, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.orb.thinking {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(130, 183, 255, 0.38),
+    rgba(17, 23, 37, 0.92) 70%
+  );
+  box-shadow:
+    var(--shadow-lg),
+    0 0 44px rgba(130, 183, 255, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.orb-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+/* Expanding pulse ring */
+.orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(86, 217, 255, 0.45);
+  animation: ringPulse 1.8s var(--spring-easing) infinite;
+  pointer-events: none;
+}
+
+.orb-ring.thinking {
+  border-color: rgba(130, 183, 255, 0.45);
+  animation-duration: 1.2s;
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+/* Recording dot */
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-rose);
+  animation: recBlink 1s step-end infinite;
+}
+
+@keyframes recBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Speaking equalizer bars */
+.speaking-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.speaking-bars i {
+  width: 3px;
+  background: var(--accent-cyan);
+  border-radius: 2px;
+  animation: barBounce 0.9s ease-in-out infinite;
+}
+
+.speaking-bars i:nth-child(1) {
+  height: 6px;
+  animation-delay: 0s;
+}
+
+.speaking-bars i:nth-child(2) {
+  height: 12px;
+  animation-delay: 0.15s;
+}
+
+.speaking-bars i:nth-child(3) {
+  height: 9px;
+  animation-delay: 0.3s;
+}
+
+@keyframes barBounce {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}

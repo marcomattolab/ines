@@ -48,6 +48,7 @@
 
   <!-- Main panels -->
   <main id="main">
+    <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
     <app-chat-tab [hidden]="activeTab() !== 'chat'" />
     <app-email-tab [hidden]="activeTab() !== 'email'" />
     <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />

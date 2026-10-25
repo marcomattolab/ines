@@ -17,8 +17,11 @@ import { ProjectTabComponent } from './components/project-tab/project-tab.compon
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
+import { VoiceAssistantService } from './core/services/voice-assistant.service';
+import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
 
 type Tab =
+  | 'assistant'
   | 'chat'
   | 'email'
   | 'meeting'
@@ -42,6 +45,7 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
+  { id: 'assistant', icon: 'record_voice_over', label: 'Voice', color: 'var(--tab-assistant)' },
   { id: 'chat', icon: 'message-square', label: 'Chat', color: 'var(--tab-chat)' },
   { id: 'email', icon: 'mail', label: 'Email', color: 'var(--tab-email)' },
   { id: 'meeting', icon: 'mic', label: 'Meeting', color: 'var(--tab-meeting)' },
@@ -82,6 +86,7 @@ const TABS: TabDef[] = [
   standalone: true,
   imports: [
     StatusBarComponent,
+    VoiceTabComponent,
     LoaderOverlayComponent,
     InfoModalComponent,
     ChatTabComponent,
@@ -115,6 +120,7 @@ export class AppComponent implements OnInit {
   isLightTheme = signal(false);
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
+  readonly assistant = inject(VoiceAssistantService);
 
   ngOnInit() {
     window.addEventListener('online', () => this.isOnline.set(true));
@@ -224,5 +230,13 @@ export class AppComponent implements OnInit {
 
   private themeEffect = effect(() => {
     document.body.classList.toggle('theme-light', this.isLightTheme());
+  });
+
+  private navEffect = effect(() => {
+    const tab = this.assistant.requestedTab();
+    if (tab && this.tabs.some((t) => t.id === tab)) {
+      this.selectCommandTab(tab as Tab);
+      this.assistant.requestedTab.set(null);
+    }
   });
 }

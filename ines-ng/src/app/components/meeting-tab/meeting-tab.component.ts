@@ -91,10 +91,12 @@ export class MeetingTabComponent implements OnDestroy {
     }
 
     this.summary.set('...');
-    const prompt = this.llm.buildPrompt(SYSTEM_MEETING, `TRANSCRIPT OF THE MEETING:\n${text}`);
     try {
-      await this.llm.generate(prompt, (_, done, full) =>
-        this.summary.set(full + (done ? '' : ' ▋')),
+      await this.llm.generate(
+        SYSTEM_MEETING,
+        `TRANSCRIPT OF THE MEETING:\n${text}`,
+        [],
+        (_, done, full) => this.summary.set(full + (done ? '' : ' ▋')),
       );
     } catch (e: any) {
       const msg = e.message?.includes('INVALID_ARGUMENT')

@@ -303,24 +303,27 @@ export class TodoTabComponent implements OnDestroy {
     ]);
     textarea.value = '';
 
-    const prompt = this.llm.buildPrompt(SYSTEM_TODO, `Today I have to do: ${desc}. Plan my day.`);
-
     try {
       let fullText = '';
-      await this.llm.generate(prompt, (_, done, full) => {
-        fullText = full;
-        this.aiMessages.update((m) =>
-          m.map((msg) =>
-            msg.id === typingId
-              ? {
-                  ...msg,
-                  typing: false,
-                  text: done ? 'Parsing tasks...' : full.substring(0, 80) + '...',
-                }
-              : msg,
-          ),
-        );
-      });
+      await this.llm.generate(
+        SYSTEM_TODO,
+        `Today I have to do: ${desc}. Plan my day.`,
+        [],
+        (_, done, full) => {
+          fullText = full;
+          this.aiMessages.update((m) =>
+            m.map((msg) =>
+              msg.id === typingId
+                ? {
+                    ...msg,
+                    typing: false,
+                    text: done ? 'Parsing tasks...' : full.substring(0, 80) + '...',
+                  }
+                : msg,
+            ),
+          );
+        },
+      );
 
       const data = this.jsonParser.parseObject<{
         tasks: { text: string; priority: string; category?: string }[];

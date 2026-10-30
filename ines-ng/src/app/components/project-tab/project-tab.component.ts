@@ -266,12 +266,10 @@ export class ProjectTabComponent implements OnInit {
         448,
         64,
       );
-      const fullPrompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
-
       const assistantMsg: ChatMessage = { role: 'assistant', content: '' };
       this.messages.update((m) => [...m, assistantMsg]);
 
-      await this.llm.generate(fullPrompt, (_, done, full) => {
+      await this.llm.generate(systemPrompt, text, trimmed, (_, done, full) => {
         this.messages.update((msgs) => {
           const newMsgs = [...msgs];
           newMsgs[newMsgs.length - 1].content = full;

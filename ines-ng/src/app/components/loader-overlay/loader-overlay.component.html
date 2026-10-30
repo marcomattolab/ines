@@ -44,8 +44,8 @@
         Load a local LLM model
       </h2>
       <p class="text-[var(--text-1)] text-[13.5px] leading-[1.7]">
-        This tool uses <strong>Google MediaPipe LLM Inference API</strong> to run models completely
-        in the browser via WebGPU — no data sent to external servers.
+        This tool uses <strong>Google LiteRT-LM Web API</strong> to run models completely in the
+        browser via WebGPU — no data sent to external servers.
       </p>
 
       <div class="flex flex-col gap-3 p-4 rounded-xl border border-[var(--border)] bg-white/[0.02]">
@@ -126,14 +126,26 @@
             1
           </div>
           <div>
-            Download a compatible model from HuggingFace: <br /><a
-              href="https://huggingface.co/litert-community/Gemma3-1B-IT"
+            Download a compatible <strong>.litertlm</strong> model from HuggingFace: <br /><a
+              href="https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-gpu.litertlm"
               target="_blank"
               class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
-              >Gemma-3 1B IT (.task, ~1GB, recommended)</a
+              >Gemma 4 E2B (.litertlm, ~2.6GB, recommended)</a
             >
             <br /><a
-              href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm"
+              href="https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it-gpu.litertlm"
+              target="_blank"
+              class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
+              >Gemma 4 E4B (.litertlm, ~3.7GB)</a
+            >
+            <br /><a
+              href="https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.litertlm"
+              target="_blank"
+              class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
+              >Gemma-3 1B IT (.litertlm, ~1GB, lightweight)</a
+            >
+            <br /><a
+              href="https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4-Web.litertlm"
               target="_blank"
               class="text-[var(--accent-blue)] no-underline font-medium hover:underline"
               >Gemma-3n E2B (.litertlm, ~2GB, multimodal)</a
@@ -148,7 +160,7 @@
           >
             2
           </div>
-          <div>Drag and drop the .task or .litertlm file here (stays 100% local)</div>
+          <div>Drag and drop the .litertlm file here (stays 100% local)</div>
         </div>
         <div
           class="flex items-start gap-2.5 text-[12.5px] text-[var(--text-1)] font-[var(--font-mono)] leading-[1.5]"
@@ -173,7 +185,7 @@
         <input
           #fileInput
           type="file"
-          accept=".task,.litertlm,.bin"
+          accept=".litertlm"
           class="hidden"
           (change)="onFileChange($event)"
         />

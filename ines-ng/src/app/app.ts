@@ -220,12 +220,12 @@ export class AppComponent implements OnInit {
   private async checkSessionFallback() {
     try {
       if (sessionStorage.getItem('model_loaded_previously') === 'true') {
-        const url = '/models/gemma3-1b-it-int8-web.task';
+        const url = '/models/gemma3-1b-it-int4.litertlm';
         try {
           const res = await fetch(url, { method: 'HEAD' });
           const cl = parseInt(res.headers.get('content-length') || '0', 10);
           if (res.ok && cl > 100 * 1024 * 1024) {
-            await this.llm.initModelFromUrl(url, 'gemma3-1b-it-int8-web.task');
+            await this.llm.initModelFromUrl(url, 'gemma3-1b-it-int4.litertlm');
             this.overlayOpen.set(false);
             return;
           }

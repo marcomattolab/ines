@@ -288,7 +288,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const contextParts: string[] = [];
 
     // Second brain: saved notes
-    const notes = this.brain.search(text).slice(0, 5);
+    const notes = (await this.brain.searchSemantic(text)).slice(0, 5);
     if (notes.length > 0) {
       sourceNames.push('Brain');
       contextParts.push('## Saved notes\n' + notes.map((n) => `- ${n.text}`).join('\n'));
@@ -313,13 +313,14 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
-    const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
     const aiId = this.nextId++;
 
     try {
       let full = '';
       await this.llm.generate(
-        prompt,
+        systemPrompt,
+        text,
+        trimmed,
         (_, done, fullText) => {
           full = fullText;
           if (this.typing()) {

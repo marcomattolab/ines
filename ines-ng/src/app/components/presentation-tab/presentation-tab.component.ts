@@ -265,25 +265,28 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
           : '',
       );
 
-    const prompt = this.llm.buildPrompt(systemPrompt, 'Generate the presentation now.');
-
     try {
       let full = '';
-      await this.llm.generate(prompt, (_, done, fullText) => {
-        full = fullText;
-        const cleaned = this.sanitizeLightBackgrounds(
-          this.sanitizeDarkColors(
-            fullText
-              .replace(/```html\s*/gi, '')
-              .replace(/```\s*$/g, '')
-              .trim(),
-          ),
-        );
-        this.generatedHtml.set(this.injectNavigationScript(cleaned));
+      await this.llm.generate(
+        systemPrompt,
+        'Generate the presentation now.',
+        [],
+        (_, done, fullText) => {
+          full = fullText;
+          const cleaned = this.sanitizeLightBackgrounds(
+            this.sanitizeDarkColors(
+              fullText
+                .replace(/```html\s*/gi, '')
+                .replace(/```\s*$/g, '')
+                .trim(),
+            ),
+          );
+          this.generatedHtml.set(this.injectNavigationScript(cleaned));
 
-        const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
-        this.slideCount.set(count);
-      });
+          const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
+          this.slideCount.set(count);
+        },
+      );
 
       const cleaned = this.sanitizeLightBackgrounds(
         this.sanitizeDarkColors(

@@ -335,11 +335,10 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 ${chunks.length > 0 ? 'Context:\n' + ctx : 'No relevant documents found — answer from your own knowledge.'}`;
 
       const trimmed = this.llm.trimConversation(system, text, this.messages().slice(-6, -1));
-      const prompt = this.llm.buildPrompt(system, text, trimmed);
       this.messages.update((m) => [...m, { role: 'assistant', content: '' }]);
 
       let full = '';
-      await this.llm.generate(prompt, (_, done, fullText) => {
+      await this.llm.generate(system, text, trimmed, (_, done, fullText) => {
         full = fullText;
         this.messages.update((msgs) => {
           const n = [...msgs];
@@ -412,8 +411,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 
     try {
       const trimmed = this.llm.trimConversation(system, 'Generate a mindmap.', []);
-      const prompt = this.llm.buildPrompt(system, 'Generate a mindmap.', trimmed);
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(system, 'Generate a mindmap.', trimmed, () => {});
       const code = this.cleanMermaidCode(result);
       await this.renderMindMap(code);
       this.isMindMapPlaceholder = false;
@@ -540,8 +538,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 
     try {
       const trimmed = this.llm.trimConversation(system, `Generate ${nq} quiz questions.`, []);
-      const prompt = this.llm.buildPrompt(system, `Generate ${nq} quiz questions.`, trimmed);
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(
+        system,
+        `Generate ${nq} quiz questions.`,
+        trimmed,
+        () => {},
+      );
       const parsed = this.jsonParser.parseArray<any>(result);
       if (!parsed?.length) throw new Error('No questions parsed');
       const norm: QuizQuestion[] = parsed.map((q: any) => {
@@ -624,11 +626,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     const system =
       'Generate 15-20 flashcards (Q&A pairs). Output ONLY CSV: front,back. No headers. One per line.';
     try {
-      const prompt = this.llm.buildPrompt(
+      const result = await this.llm.generate(
         system,
         `Context:\n${chunks.map((c) => c.text).join('\n\n')}\n\nGenerate flashcards:`,
+        [],
+        () => {},
       );
-      const result = await this.llm.generate(prompt, () => {});
       this.flashcardsText.set(result);
     } catch (err: any) {
       this.flashcardsText.set('Error: ' + err.message);
@@ -660,8 +663,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Create a study plan.');
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(system, 'Create a study plan.', [], () => {});
       this.studyPlan.set(result);
     } catch (err: any) {
       this.studyPlan.set('Error: ' + err.message);
@@ -685,8 +687,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Summarize the documents.');
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(system, 'Summarize the documents.', [], () => {});
       this.summaryText.set(result);
     } catch (err: any) {
       this.summaryText.set('Error: ' + err.message);
@@ -711,8 +712,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Generate fill-in-the-blank exercises as JSON.');
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(
+        system,
+        'Generate fill-in-the-blank exercises as JSON.',
+        [],
+        () => {},
+      );
       const parsed = this.jsonParser.parseArray<any>(result);
       const valid = (parsed || []).filter((f: any) => f.text && f.answer);
       if (valid.length === 0) throw new Error('No exercises parsed');
@@ -767,8 +772,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Generate matching pairs as JSON.');
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(
+        system,
+        'Generate matching pairs as JSON.',
+        [],
+        () => {},
+      );
       const parsed = this.jsonParser.parseArray<any>(result);
       const valid = (parsed || []).filter((m: any) => m.term && m.definition);
       if (valid.length === 0) throw new Error('No pairs parsed');
@@ -840,8 +849,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
 Context:
 ${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Generate open-ended question as JSON.');
-      const result = await this.llm.generate(prompt, () => {});
+      const result = await this.llm.generate(
+        system,
+        'Generate open-ended question as JSON.',
+        [],
+        () => {},
+      );
       const parsed = this.jsonParser.parse(result) as any;
       if (parsed?.question) {
         this.openQuestion.set(parsed.question);
@@ -866,9 +879,8 @@ Question: ${this.openQuestion()}
 Expected points: ${this.openFeedback()}
 Answer: ${a}`;
     try {
-      const prompt = this.llm.buildPrompt(system, 'Evaluate.');
       let full = '';
-      await this.llm.generate(prompt, (_, __, f) => {
+      await this.llm.generate(system, 'Evaluate.', [], (_, __, f) => {
         full = f;
       });
       this.openFeedback.set(full);

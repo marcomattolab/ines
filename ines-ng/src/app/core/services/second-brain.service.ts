@@ -345,12 +345,15 @@ export class SecondBrainService {
       pinned: false,
       kind: 'note',
       folder,
-      embedding:
-        this.embeddings.status() === 'ready'
-          ? (this.embeddings.embed(clean) ?? undefined)
-          : undefined,
     };
     this.notes.update((list) => [note, ...list]);
+    // Embed asynchronously (best-effort) so the note is searchable semantically.
+    if (this.embeddings.status() === 'ready') {
+      void this.embeddings.embedDocument(clean).then((embedding) => {
+        if (!embedding) return;
+        this.notes.update((list) => list.map((n) => (n.id === note.id ? { ...n, embedding } : n)));
+      });
+    }
     return note;
   }
 
@@ -366,12 +369,18 @@ export class SecondBrainService {
     this.notes.set([]);
   }
 
+  /** Synchronous BM25 search (used in computed signals / folder browsing). */
   search(query: string): BrainNote[] {
-    if (this.embeddings.status() === 'ready') {
-      const queryEmbedding = this.embeddings.embed(query);
-      if (queryEmbedding) return rankByEmbedding(this.notes(), queryEmbedding);
-    }
     return searchNotes(this.notes(), query);
+  }
+
+  /** Semantic search over notes (async embedding + vector ranking, BM25 fallback). */
+  async searchSemantic(query: string): Promise<BrainNote[]> {
+    if (this.embeddings.status() !== 'ready') return this.search(query);
+    const queryEmbedding = await this.embeddings.embedQuery(query);
+    if (!queryEmbedding) return this.search(query);
+    const ranked = rankByEmbedding(this.notes(), queryEmbedding);
+    return ranked.length ? ranked : this.search(query);
   }
 
   /** Loads the embedder in the background and backfills missing note embeddings. */
@@ -381,11 +390,22 @@ export class SecondBrainService {
     } catch {
       return; // semantic search unavailable — stays on the BM25 index
     }
+    const stale = !this.embeddings.isCurrentModel();
+    const missing = this.notes().filter((n) => !n.embedding || stale);
+    if (missing.length === 0) {
+      if (stale) this.embeddings.markCurrentModel();
+      return;
+    }
+    const embeddings = await this.embeddings.embedDocuments(missing.map((n) => n.text));
+    const byId = new Map(missing.map((n, i) => [n.id, embeddings[i]]));
     this.notes.update((list) =>
-      list.map((n) =>
-        n.embedding ? n : { ...n, embedding: this.embeddings.embed(n.text) ?? undefined },
-      ),
+      list.map((n) => {
+        if (!byId.has(n.id)) return n;
+        const embedding = byId.get(n.id);
+        return embedding ? { ...n, embedding } : { ...n, embedding: undefined };
+      }),
     );
+    this.embeddings.markCurrentModel();
   }
 
   exportMarkdown(): string {
@@ -414,10 +434,8 @@ export class SecondBrainService {
 
     const toCompress = working.slice(keepRecent);
     const content = toCompress.map((n) => `- ${n.text}`).join('\n');
-    const prompt = this.llm.buildPrompt(CONSOLIDATE_SYSTEM, content);
-
     let summary = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(CONSOLIDATE_SYSTEM, content, [], (_, __, full) => {
       summary = full;
     });
 
@@ -443,7 +461,7 @@ export class SecondBrainService {
       throw new Error('Load the model for memory recall.');
     }
 
-    const notes = this.search(query).slice(0, 6);
+    const notes = (await this.searchSemantic(query)).slice(0, 6);
     let chunks: { text: string; docName: string }[] = [];
     try {
       chunks = await this.km.getRelevantChunks(query, 3, 300);
@@ -461,9 +479,8 @@ export class SecondBrainService {
     const context = parts.join('\n\n');
     const system = RECALL_SYSTEM + (context ? `\n\nMemory contents:\n${context}` : '');
 
-    const prompt = this.llm.buildPrompt(system, query);
     let answer = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(system, query, [], (_, __, full) => {
       answer = full;
     });
     return answer;

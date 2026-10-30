@@ -123,15 +123,16 @@ export class EmailTabComponent implements OnDestroy {
       summary: `Summarize the key points of this email in 3-5 bullet points.`,
     };
 
-    const prompt = this.llm.buildPrompt(
-      SYSTEM_EMAIL,
-      `${actionMap[this.action()]}\n\nEMAIL:\n${emailText}`,
-    );
     this.processing.set(true);
     this.result.set(' ');
 
     try {
-      await this.llm.generate(prompt, (_, _done, full) => this.result.set(full));
+      await this.llm.generate(
+        SYSTEM_EMAIL,
+        `${actionMap[this.action()]}\n\nEMAIL:\n${emailText}`,
+        [],
+        (_, _done, full) => this.result.set(full),
+      );
     } catch (e: any) {
       const msg = e.message?.includes('INVALID_ARGUMENT')
         ? 'Conversation too long. Try shorter text.'

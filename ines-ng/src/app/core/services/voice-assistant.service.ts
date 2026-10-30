@@ -210,9 +210,8 @@ export class VoiceAssistantService {
     let llmResult: ParsedTask[] | null = null;
     if (this.llm.isReady() && !this.llm.isBusy()) {
       try {
-        const prompt = this.llm.buildPrompt(SYSTEM_VOICE, text);
         let raw = '';
-        await this.llm.generate(prompt, (_, __, full) => {
+        await this.llm.generate(SYSTEM_VOICE, text, [], (_, __, full) => {
           raw = full;
         });
         llmResult = this.jsonParser
@@ -347,10 +346,9 @@ export class VoiceAssistantService {
     }
 
     const trimmed = this.llm.trimConversation(system, question, this.history.slice(-6, -1));
-    const prompt = this.llm.buildPrompt(system, question, trimmed);
 
     let answer = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(system, question, trimmed, (_, __, full) => {
       answer = full;
     });
     this.history.push({ role: 'assistant', content: answer });
@@ -363,9 +361,8 @@ export class VoiceAssistantService {
     if (!this.llm.isReady()) {
       throw new Error('Load the model to draft emails.');
     }
-    const prompt = this.llm.buildPrompt(SYSTEM_EMAIL_DRAFT, description);
     let draft = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(SYSTEM_EMAIL_DRAFT, description, [], (_, __, full) => {
       draft = full;
     });
     this.emailDraft.set(draft.trim());
@@ -379,9 +376,8 @@ export class VoiceAssistantService {
     if (!this.llm.isReady()) {
       throw new Error('Load the model to translate.');
     }
-    const prompt = this.llm.buildPrompt(SYSTEM_TRANSLATE, text);
     let out = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(SYSTEM_TRANSLATE, text, [], (_, __, full) => {
       out = full;
     });
     this.addLog('ai', out);
@@ -393,9 +389,8 @@ export class VoiceAssistantService {
     if (!this.llm.isReady()) {
       throw new Error('Load the model to create agents.');
     }
-    const prompt = this.llm.buildPrompt(SYSTEM_AGENT, description);
     let raw = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(SYSTEM_AGENT, description, [], (_, __, full) => {
       raw = full;
     });
     const data = this.jsonParser.parseObject<{
@@ -438,14 +433,15 @@ export class VoiceAssistantService {
       .map((e) => `From: ${e.from}\nSubject: ${e.subject}\n${e.snippet}`)
       .join('\n\n---\n\n');
     const request = text.trim() || 'Summarize my recent inbox emails.';
-    const prompt = this.llm.buildPrompt(
+    let summary = '';
+    await this.llm.generate(
       SYSTEM_GMAIL,
       `User request: ${request}\n\nInbox emails:\n${joined}`,
+      [],
+      (_, __, full) => {
+        summary = full;
+      },
     );
-    let summary = '';
-    await this.llm.generate(prompt, (_, __, full) => {
-      summary = full;
-    });
     this.addLog('ai', summary);
     this.enqueueSpeech(summary);
     return categorize
@@ -523,9 +519,8 @@ export class VoiceAssistantService {
       emails.forEach((e) => lines.push(`- ${e.from}: ${e.subject}`));
     }
 
-    const prompt = this.llm.buildPrompt(SYSTEM_DIGEST, lines.join('\n'));
     let summary = '';
-    await this.llm.generate(prompt, (_, __, full) => {
+    await this.llm.generate(SYSTEM_DIGEST, lines.join('\n'), [], (_, __, full) => {
       summary = full;
     });
     this.addLog('ai', summary);

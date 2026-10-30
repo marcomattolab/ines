@@ -95,12 +95,10 @@ export class TranslateTabComponent implements OnDestroy {
 
     const srcDesc = this.fromLang() === 'auto' ? 'detected language' : this.fromLang();
     const instruction = `Translate the following text from ${srcDesc} to ${this.toLang()}:\n\n${this.inputText()}`;
-    const prompt = this.llm.buildPrompt(SYSTEM_TRANSLATE, instruction);
-
     this.translating.set(true);
     this.result.set(' ');
     try {
-      await this.llm.generate(prompt, (_, done, full) => {
+      await this.llm.generate(SYSTEM_TRANSLATE, instruction, [], (_, done, full) => {
         this.result.set(full);
         this.translating.set(!done);
       });

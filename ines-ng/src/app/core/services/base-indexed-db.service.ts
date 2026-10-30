@@ -170,6 +170,12 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
       this.processingStatus.set(`Chunking "${file.name}"...`);
       const rawChunks = this.chunkText(text, file.name, docId);
 
+      // Precompute embeddings before opening the transaction (async batch).
+      const chunkEmbeddings =
+        this.embeddings.status() === 'ready'
+          ? await this.embeddings.embedDocuments(rawChunks.map((r) => r.text))
+          : rawChunks.map(() => null);
+
       const db = await this.ensureDB();
       const tx = db.transaction([this.documentStore, this.chunkStore], 'readwrite');
       const docStore = tx.objectStore(this.documentStore);
@@ -177,16 +183,14 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
 
       docStore.put(doc);
 
-      for (const raw of rawChunks) {
+      for (let i = 0; i < rawChunks.length; i++) {
+        const raw = rawChunks[i];
         const chunkHash = await this.computeHash(raw.text);
         const chunk: BaseChunk = {
           id: crypto.randomUUID(),
           ...raw,
           hash: chunkHash,
-          embedding:
-            this.embeddings.status() === 'ready'
-              ? (this.embeddings.embed(raw.text) ?? undefined)
-              : undefined,
+          embedding: chunkEmbeddings[i] ?? undefined,
         };
         chunkStore.put(chunk);
       }
@@ -212,16 +216,23 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
       return;
     }
     this.embeddingsBackfilled = true;
+    const stale = !this.embeddings.isCurrentModel();
     const all = await this.getAllFromStore<TChunk>(this.chunkStore);
-    const missing = all.filter((c) => !c.embedding);
-    if (missing.length === 0) return;
+    const missing = all.filter((c) => !c.embedding || stale);
+    if (missing.length === 0) {
+      if (stale) this.embeddings.markCurrentModel();
+      return;
+    }
+    const embeddings = await this.embeddings.embedDocuments(missing.map((c) => c.text));
     const db = await this.ensureDB();
     const tx = db.transaction(this.chunkStore, 'readwrite');
     const store = tx.objectStore(this.chunkStore);
-    for (const c of missing) {
-      const emb = this.embeddings.embed(c.text);
+    missing.forEach((c, i) => {
+      const emb = embeddings[i];
       if (emb) store.put({ ...c, embedding: emb });
-    }
+      else if (stale) store.put({ ...c, embedding: undefined });
+    });
+    this.embeddings.markCurrentModel();
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
@@ -233,7 +244,7 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
     topK: number,
     maxWords: number,
   ): Promise<RagResult[]> {
-    const queryEmbedding = this.embeddings.embed(query);
+    const queryEmbedding = await this.embeddings.embedQuery(query);
     if (!queryEmbedding) return [];
     const all = await this.getAllFromStore<TChunk>(this.chunkStore);
     const scored = all

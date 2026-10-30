@@ -1117,12 +1117,11 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     );
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
-    const prompt = this.llm.buildPrompt(systemPrompt, text, trimmed);
     const aiId = this.nextId++;
 
     try {
       let full = '';
-      await this.llm.generate(prompt, (_, done, fullText) => {
+      await this.llm.generate(systemPrompt, text, trimmed, (_, done, fullText) => {
         full = fullText;
         if (this.typing()) {
           this.typing.set(false);

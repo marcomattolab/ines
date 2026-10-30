@@ -1783,16 +1783,19 @@ export class VisionTabComponent implements OnDestroy {
     const context = this.buildVisionContext();
     const system =
       "You are an on-device edge AI vision assistant. Analyze the user's current state based on the vision data below. Keep responses to 2-3 short sentences. Be insightful but concise.";
-    const prompt = this.llm.buildPrompt(system, `Current vision state: ${context}`);
-
     try {
-      await this.llm.generate(prompt, (partial, done, full) => {
-        this.aiInsightText.set(full);
-        if (done) {
-          this.aiInsightLoading.set(false);
-          this.addNotification('psychology', 'AI insight generated', 'purple');
-        }
-      });
+      await this.llm.generate(
+        system,
+        `Current vision state: ${context}`,
+        [],
+        (partial, done, full) => {
+          this.aiInsightText.set(full);
+          if (done) {
+            this.aiInsightLoading.set(false);
+            this.addNotification('psychology', 'AI insight generated', 'purple');
+          }
+        },
+      );
     } catch (err) {
       this.aiInsightText.set('Failed to generate insight: ' + err);
       this.aiInsightLoading.set(false);

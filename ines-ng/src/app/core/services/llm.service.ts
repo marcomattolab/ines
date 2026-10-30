@@ -12,8 +12,38 @@ export interface ChatMessage {
   content: string;
 }
 
-const MEDIAPIPE_GENAI_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai';
-const MEDIAPIPE_GENAI_WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm';
+/**
+ * LiteRT-LM Web API (the replacement for the deprecated MediaPipe LLM
+ * Inference API). Pinned to an exact version because the JS API is currently
+ * in Early Preview. WASM is auto-loaded from the package's `wasm/` directory.
+ */
+const LITERTLM_CORE_URL = 'https://cdn.jsdelivr.net/npm/@litert-lm/core@0.19.0/+esm';
+
+// Shared dynamic-import promise — the module is loaded once per page.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let litertlmModulePromise: Promise<any> | null = null;
+
+function importLiteRtLm(): Promise<any> {
+  if (!litertlmModulePromise) {
+    // Dynamic CDN import at runtime — Function() bypasses TS static analysis.
+    litertlmModulePromise = new Function('url', 'return import(url)')(LITERTLM_CORE_URL);
+  }
+  return litertlmModulePromise!;
+}
+
+/** Extracts the text content from a LiteRT-LM streaming message chunk. */
+function extractMessageText(msg: any): string {
+  if (!msg) return '';
+  const content = msg.content;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((part: any) => part?.type === 'text')
+      .map((part: any) => part?.text ?? '')
+      .join('');
+  }
+  return '';
+}
 
 @Injectable({ providedIn: 'root' })
 export class LlmService {
@@ -23,28 +53,46 @@ export class LlmService {
   readonly isReady = computed(() => this.modelStatus() === 'ready');
   readonly isBusy = signal(false);
 
+  readonly modelMaxTokens = signal(8192);
+  readonly temperature = signal(0.8);
+  readonly randomSeed = signal(101);
+  readonly topK = signal(40);
+  readonly requestCooldown = signal(0);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private llm: any = null;
+  private engine: any = null;
+  private lastRequestTime = 0;
 
   /**
-   * Loads the MediaPipe GenAI runtime once and returns the pieces needed to
-   * construct an LlmInference instance. Shared by all model-loading paths.
+   * Builds a LiteRT-LM Engine from a model source (URL, File or Blob).
+   * Passing the File/Blob directly — instead of buffering it into an
+   * ArrayBuffer first — avoids duplicating a multi-GB model in memory, which
+   * can otherwise crash the tab (white page) when loading large models.
    */
-  private async bootstrapWasm(): Promise<{ LlmInference: any; genai: any }> {
-    // Dynamic CDN import at runtime — Function() bypasses TS static analysis
-    const mediapipe = await new Function('url', 'return import(url)')(MEDIAPIPE_GENAI_URL);
-    const { FilesetResolver, LlmInference } = mediapipe;
-    const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_GENAI_WASM_URL);
-    return { LlmInference, genai };
+  private async createEngine(model: Blob | string): Promise<any> {
+    const { Engine } = await importLiteRtLm();
+    return Engine.create({ model });
   }
 
-  private createLlm(LlmInference: any, genai: any, modelBuffer: ArrayBuffer): Promise<any> {
-    return LlmInference.createFromOptions(genai, {
-      baseOptions: { modelAssetBuffer: new Uint8Array(modelBuffer) },
-      maxTokens: this.modelMaxTokens(),
-      topK: this.topK(),
-      temperature: this.temperature(),
-      randomSeed: this.randomSeed(),
+  /** Creates a fresh conversation with the system prompt and history as preface. */
+  private async createConversation(system: string, history: ChatMessage[]): Promise<any> {
+    const { SamplerType } = await importLiteRtLm();
+    return this.engine.createConversation({
+      preface: {
+        messages: [
+          { role: 'system', content: system },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+        ],
+      },
+      sessionConfig: {
+        maxOutputTokens: this.modelMaxTokens(),
+        samplerParams: {
+          type: SamplerType.TOP_K,
+          k: this.topK(),
+          temperature: this.temperature(),
+          seed: this.randomSeed(),
+        },
+      },
     });
   }
 
@@ -56,26 +104,21 @@ export class LlmService {
     }
     this.setProgress(100, 'Model ready!');
     this.modelStatus.set('ready');
-    this.modelName.set(fileName.replace(/\.(task|litertlm|bin)$/, ''));
+    this.modelName.set(fileName.replace(/\.(litertlm|task|bin)$/, ''));
   }
 
   async initModel(file: File): Promise<void> {
     this.modelStatus.set('loading');
-    this.setProgress(10, 'Initializing WASM runtime...');
+    this.setProgress(5, 'Initializing LiteRT-LM runtime...');
 
     try {
-      const { LlmInference, genai } = await this.bootstrapWasm();
-      this.setProgress(40, 'WASM ready. Loading model into GPU...');
+      this.setProgress(30, 'Loading model into GPU (this can take a while)...');
+      this.engine = await this.createEngine(file);
 
-      const modelBuffer = await file.arrayBuffer();
-      this.setProgress(60, 'Loading model into GPU (30–90 s)...');
-      this.llm = await this.createLlm(LlmInference, genai, modelBuffer);
-
-      try {
-        await this.saveModelToCache(file.name, modelBuffer);
-      } catch (cacheErr) {
-        console.warn('Failed to cache model in IndexedDB:', cacheErr);
-      }
+      // Cache in the background — don't block the UI on a multi-GB IndexedDB write.
+      void this.saveModelToCache(file.name, file).catch((cacheErr) =>
+        console.warn('Failed to cache model in IndexedDB:', cacheErr),
+      );
 
       this.markModelReady(file.name);
     } catch (err: any) {
@@ -91,9 +134,6 @@ export class LlmService {
     this.setProgress(5, 'Connecting to model stream...');
 
     try {
-      const { LlmInference, genai } = await this.bootstrapWasm();
-      this.setProgress(10, 'WASM ready. Fetching model file...');
-
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch model from ${url} (Status: ${response.status})`);
@@ -108,7 +148,7 @@ export class LlmService {
         throw new Error('Response body reader is not available');
       }
 
-      const chunks: Uint8Array[] = [];
+      const chunks: BlobPart[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -118,7 +158,7 @@ export class LlmService {
           if (total) {
             const pct = Math.floor((loaded / total) * 50); // Download is 0-50%
             this.setProgress(
-              pct + 10,
+              pct + 5,
               `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`,
             );
           } else {
@@ -127,26 +167,18 @@ export class LlmService {
         }
       }
 
-      this.setProgress(60, 'Loading model into GPU (30–90 s)...');
+      this.setProgress(55, 'Loading model into GPU (30–90 s)...');
 
-      const modelBuffer = new Uint8Array(loaded);
-      let pos = 0;
-      for (const chunk of chunks) {
-        modelBuffer.set(chunk, pos);
-        pos += chunk.length;
-      }
+      const modelBlob = new Blob(chunks);
+      this.engine = await this.createEngine(modelBlob);
 
-      this.llm = await this.createLlm(LlmInference, genai, modelBuffer.buffer);
-
-      this.setProgress(80, 'Caching model in browser storage...');
-      try {
-        await this.saveModelToCache(fileName, modelBuffer.buffer);
-      } catch (cacheErr) {
+      this.setProgress(85, 'Caching model in browser storage...');
+      void this.saveModelToCache(fileName, modelBlob).catch((cacheErr) =>
         console.warn(
           'Failed to cache model in IndexedDB (likely quota limit in incognito):',
           cacheErr,
-        );
-      }
+        ),
+      );
 
       this.markModelReady(fileName);
     } catch (err: any) {
@@ -156,23 +188,19 @@ export class LlmService {
     }
   }
 
-  readonly modelMaxTokens = signal(8192);
-  readonly temperature = signal(0.8);
-  readonly randomSeed = signal(101);
-  readonly topK = signal(40);
-  readonly requestCooldown = signal(0);
-  private lastRequestTime = 0;
-
-  static estimateTokens(text: string): number {
-    return Math.ceil(text.length / 4);
-  }
-
-  generate(
-    prompt: string,
+  /**
+   * Generates a response. `system` is the system prompt, `history` are prior
+   * turns (user/assistant), and `userMsg` is the current user message.
+   * `onToken` streams partial text; `done=true` fires once at the end.
+   */
+  async generate(
+    system: string,
+    userMsg: string,
+    history: ChatMessage[] = [],
     onToken: (partial: string, done: boolean, full: string) => void,
     signal?: AbortSignal,
   ): Promise<string> {
-    if (!this.llm) throw new Error('Model not loaded. Click "Load Model" first.');
+    if (!this.engine) throw new Error('Model not loaded. Click "Load Model" first.');
     if (this.isBusy())
       throw new Error('Model is busy processing another request. Wait for it to finish.');
 
@@ -186,46 +214,69 @@ export class LlmService {
     this.isBusy.set(true);
     this.lastRequestTime = now;
 
-    let emittedTokens = false;
+    const emitted = { value: false };
+    try {
+      return await this.withRetry(
+        () => this.runGeneration(system, userMsg, history, onToken, signal, emitted),
+        signal,
+        () => emitted.value,
+      );
+    } finally {
+      this.isBusy.set(false);
+    }
+  }
 
-    const doGenerate = (): Promise<string> =>
-      new Promise((resolve, reject) => {
-        let full = '';
-        if (signal?.aborted) {
-          this.isBusy.set(false);
-          reject(new DOMException('Aborted', 'AbortError'));
-          return;
-        }
-        const onAbort = () => {
-          this.isBusy.set(false);
-          reject(new DOMException('Aborted', 'AbortError'));
-        };
-        signal?.addEventListener('abort', onAbort, { once: true });
-        try {
-          this.llm.generateResponse(prompt, (partial: string, done: boolean) => {
-            if (partial) emittedTokens = true;
-            full += partial;
-            onToken(partial, done, full);
-            if (done) {
-              signal?.removeEventListener('abort', onAbort);
-              this.isBusy.set(false);
-              resolve(full);
-            }
-          });
-        } catch (e) {
-          signal?.removeEventListener('abort', onAbort);
-          this.isBusy.set(false);
-          reject(e);
-        }
-      });
+  /** One full generation attempt (fresh conversation per call, like the old stateless API). */
+  private async runGeneration(
+    system: string,
+    userMsg: string,
+    history: ChatMessage[],
+    onToken: (partial: string, done: boolean, full: string) => void,
+    signal: AbortSignal | undefined,
+    emitted: { value: boolean },
+  ): Promise<string> {
+    const conversation = await this.createConversation(system, history);
+    try {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
-    return this.withRetry(doGenerate, signal, () => emittedTokens);
+      const stream = conversation.sendMessageStreaming(userMsg);
+      const reader = stream.getReader();
+
+      let full = '';
+
+      const onAbort = () => {
+        // Cancelling the stream also cancels the underlying generation.
+        void reader.cancel().catch(() => undefined);
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+          if (done) break;
+          const text = extractMessageText(value);
+          if (text) {
+            emitted.value = true;
+            full += text;
+            onToken(text, false, full);
+          }
+        }
+      } finally {
+        signal?.removeEventListener('abort', onAbort);
+      }
+
+      onToken('', true, full);
+      return full;
+    } finally {
+      void conversation.delete().catch(() => undefined);
+    }
   }
 
   private async withRetry(
     fn: () => Promise<string>,
-    signal?: AbortSignal,
-    shouldAbortRetry?: () => boolean,
+    signal: AbortSignal | undefined,
+    shouldAbortRetry: () => boolean,
   ): Promise<string> {
     const maxRetries = 2;
     let lastError: unknown;
@@ -237,12 +288,11 @@ export class LlmService {
       } catch (err) {
         lastError = err;
         if (err instanceof DOMException && err.name === 'AbortError') throw err;
-        if (shouldAbortRetry?.()) throw err;
-        if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt) * 800;
-          await new Promise((r) => setTimeout(r, delay));
-          this.lastRequestTime = Date.now();
-        }
+        // Never retry once partial output has been shown (avoids duplicated text).
+        if (shouldAbortRetry() || attempt >= maxRetries) throw err;
+        const delay = Math.pow(2, attempt) * 800;
+        await new Promise((r) => setTimeout(r, delay));
+        this.lastRequestTime = Date.now();
       }
     }
     throw lastError;
@@ -274,26 +324,8 @@ export class LlmService {
     return trimmed;
   }
 
-  buildPrompt(system: string, userMsg: string, history: ChatMessage[] = []): string {
-    const safeUser = LlmService.sanitizePromptInput(userMsg);
-    let p = `<start_of_turn>user\n[SYSTEM]: ${system}\n\n`;
-    for (const h of history) {
-      p += `[PREVIOUS ${h.role.toUpperCase()}]: ${LlmService.sanitizePromptInput(h.content)}\n`;
-    }
-    p += `[USER]: ${safeUser}<end_of_turn>\n<start_of_turn>model\n`;
-    return p;
-  }
-
-  static sanitizePromptInput(text: string): string {
-    return text
-      .replace(/<\|endoftext\|>/gi, '')
-      .replace(/<start_of_turn>/gi, '')
-      .replace(/<end_of_turn>/gi, '')
-      .replace(/<\|im_start\|>/gi, '')
-      .replace(/<\|im_end\|>/gi, '')
-      .replace(/<\|user\|>/gi, '')
-      .replace(/<\|assistant\|>/gi, '')
-      .replace(/<\|system\|>/gi, '');
+  static estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
   }
 
   private setProgress(pct: number, label: string) {
@@ -325,7 +357,9 @@ export class LlmService {
         tx.oncomplete = () => {
           try {
             sessionStorage.removeItem('model_loaded_previously');
-          } catch {}
+          } catch {
+            /* best effort */
+          }
           resolve();
         };
         tx.onerror = () => reject(tx.error);
@@ -340,19 +374,25 @@ export class LlmService {
     if (!cached) return false;
 
     this.modelStatus.set('loading');
-    this.setProgress(10, 'Found cached model. Initializing WASM...');
+    this.setProgress(10, 'Found cached model. Initializing LiteRT-LM...');
 
     try {
-      const { LlmInference, genai } = await this.bootstrapWasm();
-      this.setProgress(40, 'WASM ready. Loading cached model into GPU...');
-
-      this.llm = await this.createLlm(LlmInference, genai, cached.buffer);
+      this.setProgress(40, 'Loading cached model into GPU...');
+      const model =
+        cached.buffer instanceof ArrayBuffer
+          ? new Blob([new Uint8Array(cached.buffer)])
+          : cached.buffer;
+      this.engine = await this.createEngine(model);
       this.markModelReady(cached.name);
       return true;
     } catch (err: any) {
-      this.modelStatus.set('error');
-      this.modelName.set('Error loading cached model: ' + (err?.message ?? err));
-      throw err;
+      // A MediaPipe-era `.task` model (or a corrupt cache entry) cannot load
+      // with LiteRT-LM. Invalidate it so the user can pick a `.litertlm` model.
+      console.warn('Cached model failed to load with LiteRT-LM — clearing cache:', err);
+      await this.clearModelCache().catch(() => undefined);
+      this.modelStatus.set('idle');
+      this.modelName.set('No model loaded');
+      return false;
     }
   }
 
@@ -370,12 +410,12 @@ export class LlmService {
     });
   }
 
-  private async saveModelToCache(name: string, buffer: ArrayBuffer): Promise<void> {
+  private async saveModelToCache(name: string, model: Blob): Promise<void> {
     try {
       const db = await this.openDB();
       const tx = db.transaction('models', 'readwrite');
       const store = tx.objectStore('models');
-      store.put({ name, buffer }, 'cached_model');
+      store.put({ name, buffer: model }, 'cached_model');
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error || new Error('Transaction error'));
@@ -386,7 +426,7 @@ export class LlmService {
     }
   }
 
-  private async getCachedModel(): Promise<{ name: string; buffer: ArrayBuffer } | null> {
+  private async getCachedModel(): Promise<{ name: string; buffer: Blob | ArrayBuffer } | null> {
     try {
       const db = await this.openDB();
       const tx = db.transaction('models', 'readonly');

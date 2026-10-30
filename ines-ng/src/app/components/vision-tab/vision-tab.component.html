@@ -22,9 +22,9 @@
 
   <div class="flex-1 flex p-6 gap-6 overflow-hidden">
     <!-- Camera Preview Card -->
-    <div class="flex-1 flex flex-col gap-4 min-w-0">
+    <div #leftCol class="flex-1 flex flex-col gap-4 min-w-0 min-h-0">
       <div
-        class="relative flex-1 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+        class="relative flex-1 min-h-0 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
       >
         @if (!vision.isRunning()) {
           <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
@@ -116,356 +116,394 @@
         }
       </div>
 
-      <!-- Feature Toggle Cards -->
-      <div class="grid grid-cols-3 gap-4">
-        <!-- Emotion Adaptive -->
+      <!-- Resizable Controls Panel -->
+      <div
+        #controlsPanel
+        class="controls-panel flex flex-col shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+        [style.height.px]="controlsHeight()"
+      >
         <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-blue/10]="adaptiveMode()"
-          [class.border-accent-blue/30]="adaptiveMode()"
-          [class.border-white/10]="!adaptiveMode()"
-          [class.bg-white/5]="!adaptiveMode()"
-          (click)="adaptiveMode.set(!adaptiveMode())"
-          style="cursor: pointer"
+          class="resize-handle h-3 w-full shrink-0 flex items-center justify-center cursor-ns-resize select-none touch-none group"
+          (pointerdown)="startControlsResize($event)"
+          title="Drag to resize"
         >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-blue/20 flex items-center justify-center">
-              <mat-icon fontIcon="face" class="text-accent-blue"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Emotion Adaptive</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Detect mood changes</div>
-            </div>
-          </div>
           <div
-            class="w-4 h-4 rounded-full border-2 border-accent-blue flex items-center justify-center"
-          >
-            @if (adaptiveMode()) {
-              <div class="w-2 h-2 bg-accent-blue rounded-full"></div>
-            }
-          </div>
+            class="h-1 w-10 rounded-full bg-white/15 group-hover:bg-white/30 transition-colors"
+          ></div>
         </div>
-
-        <!-- Cyberpunk Filter -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-cyan/10]="cyberpunkFilter()"
-          [class.border-accent-cyan/30]="cyberpunkFilter()"
-          [class.border-white/10]="!cyberpunkFilter()"
-          [class.bg-white/5]="!cyberpunkFilter()"
-          (click)="cyberpunkFilter.set(!cyberpunkFilter())"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center">
-              <mat-icon fontIcon="stream" class="text-accent-cyan"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Cyberpunk AR</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Digital HUD Overlay</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
-          >
-            @if (cyberpunkFilter()) {
-              <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- Bokeh Blur -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-violet-500/10]="backgroundBlur()"
-          [class.border-violet-500/30]="backgroundBlur()"
-          [class.border-white/10]="!backgroundBlur()"
-          [class.bg-white/5]="!backgroundBlur()"
-          (click)="backgroundBlur.update((v) => !v)"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
-              <mat-icon fontIcon="blur_on" class="text-violet-400"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Bokeh Blur</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Portrait background blur</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-violet-500 flex items-center justify-center"
-          >
-            @if (backgroundBlur()) {
-              <div class="w-2 h-2 bg-violet-500 rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- Gesture Control -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-purple/10]="gestureControl()"
-          [class.border-accent-purple/30]="gestureControl()"
-          [class.border-white/10]="!gestureControl()"
-          [class.bg-white/5]="!gestureControl()"
-          (click)="gestureControl.set(!gestureControl())"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 pt-1 min-h-0">
+          <!-- Feature Toggle Cards -->
+          <div class="grid grid-cols-3 gap-4">
+            <!-- Emotion Adaptive -->
             <div
-              class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-blue/10]="adaptiveMode()"
+              [class.border-accent-blue/30]="adaptiveMode()"
+              [class.border-white/10]="!adaptiveMode()"
+              [class.bg-white/5]="!adaptiveMode()"
+              (click)="adaptiveMode.set(!adaptiveMode())"
+              style="cursor: pointer"
             >
-              <mat-icon fontIcon="back_hand" class="text-accent-purple"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Gesture Control</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Hands-free commands</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
-          >
-            @if (gestureControl()) {
-              <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- Face Mesh -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-cyan/10]="showFaceMesh()"
-          [class.border-accent-cyan/30]="showFaceMesh()"
-          [class.border-white/10]="!showFaceMesh()"
-          [class.bg-white/5]="!showFaceMesh()"
-          (click)="toggleFaceMesh()"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center">
-              <mat-icon fontIcon="grid_on" class="text-accent-cyan"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Face Mesh</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">478-landmark overlay</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
-          >
-            @if (showFaceMesh()) {
-              <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- Face Overlay -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-rose/10]="showOverlayPicker()"
-          [class.border-accent-rose/30]="showOverlayPicker()"
-          [class.border-white/10]="!showOverlayPicker()"
-          [class.bg-white/5]="!showOverlayPicker()"
-          (click)="toggleOverlayPicker()"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3 flex-1 min-w-0">
-            <div class="w-10 h-10 rounded-full bg-accent-rose/20 flex items-center justify-center">
-              <mat-icon fontIcon="filter_frames" class="text-accent-rose"></mat-icon>
-            </div>
-            <div class="min-w-0">
-              <div class="text-sm font-bold">Face Overlay</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase truncate">
-                {{
-                  faceOverlayType() === 'photo'
-                    ? loadedFileName()
-                    : faceOverlayType() || 'Pac-Man, Cat, Photo & more'
-                }}
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-blue/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="face" class="text-accent-blue"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Emotion Adaptive</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">Detect mood changes</div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1 shrink-0">
-            @if (faceOverlayType() === 'photo' && loadedFaceImage()) {
-              <button
-                (click)="openFacePicker(); $event.stopPropagation()"
-                class="text-[var(--text-2)] hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
-                title="Change image"
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-blue flex items-center justify-center"
               >
-                <mat-icon fontIcon="edit" class="text-xs w-3 h-3"></mat-icon>
-              </button>
-            }
+                @if (adaptiveMode()) {
+                  <div class="w-2 h-2 bg-accent-blue rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Cyberpunk Filter -->
             <div
-              class="w-4 h-4 rounded-full border-2 border-accent-rose flex items-center justify-center"
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-cyan/10]="cyberpunkFilter()"
+              [class.border-accent-cyan/30]="cyberpunkFilter()"
+              [class.border-white/10]="!cyberpunkFilter()"
+              [class.bg-white/5]="!cyberpunkFilter()"
+              (click)="cyberpunkFilter.set(!cyberpunkFilter())"
+              style="cursor: pointer"
             >
-              @if (faceOverlayType()) {
-                <div class="w-2 h-2 bg-accent-rose rounded-full"></div>
-              }
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="stream" class="text-accent-cyan"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Cyberpunk AR</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">Digital HUD Overlay</div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
+              >
+                @if (cyberpunkFilter()) {
+                  <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
+                }
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Hidden file input -->
-        <input
-          #faceFileInput
-          type="file"
-          accept="image/*"
-          class="hidden"
-          (change)="onFaceImageSelected($event)"
-        />
-
-        <!-- Hand Skeleton -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-green/10]="showHandOverlay()"
-          [class.border-accent-green/30]="showHandOverlay()"
-          [class.border-white/10]="!showHandOverlay()"
-          [class.bg-white/5]="!showHandOverlay()"
-          (click)="showHandOverlay.set(!showHandOverlay())"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-green/20 flex items-center justify-center">
-              <mat-icon fontIcon="pan_tool" class="text-accent-green"></mat-icon>
+            <!-- Bokeh Blur -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-violet-500/10]="backgroundBlur()"
+              [class.border-violet-500/30]="backgroundBlur()"
+              [class.border-white/10]="!backgroundBlur()"
+              [class.bg-white/5]="!backgroundBlur()"
+              (click)="backgroundBlur.update((v) => !v)"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="blur_on" class="text-violet-400"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Bokeh Blur</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">
+                    Portrait background blur
+                  </div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-violet-500 flex items-center justify-center"
+              >
+                @if (backgroundBlur()) {
+                  <div class="w-2 h-2 bg-violet-500 rounded-full"></div>
+                }
+              </div>
             </div>
-            <div>
-              <div class="text-sm font-bold">Hand Skeleton</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">
-                21-landmark hand tracking
+
+            <!-- Gesture Control -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-purple/10]="gestureControl()"
+              [class.border-accent-purple/30]="gestureControl()"
+              [class.border-white/10]="!gestureControl()"
+              [class.bg-white/5]="!gestureControl()"
+              (click)="gestureControl.set(!gestureControl())"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="back_hand" class="text-accent-purple"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Gesture Control</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">Hands-free commands</div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
+              >
+                @if (gestureControl()) {
+                  <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Face Mesh -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-cyan/10]="showFaceMesh()"
+              [class.border-accent-cyan/30]="showFaceMesh()"
+              [class.border-white/10]="!showFaceMesh()"
+              [class.bg-white/5]="!showFaceMesh()"
+              (click)="toggleFaceMesh()"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="grid_on" class="text-accent-cyan"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Face Mesh</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">478-landmark overlay</div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-cyan flex items-center justify-center"
+              >
+                @if (showFaceMesh()) {
+                  <div class="w-2 h-2 bg-accent-cyan rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Face Overlay -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-rose/10]="showOverlayPicker()"
+              [class.border-accent-rose/30]="showOverlayPicker()"
+              [class.border-white/10]="!showOverlayPicker()"
+              [class.bg-white/5]="!showOverlayPicker()"
+              (click)="toggleOverlayPicker()"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-rose/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="filter_frames" class="text-accent-rose"></mat-icon>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-sm font-bold">Face Overlay</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase truncate">
+                    {{
+                      faceOverlayType() === 'photo'
+                        ? loadedFileName()
+                        : faceOverlayType() || 'Pac-Man, Cat, Photo & more'
+                    }}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                @if (faceOverlayType() === 'photo' && loadedFaceImage()) {
+                  <button
+                    (click)="openFacePicker(); $event.stopPropagation()"
+                    class="text-[var(--text-2)] hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
+                    title="Change image"
+                  >
+                    <mat-icon fontIcon="edit" class="text-xs w-3 h-3"></mat-icon>
+                  </button>
+                }
+                <div
+                  class="w-4 h-4 rounded-full border-2 border-accent-rose flex items-center justify-center"
+                >
+                  @if (faceOverlayType()) {
+                    <div class="w-2 h-2 bg-accent-rose rounded-full"></div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden file input -->
+            <input
+              #faceFileInput
+              type="file"
+              accept="image/*"
+              class="hidden"
+              (change)="onFaceImageSelected($event)"
+            />
+
+            <!-- Hand Skeleton -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-green/10]="showHandOverlay()"
+              [class.border-accent-green/30]="showHandOverlay()"
+              [class.border-white/10]="!showHandOverlay()"
+              [class.bg-white/5]="!showHandOverlay()"
+              (click)="showHandOverlay.set(!showHandOverlay())"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-green/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="pan_tool" class="text-accent-green"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Hand Skeleton</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">
+                    21-landmark hand tracking
+                  </div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-green flex items-center justify-center"
+              >
+                @if (showHandOverlay()) {
+                  <div class="w-2 h-2 bg-accent-green rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Pose Skeleton -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-amber/10]="showPoseOverlay()"
+              [class.border-accent-amber/30]="showPoseOverlay()"
+              [class.border-white/10]="!showPoseOverlay()"
+              [class.bg-white/5]="!showPoseOverlay()"
+              (click)="showPoseOverlay.set(!showPoseOverlay())"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="accessibility" class="text-accent-amber"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Pose Skeleton</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">
+                    33-landmark body tracking
+                  </div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
+              >
+                @if (showPoseOverlay()) {
+                  <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Auto Power Save -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-amber/10]="autoPowerSave()"
+              [class.border-accent-amber/30]="autoPowerSave()"
+              [class.border-white/10]="!autoPowerSave()"
+              [class.bg-white/5]="!autoPowerSave()"
+              (click)="toggleAutoPowerSave()"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="power_settings_new" class="text-accent-amber"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">Power Save</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">Pause when no face</div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
+              >
+                @if (autoPowerSave()) {
+                  <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
+                }
+              </div>
+            </div>
+
+            <!-- AI Insights -->
+            <div
+              class="p-4 rounded-2xl border transition-all flex items-center justify-between"
+              [class.bg-accent-purple/10]="aiInsights()"
+              [class.border-accent-purple/30]="aiInsights()"
+              [class.border-white/10]="!aiInsights()"
+              [class.bg-white/5]="!aiInsights()"
+              (click)="toggleAiInsights()"
+              style="cursor: pointer"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
+                >
+                  <mat-icon fontIcon="psychology" class="text-accent-purple"></mat-icon>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">AI Insights</div>
+                  <div class="text-[10px] text-[var(--text-2)] uppercase">SML-powered analysis</div>
+                </div>
+              </div>
+              <div
+                class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
+              >
+                @if (aiInsights()) {
+                  <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
+                }
               </div>
             </div>
           </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-green flex items-center justify-center"
-          >
-            @if (showHandOverlay()) {
-              <div class="w-2 h-2 bg-accent-green rounded-full"></div>
-            }
-          </div>
-        </div>
 
-        <!-- Pose Skeleton -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-amber/10]="showPoseOverlay()"
-          [class.border-accent-amber/30]="showPoseOverlay()"
-          [class.border-white/10]="!showPoseOverlay()"
-          [class.bg-white/5]="!showPoseOverlay()"
-          (click)="showPoseOverlay.set(!showPoseOverlay())"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center">
-              <mat-icon fontIcon="accessibility" class="text-accent-amber"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Pose Skeleton</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">
-                33-landmark body tracking
+          <!-- Overlay Picker Panel -->
+          @if (showOverlayPicker()) {
+            <div
+              class="bg-white/5 border border-white/10 rounded-2xl p-4 transition-all animate-in fade-in slide-in-from-top-4 duration-300"
+            >
+              <div
+                class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-2)] mb-3"
+              >
+                Choose Overlay
+              </div>
+              <div class="grid grid-cols-5 gap-2">
+                @for (ov of OVERLAYS; track ov.type) {
+                  <div
+                    class="flex flex-col items-center gap-1.5 p-2 rounded-xl border cursor-pointer transition-all"
+                    [class.border-accent-rose/50]="faceOverlayType() === ov.type"
+                    [class.border-white/10]="faceOverlayType() !== ov.type"
+                    [class.bg-accent-rose/10]="faceOverlayType() === ov.type"
+                    [class.bg-white/5]="faceOverlayType() !== ov.type"
+                    (click)="setOverlayType(ov.type)"
+                  >
+                    <mat-icon
+                      [fontIcon]="ov.icon"
+                      class="text-sm w-4 h-4"
+                      [class]="'text-' + ov.color"
+                    ></mat-icon>
+                    <span
+                      class="text-[8px] uppercase tracking-wider [font-weight:600] text-center leading-tight"
+                    >
+                      {{ ov.label }}
+                    </span>
+                  </div>
+                }
               </div>
             </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
-          >
-            @if (showPoseOverlay()) {
-              <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- Auto Power Save -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-amber/10]="autoPowerSave()"
-          [class.border-accent-amber/30]="autoPowerSave()"
-          [class.border-white/10]="!autoPowerSave()"
-          [class.bg-white/5]="!autoPowerSave()"
-          (click)="toggleAutoPowerSave()"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-accent-amber/20 flex items-center justify-center">
-              <mat-icon fontIcon="power_settings_new" class="text-accent-amber"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">Power Save</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">Pause when no face</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-amber flex items-center justify-center"
-          >
-            @if (autoPowerSave()) {
-              <div class="w-2 h-2 bg-accent-amber rounded-full"></div>
-            }
-          </div>
-        </div>
-
-        <!-- AI Insights -->
-        <div
-          class="p-4 rounded-2xl border transition-all flex items-center justify-between"
-          [class.bg-accent-purple/10]="aiInsights()"
-          [class.border-accent-purple/30]="aiInsights()"
-          [class.border-white/10]="!aiInsights()"
-          [class.bg-white/5]="!aiInsights()"
-          (click)="toggleAiInsights()"
-          style="cursor: pointer"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-full bg-accent-purple/20 flex items-center justify-center"
-            >
-              <mat-icon fontIcon="psychology" class="text-accent-purple"></mat-icon>
-            </div>
-            <div>
-              <div class="text-sm font-bold">AI Insights</div>
-              <div class="text-[10px] text-[var(--text-2)] uppercase">SML-powered analysis</div>
-            </div>
-          </div>
-          <div
-            class="w-4 h-4 rounded-full border-2 border-accent-purple flex items-center justify-center"
-          >
-            @if (aiInsights()) {
-              <div class="w-2 h-2 bg-accent-purple rounded-full"></div>
-            }
-          </div>
+          }
         </div>
       </div>
-
-      <!-- Overlay Picker Panel -->
-      @if (showOverlayPicker()) {
-        <div
-          class="bg-white/5 border border-white/10 rounded-2xl p-4 transition-all animate-in fade-in slide-in-from-top-4 duration-300"
-        >
-          <div class="text-[10px] font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
-            Choose Overlay
-          </div>
-          <div class="grid grid-cols-5 gap-2">
-            @for (ov of OVERLAYS; track ov.type) {
-              <div
-                class="flex flex-col items-center gap-1.5 p-2 rounded-xl border cursor-pointer transition-all"
-                [class.border-accent-rose/50]="faceOverlayType() === ov.type"
-                [class.border-white/10]="faceOverlayType() !== ov.type"
-                [class.bg-accent-rose/10]="faceOverlayType() === ov.type"
-                [class.bg-white/5]="faceOverlayType() !== ov.type"
-                (click)="setOverlayType(ov.type)"
-              >
-                <mat-icon
-                  [fontIcon]="ov.icon"
-                  class="text-sm w-4 h-4"
-                  [class]="'text-' + ov.color"
-                ></mat-icon>
-                <span
-                  class="text-[8px] uppercase tracking-wider [font-weight:600] text-center leading-tight"
-                >
-                  {{ ov.label }}
-                </span>
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
 
     <!-- Stats Sidebar -->

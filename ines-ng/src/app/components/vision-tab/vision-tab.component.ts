@@ -342,6 +342,8 @@ export class VisionTabComponent implements OnDestroy {
   readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   readonly meshCanvas = viewChild<ElementRef<HTMLCanvasElement>>('meshCanvas');
   readonly faceFileInput = viewChild<ElementRef<HTMLInputElement>>('faceFileInput');
+  readonly leftCol = viewChild<ElementRef<HTMLElement>>('leftCol');
+  readonly controlsPanel = viewChild<ElementRef<HTMLElement>>('controlsPanel');
 
   isInitializing = signal(false);
   adaptiveMode = signal(false);
@@ -358,6 +360,8 @@ export class VisionTabComponent implements OnDestroy {
   aiInsightLoading = signal(false);
   faceOverlayType = signal<FaceOverlayType | null>(null);
   showOverlayPicker = signal(false);
+  /** Height (px) of the resizable controls panel under the camera preview. */
+  controlsHeight = signal(240);
   backgroundBlur = signal(false);
   showHandOverlay = signal(false);
   showPoseOverlay = signal(false);
@@ -374,6 +378,7 @@ export class VisionTabComponent implements OnDestroy {
   private lastFaceCount = 0;
   private nextNotifyId = 1;
   private drawRaf: number | null = null;
+  private resizeState: { startY: number; startHeight: number } | null = null;
 
   constructor() {
     effect(() => {
@@ -570,6 +575,44 @@ export class VisionTabComponent implements OnDestroy {
 
   toggleOverlayPicker() {
     this.showOverlayPicker.update((v) => !v);
+  }
+
+  /** Starts a vertical drag to resize the controls panel under the camera. */
+  startControlsResize(event: PointerEvent) {
+    event.preventDefault();
+    const panel = this.controlsPanel();
+    if (!panel) return;
+    this.resizeState = {
+      startY: event.clientY,
+      startHeight: panel.nativeElement.offsetHeight,
+    };
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('pointermove', this.onControlsResizeMove);
+    document.addEventListener('pointerup', this.onControlsResizeEnd, { once: true });
+    document.addEventListener('pointercancel', this.onControlsResizeEnd, { once: true });
+  }
+
+  private onControlsResizeMove = (event: PointerEvent) => {
+    if (!this.resizeState) return;
+    const delta = this.resizeState.startY - event.clientY; // drag up → taller panel
+    this.controlsHeight.set(this.clampControlsHeight(this.resizeState.startHeight + delta));
+  };
+
+  private onControlsResizeEnd = () => {
+    this.resizeState = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    document.removeEventListener('pointermove', this.onControlsResizeMove);
+    document.removeEventListener('pointerup', this.onControlsResizeEnd);
+    document.removeEventListener('pointercancel', this.onControlsResizeEnd);
+  };
+
+  private clampControlsHeight(value: number): number {
+    const min = 120;
+    const col = this.leftCol();
+    const max = col ? Math.max(min, col.nativeElement.clientHeight - 180) : 900;
+    return Math.min(Math.max(value, min), max);
   }
 
   toggleFaceImage() {
@@ -1832,6 +1875,7 @@ export class VisionTabComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    this.onControlsResizeEnd();
     this.stopDrawLoop();
     this.vision.stopWebcam();
   }

@@ -12,6 +12,16 @@
   border-radius: 10px;
 }
 
+/* Resizable controls panel handle */
+.resize-handle {
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+}
+.resize-handle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .overlay-grid-item {
   transition: all 0.15s ease;
 }

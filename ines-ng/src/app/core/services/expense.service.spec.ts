@@ -136,6 +136,45 @@ describe('ExpenseService — month amortisation', () => {
     expect(md).toContain('Luce');
     expect(md).toContain('€ 100.00');
   });
+
+  it('filters monthly totals by nucleus', () => {
+    svc.expenses.set([
+      makeExpense({
+        id: 'a',
+        date: '2026-03-01',
+        amount: 100,
+        recurrence: 'once',
+        category: 'luce',
+        nucleusId: 'nucleo-1',
+      }),
+      makeExpense({
+        id: 'b',
+        date: '2026-03-02',
+        amount: 200,
+        recurrence: 'once',
+        category: 'luce',
+        nucleusId: 'nucleo-2',
+      }),
+    ]);
+    expect(svc.monthlyTotal(2026, 3, 'nucleo-1')).toBe(100);
+    expect(svc.monthlyTotal(2026, 3, 'nucleo-2')).toBe(200);
+    expect(svc.monthlyTotal(2026, 3)).toBe(300);
+  });
+
+  it('assigns legacy expenses (no nucleus) to the first nucleus', () => {
+    const e = makeExpense({ id: 'a', date: '2026-03-01', amount: 50, recurrence: 'once' });
+    expect(svc.nucleusOf(e).id).toBe('nucleo-1');
+  });
+
+  it('stores budgets per nucleus', () => {
+    svc.setBudget('nucleo-1', 'luce', 100);
+    svc.setBudget('nucleo-2', 'luce', 200);
+    expect(svc.budgetFor('luce', 'nucleo-1')).toBe(100);
+    expect(svc.budgetFor('luce', 'nucleo-2')).toBe(200);
+    expect(svc.budgetFor('luce')).toBeNull();
+    svc.setBudget('nucleo-1', 'luce', null);
+    expect(svc.budgetFor('luce', 'nucleo-1')).toBeNull();
+  });
 });
 
 describe('ExpenseService — CSV export', () => {
@@ -172,7 +211,7 @@ describe('ExpenseService — CSV export', () => {
     ]);
     const lines = svc.generateMonthCsv(2026, 3).split('\n');
     expect(lines[0]).toBe(
-      'data,categoria,descrizione,fornitore,importo,quota mensile,frequenza,fonte,allegato',
+      'data,nucleo,categoria,descrizione,fornitore,importo,quota mensile,frequenza,fonte,allegato',
     );
     expect(lines[1]).toContain('2026-03-01');
     expect(lines[1]).toContain('Luce');

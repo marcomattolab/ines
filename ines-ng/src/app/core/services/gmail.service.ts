@@ -101,6 +101,20 @@ const CLIENT_ID_KEY = 'gmail_client_id';
 const GMAIL_SCOPE =
   'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.compose';
 
+/**
+ * Builds the Gmail search query for the expenses scan: the inbox plus any
+ * user-defined labels (e.g. "scontrini", "ricevute"). Labels are double-quoted
+ * so names with spaces work as a single token.
+ */
+export function buildGmailQuery(labels: string[] = []): string {
+  const parts = ['in:inbox'];
+  for (const raw of labels) {
+    const label = raw.trim().replace(/"/g, '');
+    if (label) parts.push(`label:"${label}"`);
+  }
+  return parts.join(' OR ');
+}
+
 @Injectable({ providedIn: 'root' })
 export class GmailService {
   private readonly storage = inject(StorageService);
@@ -272,7 +286,11 @@ export class GmailService {
    * Fetches full messages (body text + attachments) from the inbox.
    * Used by the home-expenses agent to extract bills/receipts from email.
    */
-  async fetchFullMessages(max = 10): Promise<GmailFullEmail[]> {
+  async fetchFullMessages(
+    max = 10,
+    labels: string[] = [],
+    maxTotal: number = max,
+  ): Promise<GmailFullEmail[]> {
     if (!this.configured()) {
       throw new Error(
         'Gmail is not configured. Set your Google OAuth Client ID in INES Voice settings.',
@@ -285,73 +303,38 @@ export class GmailService {
 
     try {
       const token = await this.getAccessToken();
-      const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=in:inbox`;
-      const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
-      if (!listRes.ok) {
-        throw new Error(`Gmail API error (${listRes.status}).`);
-      }
-      const listData = await listRes.json();
-      const messages: { id: string }[] = listData.messages || [];
-
+      const query = buildGmailQuery(labels);
       const CONCURRENCY = 4;
       const emails: GmailFullEmail[] = [];
-      const targets = messages.slice(0, max);
-      for (let i = 0; i < targets.length; i += CONCURRENCY) {
-        const batch = targets.slice(i, i + CONCURRENCY);
-        const results = await Promise.all(
-          batch.map(async (m): Promise<GmailFullEmail | null> => {
-            try {
-              const res = await fetch(
-                `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
-                { headers: { Authorization: `Bearer ${token}` } },
-              );
-              if (!res.ok) return null;
-              const data = await res.json();
-              const headers: { name: string; value: string }[] = data.payload?.headers || [];
-              const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
-              const subject = headers.find((h) => h.name === 'Subject')?.value || '(no subject)';
-              const payload: GmailPart = data.payload || {};
+      let pageToken: string | undefined;
 
-              const attMeta = collectAttachments(payload);
-              const attachments: GmailAttachment[] = [];
-              for (const a of attMeta) {
-                try {
-                  const attRes = await fetch(
-                    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}/attachments/${a.id}`,
-                    { headers: { Authorization: `Bearer ${token}` } },
-                  );
-                  if (!attRes.ok) continue;
-                  const attData = await attRes.json();
-                  if (attData.data) {
-                    attachments.push({
-                      id: a.id,
-                      filename: a.filename,
-                      mimeType: a.mimeType,
-                      size: a.size,
-                      dataUrl: dataUrlFromBase64Url(attData.data, a.mimeType),
-                    });
-                  }
-                } catch {
-                  /* skip unreadable attachment */
-                }
-              }
-
-              return {
-                id: m.id,
-                from,
-                subject,
-                snippet: data.snippet || '',
-                body: extractBody(payload),
-                labels: data.labelIds || [],
-                attachments,
-              };
-            } catch {
-              return null;
-            }
-          }),
-        );
-        for (const r of results) if (r) emails.push(r);
-      }
+      do {
+        const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=${encodeURIComponent(
+          query,
+        )}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
+        const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
+        if (!listRes.ok) {
+          const hint =
+            listRes.status === 429
+              ? ' Rate limit Gmail superato: riduci il numero di email o riprova tra qualche minuto.'
+              : listRes.status === 403
+                ? ' Verifica che la Gmail API sia abilitata e i permessi concessi.'
+                : listRes.status === 401
+                  ? ' Token non valido: riprova e acconsenti di nuovo.'
+                  : '';
+          throw new Error(`Gmail API error (${listRes.status}).${hint}`);
+        }
+        const listData = await listRes.json();
+        const messages: { id: string }[] = listData.messages || [];
+        pageToken = listData.nextPageToken || undefined;
+        const targets = messages.slice(0, Math.max(0, maxTotal - emails.length));
+        for (let i = 0; i < targets.length; i += CONCURRENCY) {
+          const batch = targets.slice(i, i + CONCURRENCY);
+          const results = await Promise.all(batch.map((m) => this.fetchOneFull(token, m.id)));
+          for (const r of results) if (r) emails.push(r);
+          if (emails.length >= maxTotal) break;
+        }
+      } while (pageToken && emails.length < maxTotal);
 
       this.status.set('ok');
       return emails;
@@ -361,6 +344,57 @@ export class GmailService {
       throw e;
     } finally {
       this.connecting.set(false);
+    }
+  }
+
+  private async fetchOneFull(token: string, id: string): Promise<GmailFullEmail | null> {
+    try {
+      const res = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      const headers: { name: string; value: string }[] = data.payload?.headers || [];
+      const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
+      const subject = headers.find((h) => h.name === 'Subject')?.value || '(no subject)';
+      const payload: GmailPart = data.payload || {};
+
+      const attMeta = collectAttachments(payload);
+      const attachments: GmailAttachment[] = [];
+      for (const a of attMeta) {
+        try {
+          const attRes = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/attachments/${a.id}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          if (!attRes.ok) continue;
+          const attData = await attRes.json();
+          if (attData.data) {
+            attachments.push({
+              id: a.id,
+              filename: a.filename,
+              mimeType: a.mimeType,
+              size: a.size,
+              dataUrl: dataUrlFromBase64Url(attData.data, a.mimeType),
+            });
+          }
+        } catch {
+          /* skip unreadable attachment */
+        }
+      }
+
+      return {
+        id,
+        from,
+        subject,
+        snippet: data.snippet || '',
+        body: extractBody(payload),
+        labels: data.labelIds || [],
+        attachments,
+      };
+    } catch {
+      return null;
     }
   }
 

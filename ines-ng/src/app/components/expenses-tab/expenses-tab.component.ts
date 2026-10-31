@@ -16,7 +16,7 @@ import { OcrService } from '../../core/services/ocr.service';
 import { ReminderService } from '../../core/services/reminder.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
-type Panel = 'dashboard' | 'add' | 'scan' | 'ask' | 'schedule';
+type Panel = 'dashboard' | 'add' | 'scan' | 'ask' | 'schedule' | 'nuclei';
 
 interface ScheduleItem {
   expense: Expense;
@@ -55,6 +55,7 @@ export class ExpensesTabComponent {
     { id: 'scan', label: 'Scan Email', icon: 'mail' },
     { id: 'ask', label: 'Chiedi', icon: 'help' },
     { id: 'schedule', label: 'Scadenzario', icon: 'event' },
+    { id: 'nuclei', label: 'Nuclei', icon: 'groups' },
   ];
 
   // Manual add form
@@ -70,6 +71,7 @@ export class ExpensesTabComponent {
   readonly mSourceLink = signal('');
   readonly mAttachmentLink = signal('');
   readonly mAttachmentName = signal('');
+  readonly mNucleusId = signal<string>(this.expenseSvc.nuclei()[0]?.id ?? '');
 
   // Telegram import form
   readonly tText = signal('');
@@ -106,9 +108,15 @@ export class ExpensesTabComponent {
     }),
   );
 
-  readonly monthItems = computed(() => this.expenseSvc.expensesForMonth(this.year(), this.month()));
-  readonly total = computed(() => this.expenseSvc.monthlyTotal(this.year(), this.month()));
-  readonly catTotals = computed(() => this.expenseSvc.categoryTotals(this.year(), this.month()));
+  readonly monthItems = computed(() =>
+    this.expenseSvc.expensesForMonth(this.year(), this.month(), this.nucleusParam()),
+  );
+  readonly total = computed(() =>
+    this.expenseSvc.monthlyTotal(this.year(), this.month(), this.nucleusParam()),
+  );
+  readonly catTotals = computed(() =>
+    this.expenseSvc.categoryTotals(this.year(), this.month(), this.nucleusParam()),
+  );
   readonly prevTotal = computed(() => {
     let y = this.year();
     let m = this.month() - 1;
@@ -116,7 +124,7 @@ export class ExpensesTabComponent {
       m = 12;
       y -= 1;
     }
-    return this.expenseSvc.monthlyTotal(y, m);
+    return this.expenseSvc.monthlyTotal(y, m, this.nucleusParam());
   });
   readonly delta = computed(() => this.total() - this.prevTotal());
   readonly trend = computed(() => {
@@ -130,7 +138,7 @@ export class ExpensesTabComponent {
       }
       out.push({
         label: new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short' }),
-        total: this.expenseSvc.monthlyTotal(y, m),
+        total: this.expenseSvc.monthlyTotal(y, m, this.nucleusParam()),
       });
     }
     return out;
@@ -138,6 +146,8 @@ export class ExpensesTabComponent {
   readonly trendMax = computed(() => Math.max(1, ...this.trend().map((t) => t.total)));
   readonly showBudgets = signal(false);
   readonly viewMode = signal<'month' | 'year'>('month');
+  readonly nucleusFilter = signal<string>('all');
+  readonly budgetNucleus = signal<string>(this.expenseSvc.nuclei()[0]?.id ?? '');
   readonly searchQuery = signal('');
   readonly editingId = signal<string | null>(null);
   readonly askScope = signal<'month' | 'year'>('month');
@@ -296,9 +306,13 @@ export class ExpensesTabComponent {
     return items;
   });
 
-  readonly yearTotals = computed(() => this.expenseSvc.yearlyTotals(this.year()));
-  readonly yearTotal = computed(() => this.expenseSvc.yearTotal(this.year()));
-  readonly yearCatTotals = computed(() => this.expenseSvc.yearlyCategoryTotals(this.year()));
+  readonly yearTotals = computed(() =>
+    this.expenseSvc.yearlyTotals(this.year(), this.nucleusParam()),
+  );
+  readonly yearTotal = computed(() => this.expenseSvc.yearTotal(this.year(), this.nucleusParam()));
+  readonly yearCatTotals = computed(() =>
+    this.expenseSvc.yearlyCategoryTotals(this.year(), this.nucleusParam()),
+  );
   readonly yearMax = computed(() => Math.max(1, ...this.yearTotals().map((t) => t.total)));
 
   private todayIso(): string {
@@ -309,23 +323,35 @@ export class ExpensesTabComponent {
     return this.expenseSvc.recurrences.find((r) => r.value === rec)?.label ?? rec;
   }
 
+  nucleusParam(): string | undefined {
+    const f = this.nucleusFilter();
+    return f === 'all' ? undefined : f;
+  }
+
+  splitList(value: string): string[] {
+    return value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
   budgetFor(cat: ExpenseCategory): number | null {
-    return this.expenseSvc.budgetFor(cat);
+    return this.expenseSvc.budgetFor(cat, this.nucleusParam());
   }
 
   isOverBudget(cat: ExpenseCategory, total: number): boolean {
-    const b = this.expenseSvc.budgetFor(cat);
+    const b = this.expenseSvc.budgetFor(cat, this.nucleusParam());
     return b !== null && total > b;
   }
 
   budgetValue(cat: ExpenseCategory): string | number {
-    const b = this.expenseSvc.budgetFor(cat);
+    const b = this.expenseSvc.budgetFor(cat, this.budgetNucleus());
     return b === null ? '' : b;
   }
 
   updateBudget(cat: ExpenseCategory, value: string): void {
     const n = parseFloat(value);
-    this.expenseSvc.setBudget(cat, isNaN(n) || n <= 0 ? null : n);
+    this.expenseSvc.setBudget(this.budgetNucleus(), cat, isNaN(n) || n <= 0 ? null : n);
   }
 
   prevMonth(): void {
@@ -481,6 +507,7 @@ export class ExpensesTabComponent {
       sourceLink: this.mSourceLink().trim() || undefined,
       attachmentName: this.mAttachmentName().trim() || undefined,
       attachmentLink: this.mAttachmentLink().trim() || undefined,
+      nucleusId: this.mNucleusId() || undefined,
     };
     const editing = this.editingId();
     if (editing) {
@@ -507,6 +534,7 @@ export class ExpensesTabComponent {
     this.mSourceLink.set(expense.sourceLink || '');
     this.mAttachmentName.set(expense.attachmentName || '');
     this.mAttachmentLink.set(expense.attachmentLink || '');
+    this.mNucleusId.set(expense.nucleusId || this.expenseSvc.nuclei()[0]?.id || '');
     this.panel.set('add');
   }
 
@@ -546,6 +574,7 @@ export class ExpensesTabComponent {
     this.mSourceLink.set('');
     this.mAttachmentLink.set('');
     this.mAttachmentName.set('');
+    this.mNucleusId.set(this.expenseSvc.nuclei()[0]?.id ?? '');
   }
 
   onTelegramFile(event: Event): void {
@@ -666,7 +695,7 @@ export class ExpensesTabComponent {
       return;
     }
     try {
-      const added = await this.expenseSvc.scanEmails(15);
+      const added = await this.expenseSvc.scanEmails();
       this.toast.success(added > 0 ? `${added} spese rilevate` : 'Nessuna nuova spesa');
     } catch (e: any) {
       this.toast.error(e?.message ?? 'Errore scansione email');

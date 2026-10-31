@@ -174,6 +174,17 @@
             </button>
             <select
               class="input w-auto px-2 py-1 text-xs"
+              [value]="nucleusFilter()"
+              (change)="nucleusFilter.set($any($event.target).value)"
+              title="Nucleo familiare"
+            >
+              <option value="all">Tutti i nuclei</option>
+              @for (n of expenseSvc.nuclei(); track n.id) {
+                <option [value]="n.id">{{ n.name }}</option>
+              }
+            </select>
+            <select
+              class="input w-auto px-2 py-1 text-xs"
               [value]="expenseSvc.currency()"
               (change)="expenseSvc.setCurrency($any($event.target).value)"
               title="Valuta"
@@ -186,361 +197,377 @@
         </div>
 
         @if (viewMode() === 'month') {
-          <!-- Trend (last 6 months) -->
-          <div class="px-5 pt-3 shrink-0">
-            <div class="cat-card">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]">
-                  Trend ultimi 6 mesi
-                </span>
-              </div>
-              <div class="flex items-end gap-2 h-24">
-                @for (t of trend(); track $index) {
-                  <div class="flex-1 flex flex-col items-center gap-1 min-w-0">
-                    <div class="w-full flex items-end justify-center h-16">
-                      <div
-                        class="w-full max-w-[42px] rounded-t-md transition-all duration-500"
-                        [style.height.%]="(t.total / trendMax()) * 100"
-                        [style.background]="'var(--accent-cyan)'"
-                        [title]="expenseSvc.currency() + ' ' + t.total.toFixed(2)"
-                      ></div>
-                    </div>
-                    <span class="text-[9px] text-[var(--text-2)] font-[var(--font-mono)]">{{
-                      t.label
-                    }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Budget editor -->
-          @if (showBudgets()) {
+          <div class="flex-1 overflow-y-auto min-h-0">
+            <!-- Trend (last 6 months) -->
             <div class="px-5 pt-3 shrink-0">
               <div class="cat-card">
-                <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-2">
-                  Budget mensile per categoria (€)
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]">
+                    Trend ultimi 6 mesi
+                  </span>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
-                  @for (c of expenseSvc.categories; track c.value) {
-                    <label class="field">
-                      <span>{{ c.label }}</span>
-                      <input
-                        class="input"
-                        type="number"
-                        min="0"
-                        step="1"
-                        [value]="budgetValue(c.value)"
-                        (input)="updateBudget(c.value, $any($event.target).value)"
-                        placeholder="—"
-                      />
-                    </label>
+                <div class="flex items-end gap-2 h-24">
+                  @for (t of trend(); track $index) {
+                    <div class="flex-1 flex flex-col items-center gap-1 min-w-0">
+                      <div class="w-full flex items-end justify-center h-16">
+                        <div
+                          class="w-full max-w-[42px] rounded-t-md transition-all duration-500"
+                          [style.height.%]="(t.total / trendMax()) * 100"
+                          [style.background]="'var(--accent-cyan)'"
+                          [title]="expenseSvc.currency() + ' ' + t.total.toFixed(2)"
+                        ></div>
+                      </div>
+                      <span class="text-[9px] text-[var(--text-2)] font-[var(--font-mono)]">{{
+                        t.label
+                      }}</span>
+                    </div>
                   }
                 </div>
               </div>
             </div>
-          }
 
-          <!-- Category totals -->
-          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 px-5 pt-4 shrink-0">
-            @for (ct of catTotals(); track ct.category) {
-              <div class="cat-card">
-                <div class="flex items-center gap-2">
-                  <span
-                    class="w-7 h-7 rounded-lg flex items-center justify-center {{
-                      expenseSvc.categoryDef(ct.category).bg
-                    }}"
-                  >
-                    <mat-icon
-                      [fontIcon]="expenseSvc.categoryDef(ct.category).icon"
-                      class="text-sm w-4 h-4 {{ expenseSvc.categoryDef(ct.category).color }}"
-                    ></mat-icon>
-                  </span>
-                  <span class="text-xs font-medium text-[var(--text-1)]">{{
-                    expenseSvc.categoryDef(ct.category).label
-                  }}</span>
-                  <span class="ml-auto text-right">
-                    <span class="block text-xs font-[var(--font-mono)] text-[var(--text-0)]">
-                      {{ expenseSvc.currency() }} {{ ct.total.toFixed(2) }}
-                    </span>
-                    @if (budgetFor(ct.category) !== null) {
-                      <span class="block text-[9px] font-[var(--font-mono)] text-[var(--text-2)]">
-                        / {{ expenseSvc.currency() }} {{ (budgetFor(ct.category) ?? 0).toFixed(2) }}
-                      </span>
-                    }
-                  </span>
-                </div>
-                <div class="h-1 rounded-full bg-white/5 mt-2 overflow-hidden">
-                  <div
-                    class="h-full rounded-full"
-                    [style.width.%]="total() > 0 ? (ct.total / total()) * 100 : 0"
-                    [style.background]="
-                      isOverBudget(ct.category, ct.total)
-                        ? 'var(--accent-rose)'
-                        : 'var(--accent-green)'
-                    "
-                  ></div>
-                </div>
-                @if (isOverBudget(ct.category, ct.total)) {
-                  <div class="text-[9px] text-rose-300 font-[var(--font-mono)] mt-1">
-                    ⚠ budget superato
+            <!-- Budget editor -->
+            @if (showBudgets()) {
+              <div class="px-5 pt-3 shrink-0">
+                <div class="cat-card">
+                  <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                    <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)]">
+                      Budget mensile per categoria (€)
+                    </div>
+                    <select
+                      class="input w-auto px-2 py-1 text-xs"
+                      [value]="budgetNucleus()"
+                      (change)="budgetNucleus.set($any($event.target).value)"
+                      title="Nucleo del budget"
+                    >
+                      @for (n of expenseSvc.nuclei(); track n.id) {
+                        <option [value]="n.id">{{ n.name }}</option>
+                      }
+                    </select>
                   </div>
-                }
+                  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
+                    @for (c of expenseSvc.categories; track c.value) {
+                      <label class="field">
+                        <span>{{ c.label }}</span>
+                        <input
+                          class="input"
+                          type="number"
+                          min="0"
+                          step="1"
+                          [value]="budgetValue(c.value)"
+                          (input)="updateBudget(c.value, $any($event.target).value)"
+                          placeholder="—"
+                        />
+                      </label>
+                    }
+                  </div>
+                </div>
               </div>
             }
-            @if (catTotals().length === 0) {
-              <div class="col-span-full text-center text-sm text-[var(--text-2)] py-8">
-                Nessuna spesa in questo mese. Usa <b>Aggiungi</b> o <b>Scan Email</b>.
-              </div>
-            }
-          </div>
 
-          <!-- Donut chart -->
-          <div class="px-5 pt-3 shrink-0">
-            <div class="cat-card">
-              <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-3">
-                Ripartizione per categoria
-              </div>
-              <div class="flex items-center gap-6 flex-wrap">
-                @if (donutSegments().length > 0) {
-                  <svg viewBox="0 0 42 42" class="w-40 h-40 shrink-0">
-                    <circle
-                      cx="21"
-                      cy="21"
-                      r="15.9155"
-                      fill="none"
-                      stroke="rgba(255, 255, 255, 0.06)"
-                      stroke-width="5"
-                    ></circle>
-                    @for (seg of donutSegments(); track seg.category) {
+            <!-- Category totals -->
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 px-5 pt-4 shrink-0">
+              @for (ct of catTotals(); track ct.category) {
+                <div class="cat-card">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-7 h-7 rounded-lg flex items-center justify-center {{
+                        expenseSvc.categoryDef(ct.category).bg
+                      }}"
+                    >
+                      <mat-icon
+                        [fontIcon]="expenseSvc.categoryDef(ct.category).icon"
+                        class="text-sm w-4 h-4 {{ expenseSvc.categoryDef(ct.category).color }}"
+                      ></mat-icon>
+                    </span>
+                    <span class="text-xs font-medium text-[var(--text-1)]">{{
+                      expenseSvc.categoryDef(ct.category).label
+                    }}</span>
+                    <span class="ml-auto text-right">
+                      <span class="block text-xs font-[var(--font-mono)] text-[var(--text-0)]">
+                        {{ expenseSvc.currency() }} {{ ct.total.toFixed(2) }}
+                      </span>
+                      @if (budgetFor(ct.category) !== null) {
+                        <span class="block text-[9px] font-[var(--font-mono)] text-[var(--text-2)]">
+                          / {{ expenseSvc.currency() }}
+                          {{ (budgetFor(ct.category) ?? 0).toFixed(2) }}
+                        </span>
+                      }
+                    </span>
+                  </div>
+                  <div class="h-1 rounded-full bg-white/5 mt-2 overflow-hidden">
+                    <div
+                      class="h-full rounded-full"
+                      [style.width.%]="total() > 0 ? (ct.total / total()) * 100 : 0"
+                      [style.background]="
+                        isOverBudget(ct.category, ct.total)
+                          ? 'var(--accent-rose)'
+                          : 'var(--accent-green)'
+                      "
+                    ></div>
+                  </div>
+                  @if (isOverBudget(ct.category, ct.total)) {
+                    <div class="text-[9px] text-rose-300 font-[var(--font-mono)] mt-1">
+                      ⚠ budget superato
+                    </div>
+                  }
+                </div>
+              }
+              @if (catTotals().length === 0) {
+                <div class="col-span-full text-center text-sm text-[var(--text-2)] py-8">
+                  Nessuna spesa in questo mese. Usa <b>Aggiungi</b> o <b>Scan Email</b>.
+                </div>
+              }
+            </div>
+
+            <!-- Donut chart -->
+            <div class="px-5 pt-3 shrink-0">
+              <div class="cat-card">
+                <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-3">
+                  Ripartizione per categoria
+                </div>
+                <div class="flex items-center gap-6 flex-wrap">
+                  @if (donutSegments().length > 0) {
+                    <svg viewBox="0 0 42 42" class="w-40 h-40 shrink-0">
                       <circle
                         cx="21"
                         cy="21"
                         r="15.9155"
                         fill="none"
-                        [attr.stroke]="donutColors[seg.category]"
+                        stroke="rgba(255, 255, 255, 0.06)"
                         stroke-width="5"
-                        [attr.stroke-dasharray]="seg.pct + ' ' + (100 - seg.pct)"
-                        [attr.stroke-dashoffset]="-(seg.offset * 100 + 25)"
+                      ></circle>
+                      @for (seg of donutSegments(); track seg.category) {
+                        <circle
+                          cx="21"
+                          cy="21"
+                          r="15.9155"
+                          fill="none"
+                          [attr.stroke]="donutColors[seg.category]"
+                          stroke-width="5"
+                          [attr.stroke-dasharray]="seg.pct + ' ' + (100 - seg.pct)"
+                          [attr.stroke-dashoffset]="-(seg.offset * 100 + 25)"
+                        >
+                          <title>
+                            {{ expenseSvc.categoryDef(seg.category).label }}:
+                            {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }} ({{
+                              seg.pct.toFixed(1)
+                            }}%)
+                          </title>
+                        </circle>
+                      }
+                      <text
+                        x="21"
+                        y="21"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                        class="donut-center"
                       >
-                        <title>
-                          {{ expenseSvc.categoryDef(seg.category).label }}:
-                          {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }} ({{
-                            seg.pct.toFixed(1)
-                          }}%)
-                        </title>
-                      </circle>
+                        {{ expenseSvc.currency() }}{{ total().toFixed(0) }}
+                      </text>
+                    </svg>
+                  }
+                  <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
+                    @for (seg of donutSegments(); track seg.category) {
+                      <div class="flex items-center gap-2 text-xs">
+                        <span
+                          class="w-2.5 h-2.5 rounded-sm shrink-0"
+                          [style.background]="donutColors[seg.category]"
+                        ></span>
+                        <span class="text-[var(--text-1)]">{{
+                          expenseSvc.categoryDef(seg.category).label
+                        }}</span>
+                        <span class="ml-auto font-[var(--font-mono)] text-[var(--text-0)]">
+                          {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }}
+                        </span>
+                        <span class="w-12 text-right font-[var(--font-mono)] text-[var(--text-2)]">
+                          {{ seg.pct.toFixed(1) }}%
+                        </span>
+                      </div>
                     }
-                    <text
-                      x="21"
-                      y="21"
-                      text-anchor="middle"
-                      dominant-baseline="central"
-                      class="donut-center"
-                    >
-                      {{ expenseSvc.currency() }}{{ total().toFixed(0) }}
-                    </text>
-                  </svg>
-                }
-                <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
-                  @for (seg of donutSegments(); track seg.category) {
-                    <div class="flex items-center gap-2 text-xs">
-                      <span
-                        class="w-2.5 h-2.5 rounded-sm shrink-0"
-                        [style.background]="donutColors[seg.category]"
-                      ></span>
-                      <span class="text-[var(--text-1)]">{{
-                        expenseSvc.categoryDef(seg.category).label
-                      }}</span>
-                      <span class="ml-auto font-[var(--font-mono)] text-[var(--text-0)]">
-                        {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }}
-                      </span>
-                      <span class="w-12 text-right font-[var(--font-mono)] text-[var(--text-2)]">
-                        {{ seg.pct.toFixed(1) }}%
-                      </span>
-                    </div>
-                  }
-                  @if (donutSegments().length === 0) {
-                    <div class="text-xs text-[var(--text-2)]">Nessuna spesa in questo mese.</div>
-                  }
+                    @if (donutSegments().length === 0) {
+                      <div class="text-xs text-[var(--text-2)]">Nessuna spesa in questo mese.</div>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Filter & sort toolbar -->
-          <div class="px-5 pt-3 shrink-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <div class="flex items-center gap-1">
-                <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]"
-                  >Ordina</span
-                >
-                <select
-                  class="input w-auto px-2 py-1 text-xs"
-                  [value]="sortBy()"
-                  (change)="onSortByChange($any($event.target).value)"
-                >
-                  <option value="date">Data</option>
-                  <option value="amount">Importo</option>
-                  <option value="category">Categoria</option>
-                </select>
-                <button
-                  class="icon-btn"
-                  (click)="toggleSortDir()"
-                  [title]="sortDir() === 'asc' ? 'Crescente' : 'Decrescente'"
-                >
-                  <mat-icon
-                    [fontIcon]="sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward'"
-                    class="scale-75"
-                  ></mat-icon>
-                </button>
-              </div>
-
-              <div class="flex items-center gap-1">
-                <input
-                  class="input w-32 px-2 py-1 text-xs"
-                  type="date"
-                  [(ngModel)]="dateFrom"
-                  title="Da data"
-                />
-                <span class="text-[var(--text-2)] text-xs">→</span>
-                <input
-                  class="input w-32 px-2 py-1 text-xs"
-                  type="date"
-                  [(ngModel)]="dateTo"
-                  title="A data"
-                />
-              </div>
-
-              <button
-                class="mini-btn"
-                [class.mini-btn-active]="filterCategories().length > 0"
-                (click)="showFilters.set(!showFilters())"
-                title="Filtra per categoria"
-              >
-                <mat-icon fontIcon="filter_list" class="text-sm w-3.5 h-3.5"></mat-icon>
-                Categoria
-                @if (filterCategories().length) {
-                  <span class="font-[var(--font-mono)]">({{ filterCategories().length }})</span>
-                }
-              </button>
-
-              @if (activeFilterCount() > 0 || searchQuery()) {
-                <button class="mini-btn" (click)="clearFilters()" title="Azzera filtri e ricerca">
-                  <mat-icon fontIcon="restart_alt" class="text-sm w-3.5 h-3.5"></mat-icon>
-                  Reset
-                </button>
-              }
-            </div>
-
-            @if (showFilters()) {
-              <div class="flex flex-wrap gap-1.5 mt-2">
-                @for (c of expenseSvc.categories; track c.value) {
-                  <button
-                    class="mini-btn"
-                    [class.mini-btn-active]="filterCategories().includes(c.value)"
-                    (click)="toggleCategoryFilter(c.value)"
+            <!-- Filter & sort toolbar -->
+            <div class="px-5 pt-3 shrink-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]"
+                    >Ordina</span
                   >
-                    <span
-                      class="w-2 h-2 rounded-full"
-                      [style.background]="donutColors[c.value]"
-                    ></span>
-                    {{ c.label }}
+                  <select
+                    class="input w-auto px-2 py-1 text-xs"
+                    [value]="sortBy()"
+                    (change)="onSortByChange($any($event.target).value)"
+                  >
+                    <option value="date">Data</option>
+                    <option value="amount">Importo</option>
+                    <option value="category">Categoria</option>
+                  </select>
+                  <button
+                    class="icon-btn"
+                    (click)="toggleSortDir()"
+                    [title]="sortDir() === 'asc' ? 'Crescente' : 'Decrescente'"
+                  >
+                    <mat-icon
+                      [fontIcon]="sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward'"
+                      class="scale-75"
+                    ></mat-icon>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <input
+                    class="input w-32 px-2 py-1 text-xs"
+                    type="date"
+                    [(ngModel)]="dateFrom"
+                    title="Da data"
+                  />
+                  <span class="text-[var(--text-2)] text-xs">→</span>
+                  <input
+                    class="input w-32 px-2 py-1 text-xs"
+                    type="date"
+                    [(ngModel)]="dateTo"
+                    title="A data"
+                  />
+                </div>
+
+                <button
+                  class="mini-btn"
+                  [class.mini-btn-active]="filterCategories().length > 0"
+                  (click)="showFilters.set(!showFilters())"
+                  title="Filtra per categoria"
+                >
+                  <mat-icon fontIcon="filter_list" class="text-sm w-3.5 h-3.5"></mat-icon>
+                  Categoria
+                  @if (filterCategories().length) {
+                    <span class="font-[var(--font-mono)]">({{ filterCategories().length }})</span>
+                  }
+                </button>
+
+                @if (activeFilterCount() > 0 || searchQuery()) {
+                  <button class="mini-btn" (click)="clearFilters()" title="Azzera filtri e ricerca">
+                    <mat-icon fontIcon="restart_alt" class="text-sm w-3.5 h-3.5"></mat-icon>
+                    Reset
                   </button>
                 }
               </div>
-            }
-          </div>
 
-          <!-- Expenses list -->
-          <div class="flex-1 overflow-y-auto px-5 py-4">
-            <div class="flex flex-col gap-2">
-              @for (item of filteredItems(); track item.expense.id) {
-                <div class="expense-row">
-                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span
-                      class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{
-                        expenseSvc.categoryDef(item.expense.category).bg
-                      }}"
-                    >
-                      <mat-icon
-                        [fontIcon]="expenseSvc.categoryDef(item.expense.category).icon"
-                        class="text-sm w-4 h-4 {{
-                          expenseSvc.categoryDef(item.expense.category).color
-                        }}"
-                      ></mat-icon>
-                    </span>
-                    <div class="min-w-0">
-                      <div class="text-sm font-medium text-[var(--text-0)] truncate">
-                        {{ item.expense.description }}
-                      </div>
-                      <div
-                        class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] truncate"
-                      >
-                        {{ item.expense.vendor || '—' }} · {{ item.expense.date }}
-                        @if (item.expense.recurrence !== 'once') {
-                          · {{ recurrenceLabel(item.expense.recurrence) }} ({{
-                            expenseSvc.currency()
-                          }}
-                          {{ item.expense.amount.toFixed(2) }})
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    @if (item.expense.sourceLink) {
-                      <button
-                        class="icon-btn"
-                        (click)="openLink(item.expense.sourceLink)"
-                        [title]="item.expense.sourceLabel || 'Fonte'"
-                      >
-                        <mat-icon fontIcon="link" class="scale-75"></mat-icon>
-                      </button>
-                    }
-                    @if (item.expense.attachmentLink) {
-                      <button
-                        class="icon-btn"
-                        (click)="openLink(item.expense.attachmentLink)"
-                        [title]="item.expense.attachmentName || 'Allegato'"
-                      >
-                        <mat-icon fontIcon="attach_file" class="scale-75"></mat-icon>
-                      </button>
-                    }
-                    <button class="icon-btn" (click)="editExpense(item.expense)" title="Modifica">
-                      <mat-icon fontIcon="edit" class="scale-75"></mat-icon>
-                    </button>
+              @if (showFilters()) {
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  @for (c of expenseSvc.categories; track c.value) {
                     <button
-                      class="icon-btn"
-                      (click)="trackExpense(item.expense, 'draft')"
-                      title="Crea bozza email di tracciamento"
+                      class="mini-btn"
+                      [class.mini-btn-active]="filterCategories().includes(c.value)"
+                      (click)="toggleCategoryFilter(c.value)"
                     >
-                      <mat-icon fontIcon="drafts" class="scale-75"></mat-icon>
+                      <span
+                        class="w-2 h-2 rounded-full"
+                        [style.background]="donutColors[c.value]"
+                      ></span>
+                      {{ c.label }}
                     </button>
-                    <button
-                      class="icon-btn text-rose-400"
-                      (click)="removeExpense(item.expense.id)"
-                      title="Elimina"
-                    >
-                      <mat-icon fontIcon="close" class="scale-75"></mat-icon>
-                    </button>
-                    <span
-                      class="w-20 text-right text-sm font-semibold font-[var(--font-mono)] text-[var(--text-0)]"
-                    >
-                      {{ expenseSvc.currency() }} {{ item.share.toFixed(2) }}
-                    </span>
-                  </div>
-                </div>
-              }
-              @if (filteredItems().length === 0) {
-                <div class="text-center text-sm text-[var(--text-2)] py-6">
-                  @if (searchQuery()) {
-                    Nessun risultato per "{{ searchQuery() }}"
-                  } @else {
-                    Nessuna spesa in questo mese.
                   }
                 </div>
               }
+            </div>
+
+            <!-- Expenses list -->
+            <div class="px-5 py-4">
+              <div class="flex flex-col gap-2">
+                @for (item of filteredItems(); track item.expense.id) {
+                  <div class="expense-row">
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span
+                        class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{
+                          expenseSvc.categoryDef(item.expense.category).bg
+                        }}"
+                      >
+                        <mat-icon
+                          [fontIcon]="expenseSvc.categoryDef(item.expense.category).icon"
+                          class="text-sm w-4 h-4 {{
+                            expenseSvc.categoryDef(item.expense.category).color
+                          }}"
+                        ></mat-icon>
+                      </span>
+                      <div class="min-w-0">
+                        <div class="text-sm font-medium text-[var(--text-0)] truncate">
+                          {{ item.expense.description }}
+                        </div>
+                        <div
+                          class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] truncate"
+                        >
+                          {{ expenseSvc.nucleusName(item.expense.nucleusId) }} ·
+                          {{ item.expense.vendor || '—' }} · {{ item.expense.date }}
+                          @if (item.expense.recurrence !== 'once') {
+                            · {{ recurrenceLabel(item.expense.recurrence) }} ({{
+                              expenseSvc.currency()
+                            }}
+                            {{ item.expense.amount.toFixed(2) }})
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      @if (item.expense.sourceLink) {
+                        <button
+                          class="icon-btn"
+                          (click)="openLink(item.expense.sourceLink)"
+                          [title]="item.expense.sourceLabel || 'Fonte'"
+                        >
+                          <mat-icon fontIcon="link" class="scale-75"></mat-icon>
+                        </button>
+                      }
+                      @if (item.expense.attachmentLink) {
+                        <button
+                          class="icon-btn"
+                          (click)="openLink(item.expense.attachmentLink)"
+                          [title]="item.expense.attachmentName || 'Allegato'"
+                        >
+                          <mat-icon fontIcon="attach_file" class="scale-75"></mat-icon>
+                        </button>
+                      }
+                      <button class="icon-btn" (click)="editExpense(item.expense)" title="Modifica">
+                        <mat-icon fontIcon="edit" class="scale-75"></mat-icon>
+                      </button>
+                      <button
+                        class="icon-btn"
+                        (click)="trackExpense(item.expense, 'draft')"
+                        title="Crea bozza email di tracciamento"
+                      >
+                        <mat-icon fontIcon="drafts" class="scale-75"></mat-icon>
+                      </button>
+                      <button
+                        class="icon-btn text-rose-400"
+                        (click)="removeExpense(item.expense.id)"
+                        title="Elimina"
+                      >
+                        <mat-icon fontIcon="close" class="scale-75"></mat-icon>
+                      </button>
+                      <span
+                        class="w-20 text-right text-sm font-semibold font-[var(--font-mono)] text-[var(--text-0)]"
+                      >
+                        {{ expenseSvc.currency() }} {{ item.share.toFixed(2) }}
+                      </span>
+                    </div>
+                  </div>
+                }
+                @if (filteredItems().length === 0) {
+                  <div class="text-center text-sm text-[var(--text-2)] py-6">
+                    @if (searchQuery()) {
+                      Nessun risultato per "{{ searchQuery() }}"
+                    } @else {
+                      Nessuna spesa in questo mese.
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         }
@@ -732,6 +759,14 @@
                   </select>
                 </label>
                 <label class="field">
+                  <span>Nucleo familiare</span>
+                  <select class="input" [(ngModel)]="mNucleusId">
+                    @for (n of expenseSvc.nuclei(); track n.id) {
+                      <option [value]="n.id">{{ n.name }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="field">
                   <span>Frequenza</span>
                   <select class="input" [(ngModel)]="mRecurrence">
                     @for (r of expenseSvc.recurrences; track r.value) {
@@ -908,12 +943,39 @@
               Gmail come indizio e classifica le spese in modo automatico. Le spese rilevate vengono
               salvate localmente.
             </p>
+            <label class="field mb-3">
+              <span>Etichette Gmail da scansionare (separate da virgola)</span>
+              <input
+                class="input"
+                [ngModel]="expenseSvc.scanLabels()"
+                (ngModelChange)="expenseSvc.setScanLabels($event)"
+                placeholder="scontrini, ricevute, fatture"
+              />
+            </label>
+            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
+              Oltre alla inbox: le email archiviate sotto queste etichette (es. <b>scontrini</b>)
+              vengono incluse nella scansione.
+            </p>
+            <label class="field mb-3">
+              <span>Numero massimo di email da scansionare</span>
+              <input
+                class="input w-32"
+                type="number"
+                min="1"
+                step="1"
+                [value]="expenseSvc.scanMax()"
+                (change)="expenseSvc.setScanMax($any($event.target).valueAsNumber)"
+              />
+            </label>
+            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
+              La scansione scorre le pagine di Gmail fino a questo limite (default 200).
+            </p>
             <div class="flex items-center gap-3">
               <button class="primary-btn" (click)="scanEmails()" [disabled]="expenseSvc.scanning()">
                 @if (expenseSvc.scanning()) {
                   Scansione…
                 } @else {
-                  Scansiona inbox
+                  Scansiona email
                 }
               </button>
               <span class="text-xs text-[var(--text-2)]">
@@ -1056,7 +1118,8 @@
                       <div class="text-sm font-medium text-[var(--text-0)] truncate">
                         {{ item.expense.description }}
                         <span class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)]">
-                          · {{ recurrenceLabel(item.expense.recurrence) }}
+                          · {{ expenseSvc.nucleusName(item.expense.nucleusId) }} ·
+                          {{ recurrenceLabel(item.expense.recurrence) }}
                         </span>
                       </div>
                       <div
@@ -1092,6 +1155,80 @@
                 </div>
               }
             </div>
+          </div>
+        </div>
+      }
+
+      @case ('nuclei') {
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="form-card max-w-3xl">
+            <div class="form-card-title">
+              <mat-icon fontIcon="groups" class="text-sm w-4 h-4 text-emerald-300"></mat-icon>
+              Nuclei familiari
+            </div>
+            <p
+              class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-4"
+            >
+              Definisci i nuclei (es. "Casa nostra" e "Casa di papà"), i nomi dei componenti e gli
+              indirizzi di fatturazione. L'agente li usa per attribuire ogni spesa al nucleo giusto
+              (es. "dentista di Andrea" → nucleo di Andrea; "luce di via X" → nucleo di via X).
+            </p>
+
+            <div class="flex flex-col gap-3">
+              @for (n of expenseSvc.nuclei(); track n.id) {
+                <div class="border border-[var(--border)] rounded-xl p-3">
+                  <div class="flex items-center gap-2 mb-2">
+                    <input
+                      class="input flex-1"
+                      [value]="n.name"
+                      (change)="expenseSvc.updateNucleus(n.id, { name: $any($event.target).value })"
+                      placeholder="Nome nucleo"
+                    />
+                    <button
+                      class="icon-btn text-rose-400"
+                      (click)="expenseSvc.removeNucleus(n.id)"
+                      [disabled]="expenseSvc.nuclei().length <= 1"
+                      title="Rimuovi nucleo"
+                    >
+                      <mat-icon fontIcon="delete" class="scale-75"></mat-icon>
+                    </button>
+                  </div>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <label class="field">
+                      <span>Componenti (separati da virgola)</span>
+                      <input
+                        class="input"
+                        [value]="n.members.join(', ')"
+                        (change)="
+                          expenseSvc.updateNucleus(n.id, {
+                            members: splitList($any($event.target).value),
+                          })
+                        "
+                        placeholder="Mario, Anna, Andrea, Giulia"
+                      />
+                    </label>
+                    <label class="field">
+                      <span>Indirizzi di fatturazione (separati da virgola)</span>
+                      <input
+                        class="input"
+                        [value]="n.addresses.join(', ')"
+                        (change)="
+                          expenseSvc.updateNucleus(n.id, {
+                            addresses: splitList($any($event.target).value),
+                          })
+                        "
+                        placeholder="Via Roma 1, Via Verdi 2"
+                      />
+                    </label>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <button class="ghost-btn mt-3" (click)="expenseSvc.addNucleus()">
+              <mat-icon fontIcon="add" class="text-sm w-4 h-4"></mat-icon>
+              Aggiungi nucleo
+            </button>
           </div>
         </div>
       }

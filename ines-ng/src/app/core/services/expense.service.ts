@@ -56,6 +56,8 @@ export interface Expense {
   /** Deduplication key computed from source + amount + date. */
   dedupKey?: string;
   note?: string;
+  /** Family nucleus (household) this expense belongs to. */
+  nucleusId?: string;
   createdAt: number;
 }
 
@@ -81,6 +83,16 @@ export interface CategorizedExpense {
   amount?: number;
   date?: string;
   recurrence?: ExpenseRecurrence;
+  nucleusId?: string;
+}
+
+export interface Nucleus {
+  id: string;
+  name: string;
+  /** First names of the household members (used to match "dentista di Andrea"). */
+  members: string[];
+  /** Billing addresses / street names (used to match "luce di via ..."). */
+  addresses: string[];
 }
 
 export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
@@ -180,7 +192,8 @@ Respond ONLY with a JSON object (no markdown, no backticks) in this format:
   "category": "acqua|luce|gas|telefono|internet|cibo|vestiti|bellezza|salute|trasporti|casa|altro",
   "amount": 42.5,
   "date": "YYYY-MM-DD",
-  "recurrence": "once|monthly|bimonthly|quarterly|annual"
+  "recurrence": "once|monthly|bimonthly|quarterly|annual",
+  "nucleus": "A"
 }
 
 Rules:
@@ -188,7 +201,8 @@ Rules:
 - "amount" is a positive number in EUR (null if not found). Ignore the euro symbol.
 - "recurrence": "monthly" for monthly bills (e.g. phone, internet, streaming), "bimonthly" for bimestrale bills, "annual" for yearly fees, "once" otherwise.
 - Use "today" only when no date can be inferred; prefer explicit dates in the text.
-- "category" must be one of the allowed values.`;
+- "category" must be one of the allowed values.
+- "nucleus" is the letter (A, B, ...) of the family nucleus the expense belongs to, chosen from the nuclei list provided below. Match by the person name (e.g. "dentista di Andrea") or by the billing address (e.g. "via ...") mentioned in the text. If nothing matches, use "A".`;
 
 const SYSTEM_QUERY = `You are a personal home-finance assistant. Answer questions about home expenses using ONLY the Markdown data provided below. Reply in the user's language (usually Italian). Be concise and always include euro amounts when relevant. If the data does not contain the answer, say so.`;
 
@@ -204,14 +218,21 @@ export class ExpenseService {
   private readonly toast = inject(ToastService);
 
   readonly expenses = signal<Expense[]>([]);
-  readonly budgets = signal<Partial<Record<ExpenseCategory, number>>>(
-    this.storage.get<Partial<Record<ExpenseCategory, number>>>('ines_expense_budgets') ?? {},
-  );
   readonly currency = signal<string>(this.storage.get<string>('ines_expense_currency') ?? '€');
   readonly loading = signal(false);
   readonly scanning = signal(false);
   readonly categorizing = signal(false);
   readonly scanLog = signal<string[]>([]);
+  /** Extra Gmail labels to scan (comma-separated), e.g. "scontrini, ricevute". */
+  readonly scanLabels = signal<string>(this.storage.get<string>('ines_expense_scan_labels') ?? '');
+  /** Maximum number of emails to scan in a single manual run (paginated). */
+  readonly scanMax = signal<number>(this.storage.get<number>('ines_expense_scan_max') ?? 50);
+  /** Family nuclei (households) used to split expenses. */
+  readonly nuclei = signal<Nucleus[]>(this.loadNuclei());
+  /** Budgets per nucleus: nucleusId -> (category -> amount). */
+  readonly budgets = signal<Record<string, Partial<Record<ExpenseCategory, number>>>>(
+    this.loadBudgets(),
+  );
 
   // Auto-scan email (periodic background polling)
   readonly autoScan = signal<boolean>(this.storage.get<boolean>('ines_expense_autoscan') ?? false);
@@ -349,6 +370,7 @@ export class ExpenseService {
       sourceId: expense.sourceId,
       dedupKey: expense.dedupKey,
       note: expense.note,
+      nucleusId: expense.nucleusId,
     };
     await this.put(full);
     this.expenses.update((list) => [...list, full].sort((a, b) => (a.date < b.date ? 1 : -1)));
@@ -411,7 +433,7 @@ export class ExpenseService {
     if (!this.llm.isReady() || !this.gmail.configured()) return;
     if (this.scanning()) return;
     try {
-      const added = await this.scanEmails(15);
+      const added = await this.scanEmails(50);
       this.lastScanAt.set(Date.now());
       if (added > 0) {
         this.toast.success(`Auto-scan: ${added} nuove spese rilevate`);
@@ -475,19 +497,31 @@ export class ExpenseService {
     return natural;
   }
 
-  expensesForMonth(year: number, month: number): { expense: Expense; share: number }[] {
-    return this.expenses()
+  expensesForMonth(
+    year: number,
+    month: number,
+    nucleusId?: string,
+  ): { expense: Expense; share: number }[] {
+    let items = this.expenses()
       .map((expense) => ({ expense, share: this.monthlyShare(expense, year, month) }))
       .filter((x): x is { expense: Expense; share: number } => x.share !== null);
+    if (nucleusId) {
+      items = items.filter((x) => this.nucleusOf(x.expense).id === nucleusId);
+    }
+    return items;
   }
 
-  monthlyTotal(year: number, month: number): number {
-    return this.expensesForMonth(year, month).reduce((sum, x) => sum + x.share, 0);
+  monthlyTotal(year: number, month: number, nucleusId?: string): number {
+    return this.expensesForMonth(year, month, nucleusId).reduce((sum, x) => sum + x.share, 0);
   }
 
-  categoryTotals(year: number, month: number): { category: ExpenseCategory; total: number }[] {
+  categoryTotals(
+    year: number,
+    month: number,
+    nucleusId?: string,
+  ): { category: ExpenseCategory; total: number }[] {
     const map = new Map<ExpenseCategory, number>();
-    for (const { expense, share } of this.expensesForMonth(year, month)) {
+    for (const { expense, share } of this.expensesForMonth(year, month, nucleusId)) {
       map.set(expense.category, (map.get(expense.category) ?? 0) + share);
     }
     return this.categories
@@ -497,16 +531,21 @@ export class ExpenseService {
 
   // ── Budgets (persisted in localStorage) ──
 
-  budgetFor(cat: ExpenseCategory): number | null {
-    const v = this.budgets()[cat];
+  budgetFor(cat: ExpenseCategory, nucleusId?: string): number | null {
+    if (!nucleusId) return null;
+    const v = this.budgets()[nucleusId]?.[cat];
     return typeof v === 'number' && v > 0 ? v : null;
   }
 
-  setBudget(cat: ExpenseCategory, amount: number | null): void {
+  setBudget(nucleusId: string, cat: ExpenseCategory, amount: number | null): void {
     this.budgets.update((b) => {
-      const next: Partial<Record<ExpenseCategory, number>> = { ...b };
-      if (amount === null || amount <= 0) delete next[cat];
-      else next[cat] = amount;
+      const next: Record<string, Partial<Record<ExpenseCategory, number>>> = { ...b };
+      const nucleusBudgets: Partial<Record<ExpenseCategory, number>> = {
+        ...(next[nucleusId] ?? {}),
+      };
+      if (amount === null || amount <= 0) delete nucleusBudgets[cat];
+      else nucleusBudgets[cat] = amount;
+      next[nucleusId] = nucleusBudgets;
       return next;
     });
     this.storage.set('ines_expense_budgets', this.budgets());
@@ -516,6 +555,86 @@ export class ExpenseService {
     const sym = symbol.trim() || '€';
     this.currency.set(sym);
     this.storage.set('ines_expense_currency', sym);
+  }
+
+  setScanLabels(value: string): void {
+    this.scanLabels.set(value);
+    this.storage.set('ines_expense_scan_labels', value);
+  }
+
+  setScanMax(value: number): void {
+    const n = Math.max(1, Math.round(value) || 50);
+    this.scanMax.set(n);
+    this.storage.set('ines_expense_scan_max', n);
+  }
+
+  private loadNuclei(): Nucleus[] {
+    const saved = this.storage.get<Nucleus[]>('ines_expense_nuclei');
+    if (Array.isArray(saved) && saved.length) return saved;
+    return [
+      { id: 'nucleo-1', name: 'Casa nostra', members: [], addresses: [] },
+      { id: 'nucleo-2', name: 'Casa di papà', members: [], addresses: [] },
+    ];
+  }
+
+  private loadBudgets(): Record<string, Partial<Record<ExpenseCategory, number>>> {
+    const saved = this.storage.get<unknown>('ines_expense_budgets');
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+    const record = saved as Record<string, Partial<Record<ExpenseCategory, number>>>;
+    // Migrate the legacy flat shape (category -> amount) to the first nucleus.
+    const categoryKeys = new Set(EXPENSE_CATEGORIES.map((c) => c.value));
+    const keys = Object.keys(record);
+    if (keys.some((k) => categoryKeys.has(k as ExpenseCategory))) {
+      const first = this.nuclei()[0]?.id;
+      return first ? { [first]: record as Partial<Record<ExpenseCategory, number>> } : {};
+    }
+    return record;
+  }
+
+  addNucleus(name = 'Nuovo nucleo'): void {
+    const nucleus: Nucleus = {
+      id:
+        'nucleo-' +
+        (typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+      name,
+      members: [],
+      addresses: [],
+    };
+    this.nuclei.update((list) => [...list, nucleus]);
+    this.storage.set('ines_expense_nuclei', this.nuclei());
+  }
+
+  updateNucleus(id: string, patch: Partial<Omit<Nucleus, 'id'>>): void {
+    this.nuclei.update((list) => list.map((n) => (n.id === id ? { ...n, ...patch, id } : n)));
+    this.storage.set('ines_expense_nuclei', this.nuclei());
+  }
+
+  removeNucleus(id: string): void {
+    this.nuclei.update((list) => {
+      const next = list.filter((n) => n.id !== id);
+      return next.length ? next : list;
+    });
+    this.storage.set('ines_expense_nuclei', this.nuclei());
+  }
+
+  nucleusOf(expense: Expense): Nucleus {
+    const nuclei = this.nuclei();
+    if (expense.nucleusId) {
+      const found = nuclei.find((n) => n.id === expense.nucleusId);
+      if (found) return found;
+    }
+    return nuclei[0] ?? { id: '', name: 'N/D', members: [], addresses: [] };
+  }
+
+  nucleusName(id: string | undefined): string {
+    const nuclei = this.nuclei();
+    if (id) {
+      const found = nuclei.find((n) => n.id === id);
+      if (found) return found.name;
+    }
+    return nuclei[0]?.name ?? '';
   }
 
   /** Stable dedup key from source id + amount + date (djb2 hash). */
@@ -552,13 +671,13 @@ export class ExpenseService {
 
   // ── Markdown generation ──
 
-  generateMarkdown(year: number, month: number): string {
-    const items = this.expensesForMonth(year, month);
+  generateMarkdown(year: number, month: number, nucleusId?: string): string {
+    const items = this.expensesForMonth(year, month, nucleusId);
     const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('it-IT', {
       month: 'long',
       year: 'numeric',
     });
-    const total = this.monthlyTotal(year, month);
+    const total = this.monthlyTotal(year, month, nucleusId);
     const cur = this.currency();
 
     const lines: string[] = [];
@@ -573,9 +692,9 @@ export class ExpenseService {
     }
 
     lines.push(
-      '| Categoria | Descrizione | Fornitore | Quota mensile | Frequenza | Importo originale | Fonte | Allegato |',
+      '| Categoria | Nucleo | Descrizione | Fornitore | Quota mensile | Frequenza | Importo originale | Fonte | Allegato |',
     );
-    lines.push('|---|---|---|---|---|---|---|---|');
+    lines.push('|---|---|---|---|---|---|---|---|---|');
     for (const { expense, share } of items) {
       const cat = this.categoryDef(expense.category).label;
       const freq =
@@ -592,7 +711,7 @@ export class ExpenseService {
         .map((a, i) => `[${a.name || 'allegato ' + (i + 1)}](${a.link})`)
         .join(' ');
       lines.push(
-        `| ${cat} | ${this.mdEscape(expense.description)} | ${this.mdEscape(expense.vendor || '')} | ${cur} ${share.toFixed(2)} | ${freq} | ${cur} ${expense.amount.toFixed(2)} | ${source} | ${attachment} |`,
+        `| ${cat} | ${this.mdEscape(this.nucleusName(expense.nucleusId))} | ${this.mdEscape(expense.description)} | ${this.mdEscape(expense.vendor || '')} | ${cur} ${share.toFixed(2)} | ${freq} | ${cur} ${expense.amount.toFixed(2)} | ${source} | ${attachment} |`,
       );
     }
     lines.push('');
@@ -600,8 +719,14 @@ export class ExpenseService {
     lines.push('');
     lines.push('## Totale per categoria');
     lines.push('');
-    for (const ct of this.categoryTotals(year, month)) {
+    for (const ct of this.categoryTotals(year, month, nucleusId)) {
       lines.push(`- **${this.categoryDef(ct.category).label}**: ${cur} ${ct.total.toFixed(2)}`);
+    }
+    lines.push('');
+    lines.push('## Totale per nucleo');
+    lines.push('');
+    for (const n of this.nuclei()) {
+      lines.push(`- **${n.name}**: ${cur} ${this.monthlyTotal(year, month, n.id).toFixed(2)}`);
     }
     lines.push('');
     lines.push('## Spese ricorrenti / ammortizzate');
@@ -669,6 +794,7 @@ export class ExpenseService {
       const attachment = attachments.map((a) => a.link || a.name).join(' ');
       return [
         expense.date,
+        this.nucleusName(expense.nucleusId),
         cat,
         expense.description,
         expense.vendor || '',
@@ -684,6 +810,7 @@ export class ExpenseService {
   generateMonthCsv(year: number, month: number): string {
     const header = [
       'data',
+      'nucleo',
       'categoria',
       'descrizione',
       'fornitore',
@@ -701,6 +828,7 @@ export class ExpenseService {
     const header = [
       'mese',
       'data',
+      'nucleo',
       'categoria',
       'descrizione',
       'fornitore',
@@ -736,7 +864,7 @@ export class ExpenseService {
 
   async categorize(text: string): Promise<CategorizedExpense | null> {
     if (!this.llm.isReady()) throw new Error('Load the model first!');
-    const raw = await this.llm.generate(SYSTEM_CATEGORIZE, text, [], () => undefined);
+    const raw = await this.llm.generate(this.categorizeSystemPrompt(), text, [], () => undefined);
     const parsed = this.jsonParser.parseObject(raw);
     if (!parsed) return null;
     if (parsed['isExpense'] === false) return { isExpense: false };
@@ -755,7 +883,36 @@ export class ExpenseService {
       recurrence: this.recurrences.some((r) => r.value === recurrence)
         ? (recurrence as ExpenseRecurrence)
         : 'once',
+      nucleusId: this.parseNucleus(parsed['nucleus']),
     };
+  }
+
+  private categorizeSystemPrompt(): string {
+    const nuclei = this.nuclei();
+    if (!nuclei.length) return SYSTEM_CATEGORIZE;
+    const list = nuclei
+      .map((n, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const members = n.members.length ? n.members.join(', ') : 'nessun membro';
+        const addresses = n.addresses.length ? n.addresses.join(', ') : 'nessun indirizzo';
+        return `${letter}) ${n.name} — membri: ${members}; indirizzi: ${addresses}`;
+      })
+      .join('\n');
+    return `${SYSTEM_CATEGORIZE}\n\nNuclei familiari:\n${list}\n\nAssegna "nucleus" alla lettera del nucleo a cui appartiene la spesa, in base alla persona citata (es. "dentista di Andrea") o all'indirizzo di fatturazione (es. "via ..."). Se nessun elemento corrisponde, usa "A".`;
+  }
+
+  private parseNucleus(raw: unknown): string | undefined {
+    const nuclei = this.nuclei();
+    if (!nuclei.length) return undefined;
+    const s = String(raw ?? '').trim();
+    let idx = -1;
+    if (/^[A-Za-z]$/.test(s)) {
+      idx = s.toUpperCase().charCodeAt(0) - 65;
+    } else if (s) {
+      idx = nuclei.findIndex((n) => n.name.toLowerCase() === s.toLowerCase());
+    }
+    if (idx < 0 || idx >= nuclei.length) idx = 0;
+    return nuclei[idx].id;
   }
 
   /** Converts a local File into a data URL (capped at ~8 MB to avoid oversized records). */
@@ -771,55 +928,82 @@ export class ExpenseService {
 
   // ── Email scanning ──
 
-  async scanEmails(max = 10): Promise<number> {
+  async scanEmails(maxTotal?: number): Promise<number> {
     if (!this.llm.isReady()) throw new Error('Load the model first!');
     this.scanning.set(true);
     this.scanLog.set([]);
     let added = 0;
     try {
-      const emails = await this.gmail.fetchFullMessages(max);
-      this.log(`Fetched ${emails.length} emails from inbox.`);
+      const labels = this.scanLabels()
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const total = Math.max(1, maxTotal ?? this.scanMax());
+      const pageSize = 50;
+      const emails = await this.gmail.fetchFullMessages(pageSize, labels, total);
+      this.log(
+        labels.length
+          ? `Fetched ${emails.length} emails (inbox + etichette: ${labels.join(', ')}).`
+          : `Fetched ${emails.length} emails from inbox.`,
+      );
+
+      // Fast skip for emails already imported in a previous scan.
+      const knownSourceIds = new Set(
+        this.expenses()
+          .map((e) => e.sourceId)
+          .filter((id): id is string => !!id),
+      );
+
       for (const email of emails) {
         // Self-generated tracking emails are a trace, not a new expense.
         if (email.subject.trim().startsWith('[Spese]')) {
           this.log(`⏭ ${email.subject.slice(0, 40)} — email di tracciamento saltata`);
           continue;
         }
-        const text = await this.emailToText(email);
-        const parsed = await this.categorize(text);
-        if (!parsed || !parsed.isExpense) continue;
-        if (parsed.amount === undefined) continue;
-        const date = parsed.date || new Date().toISOString().slice(0, 10);
-        const dedupKey = this.dedupKeyOf('email', email.id, parsed.amount, date);
-        if (this.expenses().some((e) => e.dedupKey === dedupKey)) continue;
-        if (this.findDuplicate(parsed)) {
-          this.log(`⏭ ${parsed.description} — già presente (riconciliazione)`);
+        if (knownSourceIds.has(email.id)) {
+          this.log(`⏭ ${email.subject.slice(0, 40)} — già importata`);
           continue;
         }
-        const attachments: ExpenseAttachment[] = email.attachments.map((a) => ({
-          name: a.filename,
-          link: a.dataUrl,
-        }));
-        const firstAtt = email.attachments[0];
-        await this.add({
-          description: parsed.description || email.subject,
-          vendor: parsed.vendor,
-          category: parsed.category || 'altro',
-          amount: parsed.amount,
-          date,
-          recurrence: parsed.recurrence || 'once',
-          sourceType: 'email',
-          sourceLabel: email.from,
-          sourceLink: `https://mail.google.com/mail/u/0/#inbox/${email.id}`,
-          sourceId: email.id,
-          dedupKey,
-          attachmentName: firstAtt?.filename,
-          attachmentLink: firstAtt?.dataUrl,
-          attachments,
-          note: email.subject,
-        });
-        added++;
-        this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
+        try {
+          const text = await this.emailToText(email);
+          const parsed = await this.categorize(text);
+          if (!parsed || !parsed.isExpense) continue;
+          if (parsed.amount === undefined) continue;
+          const date = parsed.date || new Date().toISOString().slice(0, 10);
+          const dedupKey = this.dedupKeyOf('email', email.id, parsed.amount, date);
+          if (this.expenses().some((e) => e.dedupKey === dedupKey)) continue;
+          if (this.findDuplicate(parsed)) {
+            this.log(`⏭ ${parsed.description} — già presente (riconciliazione)`);
+            continue;
+          }
+          const attachments: ExpenseAttachment[] = email.attachments.map((a) => ({
+            name: a.filename,
+            link: a.dataUrl,
+          }));
+          const firstAtt = email.attachments[0];
+          await this.add({
+            description: parsed.description || email.subject,
+            vendor: parsed.vendor,
+            category: parsed.category || 'altro',
+            amount: parsed.amount,
+            date,
+            recurrence: parsed.recurrence || 'once',
+            sourceType: 'email',
+            sourceLabel: email.from,
+            sourceLink: `https://mail.google.com/mail/u/0/#inbox/${email.id}`,
+            sourceId: email.id,
+            dedupKey,
+            attachmentName: firstAtt?.filename,
+            attachmentLink: firstAtt?.dataUrl,
+            attachments,
+            note: email.subject,
+            nucleusId: parsed.nucleusId,
+          });
+          added++;
+          this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
+        } catch (e: any) {
+          this.log(`⚠ ${email.subject.slice(0, 40)} — ${e?.message ?? 'errore'}`);
+        }
       }
       if (added === 0) this.log('No new expenses detected.');
       if (added > 0) this.unseenCount.update((n) => n + added);
@@ -916,6 +1100,7 @@ export class ExpenseService {
         ? [{ name: attachment.filename, link: attachment.dataUrl }]
         : undefined,
       note: text.slice(0, 200),
+      nucleusId: parsed.nucleusId,
     });
 
     return { expense, parsed };
@@ -947,6 +1132,7 @@ export class ExpenseService {
       `Spesa registrata da INES`,
       '',
       `- Categoria: ${cat}`,
+      `- Nucleo: ${this.nucleusName(expense.nucleusId)}`,
       `- Descrizione: ${expense.description}`,
       `- Fornitore: ${expense.vendor || '-'}`,
       `- Importo: ${this.currency()} ${expense.amount.toFixed(2)}`,
@@ -1061,6 +1247,7 @@ export class ExpenseService {
         sourceId: raw.sourceId,
         dedupKey,
         note: raw.note,
+        nucleusId: raw.nucleusId,
       });
       existingKeys.add(dedupKey);
       if (raw.id) existingKeys.add(raw.id);
@@ -1071,23 +1258,26 @@ export class ExpenseService {
 
   // ── Year aggregates ──
 
-  yearTotal(year: number): number {
+  yearTotal(year: number, nucleusId?: string): number {
     let sum = 0;
-    for (let m = 1; m <= 12; m++) sum += this.monthlyTotal(year, m);
+    for (let m = 1; m <= 12; m++) sum += this.monthlyTotal(year, m, nucleusId);
     return sum;
   }
 
-  yearlyTotals(year: number): { month: number; total: number }[] {
+  yearlyTotals(year: number, nucleusId?: string): { month: number; total: number }[] {
     return Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
-      total: this.monthlyTotal(year, i + 1),
+      total: this.monthlyTotal(year, i + 1, nucleusId),
     }));
   }
 
-  yearlyCategoryTotals(year: number): { category: ExpenseCategory; total: number }[] {
+  yearlyCategoryTotals(
+    year: number,
+    nucleusId?: string,
+  ): { category: ExpenseCategory; total: number }[] {
     const map = new Map<ExpenseCategory, number>();
     for (let m = 1; m <= 12; m++) {
-      for (const { expense, share } of this.expensesForMonth(year, m)) {
+      for (const { expense, share } of this.expensesForMonth(year, m, nucleusId)) {
         map.set(expense.category, (map.get(expense.category) ?? 0) + share);
       }
     }

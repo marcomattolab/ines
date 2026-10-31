@@ -17,6 +17,11 @@
   mese/anno, con tooltip importo + percentuale, colori per categoria (`donutColors`) e legenda.
 - **Scadenzario** delle bollette ricorrenti: prossime scadenze con giorni mancanti, stato
   (`scaduta` / `in scadenza` / `prossima`) e promemoria integrato con `ReminderService`.
+- **Scansione email paginata**: etichette Gmail configurabili (es. `scontrini`), numero massimo di
+  email per scansione e scorrimento di tutta la cronologia via `pageToken`.
+- **Nuclei familiari**: configurazione di più nuclei (nome, componenti, indirizzi di fatturazione),
+  attribuzione automatica della spesa al nucleo via LLM (persona/indirizzo), filtro per nucleo in
+  dashboard, colonna `nucleo` in MD/CSV e **budget separato per nucleo**.
 
 ## Backlog (facoltativo)
 

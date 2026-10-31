@@ -225,8 +225,6 @@ export class ExpenseService {
   readonly scanLog = signal<string[]>([]);
   /** Extra Gmail labels to scan (comma-separated), e.g. "scontrini, ricevute". */
   readonly scanLabels = signal<string>(this.storage.get<string>('ines_expense_scan_labels') ?? '');
-  /** Maximum number of emails to scan in a single manual run (paginated). */
-  readonly scanMax = signal<number>(this.storage.get<number>('ines_expense_scan_max') ?? 50);
   /** Family nuclei (households) used to split expenses. */
   readonly nuclei = signal<Nucleus[]>(this.loadNuclei());
   /** Budgets per nucleus: nucleusId -> (category -> amount). */
@@ -560,12 +558,6 @@ export class ExpenseService {
   setScanLabels(value: string): void {
     this.scanLabels.set(value);
     this.storage.set('ines_expense_scan_labels', value);
-  }
-
-  setScanMax(value: number): void {
-    const n = Math.max(1, Math.round(value) || 50);
-    this.scanMax.set(n);
-    this.storage.set('ines_expense_scan_max', n);
   }
 
   private loadNuclei(): Nucleus[] {
@@ -938,20 +930,20 @@ export class ExpenseService {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-      const total = Math.max(1, maxTotal ?? this.scanMax());
+      // Without maxTotal the scan walks every Gmail page (whole history).
+      const total = maxTotal ?? Number.MAX_SAFE_INTEGER;
       const pageSize = 50;
-      const emails = await this.gmail.fetchFullMessages(pageSize, labels, total);
-      this.log(
-        labels.length
-          ? `Fetched ${emails.length} emails (inbox + etichette: ${labels.join(', ')}).`
-          : `Fetched ${emails.length} emails from inbox.`,
-      );
-
-      // Fast skip for emails already imported in a previous scan.
+      // Fast skip: don't re-fetch messages already imported in a previous scan.
       const knownSourceIds = new Set(
         this.expenses()
           .map((e) => e.sourceId)
           .filter((id): id is string => !!id),
+      );
+      const emails = await this.gmail.fetchFullMessages(pageSize, labels, total, knownSourceIds);
+      this.log(
+        labels.length
+          ? `Fetched ${emails.length} emails (inbox + etichette: ${labels.join(', ')}).`
+          : `Fetched ${emails.length} emails from inbox.`,
       );
 
       for (const email of emails) {

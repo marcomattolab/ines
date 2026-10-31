@@ -290,6 +290,7 @@ export class GmailService {
     max = 10,
     labels: string[] = [],
     maxTotal: number = max,
+    knownIds?: Set<string>,
   ): Promise<GmailFullEmail[]> {
     if (!this.configured()) {
       throw new Error(
@@ -304,7 +305,6 @@ export class GmailService {
     try {
       const token = await this.getAccessToken();
       const query = buildGmailQuery(labels);
-      const CONCURRENCY = 4;
       const emails: GmailFullEmail[] = [];
       let pageToken: string | undefined;
 
@@ -312,28 +312,25 @@ export class GmailService {
         const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=${encodeURIComponent(
           query,
         )}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
-        const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
+        const listRes = await this.fetchGmail(listUrl, token);
         if (!listRes.ok) {
-          const hint =
-            listRes.status === 429
-              ? ' Rate limit Gmail superato: riduci il numero di email o riprova tra qualche minuto.'
-              : listRes.status === 403
-                ? ' Verifica che la Gmail API sia abilitata e i permessi concessi.'
-                : listRes.status === 401
-                  ? ' Token non valido: riprova e acconsenti di nuovo.'
-                  : '';
-          throw new Error(`Gmail API error (${listRes.status}).${hint}`);
+          const reason = await this.gmailErrorMessage(listRes);
+          throw new Error(`Gmail API error (${listRes.status})${reason ? `: ${reason}` : ''}.`);
         }
         const listData = await listRes.json();
         const messages: { id: string }[] = listData.messages || [];
         pageToken = listData.nextPageToken || undefined;
         const targets = messages.slice(0, Math.max(0, maxTotal - emails.length));
-        for (let i = 0; i < targets.length; i += CONCURRENCY) {
-          const batch = targets.slice(i, i + CONCURRENCY);
-          const results = await Promise.all(batch.map((m) => this.fetchOneFull(token, m.id)));
-          for (const r of results) if (r) emails.push(r);
+        for (const m of targets) {
+          if (knownIds?.has(m.id)) continue;
+          const email = await this.fetchOneFull(token, m.id);
+          if (email) emails.push(email);
           if (emails.length >= maxTotal) break;
+          // Throttle each full-message fetch to stay under the Gmail rate limits.
+          await this.sleep(250);
         }
+        // Throttle between pages to stay under the Gmail rate limits.
+        await this.sleep(250);
       } while (pageToken && emails.length < maxTotal);
 
       this.status.set('ok');
@@ -347,11 +344,43 @@ export class GmailService {
     }
   }
 
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /** Fetches with retry/backoff on transient Gmail errors (429/403/5xx). */
+  private async fetchGmail(url: string, token: string): Promise<Response> {
+    let lastRes: Response | null = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      lastRes = res;
+      if (res.ok) return res;
+      const retryable = res.status === 429 || res.status === 403 || res.status >= 500;
+      if (!retryable || attempt === 3) break;
+      await this.sleep(1000 * Math.pow(2, attempt) + Math.random() * 500);
+    }
+    if (lastRes && !lastRes.ok) {
+      const reason = await this.gmailErrorMessage(lastRes.clone());
+      console.warn(`[Gmail] ${lastRes.status} ${reason} — ${url.split('?')[0]}`);
+    }
+    return lastRes!;
+  }
+
+  private async gmailErrorMessage(res: Response): Promise<string> {
+    try {
+      const data = await res.json();
+      const reason = data?.error?.errors?.[0]?.reason || data?.error?.message || '';
+      return typeof reason === 'string' ? reason : '';
+    } catch {
+      return '';
+    }
+  }
+
   private async fetchOneFull(token: string, id: string): Promise<GmailFullEmail | null> {
     try {
-      const res = await fetch(
+      const res = await this.fetchGmail(
         `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        token,
       );
       if (!res.ok) return null;
       const data = await res.json();
@@ -364,9 +393,10 @@ export class GmailService {
       const attachments: GmailAttachment[] = [];
       for (const a of attMeta) {
         try {
-          const attRes = await fetch(
+          await this.sleep(150);
+          const attRes = await this.fetchGmail(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/attachments/${a.id}`,
-            { headers: { Authorization: `Bearer ${token}` } },
+            token,
           );
           if (!attRes.ok) continue;
           const attData = await attRes.json();

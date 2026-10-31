@@ -956,19 +956,9 @@
               Oltre alla inbox: le email archiviate sotto queste etichette (es. <b>scontrini</b>)
               vengono incluse nella scansione.
             </p>
-            <label class="field mb-3">
-              <span>Numero massimo di email da scansionare</span>
-              <input
-                class="input w-32"
-                type="number"
-                min="1"
-                step="1"
-                [value]="expenseSvc.scanMax()"
-                (change)="expenseSvc.setScanMax($any($event.target).valueAsNumber)"
-              />
-            </label>
             <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
-              La scansione scorre le pagine di Gmail fino a questo limite (default 200).
+              La scansione manuale legge <b>tutte</b> le email (inbox + etichette), pagina per
+              pagina. L'auto-scan periodico resta limitato a 50 email per ciclo.
             </p>
             <div class="flex items-center gap-3">
               <button class="primary-btn" (click)="scanEmails()" [disabled]="expenseSvc.scanning()">

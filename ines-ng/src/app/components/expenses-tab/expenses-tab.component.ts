@@ -689,13 +689,18 @@ export class ExpensesTabComponent {
     }
   }
 
+  scanLimit(): number | undefined {
+    const n = this.expenseSvc.scanMax();
+    return n > 0 ? n : undefined;
+  }
+
   async scanEmails(): Promise<void> {
     if (!this.gmail.configured()) {
       this.toast.error('Configura Gmail (Client ID) prima di scansionare le email');
       return;
     }
     try {
-      const added = await this.expenseSvc.scanEmails();
+      const added = await this.expenseSvc.scanEmails(this.scanLimit());
       this.toast.success(added > 0 ? `${added} spese rilevate` : 'Nessuna nuova spesa');
     } catch (e: any) {
       this.toast.error(e?.message ?? 'Errore scansione email');

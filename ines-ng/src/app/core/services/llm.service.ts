@@ -54,6 +54,7 @@ export class LlmService {
   readonly isBusy = signal(false);
 
   readonly modelMaxTokens = signal(8192);
+  readonly contextWindow = signal(8192);
   readonly temperature = signal(0.8);
   readonly randomSeed = signal(101);
   readonly topK = signal(40);
@@ -75,7 +76,11 @@ export class LlmService {
   }
 
   /** Creates a fresh conversation with the system prompt and history as preface. */
-  private async createConversation(system: string, history: ChatMessage[]): Promise<any> {
+  private async createConversation(
+    system: string,
+    history: ChatMessage[],
+    maxOutputTokens?: number,
+  ): Promise<any> {
     const { SamplerType } = await importLiteRtLm();
     return this.engine.createConversation({
       preface: {
@@ -85,7 +90,7 @@ export class LlmService {
         ],
       },
       sessionConfig: {
-        maxOutputTokens: this.modelMaxTokens(),
+        maxOutputTokens: maxOutputTokens ?? this.modelMaxTokens(),
         samplerParams: {
           type: SamplerType.TOP_K,
           k: this.topK(),
@@ -199,6 +204,7 @@ export class LlmService {
     history: ChatMessage[] = [],
     onToken: (partial: string, done: boolean, full: string) => void,
     signal?: AbortSignal,
+    maxOutputTokens?: number,
   ): Promise<string> {
     if (!this.engine) throw new Error('Model not loaded. Click "Load Model" first.');
     if (this.isBusy())
@@ -217,7 +223,8 @@ export class LlmService {
     const emitted = { value: false };
     try {
       return await this.withRetry(
-        () => this.runGeneration(system, userMsg, history, onToken, signal, emitted),
+        () =>
+          this.runGeneration(system, userMsg, history, onToken, signal, emitted, maxOutputTokens),
         signal,
         () => emitted.value,
       );
@@ -234,8 +241,9 @@ export class LlmService {
     onToken: (partial: string, done: boolean, full: string) => void,
     signal: AbortSignal | undefined,
     emitted: { value: boolean },
+    maxOutputTokens?: number,
   ): Promise<string> {
-    const conversation = await this.createConversation(system, history);
+    const conversation = await this.createConversation(system, history, maxOutputTokens);
     try {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 

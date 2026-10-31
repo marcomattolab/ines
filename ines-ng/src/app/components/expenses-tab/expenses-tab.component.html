@@ -956,11 +956,22 @@
               Oltre alla inbox: le email archiviate sotto queste etichette (es. <b>scontrini</b>)
               vengono incluse nella scansione.
             </p>
+            <label class="field mb-3">
+              <span>Numero email da scansionare (0 = tutte)</span>
+              <input
+                class="input w-32"
+                type="number"
+                min="0"
+                step="1"
+                [value]="expenseSvc.scanMax()"
+                (change)="expenseSvc.setScanMax($any($event.target).valueAsNumber)"
+              />
+            </label>
             <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
-              La scansione manuale legge <b>tutte</b> le email (inbox + etichette), pagina per
-              pagina. L'auto-scan periodico resta limitato a 50 email per ciclo.
+              Imposta un numero per fare lotti più piccoli (consigliato per stare sotto la quota
+              Gmail). <b>0</b> = scansiona tutte le email. L'auto-scan resta a 50 per ciclo.
             </p>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
               <button class="primary-btn" (click)="scanEmails()" [disabled]="expenseSvc.scanning()">
                 @if (expenseSvc.scanning()) {
                   Scansione…
@@ -968,6 +979,12 @@
                   Scansiona email
                 }
               </button>
+              @if (expenseSvc.scanning() && expenseSvc.scanTotal() > 0) {
+                <span class="text-sm font-[var(--font-mono)] text-emerald-300">
+                  {{ expenseSvc.scanProgress() }}/{{ expenseSvc.scanTotal() }} · nuove
+                  {{ expenseSvc.scanAdded() }}
+                </span>
+              }
               <span class="text-xs text-[var(--text-2)]">
                 Stato Gmail: <b class="text-[var(--text-1)]">{{ gmail.status() }}</b>
               </span>

@@ -223,8 +223,13 @@ export class ExpenseService {
   readonly scanning = signal(false);
   readonly categorizing = signal(false);
   readonly scanLog = signal<string[]>([]);
+  readonly scanProgress = signal(0);
+  readonly scanTotal = signal(0);
+  readonly scanAdded = signal(0);
   /** Extra Gmail labels to scan (comma-separated), e.g. "scontrini, ricevute". */
   readonly scanLabels = signal<string>(this.storage.get<string>('ines_expense_scan_labels') ?? '');
+  /** Number of emails to scan manually (0 = all). */
+  readonly scanMax = signal<number>(this.storage.get<number>('ines_expense_scan_max') ?? 0);
   /** Family nuclei (households) used to split expenses. */
   readonly nuclei = signal<Nucleus[]>(this.loadNuclei());
   /** Budgets per nucleus: nucleusId -> (category -> amount). */
@@ -558,6 +563,12 @@ export class ExpenseService {
   setScanLabels(value: string): void {
     this.scanLabels.set(value);
     this.storage.set('ines_expense_scan_labels', value);
+  }
+
+  setScanMax(value: number): void {
+    const n = Math.max(0, Math.round(value) || 0);
+    this.scanMax.set(n);
+    this.storage.set('ines_expense_scan_max', n);
   }
 
   private loadNuclei(): Nucleus[] {
@@ -924,6 +935,9 @@ export class ExpenseService {
     if (!this.llm.isReady()) throw new Error('Load the model first!');
     this.scanning.set(true);
     this.scanLog.set([]);
+    this.scanProgress.set(0);
+    this.scanTotal.set(0);
+    this.scanAdded.set(0);
     let added = 0;
     try {
       const labels = this.scanLabels()
@@ -940,6 +954,7 @@ export class ExpenseService {
           .filter((id): id is string => !!id),
       );
       const emails = await this.gmail.fetchFullMessages(pageSize, labels, total, knownSourceIds);
+      this.scanTotal.set(emails.length);
       this.log(
         labels.length
           ? `Fetched ${emails.length} emails (inbox + etichette: ${labels.join(', ')}).`
@@ -947,6 +962,7 @@ export class ExpenseService {
       );
 
       for (const email of emails) {
+        this.scanProgress.update((n) => n + 1);
         // Self-generated tracking emails are a trace, not a new expense.
         if (email.subject.trim().startsWith('[Spese]')) {
           this.log(`⏭ ${email.subject.slice(0, 40)} — email di tracciamento saltata`);
@@ -992,6 +1008,7 @@ export class ExpenseService {
             nucleusId: parsed.nucleusId,
           });
           added++;
+          this.scanAdded.set(added);
           this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
         } catch (e: any) {
           this.log(`⚠ ${email.subject.slice(0, 40)} — ${e?.message ?? 'errore'}`);

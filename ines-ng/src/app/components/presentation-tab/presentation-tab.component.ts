@@ -10,7 +10,10 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
-import { PRESENTATION_SYSTEM_PROMPT } from '../../core/services/presentation-prompt';
+import {
+  PRESENTATION_SYSTEM_PROMPT,
+  PRESENTATION_CSS,
+} from '../../core/services/presentation-prompt';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
@@ -261,9 +264,16 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
       .replace(
         /\{MARKDOWN_CONTEXT\}/g,
         this.fileContent()
-          ? `Use the following file content as the primary source for the presentation:\n\n${this.fileContent()}`
+          ? `Use the following file content as the primary source for the presentation:\n\n${this.fileContent()!.slice(0, 8000)}`
           : '',
       );
+
+    // Token budget: keep input + output inside the model context window.
+    const inputTokens = LlmService.estimateTokens(systemPrompt);
+    const maxOutput = Math.max(
+      256,
+      Math.min(this.llm.modelMaxTokens(), this.llm.contextWindow() - inputTokens - 64),
+    );
 
     try {
       let full = '';
@@ -281,11 +291,13 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
                 .trim(),
             ),
           );
-          this.generatedHtml.set(this.injectNavigationScript(cleaned));
+          this.generatedHtml.set(this.injectNavigationScript(this.injectCss(cleaned, colors)));
 
           const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
           this.slideCount.set(count);
         },
+        undefined,
+        maxOutput,
       );
 
       const cleaned = this.sanitizeLightBackgrounds(
@@ -296,16 +308,18 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
             .trim(),
         ),
       );
-      this.generatedHtml.set(this.injectNavigationScript(cleaned));
+      this.generatedHtml.set(this.injectNavigationScript(this.injectCss(cleaned, colors)));
       const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
       this.slideCount.set(count);
       this.currentSlide.set(1);
       this.toast.success(`Presentation generated! ${count} slides`);
     } catch (e: any) {
-      const msg = e.message?.includes('INVALID_ARGUMENT')
-        ? '⚠️ Presentation too long — try a simpler topic or fewer slides.'
-        : '❌ ' + e.message;
-      this.toast.show(msg);
+      const m = String(e?.message ?? e ?? '');
+      const tooLong = /too long|INVALID_ARGUMENT|exceed|context|token|input/i.test(m);
+      const msg = tooLong
+        ? '⚠️ Presentazione troppo lunga per il modello: riduci il numero di slide o il contenuto del file, oppure aumenta "Context" nel loader.'
+        : '❌ ' + m;
+      this.toast.error(msg);
     }
 
     this.generating.set(false);
@@ -332,6 +346,23 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
     const iframe = this.previewFrame()?.nativeElement;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.postMessage({ command: 'goToSlide', slide: this.currentSlide() }, '*');
+  }
+
+  private injectCss(
+    html: string,
+    colors: { primary: string; secondary: string; accent: string },
+  ): string {
+    const css = `<style>${PRESENTATION_CSS.replace(/\{PRIMARY\}/g, colors.primary)
+      .replace(/\{SECONDARY\}/g, colors.secondary)
+      .replace(/\{ACCENT\}/g, colors.accent)}</style>`;
+    if (/<style[\s\S]*?<\/style>/i.test(html)) {
+      return html.replace(/<style[\s\S]*?<\/style>/i, css);
+    }
+    const headIdx = html.indexOf('</head>');
+    if (headIdx !== -1) {
+      return html.slice(0, headIdx) + css + html.slice(headIdx);
+    }
+    return css + '\n' + html;
   }
 
   private injectNavigationScript(html: string): string {

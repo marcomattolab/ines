@@ -53,6 +53,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
   slideCount = signal(0);
   currentSlide = signal(0);
   generatedHtml = signal<string>('');
+  debugOutput = signal('');
   brandingOpen = signal(false);
 
   slideCountOption = signal<'auto' | number>('auto');
@@ -222,14 +223,12 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
         : COLOR_THEMES[theme];
 
     const requestedSlides =
-      this.slideCountOption() === 'auto'
-        ? 'auto (8–14, depending on content depth)'
-        : String(this.slideCountCustom());
+      this.slideCountOption() === 'auto' ? '10' : String(this.slideCountCustom());
 
     const slideCountGuide =
       this.slideCountOption() === 'auto'
-        ? 'Choose 8–14 slides based on content depth — include section dividers for pacing.'
-        : `Create EXACTLY ${this.slideCountCustom()} slides. Each slide must have meaningful, non-redundant content.`;
+        ? 'Generate 10 complete slides, one after another: 1 title, 1 agenda/overview, 6 content slides (vary the layouts), 1 quote, 1 closing. Every slide must be a full <section class="slide"> block. Do NOT stop after the first slide — output ALL 10 slides.'
+        : `Generate EXACTLY ${this.slideCountCustom()} complete slides, one after another. Every slide must be a full <section class="slide"> block. Do NOT stop early — output every slide.`;
 
     const styleGuide =
       this.style() === 'minimal'
@@ -269,10 +268,11 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
       );
 
     // Token budget: keep input + output inside the model context window.
+    // The char/4 estimate undercounts the real tokenizer, so leave a large margin.
     const inputTokens = LlmService.estimateTokens(systemPrompt);
     const maxOutput = Math.max(
-      256,
-      Math.min(this.llm.modelMaxTokens(), this.llm.contextWindow() - inputTokens - 64),
+      1024,
+      Math.min(this.llm.modelMaxTokens(), this.llm.contextWindow() - inputTokens - 1024),
     );
 
     try {
@@ -293,7 +293,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
           );
           this.generatedHtml.set(this.injectNavigationScript(this.injectCss(cleaned, colors)));
 
-          const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
+          const count = (cleaned.match(/<section\s[^>]*class=["']slide\b/gi) || []).length;
           this.slideCount.set(count);
         },
         undefined,
@@ -309,10 +309,20 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
         ),
       );
       this.generatedHtml.set(this.injectNavigationScript(this.injectCss(cleaned, colors)));
-      const count = (cleaned.match(/<section\s[^>]*class="slide"[^>]*>/gi) || []).length;
+      const count = (cleaned.match(/<section\s[^>]*class=["']slide\b/gi) || []).length;
       this.slideCount.set(count);
       this.currentSlide.set(1);
-      this.toast.success(`Presentation generated! ${count} slides`);
+      if (count === 0) {
+        this.debugOutput.set(full);
+        const snippet = full.slice(0, 180).replace(/\n/g, ' ');
+        console.warn('[Presentation] no slides detected — raw output:', full.slice(0, 500));
+        this.toast.error(
+          `Nessuna slide rilevata (output ${full.length} char): ${snippet}${full.length > 180 ? '…' : ''}`,
+          7000,
+        );
+      } else {
+        this.toast.success(`Presentation generated! ${count} slides (${full.length} chars)`);
+      }
     } catch (e: any) {
       const m = String(e?.message ?? e ?? '');
       const tooLong = /too long|INVALID_ARGUMENT|exceed|context|token|input/i.test(m);

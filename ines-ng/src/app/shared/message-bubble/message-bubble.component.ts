@@ -61,6 +61,7 @@ export class MessageBubbleComponent implements AfterViewChecked {
 
   role = input.required<'user' | 'ai'>();
   text = input<string>('');
+  image = input<string>('');
   streaming = input<boolean>(false);
   readonly onEdit = output<void>();
 

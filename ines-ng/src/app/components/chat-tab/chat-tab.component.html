@@ -51,6 +51,7 @@
         <app-message-bubble
           [role]="msg.role"
           [text]="msg.text"
+          [image]="msg.image ?? ''"
           [streaming]="!!msg.streaming"
           (onEdit)="editMessage(msg)"
         />
@@ -150,6 +151,45 @@
     </div>
   }
 
+  @if (attachedFile()) {
+    <div
+      class="flex items-center gap-2 px-[22px] py-2 border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0"
+    >
+      @if (attachedFile()!.kind === 'image') {
+        <img
+          [src]="attachedFile()!.preview"
+          class="w-10 h-10 rounded-lg object-cover border border-[var(--border)]"
+          alt="anteprima"
+        />
+      } @else {
+        <mat-icon fontIcon="picture_as_pdf" class="text-2xl text-rose-400"></mat-icon>
+      }
+      <div class="min-w-0 flex-1">
+        <div class="text-xs text-[var(--text-0)] truncate">{{ attachedFile()!.name }}</div>
+        <div class="text-[10px] font-[var(--font-mono)] text-[var(--text-2)]">
+          @if (attachedFile()!.busy) {
+            @if (attachedFile()!.kind === 'image') {
+              OCR in corso… {{ ocr.progress() }}%
+            } @else {
+              Estrazione testo…
+            }
+          } @else if (attachedFile()!.text) {
+            ✓ testo rilevato ({{ attachedFile()!.text!.length }} caratteri)
+          } @else {
+            nessun testo rilevato
+          }
+        </div>
+      </div>
+      <button
+        class="text-xs text-[var(--text-2)] hover:text-rose-400 transition-colors"
+        (click)="removeAttachedFile()"
+        title="Rimuovi allegato"
+      >
+        <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
+      </button>
+    </div>
+  }
+
   <div class="input-zone">
     @if (editingMessageId()) {
       <button
@@ -160,6 +200,18 @@
         <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
       </button>
     }
+    <label class="cursor-pointer shrink-0" title="Allega immagine o PDF">
+      <input
+        type="file"
+        accept="image/*,.pdf,application/pdf"
+        class="hidden"
+        (change)="onAttachFile($event)"
+      />
+      <mat-icon
+        fontIcon="image"
+        class="text-[var(--text-2)] hover:text-[var(--text-0)] transition-colors"
+      ></mat-icon>
+    </label>
     <textarea
       class="input-field"
       #inputEl

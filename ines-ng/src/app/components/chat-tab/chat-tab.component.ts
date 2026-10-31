@@ -20,6 +20,8 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { OcrService } from '../../core/services/ocr.service';
+import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ChatInputDirective } from '../../shared/chat-input.directive';
 
 interface UiMessage {
@@ -28,6 +30,7 @@ interface UiMessage {
   text: string;
   streaming?: boolean;
   sources?: string[];
+  image?: string;
 }
 
 const SYSTEM_CHAT = `You're a general AI assistant, helpful, precise, and friendly.
@@ -77,6 +80,8 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly brain = inject(SecondBrainService);
   private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
+  readonly ocr = inject(OcrService);
+  private readonly textProc = inject(TextProcessingService);
 
   messages = signal<UiMessage[]>([
     {
@@ -89,6 +94,14 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   generating = signal(false);
   tokenInfo = signal('');
   editingMessageId = signal<number | null>(null);
+  readonly attachedFile = signal<{
+    kind: 'image' | 'pdf';
+    file: File;
+    preview?: string;
+    name: string;
+    text: string | null;
+    busy: boolean;
+  } | null>(null);
 
   readonly builtinTemplates: PromptTemplate[] = [
     {
@@ -210,6 +223,50 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
   }
 
+  async onAttachFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isImage && !isPdf) {
+      this.toast.error("Allega un'immagine o un PDF");
+      return;
+    }
+    const preview = isImage ? await this.readFileDataUrl(file) : undefined;
+    this.attachedFile.set({
+      kind: isImage ? 'image' : 'pdf',
+      file,
+      preview,
+      name: file.name,
+      text: null,
+      busy: true,
+    });
+    try {
+      const text = isImage
+        ? await this.ocr.recognize(file)
+        : await this.textProc.extractTextFromPdf(file);
+      this.attachedFile.update((a) => (a ? { ...a, text: text || null, busy: false } : a));
+      if (!text) this.toast.show('Nessun testo rilevato nel file');
+    } catch {
+      this.attachedFile.update((a) => (a ? { ...a, text: null, busy: false } : a));
+    }
+  }
+
+  removeAttachedFile(): void {
+    this.attachedFile.set(null);
+  }
+
+  private readFileDataUrl(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  }
+
   applyTemplate(tmpl: PromptTemplate) {
     const el = this.inputEl()?.nativeElement;
     if (!el) return;
@@ -251,16 +308,31 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   async send() {
     if (this.generating()) return;
     const text = this.inputEl().nativeElement.value.trim();
-    if (!text) return;
+    const file = this.attachedFile();
+    if (!text && !file) return;
     if (!this.llm.isReady()) {
       this.toast.show('Load the model first!');
       return;
     }
 
+    // Include the extracted text of the attached image/PDF in the model input.
+    let modelText = text;
+    if (file) {
+      const label = file.kind === 'image' ? 'Immagine allegata' : 'PDF allegato';
+      const part = file.text
+        ? `\n\n[${label}: ${file.name}]\nTesto estratto:\n${file.text}`
+        : `\n\n[${label}: ${file.name} — nessun testo rilevato]`;
+      modelText = text ? text + part : part.trim();
+    }
+
+    const displayText =
+      text || (file ? (file.kind === 'pdf' ? `[PDF: ${file.name}]` : '[Immagine]') : '');
+
     this.generating.set(true);
     this.abortController = new AbortController();
     this.inputEl().nativeElement.value = '';
     this.inputEl().nativeElement.style.height = '';
+    this.attachedFile.set(null);
 
     const editingId = this.editingMessageId();
     if (editingId !== null) {
@@ -276,10 +348,13 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       this.nextId = this.messages().reduce((max, m) => Math.max(max, m.id), 0) + 1;
     }
 
-    this.history.push({ role: 'user', content: text });
+    this.history.push({ role: 'user', content: modelText });
     if (this.history.length > MAX_HISTORY_LENGTH)
       this.history = this.history.slice(-MAX_HISTORY_LENGTH);
-    this.messages.update((m) => [...m, { id: this.nextId++, role: 'user', text }]);
+    this.messages.update((m) => [
+      ...m,
+      { id: this.nextId++, role: 'user', text: displayText, image: file?.preview },
+    ]);
     this.typing.set(true);
     this.shouldScroll = true;
 
@@ -312,14 +387,14 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       systemPrompt += `\n\nYou have access to the user's personal knowledge base and second brain (saved notes and documents). Use the provided context when it is relevant and cite the source. If the context doesn't contain the answer, answer from your own knowledge.\n\nContext:\n${contextParts.join('\n\n')}`;
     }
 
-    const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
+    const trimmed = this.llm.trimConversation(systemPrompt, modelText, this.history.slice(-6, -1));
     const aiId = this.nextId++;
 
     try {
       let full = '';
       await this.llm.generate(
         systemPrompt,
-        text,
+        modelText,
         trimmed,
         (_, done, fullText) => {
           full = fullText;

@@ -334,6 +334,17 @@
           }
         </div>
       }
+      @if (debugOutput()) {
+        <div class="mx-4 mb-2 p-3 rounded-xl border border-rose-400/30 bg-rose-500/5">
+          <div class="text-[10px] uppercase tracking-widest text-rose-400 font-mono mb-1">
+            Output del modello (nessuna slide rilevata)
+          </div>
+          <pre
+            class="text-[11px] text-[var(--text-1)] font-mono whitespace-pre-wrap max-h-40 overflow-auto"
+            >{{ debugOutput().slice(0, 3000) }}</pre
+          >
+        </div>
+      }
       <iframe
         #previewFrame
         class="preview-iframe"

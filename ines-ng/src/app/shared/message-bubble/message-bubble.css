@@ -51,6 +51,17 @@
   backdrop-filter: blur(10px);
 }
 
+.msg-image {
+  display: block;
+  max-width: 320px;
+  max-height: 220px;
+  width: auto;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+}
+
 .message.user .msg-bubble {
   background: rgba(99, 179, 255, 0.1);
   border: 1px solid rgba(99, 179, 255, 0.2);

@@ -177,8 +177,8 @@ export class AppComponent implements OnInit {
   }
 
   moveTab(id: Tab, dir: -1 | 1) {
-    const defaultOrder = this.tabs.map((t) => t.id);
-    const order = this.settings.tabOrder().length ? this.settings.tabOrder() : defaultOrder;
+    // Operate on the full displayed order (includes tabs missing from the saved order).
+    const order = this.orderedTabs().map((t) => t.id);
     const idx = order.indexOf(id);
     const target = idx + dir;
     if (idx < 0 || target < 0 || target >= order.length) return;

@@ -19,6 +19,10 @@
         <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
         MD
       </app-button>
+      <app-button variant="ghost" size="sm" (onClick)="downloadCsv()" title="Esporta mese in CSV">
+        <mat-icon fontIcon="table_view" class="text-sm w-3.5 h-3.5"></mat-icon>
+        CSV
+      </app-button>
       <app-button
         variant="ghost"
         size="sm"
@@ -27,6 +31,15 @@
       >
         <mat-icon fontIcon="calendar_view_month" class="text-sm w-3.5 h-3.5"></mat-icon>
         Anno
+      </app-button>
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="downloadYearCsv()"
+        title="Esporta anno in CSV"
+      >
+        <mat-icon fontIcon="table_view" class="text-sm w-3.5 h-3.5"></mat-icon>
+        CSV Anno
       </app-button>
       <app-button variant="ghost" size="sm" (onClick)="exportJson()" title="Esporta tutto in JSON">
         <mat-icon fontIcon="data_object" class="text-sm w-3.5 h-3.5"></mat-icon>
@@ -282,6 +295,163 @@
             }
           </div>
 
+          <!-- Donut chart -->
+          <div class="px-5 pt-3 shrink-0">
+            <div class="cat-card">
+              <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-3">
+                Ripartizione per categoria
+              </div>
+              <div class="flex items-center gap-6 flex-wrap">
+                @if (donutSegments().length > 0) {
+                  <svg viewBox="0 0 42 42" class="w-40 h-40 shrink-0">
+                    <circle
+                      cx="21"
+                      cy="21"
+                      r="15.9155"
+                      fill="none"
+                      stroke="rgba(255, 255, 255, 0.06)"
+                      stroke-width="5"
+                    ></circle>
+                    @for (seg of donutSegments(); track seg.category) {
+                      <circle
+                        cx="21"
+                        cy="21"
+                        r="15.9155"
+                        fill="none"
+                        [attr.stroke]="donutColors[seg.category]"
+                        stroke-width="5"
+                        [attr.stroke-dasharray]="seg.pct + ' ' + (100 - seg.pct)"
+                        [attr.stroke-dashoffset]="-(seg.offset * 100 + 25)"
+                      >
+                        <title>
+                          {{ expenseSvc.categoryDef(seg.category).label }}:
+                          {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }} ({{
+                            seg.pct.toFixed(1)
+                          }}%)
+                        </title>
+                      </circle>
+                    }
+                    <text
+                      x="21"
+                      y="21"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      class="donut-center"
+                    >
+                      {{ expenseSvc.currency() }}{{ total().toFixed(0) }}
+                    </text>
+                  </svg>
+                }
+                <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
+                  @for (seg of donutSegments(); track seg.category) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <span
+                        class="w-2.5 h-2.5 rounded-sm shrink-0"
+                        [style.background]="donutColors[seg.category]"
+                      ></span>
+                      <span class="text-[var(--text-1)]">{{
+                        expenseSvc.categoryDef(seg.category).label
+                      }}</span>
+                      <span class="ml-auto font-[var(--font-mono)] text-[var(--text-0)]">
+                        {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }}
+                      </span>
+                      <span class="w-12 text-right font-[var(--font-mono)] text-[var(--text-2)]">
+                        {{ seg.pct.toFixed(1) }}%
+                      </span>
+                    </div>
+                  }
+                  @if (donutSegments().length === 0) {
+                    <div class="text-xs text-[var(--text-2)]">Nessuna spesa in questo mese.</div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & sort toolbar -->
+          <div class="px-5 pt-3 shrink-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]"
+                  >Ordina</span
+                >
+                <select
+                  class="input w-auto px-2 py-1 text-xs"
+                  [value]="sortBy()"
+                  (change)="onSortByChange($any($event.target).value)"
+                >
+                  <option value="date">Data</option>
+                  <option value="amount">Importo</option>
+                  <option value="category">Categoria</option>
+                </select>
+                <button
+                  class="icon-btn"
+                  (click)="toggleSortDir()"
+                  [title]="sortDir() === 'asc' ? 'Crescente' : 'Decrescente'"
+                >
+                  <mat-icon
+                    [fontIcon]="sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward'"
+                    class="scale-75"
+                  ></mat-icon>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <input
+                  class="input w-32 px-2 py-1 text-xs"
+                  type="date"
+                  [(ngModel)]="dateFrom"
+                  title="Da data"
+                />
+                <span class="text-[var(--text-2)] text-xs">→</span>
+                <input
+                  class="input w-32 px-2 py-1 text-xs"
+                  type="date"
+                  [(ngModel)]="dateTo"
+                  title="A data"
+                />
+              </div>
+
+              <button
+                class="mini-btn"
+                [class.mini-btn-active]="filterCategories().length > 0"
+                (click)="showFilters.set(!showFilters())"
+                title="Filtra per categoria"
+              >
+                <mat-icon fontIcon="filter_list" class="text-sm w-3.5 h-3.5"></mat-icon>
+                Categoria
+                @if (filterCategories().length) {
+                  <span class="font-[var(--font-mono)]">({{ filterCategories().length }})</span>
+                }
+              </button>
+
+              @if (activeFilterCount() > 0 || searchQuery()) {
+                <button class="mini-btn" (click)="clearFilters()" title="Azzera filtri e ricerca">
+                  <mat-icon fontIcon="restart_alt" class="text-sm w-3.5 h-3.5"></mat-icon>
+                  Reset
+                </button>
+              }
+            </div>
+
+            @if (showFilters()) {
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                @for (c of expenseSvc.categories; track c.value) {
+                  <button
+                    class="mini-btn"
+                    [class.mini-btn-active]="filterCategories().includes(c.value)"
+                    (click)="toggleCategoryFilter(c.value)"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full"
+                      [style.background]="donutColors[c.value]"
+                    ></span>
+                    {{ c.label }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
           <!-- Expenses list -->
           <div class="flex-1 overflow-y-auto px-5 py-4">
             <div class="flex flex-col gap-2">
@@ -435,6 +605,79 @@
                   Nessuna spesa nell'anno {{ year() }}.
                 </div>
               }
+            </div>
+
+            <!-- Year donut chart -->
+            <div class="cat-card mt-4">
+              <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-3">
+                Ripartizione per categoria (anno)
+              </div>
+              <div class="flex items-center gap-6 flex-wrap">
+                @if (yearDonutSegments().length > 0) {
+                  <svg viewBox="0 0 42 42" class="w-40 h-40 shrink-0">
+                    <circle
+                      cx="21"
+                      cy="21"
+                      r="15.9155"
+                      fill="none"
+                      stroke="rgba(255, 255, 255, 0.06)"
+                      stroke-width="5"
+                    ></circle>
+                    @for (seg of yearDonutSegments(); track seg.category) {
+                      <circle
+                        cx="21"
+                        cy="21"
+                        r="15.9155"
+                        fill="none"
+                        [attr.stroke]="donutColors[seg.category]"
+                        stroke-width="5"
+                        [attr.stroke-dasharray]="seg.pct + ' ' + (100 - seg.pct)"
+                        [attr.stroke-dashoffset]="-(seg.offset * 100 + 25)"
+                      >
+                        <title>
+                          {{ expenseSvc.categoryDef(seg.category).label }}:
+                          {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }} ({{
+                            seg.pct.toFixed(1)
+                          }}%)
+                        </title>
+                      </circle>
+                    }
+                    <text
+                      x="21"
+                      y="21"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      class="donut-center"
+                    >
+                      {{ expenseSvc.currency() }}{{ yearTotal().toFixed(0) }}
+                    </text>
+                  </svg>
+                }
+                <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
+                  @for (seg of yearDonutSegments(); track seg.category) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <span
+                        class="w-2.5 h-2.5 rounded-sm shrink-0"
+                        [style.background]="donutColors[seg.category]"
+                      ></span>
+                      <span class="text-[var(--text-1)]">{{
+                        expenseSvc.categoryDef(seg.category).label
+                      }}</span>
+                      <span class="ml-auto font-[var(--font-mono)] text-[var(--text-0)]">
+                        {{ expenseSvc.currency() }} {{ seg.total.toFixed(2) }}
+                      </span>
+                      <span class="w-12 text-right font-[var(--font-mono)] text-[var(--text-2)]">
+                        {{ seg.pct.toFixed(1) }}%
+                      </span>
+                    </div>
+                  }
+                  @if (yearDonutSegments().length === 0) {
+                    <div class="text-xs text-[var(--text-2)]">
+                      Nessuna spesa nell'anno {{ year() }}.
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         }
@@ -767,6 +1010,88 @@
             @if (answer()) {
               <div class="answer-box mt-4">{{ answer() }}</div>
             }
+          </div>
+        </div>
+      }
+
+      @case ('schedule') {
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="form-card max-w-3xl">
+            <div class="form-card-title">
+              <mat-icon fontIcon="event" class="text-sm w-4 h-4 text-amber-300"></mat-icon>
+              Scadenzario bollette ricorrenti
+            </div>
+            <p
+              class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
+            >
+              Prossime scadenze calcolate dalle spese ricorrenti (mensili / bimestrali / trimestrali
+              / annuali). Usa <b class="text-[var(--text-1)]">Ricorda</b> per impostare un
+              promemoria vocale/toast.
+            </p>
+
+            @if (schedule().length === 0) {
+              <div class="text-sm text-[var(--text-2)] py-6 text-center">
+                Nessuna spesa ricorrente registrata. Aggiungi una spesa con frequenza mensile o
+                superiore.
+              </div>
+            }
+
+            <div class="flex flex-col gap-2">
+              @for (item of schedule(); track item.expense.id) {
+                <div class="expense-row">
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span
+                      class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{
+                        expenseSvc.categoryDef(item.expense.category).bg
+                      }}"
+                    >
+                      <mat-icon
+                        [fontIcon]="expenseSvc.categoryDef(item.expense.category).icon"
+                        class="text-sm w-4 h-4 {{
+                          expenseSvc.categoryDef(item.expense.category).color
+                        }}"
+                      ></mat-icon>
+                    </span>
+                    <div class="min-w-0">
+                      <div class="text-sm font-medium text-[var(--text-0)] truncate">
+                        {{ item.expense.description }}
+                        <span class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)]">
+                          · {{ recurrenceLabel(item.expense.recurrence) }}
+                        </span>
+                      </div>
+                      <div
+                        class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] truncate"
+                      >
+                        Scade il {{ formatDate(item.nextDue) }}
+                        @if (item.status === 'scaduta') {
+                          <span class="text-rose-300">
+                            · scaduta il {{ formatDate(item.lastDue) }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span
+                      class="text-[10px] font-[var(--font-mono)] px-2 py-0.5 rounded-md border {{
+                        scheduleStatusClass(item.status)
+                      }}"
+                    >
+                      {{ scheduleStatusLabel(item) }}
+                    </span>
+                    <button class="icon-btn" (click)="remind(item)" title="Imposta promemoria">
+                      <mat-icon fontIcon="notifications_active" class="scale-75"></mat-icon>
+                    </button>
+                    <span
+                      class="w-20 text-right text-sm font-semibold font-[var(--font-mono)] text-[var(--text-0)]"
+                    >
+                      {{ expenseSvc.currency() }} {{ item.expense.amount.toFixed(2) }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         </div>
       }

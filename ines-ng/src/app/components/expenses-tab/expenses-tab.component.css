@@ -182,3 +182,36 @@ select.input option {
   white-space: pre-wrap;
   line-height: 1.7;
 }
+
+.mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mini-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-0);
+}
+
+.mini-btn-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-0);
+  border-color: var(--border-active);
+}
+
+.donut-center {
+  fill: var(--text-0);
+  font-family: var(--font-mono);
+  font-size: 5.5px;
+  font-weight: 600;
+}

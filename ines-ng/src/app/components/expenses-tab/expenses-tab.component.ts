@@ -13,9 +13,19 @@ import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TelegramService } from '../../core/services/telegram.service';
 import { OcrService } from '../../core/services/ocr.service';
+import { ReminderService } from '../../core/services/reminder.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
-type Panel = 'dashboard' | 'add' | 'scan' | 'ask';
+type Panel = 'dashboard' | 'add' | 'scan' | 'ask' | 'schedule';
+
+interface ScheduleItem {
+  expense: Expense;
+  lastDue: Date;
+  nextDue: Date;
+  days: number;
+  status: 'scaduta' | 'in-scadenza' | 'prossima';
+  overdueDays: number;
+}
 
 @Component({
   selector: 'app-expenses-tab',
@@ -32,6 +42,7 @@ export class ExpensesTabComponent {
   readonly toast = inject(ToastService);
   readonly telegram = inject(TelegramService);
   readonly ocr = inject(OcrService);
+  readonly reminder = inject(ReminderService);
 
   readonly now = new Date();
   readonly year = signal(this.now.getFullYear());
@@ -43,6 +54,7 @@ export class ExpensesTabComponent {
     { id: 'add', label: 'Aggiungi', icon: 'add_circle' },
     { id: 'scan', label: 'Scan Email', icon: 'mail' },
     { id: 'ask', label: 'Chiedi', icon: 'help' },
+    { id: 'schedule', label: 'Scadenzario', icon: 'event' },
   ];
 
   // Manual add form
@@ -130,15 +142,158 @@ export class ExpensesTabComponent {
   readonly editingId = signal<string | null>(null);
   readonly askScope = signal<'month' | 'year'>('month');
 
+  // Filter / sort for the expense list
+  readonly sortBy = signal<'date' | 'amount' | 'category'>('date');
+  readonly sortDir = signal<'asc' | 'desc'>('desc');
+  readonly filterCategories = signal<ExpenseCategory[]>([]);
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
+  readonly showFilters = signal(false);
+
+  readonly activeFilterCount = computed(() => {
+    let n = this.filterCategories().length;
+    if (this.dateFrom()) n++;
+    if (this.dateTo()) n++;
+    return n;
+  });
+
   readonly filteredItems = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    const items = this.monthItems();
-    if (!q) return items;
-    return items.filter(
-      (x) =>
-        x.expense.description.toLowerCase().includes(q) ||
-        (x.expense.vendor || '').toLowerCase().includes(q),
-    );
+    const q = this.searchQuery().trim().toLowerCase();
+    let items = this.monthItems();
+
+    if (q) {
+      items = items.filter(
+        (x) =>
+          x.expense.description.toLowerCase().includes(q) ||
+          (x.expense.vendor || '').toLowerCase().includes(q),
+      );
+    }
+
+    const cats = this.filterCategories();
+    if (cats.length > 0) items = items.filter((x) => cats.includes(x.expense.category));
+
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    if (from) items = items.filter((x) => x.expense.date >= from);
+    if (to) items = items.filter((x) => x.expense.date <= to);
+
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    const key = this.sortBy();
+    return [...items].sort((a, b) => {
+      switch (key) {
+        case 'amount':
+          return (a.share - b.share) * dir || a.expense.date.localeCompare(b.expense.date);
+        case 'category':
+          return (
+            a.expense.category.localeCompare(b.expense.category) * dir ||
+            a.expense.date.localeCompare(b.expense.date)
+          );
+        case 'date':
+        default:
+          return a.expense.date.localeCompare(b.expense.date) * dir;
+      }
+    });
+  });
+
+  // Colors for the donut chart (SVG needs hex values).
+  readonly donutColors: Record<ExpenseCategory, string> = {
+    acqua: '#38bdf8',
+    luce: '#fbbf24',
+    gas: '#fb923c',
+    telefono: '#34d399',
+    internet: '#22d3ee',
+    cibo: '#4ade80',
+    vestiti: '#e879f9',
+    bellezza: '#fb7185',
+    salute: '#f87171',
+    trasporti: '#818cf8',
+    casa: '#a78bfa',
+    altro: '#a1a1aa',
+  };
+
+  readonly donutSegments = computed(() => {
+    const total = this.total();
+    let acc = 0;
+    return this.catTotals().map((ct) => {
+      const pct = total > 0 ? (ct.total / total) * 100 : 0;
+      const seg = { category: ct.category, total: ct.total, pct, offset: acc };
+      acc += pct;
+      return seg;
+    });
+  });
+
+  readonly yearDonutSegments = computed(() => {
+    const total = this.yearTotal();
+    let acc = 0;
+    return this.yearCatTotals().map((ct) => {
+      const pct = total > 0 ? (ct.total / total) * 100 : 0;
+      const seg = { category: ct.category, total: ct.total, pct, offset: acc };
+      acc += pct;
+      return seg;
+    });
+  });
+
+  readonly schedule = computed<ScheduleItem[]>(() => {
+    const today = this.startOfToday();
+    const items: ScheduleItem[] = [];
+
+    for (const expense of this.expenseSvc.expenses()) {
+      if (expense.recurrence === 'once') continue;
+      const start = new Date(expense.date + 'T00:00:00');
+      const period = this.expenseSvc.periodMonths(expense.recurrence);
+      const end = expense.endDate ? new Date(expense.endDate + 'T00:00:00') : null;
+
+      let lastDue: Date;
+      let nextDue: Date;
+      let overdue = false;
+
+      if (expense.recurrence === 'monthly') {
+        if (start.getTime() > today.getTime()) {
+          // Not yet started: the first due date is the start date itself.
+          lastDue = start;
+          nextDue = start;
+        } else {
+          const dueThisMonth = this.clampedDate(
+            today.getFullYear(),
+            today.getMonth(),
+            start.getDate(),
+          );
+          lastDue = dueThisMonth;
+          nextDue =
+            dueThisMonth.getTime() >= today.getTime()
+              ? dueThisMonth
+              : this.addMonths(dueThisMonth, 1);
+          overdue = dueThisMonth.getTime() < today.getTime();
+        }
+      } else {
+        // bimonthly / quarterly / annual: occurrences every `period` months from start.
+        let k = 0;
+        let candidate = start;
+        while (candidate.getTime() <= today.getTime()) {
+          k++;
+          candidate = this.addMonths(start, k * period);
+          if (k > 1200) break;
+        }
+        nextDue = candidate;
+        lastDue = this.addMonths(start, (k - 1) * period);
+      }
+
+      // Skip recurring expenses whose next occurrence falls beyond the end date.
+      if (end && nextDue.getTime() > end.getTime()) continue;
+
+      const days = this.dayDiff(today, nextDue);
+      items.push({
+        expense,
+        lastDue,
+        nextDue,
+        days,
+        status: overdue ? 'scaduta' : days <= 7 ? 'in-scadenza' : 'prossima',
+        overdueDays: overdue ? this.dayDiff(lastDue, today) : 0,
+      });
+    }
+
+    items.sort((a, b) => a.nextDue.getTime() - b.nextDue.getTime());
+    return items;
   });
 
   readonly yearTotals = computed(() => this.expenseSvc.yearlyTotals(this.year()));
@@ -217,6 +372,93 @@ export class ExpensesTabComponent {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  formatDate(d: Date): string {
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  scheduleStatusClass(status: ScheduleItem['status']): string {
+    switch (status) {
+      case 'scaduta':
+        return 'text-rose-300 border-rose-400/30 bg-rose-400/10';
+      case 'in-scadenza':
+        return 'text-amber-300 border-amber-400/30 bg-amber-400/10';
+      default:
+        return 'text-[var(--text-2)] border-[var(--border)]';
+    }
+  }
+
+  scheduleStatusLabel(item: ScheduleItem): string {
+    switch (item.status) {
+      case 'scaduta':
+        return 'Scaduta';
+      case 'in-scadenza':
+        return 'In scadenza';
+      default:
+        return `Tra ${item.days} gg`;
+    }
+  }
+
+  onSortByChange(value: string): void {
+    if (value === 'date' || value === 'amount' || value === 'category') {
+      this.sortBy.set(value);
+    }
+  }
+
+  toggleSortDir(): void {
+    this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+  }
+
+  toggleCategoryFilter(cat: ExpenseCategory): void {
+    this.filterCategories.update((list) =>
+      list.includes(cat) ? list.filter((c) => c !== cat) : [...list, cat],
+    );
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.filterCategories.set([]);
+    this.dateFrom.set('');
+    this.dateTo.set('');
+  }
+
+  remind(item: ScheduleItem): void {
+    const cur = this.expenseSvc.currency();
+    const at = new Date(item.nextDue);
+    at.setHours(9, 0, 0, 0);
+    this.reminder.schedule(
+      `Scadenza spesa: ${item.expense.description} (${cur} ${item.expense.amount.toFixed(2)})`,
+      at.getTime(),
+    );
+    this.toast.success(`Promemoria impostato per ${at.toLocaleDateString('it-IT')}`);
+  }
+
+  private startOfToday(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private dayDiff(from: Date, to: Date): number {
+    return Math.round((to.getTime() - from.getTime()) / 86400000);
+  }
+
+  private clampedDate(year: number, month: number, day: number): Date {
+    const d = new Date(year, month, 1);
+    const max = new Date(year, month + 1, 0).getDate();
+    d.setDate(Math.min(day, max));
+    return d;
+  }
+
+  private addMonths(date: Date, months: number): Date {
+    const d = new Date(date);
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const max = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, max));
+    return d;
   }
 
   async addManual(): Promise<void> {
@@ -471,6 +713,16 @@ export class ExpensesTabComponent {
   async exportJson(): Promise<void> {
     const native = await this.expenseSvc.exportJson();
     this.toast.success(native ? 'File JSON salvato' : 'File JSON scaricato');
+  }
+
+  async downloadCsv(): Promise<void> {
+    const native = await this.expenseSvc.downloadMonthCsv(this.year(), this.month());
+    this.toast.success(native ? 'File CSV salvato' : 'File CSV scaricato');
+  }
+
+  async downloadYearCsv(): Promise<void> {
+    const native = await this.expenseSvc.downloadYearCsv(this.year());
+    this.toast.success(native ? 'CSV annuale salvato' : 'CSV annuale scaricato');
   }
 
   openLink(url?: string): void {

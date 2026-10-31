@@ -137,3 +137,77 @@ describe('ExpenseService — month amortisation', () => {
     expect(md).toContain('€ 100.00');
   });
 });
+
+describe('ExpenseService — CSV export', () => {
+  let svc: ExpenseService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        ExpenseService,
+        { provide: LlmService, useValue: {} },
+        { provide: JsonParserService, useValue: {} },
+        { provide: GmailService, useValue: {} },
+        { provide: TextProcessingService, useValue: {} },
+        { provide: DomUtilsService, useValue: {} },
+        { provide: OcrService, useValue: {} },
+        { provide: StorageService, useValue: { get: () => null, set: () => {}, remove: () => {} } },
+        { provide: ToastService, useValue: { success: () => {}, error: () => {}, show: () => {} } },
+      ],
+    });
+    svc = TestBed.inject(ExpenseService);
+  });
+
+  it('emits the expected header and one row per expense', () => {
+    svc.expenses.set([
+      makeExpense({
+        id: 'a',
+        date: '2026-03-01',
+        amount: 100,
+        recurrence: 'once',
+        category: 'luce',
+        vendor: 'Enel',
+        description: 'Bolletta luce',
+      }),
+    ]);
+    const lines = svc.generateMonthCsv(2026, 3).split('\n');
+    expect(lines[0]).toBe(
+      'data,categoria,descrizione,fornitore,importo,quota mensile,frequenza,fonte,allegato',
+    );
+    expect(lines[1]).toContain('2026-03-01');
+    expect(lines[1]).toContain('Luce');
+    expect(lines[1]).toContain('Bolletta luce');
+    expect(lines[1]).toContain('Enel');
+    expect(lines[1]).toContain('100.00');
+  });
+
+  it('escapes commas and quotes in text fields', () => {
+    svc.expenses.set([
+      makeExpense({
+        id: 'a',
+        date: '2026-03-01',
+        amount: 10,
+        recurrence: 'once',
+        category: 'altro',
+        description: 'A, "B" C',
+      }),
+    ]);
+    const lines = svc.generateMonthCsv(2026, 3).split('\n');
+    expect(lines[1]).toContain('"A, ""B"" C"');
+  });
+
+  it('adds a month column to the yearly export', () => {
+    svc.expenses.set([
+      makeExpense({
+        id: 'a',
+        date: '2026-03-01',
+        amount: 10,
+        recurrence: 'once',
+        category: 'altro',
+      }),
+    ]);
+    const lines = svc.generateYearCsv(2026).split('\n');
+    expect(lines[0]).toContain('mese');
+    expect(lines.some((l) => l.includes('marzo') && l.includes('2026-03-01'))).toBe(true);
+  });
+});

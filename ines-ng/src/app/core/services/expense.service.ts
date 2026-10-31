@@ -647,6 +647,91 @@ export class ExpenseService {
     );
   }
 
+  // ── CSV export ──
+
+  private csvCell(value: string | number | undefined): string {
+    const s = String(value ?? '');
+    if (/[",;\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  private csvRowsForMonth(year: number, month: number): string[][] {
+    return this.expensesForMonth(year, month).map(({ expense, share }) => {
+      const cat = this.categoryDef(expense.category).label;
+      const freq =
+        this.recurrences.find((r) => r.value === expense.recurrence)?.label ?? expense.recurrence;
+      const source = expense.sourceLink || expense.sourceLabel || expense.sourceType;
+      const attachments = expense.attachments?.length
+        ? expense.attachments
+        : expense.attachmentLink
+          ? [{ name: expense.attachmentName || 'allegato', link: expense.attachmentLink }]
+          : [];
+      const attachment = attachments.map((a) => a.link || a.name).join(' ');
+      return [
+        expense.date,
+        cat,
+        expense.description,
+        expense.vendor || '',
+        expense.amount.toFixed(2),
+        share.toFixed(2),
+        freq,
+        source,
+        attachment,
+      ];
+    });
+  }
+
+  generateMonthCsv(year: number, month: number): string {
+    const header = [
+      'data',
+      'categoria',
+      'descrizione',
+      'fornitore',
+      'importo',
+      'quota mensile',
+      'frequenza',
+      'fonte',
+      'allegato',
+    ];
+    const rows = this.csvRowsForMonth(year, month);
+    return [header, ...rows].map((r) => r.map((c) => this.csvCell(c)).join(',')).join('\n');
+  }
+
+  generateYearCsv(year: number): string {
+    const header = [
+      'mese',
+      'data',
+      'categoria',
+      'descrizione',
+      'fornitore',
+      'importo',
+      'quota mensile',
+      'frequenza',
+      'fonte',
+      'allegato',
+    ];
+    const rows: string[][] = [];
+    for (let m = 1; m <= 12; m++) {
+      const label = new Date(year, m - 1, 1).toLocaleDateString('it-IT', { month: 'long' });
+      for (const row of this.csvRowsForMonth(year, m)) {
+        rows.push([label, ...row]);
+      }
+    }
+    return [header, ...rows].map((r) => r.map((c) => this.csvCell(c)).join(',')).join('\n');
+  }
+
+  async downloadMonthCsv(year: number, month: number): Promise<boolean> {
+    const csv = this.generateMonthCsv(year, month);
+    const name = `spese-casa-${year}-${String(month).padStart(2, '0')}.csv`;
+    return this.dom.saveTextFile(csv, name, 'text/csv');
+  }
+
+  async downloadYearCsv(year: number): Promise<boolean> {
+    const csv = this.generateYearCsv(year);
+    const name = `spese-casa-${year}.csv`;
+    return this.dom.saveTextFile(csv, name, 'text/csv');
+  }
+
   // ── LLM categorisation ──
 
   async categorize(text: string): Promise<CategorizedExpense | null> {

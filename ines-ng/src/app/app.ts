@@ -17,6 +17,7 @@ import { PresentationTabComponent } from './components/presentation-tab/presenta
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
+import { ExpenseService } from './core/services/expense.service';
 import { LlmService } from './core/services/llm.service';
 import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
@@ -132,6 +133,7 @@ export class AppComponent implements OnInit {
   readonly llm = inject(LlmService);
   readonly assistant = inject(VoiceAssistantService);
   readonly settings = inject(SettingsService);
+  readonly expense = inject(ExpenseService);
 
   settingsOpen = signal(false);
   readonly isLightTheme = this.settings.lightTheme;
@@ -318,6 +320,12 @@ export class AppComponent implements OnInit {
     if (vis.length === 0) return;
     if (!vis.some((t) => t.id === this.activeTab())) {
       this.selectCommandTab(vis[0].id);
+    }
+  });
+
+  private expenseSeenEffect = effect(() => {
+    if (this.activeTab() === 'expenses') {
+      this.expense.markSeen();
     }
   });
 }

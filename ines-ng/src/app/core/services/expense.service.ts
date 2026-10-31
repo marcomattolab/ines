@@ -6,6 +6,7 @@ import { TextProcessingService } from './text-processing.service';
 import { DomUtilsService } from './dom-utils.service';
 import { OcrService } from './ocr.service';
 import { StorageService } from './storage.service';
+import { ToastService } from './toast.service';
 
 export type ExpenseCategory =
   | 'acqua'
@@ -200,6 +201,7 @@ export class ExpenseService {
   private readonly dom = inject(DomUtilsService);
   private readonly ocr = inject(OcrService);
   private readonly storage = inject(StorageService);
+  private readonly toast = inject(ToastService);
 
   readonly expenses = signal<Expense[]>([]);
   readonly budgets = signal<Partial<Record<ExpenseCategory, number>>>(
@@ -211,7 +213,22 @@ export class ExpenseService {
   readonly categorizing = signal(false);
   readonly scanLog = signal<string[]>([]);
 
+  // Auto-scan email (periodic background polling)
+  readonly autoScan = signal<boolean>(this.storage.get<boolean>('ines_expense_autoscan') ?? false);
+  readonly autoScanMinutes = signal<number>(
+    this.storage.get<number>('ines_expense_autoscan_minutes') ?? 60,
+  );
+  readonly lastScanAt = signal<number | null>(null);
+  /** Expenses detected in the background since the user last opened the tab. */
+  readonly unseenCount = signal(0);
+
+  markSeen(): void {
+    this.unseenCount.set(0);
+  }
+
   private db: IDBDatabase | null = null;
+  private autoScanTimer: ReturnType<typeof setInterval> | null = null;
+  private autoScanFirstRun: ReturnType<typeof setTimeout> | null = null;
   private initPromise: Promise<void> | null = null;
 
   readonly categories = EXPENSE_CATEGORIES;
@@ -225,6 +242,7 @@ export class ExpenseService {
 
   constructor() {
     void this.load();
+    if (this.autoScan()) this.startAutoScan();
   }
 
   // ── IndexedDB persistence ──
@@ -347,6 +365,62 @@ export class ExpenseService {
     this.expenses.set([]);
   }
 
+  // ── Auto-scan email ──
+
+  setAutoScan(enabled: boolean): void {
+    this.autoScan.set(enabled);
+    this.storage.set('ines_expense_autoscan', enabled);
+    if (enabled) {
+      this.startAutoScan();
+    } else {
+      this.stopAutoScan();
+    }
+  }
+
+  setAutoScanMinutes(minutes: number): void {
+    const m = Math.max(5, Math.round(minutes) || 60);
+    this.autoScanMinutes.set(m);
+    this.storage.set('ines_expense_autoscan_minutes', m);
+    if (this.autoScan() && this.autoScanTimer) {
+      this.stopAutoScan();
+      this.startAutoScan();
+    }
+  }
+
+  startAutoScan(): void {
+    this.stopAutoScan();
+    if (!this.autoScan()) return;
+    const intervalMs = this.autoScanMinutes() * 60 * 1000;
+    this.autoScanTimer = setInterval(() => void this.tickAutoScan(), intervalMs);
+    // Kick off a first scan shortly after enabling (model may still be loading).
+    this.autoScanFirstRun = setTimeout(() => void this.tickAutoScan(), 5000);
+  }
+
+  stopAutoScan(): void {
+    if (this.autoScanTimer) {
+      clearInterval(this.autoScanTimer);
+      this.autoScanTimer = null;
+    }
+    if (this.autoScanFirstRun) {
+      clearTimeout(this.autoScanFirstRun);
+      this.autoScanFirstRun = null;
+    }
+  }
+
+  private async tickAutoScan(): Promise<void> {
+    if (!this.llm.isReady() || !this.gmail.configured()) return;
+    if (this.scanning()) return;
+    try {
+      const added = await this.scanEmails(15);
+      this.lastScanAt.set(Date.now());
+      if (added > 0) {
+        this.toast.success(`Auto-scan: ${added} nuove spese rilevate`);
+      }
+    } catch {
+      /* background scan errors are non-fatal */
+    }
+  }
+
   // ── Month helpers (handles bimonthly/annual amortisation) ──
 
   periodMonths(rec: ExpenseRecurrence): number {
@@ -459,6 +533,23 @@ export class ExpenseService {
     return 'dedup_' + (hash >>> 0).toString(36);
   }
 
+  /**
+   * Reconciliation across sources: an expense is a duplicate when the same
+   * description + amount already exists in the same month (e.g. a Telegram
+   * expense that also arrives as a tracking email).
+   */
+  private findDuplicate(parsed: CategorizedExpense): boolean {
+    const desc = (parsed.description || '').trim().toLowerCase();
+    const month = (parsed.date || '').slice(0, 7);
+    const amount = parsed.amount;
+    if (!desc || !month || amount === undefined) return false;
+    return this.expenses().some((e) => {
+      if (e.date.slice(0, 7) !== month) return false;
+      if (Math.abs(e.amount - amount) > 0.009) return false;
+      return e.description.trim().toLowerCase() === desc;
+    });
+  }
+
   // ── Markdown generation ──
 
   generateMarkdown(year: number, month: number): string {
@@ -542,6 +633,12 @@ export class ExpenseService {
     return this.dom.saveTextFile(md, name, 'text/markdown');
   }
 
+  async downloadYearMd(year: number): Promise<boolean> {
+    const md = this.generateYearMarkdown(year);
+    const name = `spese-casa-${year}.md`;
+    return this.dom.saveTextFile(md, name, 'text/markdown');
+  }
+
   async exportJson(): Promise<boolean> {
     return this.dom.saveTextFile(
       JSON.stringify(this.expenses(), null, 2),
@@ -598,6 +695,11 @@ export class ExpenseService {
       const emails = await this.gmail.fetchFullMessages(max);
       this.log(`Fetched ${emails.length} emails from inbox.`);
       for (const email of emails) {
+        // Self-generated tracking emails are a trace, not a new expense.
+        if (email.subject.trim().startsWith('[Spese]')) {
+          this.log(`⏭ ${email.subject.slice(0, 40)} — email di tracciamento saltata`);
+          continue;
+        }
         const text = await this.emailToText(email);
         const parsed = await this.categorize(text);
         if (!parsed || !parsed.isExpense) continue;
@@ -605,6 +707,10 @@ export class ExpenseService {
         const date = parsed.date || new Date().toISOString().slice(0, 10);
         const dedupKey = this.dedupKeyOf('email', email.id, parsed.amount, date);
         if (this.expenses().some((e) => e.dedupKey === dedupKey)) continue;
+        if (this.findDuplicate(parsed)) {
+          this.log(`⏭ ${parsed.description} — già presente (riconciliazione)`);
+          continue;
+        }
         const attachments: ExpenseAttachment[] = email.attachments.map((a) => ({
           name: a.filename,
           link: a.dataUrl,
@@ -631,6 +737,7 @@ export class ExpenseService {
         this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
       }
       if (added === 0) this.log('No new expenses detected.');
+      if (added > 0) this.unseenCount.update((n) => n + added);
       return added;
     } finally {
       this.scanning.set(false);

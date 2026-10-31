@@ -149,6 +149,24 @@
   text-shadow: 0 0 8px var(--tab-color, var(--accent-blue));
 }
 
+.tab-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-rose);
+  color: #0a0a0a;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: var(--shadow-glow-rose);
+}
+
 #main {
   flex: 1;
   display: flex;

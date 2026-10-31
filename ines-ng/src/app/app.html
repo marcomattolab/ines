@@ -43,6 +43,9 @@
           class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none"
           >{{ item.tab.label }}</span
         >
+        @if (item.tab.id === 'expenses' && expense.unseenCount() > 0) {
+          <span class="tab-badge">{{ expense.unseenCount() }}</span>
+        }
       </button>
     }
     <div class="flex-1"></div>

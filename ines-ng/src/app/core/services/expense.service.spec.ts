@@ -14,6 +14,7 @@ import { TextProcessingService } from './text-processing.service';
 import { DomUtilsService } from './dom-utils.service';
 import { OcrService } from './ocr.service';
 import { StorageService } from './storage.service';
+import { ToastService } from './toast.service';
 
 function makeExpense(partial: Partial<Expense>): Expense {
   return {
@@ -43,6 +44,7 @@ describe('ExpenseService — month amortisation', () => {
         { provide: DomUtilsService, useValue: {} },
         { provide: OcrService, useValue: {} },
         { provide: StorageService, useValue: { get: () => null, set: () => {}, remove: () => {} } },
+        { provide: ToastService, useValue: { success: () => {}, error: () => {}, show: () => {} } },
       ],
     });
     svc = TestBed.inject(ExpenseService);

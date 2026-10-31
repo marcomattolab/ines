@@ -19,6 +19,15 @@
         <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
         MD
       </app-button>
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="downloadYearMd()"
+        title="Esporta anno in Markdown"
+      >
+        <mat-icon fontIcon="calendar_view_month" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Anno
+      </app-button>
       <app-button variant="ghost" size="sm" (onClick)="exportJson()" title="Esporta tutto in JSON">
         <mat-icon fontIcon="data_object" class="text-sm w-3.5 h-3.5"></mat-icon>
         JSON
@@ -674,6 +683,48 @@
                 usare la scansione email.
               </div>
             }
+
+            <div class="border-t border-[var(--border)] mt-4 pt-4">
+              <div class="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="autoscan"
+                  [checked]="expenseSvc.autoScan()"
+                  (change)="expenseSvc.setAutoScan($any($event.target).checked)"
+                  class="cursor-pointer"
+                />
+                <label for="autoscan" class="text-xs text-[var(--text-1)] cursor-pointer">
+                  Scansione automatica periodica
+                </label>
+              </div>
+              @if (expenseSvc.autoScan()) {
+                <div class="flex items-end gap-3 flex-wrap">
+                  <label class="field">
+                    <span>Ogni (minuti)</span>
+                    <input
+                      class="input w-28"
+                      type="number"
+                      min="5"
+                      step="5"
+                      [value]="expenseSvc.autoScanMinutes()"
+                      (change)="expenseSvc.setAutoScanMinutes($any($event.target).valueAsNumber)"
+                    />
+                  </label>
+                  <span class="text-[11px] font-[var(--font-mono)] text-[var(--text-2)] pb-1">
+                    @if (expenseSvc.lastScanAt()) {
+                      Ultima scansione: {{ formatTime(expenseSvc.lastScanAt()!) }}
+                    } @else {
+                      Nessuna scansione automatica ancora eseguita
+                    }
+                  </span>
+                </div>
+                <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mt-2">
+                  Richiede modello caricato e Gmail configurata; altrimenti il tentativo viene
+                  saltato silenziosamente.
+                </p>
+              }
+            </div>
+
             @if (expenseSvc.scanLog().length) {
               <pre class="scan-log mt-4">{{ expenseSvc.scanLog().join('\n') }}</pre>
             }

@@ -210,6 +210,15 @@ export class ExpensesTabComponent {
     return new Date(2000, m - 1, 1).toLocaleDateString('it-IT', { month: 'short' });
   }
 
+  formatTime(ts: number): string {
+    return new Date(ts).toLocaleString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   async addManual(): Promise<void> {
     const amount = this.mAmount();
     const description = this.mDescription().trim();
@@ -452,6 +461,11 @@ export class ExpensesTabComponent {
   async downloadMd(): Promise<void> {
     const native = await this.expenseSvc.downloadMonthMd(this.year(), this.month());
     this.toast.success(native ? 'File MD salvato' : 'File MD scaricato');
+  }
+
+  async downloadYearMd(): Promise<void> {
+    const native = await this.expenseSvc.downloadYearMd(this.year());
+    this.toast.success(native ? 'MD annuale salvato' : 'MD annuale scaricato');
   }
 
   async exportJson(): Promise<void> {

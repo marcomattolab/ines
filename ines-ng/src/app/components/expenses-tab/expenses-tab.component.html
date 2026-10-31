@@ -1,0 +1,724 @@
+<div class="tab-panel-inner">
+  <div class="panel-header">
+    <div class="flex items-center gap-3">
+      <mat-icon fontIcon="receipt_long" class="text-emerald-300 scale-110"></mat-icon>
+      <div>
+        <div class="panel-title text-white">Spese Casa</div>
+        <div class="panel-desc text-zinc-400">
+          Dashboard spese domestiche · agente locale per email, PDF e Telegram
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <app-button
+        variant="ghost"
+        size="sm"
+        (onClick)="downloadMd()"
+        title="Esporta mese in Markdown"
+      >
+        <mat-icon fontIcon="download" class="text-sm w-3.5 h-3.5"></mat-icon>
+        MD
+      </app-button>
+      <app-button variant="ghost" size="sm" (onClick)="exportJson()" title="Esporta tutto in JSON">
+        <mat-icon fontIcon="data_object" class="text-sm w-3.5 h-3.5"></mat-icon>
+        JSON
+      </app-button>
+      <label class="cursor-pointer" title="Importa spese da JSON">
+        <input
+          type="file"
+          accept=".json,application/json"
+          class="hidden"
+          (change)="onImportJson($event)"
+        />
+        <span
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
+        >
+          <mat-icon fontIcon="upload" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Import
+        </span>
+      </label>
+      <app-button
+        variant="danger"
+        size="sm"
+        (onClick)="expenseSvc.clearAll(); toast.success('Tutte le spese eliminate')"
+        title="Elimina tutte le spese"
+      >
+        <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Svuota
+      </app-button>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-1 px-5 py-2 border-b border-[var(--border)] shrink-0">
+    @for (p of panels; track p.id) {
+      <button
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
+        [class.bg-white/10]="panel() === p.id"
+        [class.text-[var(--text-0)]]="panel() === p.id"
+        [class.text-[var(--text-2)]]="panel() !== p.id"
+        (click)="panel.set(p.id)"
+      >
+        <mat-icon class="scale-50">{{ p.icon }}</mat-icon>
+        {{ p.label }}
+      </button>
+    }
+  </div>
+
+  <div class="expenses-body">
+    @switch (panel()) {
+      @case ('dashboard') {
+        <!-- Month / Year selector -->
+        <div class="flex items-center justify-between px-5 pt-4 shrink-0 flex-wrap gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              class="icon-btn"
+              (click)="viewMode() === 'year' ? prevYear() : prevMonth()"
+              aria-label="Periodo precedente"
+            >
+              <mat-icon fontIcon="chevron_left" class="scale-75"></mat-icon>
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-lg text-sm font-semibold capitalize text-[var(--text-0)] hover:bg-white/5"
+              (click)="setToday()"
+              title="Vai al periodo corrente"
+            >
+              @if (viewMode() === 'year') {
+                Anno {{ year() }}
+              } @else {
+                {{ monthLabel() }}
+              }
+            </button>
+            <button
+              class="icon-btn"
+              (click)="viewMode() === 'year' ? nextYear() : nextMonth()"
+              aria-label="Periodo successivo"
+            >
+              <mat-icon fontIcon="chevron_right" class="scale-75"></mat-icon>
+            </button>
+            <div
+              class="flex items-center gap-1 ml-2 rounded-lg border border-[var(--border)] p-0.5"
+            >
+              <button
+                class="px-2.5 py-1 rounded-md text-xs"
+                [class.bg-white/10]="viewMode() === 'month'"
+                [class.text-[var(--text-0)]]="viewMode() === 'month'"
+                [class.text-[var(--text-2)]]="viewMode() !== 'month'"
+                (click)="viewMode.set('month')"
+              >
+                Mese
+              </button>
+              <button
+                class="px-2.5 py-1 rounded-md text-xs"
+                [class.bg-white/10]="viewMode() === 'year'"
+                [class.text-[var(--text-0)]]="viewMode() === 'year'"
+                [class.text-[var(--text-2)]]="viewMode() !== 'year'"
+                (click)="viewMode.set('year')"
+              >
+                Anno
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            @if (viewMode() === 'month') {
+              <input
+                class="input w-40"
+                type="search"
+                [(ngModel)]="searchQuery"
+                placeholder="Cerca…"
+              />
+            }
+            <div class="flex items-baseline gap-2">
+              <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]">Totale</span>
+              <span class="text-2xl font-bold text-[var(--accent-green)] font-[var(--font-mono)]">
+                {{ expenseSvc.currency() }}
+                {{ (viewMode() === 'year' ? yearTotal() : total()).toFixed(2) }}
+              </span>
+            </div>
+            @if (viewMode() === 'month') {
+              <span
+                class="text-[11px] font-[var(--font-mono)]"
+                [class.text-emerald-300]="delta() <= 0"
+                [class.text-rose-300]="delta() > 0"
+              >
+                {{ delta() > 0 ? '▲ +' : '▼ ' }}{{ delta().toFixed(2) }} vs mese prec.
+              </span>
+            }
+            <button
+              class="icon-btn"
+              (click)="showBudgets.set(!showBudgets())"
+              title="Budget per categoria"
+            >
+              <mat-icon fontIcon="savings" class="scale-75"></mat-icon>
+            </button>
+            <select
+              class="input w-auto px-2 py-1 text-xs"
+              [value]="expenseSvc.currency()"
+              (change)="expenseSvc.setCurrency($any($event.target).value)"
+              title="Valuta"
+            >
+              @for (c of ['€', '$', '£', 'CHF']; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (viewMode() === 'month') {
+          <!-- Trend (last 6 months) -->
+          <div class="px-5 pt-3 shrink-0">
+            <div class="cat-card">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] uppercase tracking-widest text-[var(--text-2)]">
+                  Trend ultimi 6 mesi
+                </span>
+              </div>
+              <div class="flex items-end gap-2 h-24">
+                @for (t of trend(); track $index) {
+                  <div class="flex-1 flex flex-col items-center gap-1 min-w-0">
+                    <div class="w-full flex items-end justify-center h-16">
+                      <div
+                        class="w-full max-w-[42px] rounded-t-md transition-all duration-500"
+                        [style.height.%]="(t.total / trendMax()) * 100"
+                        [style.background]="'var(--accent-cyan)'"
+                        [title]="expenseSvc.currency() + ' ' + t.total.toFixed(2)"
+                      ></div>
+                    </div>
+                    <span class="text-[9px] text-[var(--text-2)] font-[var(--font-mono)]">{{
+                      t.label
+                    }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Budget editor -->
+          @if (showBudgets()) {
+            <div class="px-5 pt-3 shrink-0">
+              <div class="cat-card">
+                <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-2">
+                  Budget mensile per categoria (€)
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
+                  @for (c of expenseSvc.categories; track c.value) {
+                    <label class="field">
+                      <span>{{ c.label }}</span>
+                      <input
+                        class="input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        [value]="budgetValue(c.value)"
+                        (input)="updateBudget(c.value, $any($event.target).value)"
+                        placeholder="—"
+                      />
+                    </label>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Category totals -->
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 px-5 pt-4 shrink-0">
+            @for (ct of catTotals(); track ct.category) {
+              <div class="cat-card">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="w-7 h-7 rounded-lg flex items-center justify-center {{
+                      expenseSvc.categoryDef(ct.category).bg
+                    }}"
+                  >
+                    <mat-icon
+                      [fontIcon]="expenseSvc.categoryDef(ct.category).icon"
+                      class="text-sm w-4 h-4 {{ expenseSvc.categoryDef(ct.category).color }}"
+                    ></mat-icon>
+                  </span>
+                  <span class="text-xs font-medium text-[var(--text-1)]">{{
+                    expenseSvc.categoryDef(ct.category).label
+                  }}</span>
+                  <span class="ml-auto text-right">
+                    <span class="block text-xs font-[var(--font-mono)] text-[var(--text-0)]">
+                      {{ expenseSvc.currency() }} {{ ct.total.toFixed(2) }}
+                    </span>
+                    @if (budgetFor(ct.category) !== null) {
+                      <span class="block text-[9px] font-[var(--font-mono)] text-[var(--text-2)]">
+                        / {{ expenseSvc.currency() }} {{ (budgetFor(ct.category) ?? 0).toFixed(2) }}
+                      </span>
+                    }
+                  </span>
+                </div>
+                <div class="h-1 rounded-full bg-white/5 mt-2 overflow-hidden">
+                  <div
+                    class="h-full rounded-full"
+                    [style.width.%]="total() > 0 ? (ct.total / total()) * 100 : 0"
+                    [style.background]="
+                      isOverBudget(ct.category, ct.total)
+                        ? 'var(--accent-rose)'
+                        : 'var(--accent-green)'
+                    "
+                  ></div>
+                </div>
+                @if (isOverBudget(ct.category, ct.total)) {
+                  <div class="text-[9px] text-rose-300 font-[var(--font-mono)] mt-1">
+                    ⚠ budget superato
+                  </div>
+                }
+              </div>
+            }
+            @if (catTotals().length === 0) {
+              <div class="col-span-full text-center text-sm text-[var(--text-2)] py-8">
+                Nessuna spesa in questo mese. Usa <b>Aggiungi</b> o <b>Scan Email</b>.
+              </div>
+            }
+          </div>
+
+          <!-- Expenses list -->
+          <div class="flex-1 overflow-y-auto px-5 py-4">
+            <div class="flex flex-col gap-2">
+              @for (item of filteredItems(); track item.expense.id) {
+                <div class="expense-row">
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span
+                      class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 {{
+                        expenseSvc.categoryDef(item.expense.category).bg
+                      }}"
+                    >
+                      <mat-icon
+                        [fontIcon]="expenseSvc.categoryDef(item.expense.category).icon"
+                        class="text-sm w-4 h-4 {{
+                          expenseSvc.categoryDef(item.expense.category).color
+                        }}"
+                      ></mat-icon>
+                    </span>
+                    <div class="min-w-0">
+                      <div class="text-sm font-medium text-[var(--text-0)] truncate">
+                        {{ item.expense.description }}
+                      </div>
+                      <div
+                        class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] truncate"
+                      >
+                        {{ item.expense.vendor || '—' }} · {{ item.expense.date }}
+                        @if (item.expense.recurrence !== 'once') {
+                          · {{ recurrenceLabel(item.expense.recurrence) }} ({{
+                            expenseSvc.currency()
+                          }}
+                          {{ item.expense.amount.toFixed(2) }})
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    @if (item.expense.sourceLink) {
+                      <button
+                        class="icon-btn"
+                        (click)="openLink(item.expense.sourceLink)"
+                        [title]="item.expense.sourceLabel || 'Fonte'"
+                      >
+                        <mat-icon fontIcon="link" class="scale-75"></mat-icon>
+                      </button>
+                    }
+                    @if (item.expense.attachmentLink) {
+                      <button
+                        class="icon-btn"
+                        (click)="openLink(item.expense.attachmentLink)"
+                        [title]="item.expense.attachmentName || 'Allegato'"
+                      >
+                        <mat-icon fontIcon="attach_file" class="scale-75"></mat-icon>
+                      </button>
+                    }
+                    <button class="icon-btn" (click)="editExpense(item.expense)" title="Modifica">
+                      <mat-icon fontIcon="edit" class="scale-75"></mat-icon>
+                    </button>
+                    <button
+                      class="icon-btn"
+                      (click)="trackExpense(item.expense, 'draft')"
+                      title="Crea bozza email di tracciamento"
+                    >
+                      <mat-icon fontIcon="drafts" class="scale-75"></mat-icon>
+                    </button>
+                    <button
+                      class="icon-btn text-rose-400"
+                      (click)="removeExpense(item.expense.id)"
+                      title="Elimina"
+                    >
+                      <mat-icon fontIcon="close" class="scale-75"></mat-icon>
+                    </button>
+                    <span
+                      class="w-20 text-right text-sm font-semibold font-[var(--font-mono)] text-[var(--text-0)]"
+                    >
+                      {{ expenseSvc.currency() }} {{ item.share.toFixed(2) }}
+                    </span>
+                  </div>
+                </div>
+              }
+              @if (filteredItems().length === 0) {
+                <div class="text-center text-sm text-[var(--text-2)] py-6">
+                  @if (searchQuery()) {
+                    Nessun risultato per "{{ searchQuery() }}"
+                  } @else {
+                    Nessuna spesa in questo mese.
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (viewMode() === 'year') {
+          <div class="flex-1 overflow-y-auto px-5 py-4">
+            <div class="cat-card mb-4">
+              <div class="text-[10px] uppercase tracking-widest text-[var(--text-2)] mb-2">
+                Andamento mensile {{ year() }}
+              </div>
+              <div class="flex items-end gap-2 h-28">
+                @for (m of yearTotals(); track m.month) {
+                  <div class="flex-1 flex flex-col items-center gap-1 min-w-0">
+                    <div class="w-full flex items-end justify-center h-20">
+                      <div
+                        class="w-full max-w-[34px] rounded-t-md transition-all duration-500"
+                        [style.height.%]="(m.total / yearMax()) * 100"
+                        [style.background]="'var(--accent-green)'"
+                        [title]="expenseSvc.currency() + ' ' + m.total.toFixed(2)"
+                      ></div>
+                    </div>
+                    <span class="text-[8px] text-[var(--text-2)] font-[var(--font-mono)]">
+                      {{ monthShort(m.month) }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+              @for (ct of yearCatTotals(); track ct.category) {
+                <div class="cat-card">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-7 h-7 rounded-lg flex items-center justify-center {{
+                        expenseSvc.categoryDef(ct.category).bg
+                      }}"
+                    >
+                      <mat-icon
+                        [fontIcon]="expenseSvc.categoryDef(ct.category).icon"
+                        class="text-sm w-4 h-4 {{ expenseSvc.categoryDef(ct.category).color }}"
+                      ></mat-icon>
+                    </span>
+                    <span class="text-xs font-medium text-[var(--text-1)]">{{
+                      expenseSvc.categoryDef(ct.category).label
+                    }}</span>
+                    <span class="ml-auto text-xs font-[var(--font-mono)] text-[var(--text-0)]">
+                      {{ expenseSvc.currency() }} {{ ct.total.toFixed(2) }}
+                    </span>
+                  </div>
+                  <div class="h-1 rounded-full bg-white/5 mt-2 overflow-hidden">
+                    <div
+                      class="h-full rounded-full"
+                      [style.width.%]="yearTotal() > 0 ? (ct.total / yearTotal()) * 100 : 0"
+                      [style.background]="'var(--accent-green)'"
+                    ></div>
+                  </div>
+                </div>
+              }
+              @if (yearCatTotals().length === 0) {
+                <div class="col-span-full text-center text-sm text-[var(--text-2)] py-8">
+                  Nessuna spesa nell'anno {{ year() }}.
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @case ('add') {
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Manual add -->
+            <div class="form-card">
+              <div class="form-card-title">
+                <mat-icon
+                  [fontIcon]="editingId() ? 'edit' : 'add_circle'"
+                  class="text-sm w-4 h-4 text-emerald-300"
+                ></mat-icon>
+                {{ editingId() ? 'Modifica spesa' : 'Aggiunta manuale' }}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="field col-span-2">
+                  <span>Descrizione *</span>
+                  <input
+                    class="input"
+                    [(ngModel)]="mDescription"
+                    placeholder="Es. Bolletta luce Enel"
+                  />
+                </label>
+                <label class="field">
+                  <span>Importo (€) *</span>
+                  <input
+                    class="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [(ngModel)]="mAmount"
+                    placeholder="45.00"
+                  />
+                </label>
+                <label class="field">
+                  <span>Data</span>
+                  <input class="input" type="date" [(ngModel)]="mDate" />
+                </label>
+                <label class="field">
+                  <span>Data fine (ricorrenze)</span>
+                  <input class="input" type="date" [(ngModel)]="mEndDate" />
+                </label>
+                <label class="field">
+                  <span>Categoria</span>
+                  <select class="input" [(ngModel)]="mCategory">
+                    @for (c of expenseSvc.categories; track c.value) {
+                      <option [value]="c.value">{{ c.label }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Frequenza</span>
+                  <select class="input" [(ngModel)]="mRecurrence">
+                    @for (r of expenseSvc.recurrences; track r.value) {
+                      <option [value]="r.value">{{ r.label }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Fornitore</span>
+                  <input class="input" [(ngModel)]="mVendor" placeholder="Enel, Vodafone…" />
+                </label>
+                <label class="field">
+                  <span>Origine</span>
+                  <select class="input" [(ngModel)]="mSourceType">
+                    <option value="manual">Manuale</option>
+                    <option value="email">Email</option>
+                    <option value="telegram">Telegram</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Etichetta fonte</span>
+                  <input class="input" [(ngModel)]="mSourceLabel" placeholder="Email / Telegram" />
+                </label>
+                <label class="field">
+                  <span>Link fonte</span>
+                  <input class="input" [(ngModel)]="mSourceLink" placeholder="https://…" />
+                </label>
+                <label class="field">
+                  <span>Link allegato</span>
+                  <input
+                    class="input"
+                    [(ngModel)]="mAttachmentLink"
+                    placeholder="https://… o data:"
+                  />
+                </label>
+                <label class="field">
+                  <span>Nome allegato</span>
+                  <input class="input" [(ngModel)]="mAttachmentName" placeholder="fattura.pdf" />
+                </label>
+              </div>
+              <div class="flex items-center gap-2 mt-4">
+                <button class="primary-btn" (click)="addManual()">
+                  {{ editingId() ? 'Aggiorna spesa' : 'Salva spesa' }}
+                </button>
+                @if (editingId()) {
+                  <button class="ghost-btn" (click)="cancelEdit()">Annulla</button>
+                }
+              </div>
+            </div>
+
+            <!-- Telegram import -->
+            <div class="form-card">
+              <div class="form-card-title">
+                <mat-icon fontIcon="send" class="text-sm w-4 h-4 text-sky-300"></mat-icon>
+                Da Telegram (chat privata)
+              </div>
+              <p
+                class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
+              >
+                Incolla il messaggio (testo) e/o allega immagine o PDF. L'agente categorizza la
+                spesa e crea un'email di tracciamento in Gmail (fonte di verità).
+              </p>
+              <label class="field">
+                <span>Messaggio Telegram</span>
+                <textarea
+                  class="input min-h-[80px] resize-y"
+                  [(ngModel)]="tText"
+                  placeholder="Es. Ho pagato 120€ per la bolletta del gas di gennaio"
+                ></textarea>
+              </label>
+              <label class="field mt-3">
+                <span>Allegato (immagine / PDF)</span>
+                <input
+                  type="file"
+                  class="input"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.docx,.pptx"
+                  (change)="onTelegramFile($event)"
+                />
+              </label>
+              @if (tFileName()) {
+                <div class="text-[11px] text-emerald-300 font-[var(--font-mono)] mt-1">
+                  ✓ {{ tFileName() }}
+                </div>
+              }
+              <div class="flex items-center gap-3 mt-3">
+                <label
+                  class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer"
+                >
+                  <input type="radio" name="emailMode" value="draft" [(ngModel)]="tEmailMode" />
+                  Salva bozza
+                </label>
+                <label
+                  class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer"
+                >
+                  <input type="radio" name="emailMode" value="send" [(ngModel)]="tEmailMode" />
+                  Invia email
+                </label>
+                <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
+                  Gmail: {{ gmail.configured() ? 'configurata' : 'non configurata' }}
+                </span>
+              </div>
+              <button
+                class="primary-btn mt-4"
+                (click)="importFromTelegram()"
+                [disabled]="expenseSvc.categorizing()"
+              >
+                @if (expenseSvc.categorizing()) {
+                  Classificazione…
+                } @else {
+                  Classifica spesa
+                }
+              </button>
+            </div>
+
+            <!-- Telegram bot (long polling) -->
+            <div class="form-card lg:col-span-2">
+              <div class="form-card-title">
+                <mat-icon fontIcon="smart_toy" class="text-sm w-4 h-4 text-sky-300"></mat-icon>
+                Bot Telegram (ricezione automatica)
+              </div>
+              <p
+                class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
+              >
+                Crea un bot con @BotFather, incolla il token e il tuo chat id. INES ascolta i
+                messaggi in arrivo (testo, foto, PDF) e li classifica automaticamente come spese.
+              </p>
+              <div class="grid md:grid-cols-2 gap-3">
+                <label class="field">
+                  <span>Bot token</span>
+                  <input class="input" [(ngModel)]="tBotToken" placeholder="123456:ABC-…" />
+                </label>
+                <label class="field">
+                  <span>Chat id</span>
+                  <input class="input" [(ngModel)]="tChatId" placeholder="123456789" />
+                </label>
+              </div>
+              <div class="flex items-center gap-3 mt-3 flex-wrap">
+                <button class="primary-btn" (click)="saveTelegramConfig()">Salva config</button>
+                <button
+                  class="primary-btn"
+                  (click)="togglePolling()"
+                  [disabled]="!telegram.configured()"
+                >
+                  {{ telegram.polling() ? 'Stop polling' : 'Avvia polling' }}
+                </button>
+                @if (telegram.polling()) {
+                  <span class="text-xs text-emerald-300 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    in ascolto…
+                  </span>
+                }
+                @if (telegram.lastError()) {
+                  <span class="text-[11px] text-rose-400 font-[var(--font-mono)]">{{
+                    telegram.lastError()
+                  }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @case ('scan') {
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="form-card max-w-2xl">
+            <div class="form-card-title">
+              <mat-icon fontIcon="mail" class="text-sm w-4 h-4 text-emerald-300"></mat-icon>
+              Scansione email (Gmail)
+            </div>
+            <p
+              class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
+            >
+              L'agente legge le email della tua casella, estrae testo e allegati (PDF), usa i tag
+              Gmail come indizio e classifica le spese in modo automatico. Le spese rilevate vengono
+              salvate localmente.
+            </p>
+            <div class="flex items-center gap-3">
+              <button class="primary-btn" (click)="scanEmails()" [disabled]="expenseSvc.scanning()">
+                @if (expenseSvc.scanning()) {
+                  Scansione…
+                } @else {
+                  Scansiona inbox
+                }
+              </button>
+              <span class="text-xs text-[var(--text-2)]">
+                Stato Gmail: <b class="text-[var(--text-1)]">{{ gmail.status() }}</b>
+              </span>
+            </div>
+            @if (gmail.status() === 'unconfigured') {
+              <div class="mt-3 text-xs text-amber-300">
+                Configura il Google OAuth Client ID dalle impostazioni (tab Voice/Settings) per
+                usare la scansione email.
+              </div>
+            }
+            @if (expenseSvc.scanLog().length) {
+              <pre class="scan-log mt-4">{{ expenseSvc.scanLog().join('\n') }}</pre>
+            }
+          </div>
+        </div>
+      }
+
+      @case ('ask') {
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="form-card max-w-2xl">
+            <div class="form-card-title">
+              <mat-icon fontIcon="help" class="text-sm w-4 h-4 text-purple-300"></mat-icon>
+              Interroga le spese
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <label class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="askScope" value="month" [(ngModel)]="askScope" />
+                Mese ({{ monthLabel() }})
+              </label>
+              <label class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="askScope" value="year" [(ngModel)]="askScope" />
+                Anno {{ year() }}
+              </label>
+            </div>
+            <label class="field">
+              <span>Domanda</span>
+              <textarea
+                class="input min-h-[70px] resize-y"
+                [(ngModel)]="question"
+                placeholder="Quanto ho speso in cibo? Qual è la bolletta più alta?"
+              ></textarea>
+            </label>
+            <button class="primary-btn mt-3" (click)="ask()" [disabled]="asking()">
+              @if (asking()) {
+                Rispondo…
+              } @else {
+                Chiedi
+              }
+            </button>
+            @if (answer()) {
+              <div class="answer-box mt-4">{{ answer() }}</div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

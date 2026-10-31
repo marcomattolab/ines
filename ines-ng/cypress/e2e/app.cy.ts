@@ -24,8 +24,8 @@ describe('INES Application E2E', () => {
     cy.contains('Ines (General Assistant)').should('be.visible');
   });
 
-  it('should have all 12 sidebar tab buttons', () => {
-    cy.get('.tab-btn').should('have.length', 12);
+  it('should have all 13 sidebar tab buttons', () => {
+    cy.get('.tab-btn').should('have.length', 13);
   });
 
   it('should show sidebar divider categories', () => {

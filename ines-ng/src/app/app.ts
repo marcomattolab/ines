@@ -22,6 +22,7 @@ import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
 import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
 import { BrainTabComponent } from './components/brain-tab/brain-tab.component';
+import { ExpensesTabComponent } from './components/expenses-tab/expenses-tab.component';
 
 type Tab =
   | 'assistant'
@@ -37,7 +38,8 @@ type Tab =
   | 'learning'
   | 'presentation'
   | 'project'
-  | 'dev-agent';
+  | 'dev-agent'
+  | 'expenses';
 
 interface TabDef {
   id: Tab;
@@ -55,6 +57,7 @@ const TABS: TabDef[] = [
   { id: 'meeting', icon: 'mic', label: 'Meeting', color: 'var(--tab-meeting)' },
   { id: 'translate', icon: 'languages', label: 'Translate', color: 'var(--tab-translate)' },
   { id: 'todo', icon: 'check-square', label: 'Todo', color: 'var(--tab-todo)' },
+  { id: 'expenses', icon: 'receipt_long', label: 'Spese', color: 'var(--tab-expenses)' },
   {
     id: 'coding',
     icon: 'code',
@@ -107,6 +110,7 @@ const TABS: TabDef[] = [
     LearningTabComponent,
     AgentsTabComponent,
     VisionTabComponent,
+    ExpensesTabComponent,
     FormsModule,
     MatIconModule,
   ],
@@ -137,7 +141,12 @@ export class AppComponent implements OnInit {
     const order = this.settings.tabOrder();
     if (!order.length) return this.tabs;
     const byId = new Map<string, TabDef>(this.tabs.map((t) => [t.id as string, t]));
-    return order.map((id) => byId.get(id)).filter((t): t is TabDef => !!t);
+    const ordered = order.map((id) => byId.get(id)).filter((t): t is TabDef => !!t);
+    // Append tabs that are not in the saved order (e.g. newly added tabs).
+    for (const t of this.tabs) {
+      if (!order.includes(t.id)) ordered.push(t);
+    }
+    return ordered;
   });
 
   /** Only the tabs the user has not hidden (in the configured order). */
@@ -224,7 +233,9 @@ export class AppComponent implements OnInit {
         try {
           const res = await fetch(url, { method: 'HEAD' });
           const cl = parseInt(res.headers.get('content-length') || '0', 10);
-          if (res.ok && cl > 100 * 1024 * 1024) {
+          // Some dev/static servers omit Content-Length on HEAD; treat a 200 as
+          // available in that case instead of silently skipping the load.
+          if (res.ok && (cl === 0 || cl > 100 * 1024 * 1024)) {
             await this.llm.initModelFromUrl(url, 'gemma-4-E2B-it-gpu.litertlm');
             this.overlayOpen.set(false);
             return;

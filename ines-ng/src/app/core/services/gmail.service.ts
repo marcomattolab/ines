@@ -50,8 +50,45 @@ function decodeBase64UrlUtf8(data: string): string {
   }
 }
 
+/** Collapses CR/LF so untrusted text cannot inject additional MIME headers. */
+export function sanitizeHeaderValue(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ').trim();
+}
+
+/** Keeps a MIME type only when it is a single strict type/subtype token. */
+export function sanitizeMimeType(mimeType: string): string {
+  const raw = (mimeType || '').trim();
+  return /^[\w.+-]+\/[\w.+-]+$/.test(raw) ? raw : 'application/octet-stream';
+}
+
+/**
+ * Neutralises CR/LF, quotes and backslashes so a filename cannot break out of
+ * a quoted MIME header.
+ */
+export function sanitizeFilename(filename: string): string {
+  const cleaned = (filename || '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/["\\]+/g, '')
+    .trim();
+  return cleaned || 'attachment';
+}
+
+/** Cryptographically random MIME boundary (falls back to Math.random in non-secure contexts). */
+function makeBoundary(): string {
+  let suffix: string;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    suffix = Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } else {
+    suffix = Math.random().toString(36).slice(2);
+  }
+  return 'ines_boundary_' + suffix;
+}
+
 function dataUrlFromBase64Url(data: string, mimeType: string): string {
-  return `data:${mimeType || 'application/octet-stream'};base64,${base64UrlToBase64(data)}`;
+  return `data:${sanitizeMimeType(mimeType)};base64,${base64UrlToBase64(data)}`;
 }
 
 /** Recursively extracts the plain-text body (prefers text/plain, falls back to HTML). */
@@ -433,10 +470,15 @@ export class GmailService {
     bodyText: string,
     attachments: { filename: string; mimeType: string; dataUrl: string }[],
   ): string {
-    const boundary = 'ines_boundary_' + Math.random().toString(36).slice(2);
+    // Strip CR/LF so user/LLM text cannot inject extra MIME headers.
+    const safeSubject = sanitizeHeaderValue(subject);
+    // Random boundary; regenerate if the body happens to contain it, so the
+    // message structure cannot be broken by injected text.
+    let boundary = makeBoundary();
+    while (bodyText.includes(`--${boundary}`)) boundary = makeBoundary();
     const lines: string[] = [];
     lines.push('MIME-Version: 1.0');
-    lines.push(`Subject: ${subject}`);
+    lines.push(`Subject: ${safeSubject}`);
     lines.push('To: me');
     lines.push('From: me');
     lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
@@ -446,9 +488,11 @@ export class GmailService {
     lines.push('');
     lines.push(bodyText);
     for (const att of attachments) {
+      const safeMime = sanitizeMimeType(att.mimeType);
+      const safeName = sanitizeFilename(att.filename);
       lines.push(`--${boundary}`);
-      lines.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
-      lines.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+      lines.push(`Content-Type: ${safeMime}; name="${safeName}"`);
+      lines.push(`Content-Disposition: attachment; filename="${safeName}"`);
       lines.push('Content-Transfer-Encoding: base64');
       lines.push('');
       const b64 = att.dataUrl.split(',')[1] || '';

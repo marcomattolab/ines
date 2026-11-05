@@ -42,11 +42,15 @@ export class BackgroundTabComponent implements OnDestroy {
   protected readonly preset = signal('');
   // Sfondi: foto da Wikimedia Commons.
   // Palermo: "Palermo panorama 2009" di Cezary p (CC BY-SA 4.0)
+  // Roma: "Pincio Panorama di Roma" di Wolfgang Moroder (CC BY-SA 3.0)
   // Parigi: "Paris Night" di Benh LIEU SONG (CC BY-SA 4.0)
+  // Londra: "London Skyline from Waterloo Bridge" di Diliff (CC BY-SA 3.0)
   // Tokyo: "Tokyo - Sunset Skyline" di Fred Cherrygarden (CC BY-SA 4.0)
   protected readonly presets: BgPreset[] = [
     { id: 'palermo', label: 'Palermo', url: '/backgrounds/palermo.jpg' },
+    { id: 'roma', label: 'Roma', url: '/backgrounds/roma.jpg' },
     { id: 'paris', label: 'Parigi', url: '/backgrounds/paris.jpg' },
+    { id: 'london', label: 'Londra', url: '/backgrounds/london.jpg' },
     { id: 'tokyo', label: 'Tokyo', url: '/backgrounds/tokyo.jpg' },
   ];
 

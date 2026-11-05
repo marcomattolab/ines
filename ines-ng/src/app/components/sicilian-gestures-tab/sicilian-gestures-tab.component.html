@@ -1,0 +1,155 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="back_hand"
+          class="text-accent-amber w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        Gesti siciliani
+      </div>
+      <div class="panel-desc">
+        Hand landmarker on-device · vocabolario siciliano e azioni dal vivo
+      </div>
+    </div>
+    <app-button
+      [variant]="status() === 'running' ? 'danger' : 'primary'"
+      [disabled]="status() === 'loading'"
+      (onClick)="status() === 'running' ? stop() : start()"
+    >
+      <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
+      {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+    </app-button>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
+    <!-- Camera -->
+    <section class="flex-1 flex flex-col gap-4 min-w-0 min-h-0">
+      <div
+        class="relative flex-1 min-h-0 bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+      >
+        @if (status() !== 'running') {
+          <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
+            <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
+            <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Camera Offline</p>
+          </div>
+        }
+        <video
+          #video
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          [class.opacity-0]="status() !== 'running'"
+          autoplay
+          playsinline
+          muted
+        ></video>
+        <canvas
+          #overlay
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1] pointer-events-none"
+        ></canvas>
+
+        @if (status() === 'running') {
+          <div
+            class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2"
+          >
+            <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Live</span>
+          </div>
+
+          <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
+            <span
+              class="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-[11px] font-semibold"
+              [class.border-accent-amber/40]="current() !== null"
+              [class.text-accent-amber]="current() !== null"
+            >
+              {{ currentLabel() }}
+            </span>
+            <span
+              class="px-2 py-1 bg-black/60 backdrop-blur-md rounded-md font-[var(--font-mono)] text-[10px] text-[var(--text-2)]"
+            >
+              azioni: {{ log().length }} · mi piace: {{ likes() }}
+            </span>
+          </div>
+        }
+      </div>
+
+      @if (status() === 'loading') {
+        <div class="flex items-center gap-3 text-accent-amber text-sm">
+          <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
+          Carico il modello della mano…
+        </div>
+      }
+      @if (error()) {
+        <p class="text-accent-rose text-sm">{{ error() }}</p>
+      }
+
+      <div class="flex items-center gap-4 flex-wrap">
+        <label class="flex items-center gap-2 text-sm text-[var(--text-1)] cursor-pointer">
+          <input
+            type="checkbox"
+            class="accent-[var(--accent-blue)] w-4 h-4"
+            [checked]="voice()"
+            (change)="onVoice($event)"
+          />
+          Voce
+        </label>
+        <button class="btn-secondary" (click)="clear()">
+          <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
+          Svuota registro
+        </button>
+      </div>
+
+      <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
+        <li>· Tieni la mano a 40–60 cm dalla camera, con una buona luce.</li>
+        <li>· Un gesto scatta quando resta fermo per un attimo; cambia gesto per ripeterlo.</li>
+        <li>
+          · I gesti nuovi (telefono, OK, dita incrociate, pistola) richiedono una mano ben
+          illuminata.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Gestures + log -->
+    <div class="w-[380px] shrink-0 flex flex-col gap-4 overflow-y-auto min-h-0 pr-1">
+      <section class="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
+          Gesti e vocabolario siciliano
+        </h2>
+        <div class="gesture-grid">
+          @for (g of gestures; track g.id) {
+            <div class="gesture" [class.live]="current() === g.id">
+              <span class="gesture-emoji">{{ g.emoji }}</span>
+              <div class="min-w-0">
+                <strong class="text-sm text-[var(--text-0)]">{{ g.name }}</strong>
+                <div class="sicilian">{{ g.sicilian }}</div>
+                <div class="text-[11px] text-[var(--text-2)]">{{ g.meaning }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
+          Registro azioni
+        </h2>
+        @if (log().length) {
+          <ol class="log">
+            @for (entry of log(); track entry.id) {
+              <li>
+                <span class="gesture-emoji">{{ entry.emoji }}</span>
+                <span class="text-sm text-[var(--text-1)]">{{ entry.text }}</span>
+                <span class="time font-[var(--font-mono)] text-[10px] text-[var(--text-2)]">{{
+                  entry.time
+                }}</span>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="text-xs text-[var(--text-2)] italic opacity-60">
+            Fai un gesto per vederne l'azione qui.
+          </p>
+        }
+      </section>
+    </div>
+  </div>
+</div>

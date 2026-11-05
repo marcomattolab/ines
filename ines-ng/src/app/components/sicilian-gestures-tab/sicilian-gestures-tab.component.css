@@ -1,0 +1,61 @@
+.gesture-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.gesture {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.gesture.live {
+  border-color: var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-amber) 18%, transparent);
+}
+
+.gesture-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex: none;
+}
+
+.sicilian {
+  color: var(--accent-amber);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.log li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  background: var(--bg-2);
+  font-size: 0.92rem;
+}
+
+.log .time {
+  margin-left: auto;
+  flex: none;
+}

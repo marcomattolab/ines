@@ -13,6 +13,7 @@ import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { CodingTabComponent } from './components/coding-tab/coding-tab.component';
 import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { VisionTabComponent } from './components/vision-tab/vision-tab.component';
+import { SicilianGesturesTabComponent } from './components/sicilian-gestures-tab/sicilian-gestures-tab.component';
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
@@ -36,6 +37,7 @@ type Tab =
   | 'coding'
   | 'agents'
   | 'vision'
+  | 'sicilian'
   | 'learning'
   | 'presentation'
   | 'project'
@@ -69,6 +71,7 @@ const TABS: TabDef[] = [
   },
   { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'vision', icon: 'visibility', label: 'Vision', color: 'var(--tab-vision)' },
+  { id: 'sicilian', icon: 'back_hand', label: 'Gesti', color: 'var(--tab-sicilian)' },
   {
     id: 'learning',
     icon: 'school',
@@ -111,6 +114,7 @@ const TABS: TabDef[] = [
     LearningTabComponent,
     AgentsTabComponent,
     VisionTabComponent,
+    SicilianGesturesTabComponent,
     ExpensesTabComponent,
     FormsModule,
     MatIconModule,

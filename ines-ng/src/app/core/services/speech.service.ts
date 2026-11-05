@@ -7,6 +7,7 @@ const WAKE_RE = /\b(?:hey\s+|ehi\s+|ok\s+)?ines\b/i;
 export class SpeechService {
   readonly speaking = signal<boolean>(false);
   readonly activeId = signal<string | null>(null);
+  readonly voices = signal<SpeechSynthesisVoice[]>([]);
 
   readonly recording = signal(false);
   readonly recordingTimer = signal('');
@@ -15,6 +16,14 @@ export class SpeechService {
 
   private synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
+
+  constructor() {
+    if (this.synth) {
+      const refresh = () => this.voices.set(this.synth?.getVoices() ?? []);
+      refresh();
+      this.synth.addEventListener('voiceschanged', refresh);
+    }
+  }
 
   private recognition: any = null;
   private recordingBaseText = '';
@@ -29,7 +38,7 @@ export class SpeechService {
   private wakeCmdFinal = '';
   private wakeSilenceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  speak(id: string, text: string, langOrName?: string): void {
+  speak(id: string, text: string, langOrName?: string, voiceUri?: string): void {
     if (!this.synth) return;
 
     this.stop();
@@ -46,9 +55,9 @@ export class SpeechService {
       const locale = this.getLanguageCode(langOrName);
       utterance.lang = locale;
 
-      // Try to find a premium native voice for this locale
       const voices = this.synth.getVoices();
       const matchedVoice =
+        (voiceUri && voices.find((v) => v.voiceURI === voiceUri)) ||
         voices.find(
           (v) =>
             (v.lang.toLowerCase() === locale.toLowerCase() ||

@@ -1,5 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 
+export interface OcrWord {
+  text: string;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
 /**
  * Local OCR via Tesseract.js. The library is lazy-loaded on first use so the
  * main bundle stays small; language data (`ita+eng`) is fetched once and
@@ -46,6 +54,34 @@ export class OcrService {
       const worker = await this.getWorker();
       const result = await worker.recognize(file);
       return typeof result?.data?.text === 'string' ? result.data.text.trim() : '';
+    } finally {
+      this.busy.set(false);
+      this.progress.set(0);
+    }
+  }
+
+  /** OCR con bounding box delle singole parole (per oscurare i dati personali). */
+  async recognizeWords(image: File | Blob): Promise<OcrWord[]> {
+    this.busy.set(true);
+    this.progress.set(0);
+    try {
+      const worker = await this.getWorker();
+      const result = await worker.recognize(image, {}, { blocks: true });
+      const words: OcrWord[] = [];
+      for (const b of result?.data?.blocks ?? [])
+        for (const p of b.paragraphs ?? [])
+          for (const l of p.lines ?? [])
+            for (const w of l.words ?? []) {
+              if (w.text?.trim())
+                words.push({
+                  text: w.text,
+                  x0: w.bbox.x0,
+                  y0: w.bbox.y0,
+                  x1: w.bbox.x1,
+                  y1: w.bbox.y1,
+                });
+            }
+      return words;
     } finally {
       this.busy.set(false);
       this.progress.set(0);

@@ -1,0 +1,67 @@
+.canvas-doc {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+
+.seg button {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
+}
+
+.seg button.on {
+  background: var(--bg-3);
+  color: var(--text-0);
+  box-shadow: var(--shadow-sm);
+}
+
+.caption-box {
+  margin-top: 1rem;
+  padding: 1.1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.caption-text {
+  font-size: 1.3rem;
+  line-height: 1.55;
+  margin: 0.5rem 0 0.9rem;
+}
+
+.meter {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--accent-purple);
+  border-radius: 999px;
+  transition: width 0.15s linear;
+}

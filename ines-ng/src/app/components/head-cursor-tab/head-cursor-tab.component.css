@@ -1,0 +1,73 @@
+.head-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-rose);
+  background: rgba(214, 51, 74, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+}
+
+.head-cursor.tap {
+  animation: tap 0.35s;
+}
+
+@keyframes tap {
+  40% {
+    box-shadow: 0 0 0 16px rgba(214, 51, 74, 0.25);
+  }
+}
+
+.meter {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--accent-rose);
+  border-radius: 999px;
+  transition: width 0.1s linear;
+}
+
+.targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.target {
+  padding: 1.4rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    box-shadow 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.target:hover {
+  border-color: var(--accent-rose);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.target.hit {
+  background: var(--accent-rose);
+  border-color: var(--accent-rose);
+  color: #fff;
+}

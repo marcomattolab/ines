@@ -48,6 +48,11 @@
   --tab-agents: #a78bfa;
   --tab-vision: #fda4af;
   --tab-sicilian: #fbbf24;
+  --tab-pinch-scroll: #2dd4bf;
+  --tab-head-cursor: #f87171;
+  --tab-background: #a3e635;
+  --tab-pii-ocr: #facc15;
+  --tab-vision-assist: #e879f9;
   --tab-learning: #60a5fa;
   --tab-presentation: #fb923c;
   --tab-knowledge: #c4b5fd;
@@ -712,6 +717,11 @@ select:focus-visible,
   --tab-agents: #4f46e5;
   --tab-vision: #db2777;
   --tab-sicilian: #d97706;
+  --tab-pinch-scroll: #0d9488;
+  --tab-head-cursor: #dc2626;
+  --tab-background: #65a30d;
+  --tab-pii-ocr: #ca8a04;
+  --tab-vision-assist: #c026d3;
   --tab-learning: #ea580c;
   --tab-presentation: #dc2626;
   --tab-knowledge: #2563eb;

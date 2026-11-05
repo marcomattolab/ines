@@ -1,0 +1,151 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="visibility"
+          class="text-accent-purple w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        Assistente visivo
+      </div>
+      <div class="panel-desc">Descrivi una scena o leggi testi ad alta voce · on-device</div>
+    </div>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
+    <section class="w-[400px] shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto">
+      <div
+        class="relative aspect-[4/3] bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+      >
+        @if (!cameraOn()) {
+          <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
+            <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
+            <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Camera Offline</p>
+          </div>
+        }
+        <video
+          #video
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          [class.opacity-0]="!cameraOn()"
+          autoplay
+          playsinline
+          muted
+        ></video>
+      </div>
+
+      <div class="flex gap-2">
+        @if (!cameraOn()) {
+          <button class="btn-primary" (click)="start()">
+            <mat-icon fontIcon="videocam" class="text-sm w-4 h-4"></mat-icon>
+            Avvia webcam
+          </button>
+        } @else {
+          <button class="btn-secondary" (click)="stop()">
+            <mat-icon fontIcon="videocam_off" class="text-sm w-4 h-4"></mat-icon>
+            Ferma webcam
+          </button>
+        }
+        <label class="btn-secondary cursor-pointer">
+          <mat-icon fontIcon="upload" class="text-sm w-4 h-4"></mat-icon>
+          Carica immagine
+          <input type="file" accept="image/*" hidden (change)="onFile($event)" />
+        </label>
+      </div>
+
+      <div>
+        <p class="text-sm text-[var(--text-1)] mb-2">Cosa vuoi fare?</p>
+        <div class="seg" role="group" aria-label="Modalità di analisi">
+          <button [class.on]="mode() === 'caption'" (click)="mode.set('caption')">
+            Descrivi la scena
+          </button>
+          <button [class.on]="mode() === 'ocr'" (click)="mode.set('ocr')">Leggi il testo</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button class="btn-primary" [disabled]="busy()" (click)="analyze()">
+          <mat-icon fontIcon="auto_awesome" class="text-sm w-4 h-4"></mat-icon>
+          Analizza
+        </button>
+        <label class="flex items-center gap-2 text-sm text-[var(--text-1)] cursor-pointer">
+          <input
+            type="checkbox"
+            class="accent-[var(--accent-purple)] w-4 h-4"
+            [checked]="voice()"
+            (change)="onVoice($event)"
+          />
+          Leggi ad alta voce
+        </label>
+      </div>
+
+      <div>
+        <p class="text-sm text-[var(--text-1)] mb-1">Voce dello speaker</p>
+        <div class="flex gap-2">
+          <select
+            [value]="selectedVoiceUri()"
+            (change)="onVoiceSelect($event)"
+            class="pill-select flex-1"
+          >
+            <option value="">Voce di sistema (predefinita)</option>
+            @for (v of voices(); track v.voiceURI) {
+              <option [value]="v.voiceURI">{{ v.name }} · {{ v.lang }}</option>
+            }
+          </select>
+          <button class="btn-secondary" (click)="previewVoice()">Prova</button>
+        </div>
+        <p class="text-xs text-[var(--text-2)] mt-1">
+          La voce scelta vale per la modalità corrente ({{
+            mode() === 'caption' ? 'descrizione in inglese' : 'lettura testo in italiano'
+          }}).
+        </p>
+      </div>
+
+      @if (busy()) {
+        <div>
+          <p class="text-sm text-[var(--text-2)]">
+            {{ mode() === 'caption' ? 'Analizzo la scena…' : 'Leggo il testo…' }}
+            {{ mode() === 'caption' ? caption.message() : ocr.progress() + '%' }}
+          </p>
+          <div class="meter mt-2">
+            <i [style.width.%]="mode() === 'caption' ? caption.progress() : ocr.progress()"></i>
+          </div>
+        </div>
+      }
+      @if (error()) {
+        <p class="text-accent-rose text-sm">{{ error() }}</p>
+      }
+
+      <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
+        <li>
+          · La prima descrizione scarica un piccolo modello di visione (qualche decina di MB).
+        </li>
+        <li>· La voce usa la sintesi vocale del sistema operativo.</li>
+        <li>· La descrizione è in inglese: è la lingua del modello di riconoscimento immagini.</li>
+      </ul>
+    </section>
+
+    <section
+      class="flex-1 rounded-2xl border border-white/10 bg-white/5 p-4 overflow-y-auto min-h-0"
+    >
+      <canvas #canvas class="canvas-doc"></canvas>
+      @if (result()) {
+        <div class="caption-box" role="status">
+          <span
+            class="px-2 py-0.5 rounded-full border border-accent-purple/40 text-accent-purple text-[10px] font-bold uppercase w-fit"
+          >
+            {{ mode() === 'caption' ? 'Descrizione' : 'Testo rilevato' }}
+          </span>
+          <p class="caption-text">{{ result() }}</p>
+          <button class="btn-secondary" (click)="speak()">
+            <mat-icon fontIcon="volume_up" class="text-sm w-4 h-4"></mat-icon>
+            Rileggi ad alta voce
+          </button>
+        </div>
+      } @else {
+        <p class="text-sm text-[var(--text-2)] italic opacity-60">
+          Qui comparirà l'immagine con la descrizione o il testo rilevato, in caratteri grandi.
+        </p>
+      }
+    </section>
+  </div>
+</div>

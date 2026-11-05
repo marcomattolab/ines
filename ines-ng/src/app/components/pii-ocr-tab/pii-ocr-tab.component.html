@@ -1,0 +1,107 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="document_scanner"
+          class="text-accent-amber w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        OCR e dati personali
+      </div>
+      <div class="panel-desc">
+        Leggi un documento e oscura i dati personali · Tesseract.js on-device
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
+    <section class="w-[380px] shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto">
+      <label class="text-sm text-[var(--text-1)]">
+        Immagine del documento
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onFile($event)"
+          class="block mt-1 text-xs text-[var(--text-2)]"
+        />
+      </label>
+
+      @if (ocr.busy()) {
+        <div>
+          <p class="text-sm text-[var(--text-2)]">Leggo il testo… {{ ocr.progress() }}%</p>
+          <div class="meter mt-2"><i [style.width.%]="ocr.progress()"></i></div>
+        </div>
+      }
+      @if (error()) {
+        <p class="text-accent-rose text-sm">{{ error() }}</p>
+      }
+
+      @if (matches().length) {
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">
+          Dati trovati ({{ matches().length }})
+        </h2>
+        <p class="text-xs text-[var(--text-2)]">
+          Togli la spunta per lasciare visibile un elemento.
+        </p>
+        <div class="space-y-1">
+          @for (m of matches(); track m.id) {
+            <label
+              class="flex items-center gap-2 px-1 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                class="accent-[var(--accent-amber)] w-4 h-4 shrink-0"
+                [checked]="!excluded().has(m.id)"
+                (change)="toggle(m.id)"
+              />
+              <span
+                class="px-2 py-0.5 rounded-full border border-white/10 text-[10px] font-bold uppercase text-accent-amber"
+              >
+                {{ m.kind }}
+              </span>
+              <span class="font-[var(--font-mono)] text-xs text-[var(--text-1)] truncate">{{
+                m.value
+              }}</span>
+            </label>
+          }
+        </div>
+      } @else if (done() && !ocr.busy()) {
+        <p class="text-xs text-[var(--text-2)]">
+          Nessun dato personale riconosciuto. Il riconoscimento usa regole su formati noti, quindi
+          nomi e indirizzi non vengono individuati.
+        </p>
+      }
+
+      @if (done()) {
+        <div class="flex gap-2">
+          <button class="btn-primary" (click)="download()">
+            <mat-icon fontIcon="download" class="text-sm w-4 h-4"></mat-icon>
+            Scarica immagine oscurata
+          </button>
+          <button class="btn-secondary" (click)="copyText()">
+            <mat-icon fontIcon="content_copy" class="text-sm w-4 h-4"></mat-icon>
+            Copia testo
+          </button>
+        </div>
+      }
+    </section>
+
+    <section
+      class="flex-1 rounded-2xl border border-white/10 bg-white/5 p-4 overflow-y-auto min-h-0"
+    >
+      <canvas #canvas class="canvas-doc"></canvas>
+      @if (done()) {
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mt-4 mb-2">
+          Testo oscurato
+        </h2>
+        <pre class="font-[var(--font-mono)] text-xs whitespace-pre-wrap text-[var(--text-1)] m-0">{{
+          redactedText()
+        }}</pre>
+      } @else if (!ocr.busy()) {
+        <p class="text-sm text-[var(--text-2)] italic opacity-60">
+          Qui vedrai il documento con le parti riservate coperte.
+        </p>
+      }
+    </section>
+  </div>
+</div>

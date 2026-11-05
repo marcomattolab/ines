@@ -14,6 +14,11 @@ import { CodingTabComponent } from './components/coding-tab/coding-tab.component
 import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
 import { VisionTabComponent } from './components/vision-tab/vision-tab.component';
 import { SicilianGesturesTabComponent } from './components/sicilian-gestures-tab/sicilian-gestures-tab.component';
+import { PinchScrollTabComponent } from './components/pinch-scroll-tab/pinch-scroll-tab.component';
+import { HeadCursorTabComponent } from './components/head-cursor-tab/head-cursor-tab.component';
+import { BackgroundTabComponent } from './components/background-tab/background-tab.component';
+import { PiiOcrTabComponent } from './components/pii-ocr-tab/pii-ocr-tab.component';
+import { VisionAssistTabComponent } from './components/vision-assist-tab/vision-assist-tab.component';
 import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
@@ -38,6 +43,11 @@ type Tab =
   | 'agents'
   | 'vision'
   | 'sicilian'
+  | 'pinch-scroll'
+  | 'head-cursor'
+  | 'background'
+  | 'pii-ocr'
+  | 'vision-assist'
   | 'learning'
   | 'presentation'
   | 'project'
@@ -72,6 +82,16 @@ const TABS: TabDef[] = [
   { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'var(--tab-agents)' },
   { id: 'vision', icon: 'visibility', label: 'Vision', color: 'var(--tab-vision)' },
   { id: 'sicilian', icon: 'back_hand', label: 'Gesti', color: 'var(--tab-sicilian)' },
+  { id: 'pinch-scroll', icon: 'touch_app', label: 'Pinch', color: 'var(--tab-pinch-scroll)' },
+  { id: 'head-cursor', icon: 'face', label: 'Head Cursor', color: 'var(--tab-head-cursor)' },
+  { id: 'background', icon: 'wallpaper', label: 'Sfondo', color: 'var(--tab-background)' },
+  { id: 'pii-ocr', icon: 'document_scanner', label: 'OCR PII', color: 'var(--tab-pii-ocr)' },
+  {
+    id: 'vision-assist',
+    icon: 'remove_red_eye',
+    label: 'Assistente',
+    color: 'var(--tab-vision-assist)',
+  },
   {
     id: 'learning',
     icon: 'school',
@@ -115,6 +135,11 @@ const TABS: TabDef[] = [
     AgentsTabComponent,
     VisionTabComponent,
     SicilianGesturesTabComponent,
+    PinchScrollTabComponent,
+    HeadCursorTabComponent,
+    BackgroundTabComponent,
+    PiiOcrTabComponent,
+    VisionAssistTabComponent,
     ExpensesTabComponent,
     FormsModule,
     MatIconModule,

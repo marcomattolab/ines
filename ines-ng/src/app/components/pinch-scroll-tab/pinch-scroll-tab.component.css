@@ -1,0 +1,58 @@
+.stage {
+  overflow: hidden;
+}
+
+.scroller {
+  height: 100%;
+  overflow-y: auto;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+}
+
+.card.liked {
+  border-color: var(--accent-cyan);
+  background: color-mix(in srgb, var(--accent-cyan) 12%, transparent);
+}
+
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-cyan);
+  background: rgba(39, 72, 240, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  transition: opacity 0.15s;
+}
+
+.cursor.down {
+  background: var(--accent-cyan);
+}
+
+.cursor.tap {
+  animation: tap 0.3s;
+}
+
+@keyframes tap {
+  40% {
+    box-shadow: 0 0 0 14px rgba(39, 72, 240, 0.25);
+  }
+}

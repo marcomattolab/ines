@@ -1,0 +1,120 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="touch_app"
+          class="text-accent-cyan w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        Pinch &amp; Scroll
+      </div>
+      <div class="panel-desc">
+        Scorri e clicca pizzicando pollice e indice · MediaPipe Hand Landmarker
+      </div>
+    </div>
+    <app-button
+      [variant]="status() === 'running' ? 'danger' : 'primary'"
+      [disabled]="status() === 'loading'"
+      (onClick)="status() === 'running' ? stop() : start()"
+    >
+      <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
+      {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+    </app-button>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
+    <section class="w-[360px] shrink-0 flex flex-col gap-4 min-h-0">
+      <div
+        class="relative aspect-[4/3] bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+      >
+        @if (status() !== 'running') {
+          <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
+            <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
+            <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Camera Offline</p>
+          </div>
+        }
+        <video
+          #video
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          [class.opacity-0]="status() !== 'running'"
+          autoplay
+          playsinline
+          muted
+        ></video>
+        <canvas
+          #overlay
+          class="absolute inset-0 w-full h-full object-cover scale-x-[-1] pointer-events-none"
+        ></canvas>
+        @if (status() === 'running') {
+          <div
+            class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2"
+          >
+            <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Live</span>
+          </div>
+        }
+      </div>
+
+      @if (status() === 'loading') {
+        <div class="flex items-center gap-3 text-accent-cyan text-sm">
+          <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
+          Carico il modello della mano…
+        </div>
+      }
+      @if (error()) {
+        <p class="text-accent-rose text-sm">{{ error() }}</p>
+      }
+
+      <div class="flex items-center gap-3">
+        <span
+          class="px-3 py-1 rounded-full border text-[11px] font-semibold"
+          [class.border-accent-cyan/40]="pinching()"
+          [class.text-accent-cyan]="pinching()"
+          [class.border-white/10]="!pinching()"
+          [class.text-[var(--text-2)]]="!pinching()"
+        >
+          {{ pinching() ? 'Pizzico attivo' : 'Mano aperta' }}
+        </span>
+        <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">
+          distanza: {{ ratio() }} · clic: {{ clicks() }}
+        </span>
+      </div>
+
+      <label class="text-sm text-[var(--text-1)]">
+        Velocità di scorrimento: {{ gain() }}×
+        <input
+          type="range"
+          min="1"
+          max="5"
+          step="0.5"
+          [value]="gain()"
+          (input)="onGain($event)"
+          class="w-full mt-1 accent-[var(--accent-cyan)]"
+        />
+      </label>
+
+      <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
+        <li>· Tieni la mano a 40–60 cm dalla camera, con una buona luce.</li>
+        <li>· Per scorrere verso il basso, trascina la mano verso l'alto.</li>
+        <li>· Un pizzico rapido clicca dove si trova il cursore.</li>
+      </ul>
+    </section>
+
+    <section #stage class="stage flex-1 relative rounded-2xl border border-white/10 bg-white/5">
+      <div #demo class="scroller">
+        @for (n of cards; track n) {
+          <div class="card" [class.liked]="liked().has(n)">
+            <div>
+              <strong>Scheda {{ n + 1 }}</strong>
+              <div class="text-[var(--text-2)] text-xs">Pizzica sul pulsante per attivarlo.</div>
+            </div>
+            <button class="btn-secondary" [class.btn-primary]="liked().has(n)" (click)="toggle(n)">
+              {{ liked().has(n) ? 'Salvata' : 'Salva' }}
+            </button>
+          </div>
+        }
+      </div>
+      <div #cursor class="cursor" [class.down]="pinching()"></div>
+    </section>
+  </div>
+</div>

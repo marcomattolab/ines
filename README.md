@@ -2,7 +2,7 @@
 
 > **Run a small language model entirely in your browser. No server. No API key. No data leaving your device.**
 
-INES is an **Angular 22 PWA** that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use twenty-one specialized AI-, vision-, and gesture-powered tools — all completely offline after the initial CDN load.
+INES is an **Angular 22 PWA** that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use **21 specialized AI-, vision-, and gesture-powered tools across 21 dedicated tabs** — all completely offline after the initial CDN load.
 
 ---
 
@@ -13,36 +13,37 @@ INES is an **Angular 22 PWA** that brings on-device AI to the browser using Goog
 - [Tech Stack](#tech-stack)
 - [Supported Models](#supported-models)
 - [Getting Started](#getting-started)
+- [Implemented Tabs (21 Tabs)](#implemented-tabs-21-tabs)
 - [Features](#features)
-  - [Chat](#-chat)
-  - [Voice Assistant](#-voice-assistant)
-  - [Second Brain](#-second-brain)
-  - [Email Assistant](#-email-assistant)
-  - [Meeting Recorder](#-meeting-recorder)
-  - [Translator](#-translator)
-  - [Daily Planner](#-daily-planner)
-  - [Expenses (Spese)](#-expenses-spese)
-  - [Coding Assistant](#-coding-assistant)
-  - [DevAgent](#-devagent)
-  - [Agents](#-agents)
-  - [Vision](#-vision)
-  - [Sicilian Gestures (Gesti Siciliani)](#-sicilian-gestures-gesti-siciliani)
-  - [Pinch Scroll](#-pinch-scroll)
-  - [Head Cursor](#-head-cursor)
-  - [Background Replacer (Sfondo)](#-background-replacer-sfondo)
-  - [OCR & PII Redaction](#-ocr--pii-redaction)
-  - [Vision Assist](#-vision-assist)
-  - [Learning Center](#-learning-center)
-  - [Knowledge Manager](#-knowledge-manager)
-  - [Slides](#-slides)
-  - [Project](#-project)
+  - [Chat](#chat)
+  - [Voice Assistant](#voice-assistant)
+  - [Second Brain](#second-brain)
+  - [Email Assistant](#email-assistant)
+  - [Meeting Recorder](#meeting-recorder)
+  - [Translator](#translator)
+  - [Daily Planner](#daily-planner)
+  - [Expenses (Spese)](#expenses-spese)
+  - [Coding Assistant](#coding-assistant)
+  - [DevAgent](#devagent)
+  - [Agents](#agents)
+  - [Vision](#vision)
+  - [Sicilian Gestures (Gesti Siciliani)](#sicilian-gestures-gesti-siciliani)
+  - [Pinch Scroll](#pinch-scroll)
+  - [Head Cursor](#head-cursor)
+  - [Background Replacer (Sfondo)](#background-replacer-sfondo)
+  - [OCR & PII Redaction](#ocr--pii-redaction)
+  - [Vision Assist](#vision-assist)
+  - [Learning Center](#learning-center)
+  - [Knowledge Manager](#knowledge-manager)
+  - [Slides](#slides)
+  - [Project](#project)
 - [RAG Pipeline](#rag-pipeline)
 - [Model Loading Internals](#model-loading-internals)
 - [Prompt Architecture](#prompt-architecture)
 - [Browser Requirements](#browser-requirements)
 - [Privacy Guarantee](#privacy-guarantee)
 - [Known Limitations](#known-limitations)
-- [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
@@ -72,7 +73,7 @@ This makes INES suitable for:
 │  └──────────┘                 │                                │ │
 │                               │  Single LlmInference instance  │ │
 │  ┌──────────┐                 │  (shared across all tabs)      │ │
-│  │  13 Tab  │                 │                                │ │
+│  │  21 Tabs │                 │                                │ │
 │  │  UI      │                 │  Gemma 3 / Gemma 3n            │ │
 │  │          │◄────────────────│  streaming tokens via          │ │
 │  │  Chat    │  Prompt         │  generateResponse()            │ │
@@ -84,13 +85,13 @@ This makes INES suitable for:
 │  ┌─────────────────────────────────────────────────────────────┐ │
 │  │  Services (DI)                                              │ │
 │  │  KnowledgeManager · RagService · SpeechService              │ │
-│  │  VisionService · AgentService · TodoService                 │ │
+│  │  VisionService · AgentService · TodoService · ExpenseService│ │
 │  │  TextProcessingService (PDF/DOCX/PPTX/HTML)                 │ │
-│  │  DocFetchService · MarkdownService                          │ │
+│  │  DocFetchService · OcrService · CaptioningService           │ │
 │  ├─────────────────────────────────────────────────────────────┤ │
 │  │  Persistence                                                │ │
-│  │  IndexedDB (KnowledgeBase, Documents, Chunks, QAs)          │ │
-│  │  localStorage (Todo, Chat, Coding, Agent persistence)       │ │
+│  │  IndexedDB (KnowledgeBase, Documents, Expenses, Models)     │ │
+│  │  localStorage (Todo, Settings, Brain, Coding persistence)   │ │
 │  │  sessionStorage (Model cache flag, theme, active tab)       │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
@@ -99,32 +100,35 @@ This makes INES suitable for:
                  │  @mediapipe/tasks-genai
 ```
 
-A single `LlmInference` instance is initialized once and reused across all thirteen tabs. Each tab injects its own system prompt before the user message, effectively turning one model into thirteen specialized agents.
+A single `LlmInference` instance is initialized once and reused across all 21 tabs. Each tab injects its own specialized system prompt before the user message, effectively turning one model into 21 specialized agents. Tabs are lazy-loaded on-demand using Angular `@defer (prefetch on idle)` to keep initial bundle size tiny (~1.5 MB) while keeping tab switching instantaneous.
 
 ---
 
 ## Tech Stack
 
-| Layer                    | Technology                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Framework**            | [Angular 22](https://angular.dev) — standalone components, Signals, `@for`/`@if` control flow                                       |
-| **Styling**              | [Tailwind CSS 3](https://tailwindcss.com) + CSS custom properties + per-component CSS files                                         |
-| **LLM Runtime**          | [Google MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (`@mediapipe/tasks-genai`) |
-| **GPU Acceleration**     | WebGPU (via browser) + WASM SIMD fallback                                                                                            |
-| **Model Format**         | `.task` / `.litertlm` / `.bin` (MediaPipe-compatible)                                                                                |
-| **RAG**                  | Keyword-scoring retrieval over IndexedDB-stored document chunks                                                                      |
-| **PDF Parsing**          | [pdfjs-dist](https://github.com/mozilla/pdf.js) v5                                                                                   |
-| **DOCX Parsing**         | [Mammoth](https://github.com/mwilliamson/mammoth.js) — DOCX → plain text                                                             |
-| **PPTX Parsing**         | [JSZip](https://stuk.github.io/jszip/) + DOM namespace-aware XML parsing — PPTX → Markdown                                           |
-| **Diagrams**             | [Mermaid.js](https://mermaid.js.org) v11 — mind maps, flowcharts                                                                     |
-| **Presentations**        | [PptxGenJS](https://github.com/gitbrent/PptxGenJS) v4 — client-side PPTX generation                                                  |
-| **Markdown Rendering**   | [marked](https://marked.js.org) v18                                                                                                  |
-| **Speech Transcription** | Web Speech API (native browser, no library)                                                                                          |
-| **Persistence**          | IndexedDB (knowledge base), `localStorage` (settings, todo), `sessionStorage` (session flags)                                         |
-| **Testing**              | Vitest + jsdom (unit), Cypress (E2E)                                                                                                 |
-| **Code Quality**         | Prettier, lint-staged                                                                                                                |
-| **PWA**                  | Angular Service Worker (`ngsw-config.json`), offline-capable                                                                         |
-| **Fonts**                | Syne · IBM Plex Sans · DM Mono (Google Fonts)                                                                                        |
+| Layer                  | Technology                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Framework**          | [Angular 22](https://angular.dev) — standalone components, Signals, `@defer` lazy-loading, `@for`/`@if` control flow                                   |
+| **Styling**            | [Tailwind CSS 3](https://tailwindcss.com) + CSS custom properties + per-component CSS files                                                            |
+| **LLM Runtime**        | [Google MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (`@mediapipe/tasks-genai`)                   |
+| **Vision & Gestures**  | [Google MediaPipe Tasks Vision](https://developers.google.com/mediapipe/solutions/vision) (`@mediapipe/tasks-vision`) — Gesture Recognizer & Face Mesh |
+| **GPU Acceleration**   | WebGPU (via browser) + WASM SIMD fallback                                                                                                              |
+| **Model Format**       | `.task` / `.litertlm` / `.bin` (MediaPipe-compatible)                                                                                                  |
+| **RAG**                | Semantic and keyword-scoring retrieval over IndexedDB-stored document chunks                                                                           |
+| **OCR (On-Device)**    | [Tesseract.js](https://tesseract.projectnaptha.com/) v7 — client-side optical character recognition with PII detection/masking                         |
+| **Image Captioning**   | [@huggingface/transformers](https://huggingface.co/docs/transformers.js) via dedicated Web Worker for background image captioning                      |
+| **PDF Parsing**        | [pdfjs-dist](https://github.com/mozilla/pdf.js) v5                                                                                                     |
+| **DOCX Parsing**       | [Mammoth](https://github.com/mwilliamson/mammoth.js) — DOCX → plain text                                                                               |
+| **PPTX Parsing**       | [JSZip](https://stuk.github.io/jszip/) + DOM namespace-aware XML parsing — PPTX → Markdown                                                             |
+| **Diagrams**           | [Mermaid.js](https://mermaid.js.org) v11 — mind maps, flowcharts                                                                                       |
+| **Presentations**      | [PptxGenJS](https://github.com/gitbrent/PptxGenJS) v4 — client-side PPTX generation                                                                    |
+| **Markdown Rendering** | [marked](https://marked.js.org) v18                                                                                                                    |
+| **Speech & Audio**     | Web Speech API (speech recognition + synthesis, native browser)                                                                                        |
+| **Persistence**        | IndexedDB (knowledge base, expenses, cached models), `localStorage` (settings, todos), `sessionStorage` (session flags)                                |
+| **Testing**            | Vitest + jsdom (210+ unit tests), Cypress (E2E)                                                                                                        |
+| **Code Quality**       | Prettier, lint-staged                                                                                                                                  |
+| **PWA**                | Angular Service Worker (`ngsw-config.json`), offline-capable                                                                                           |
+| **Fonts**              | Syne · IBM Plex Sans · DM Mono (Google Fonts)                                                                                                          |
 
 ---
 
@@ -134,7 +138,7 @@ INES works with any MediaPipe-compatible LLM. The following are recommended and 
 
 | Model                                                                      | Size  | Format      | Notes                             |
 | -------------------------------------------------------------------------- | ----- | ----------- | --------------------------------- |
-| [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)      | ~1 GB | `.task`     | Recommended for most hardware  |
+| [Gemma-3 1B IT](https://huggingface.co/litert-community/Gemma3-1B-IT)      | ~1 GB | `.task`     | Recommended for most hardware     |
 | [Gemma-3n E2B IT](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm) | ~2 GB | `.litertlm` | Multimodal (text + image + audio) |
 | [Gemma-3n E4B IT](https://huggingface.co/google/gemma-3n-E4B-it-litert-lm) | ~4 GB | `.litertlm` | Higher quality, needs more VRAM   |
 | [Gemma-2 2B IT](https://huggingface.co/litert-community/Gemma2-2B-IT)      | ~2 GB | `.task`     | Strong reasoning, all platforms   |
@@ -191,6 +195,36 @@ Loading time by model size:
 | 4 GB       | 60 – 120 s        |
 
 Once loaded, the status bar shows `✓ [model name]` in green. The model stays loaded for the entire session across all tabs.
+
+---
+
+## Implemented Tabs (21 Tabs)
+
+INES includes **21 specialized tabs** categorized across productivity, development, computer vision, gestures, and active content learning. All tabs share the same underlying on-device neural runtime.
+
+| #   | Tab ID          | Label           | Category          | Description                                                                                                   |
+| --- | --------------- | --------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | `assistant`     | **Voice**       | General           | Continuous hands-free voice assistant with "Hey Ines" wake word, voice commands & speech synthesis            |
+| 2   | `chat`          | **Chat**        | General           | Conversational multi-turn assistant with streaming tokens and context memory                                  |
+| 3   | `email`         | **Email**       | General           | One-click email drafting, tone styling (formal, concise, friendly), proofreading & summarization              |
+| 4   | `meeting`       | **Meeting**     | General           | Real-time speech-to-text recorder with automated action items & meeting minutes                               |
+| 5   | `translate`     | **Translate**   | General           | Instant translation between 10 languages with auto-detection & style preservation                             |
+| 6   | `todo`          | **Todo**        | General           | Smart daily planner with priorities, undo/redo stack, categories & natural language plan generation           |
+| 7   | `expenses`      | **Spese**       | General           | Personal & business expense tracking with monthly amortisation, receipt OCR & category analytics              |
+| 8   | `coding`        | **Code**        | Development       | Angular/TypeScript coding assistant with syntax highlighting, sandbox preview & export                        |
+| 9   | `agents`        | **Agents**      | Development       | Multi-agent manager with customizable system prompts, capabilities & tool bindings                            |
+| 10  | `vision`        | **Vision**      | Vision & Gestures | Object detection, visual classification, and scene analysis via MediaPipe Vision                              |
+| 11  | `sicilian`      | **Gesti**       | Vision & Gestures | Real-time Sicilian hand gesture recognition (_"Ma che vuoi?"_, _"Perfetto"_, etc.) with audio/visual feedback |
+| 12  | `pinch-scroll`  | **Pinch**       | Vision & Gestures | Touchless page navigation and scrolling driven entirely by hand pinch gestures                                |
+| 13  | `head-cursor`   | **Head Cursor** | Vision & Gestures | Accessible pointer navigation and clicks driven by head pose and Face Mesh tracking                           |
+| 14  | `background`    | **Sfondo**      | Vision & Gestures | Live webcam portrait background segmentation and replacement (London, Paris, Rome, Tokyo, Palermo)            |
+| 15  | `pii-ocr`       | **OCR PII**     | Vision & Gestures | On-device Tesseract.js OCR with automated detection & masking of sensitive PII (GDPR/privacy)                 |
+| 16  | `vision-assist` | **Assistente**  | Vision & Gestures | Assistive vision camera captioning, document reader & text-to-speech descriptions for accessibility           |
+| 17  | `learning`      | **Learning**    | Content           | RAG active learning suite: flashcards, quizzes, Mermaid mind maps, cloze & study schedules                    |
+| 18  | `presentation`  | **Slides**      | Content           | Interactive slide creator with AI generation & client-side PowerPoint (.pptx) export                          |
+| 19  | `project`       | **Project**     | Content           | Multi-file project workspace with document indexing & local RAG search                                        |
+| 20  | `brain`         | **Brain**       | Content           | Second Brain personal knowledge base with hierarchical folders & semantic retrieval                           |
+| 21  | `dev-agent`     | **DevAgent**    | AI                | Autonomous developer coding agent with file system abstraction, patch application & git diffs                 |
 
 ---
 
@@ -311,7 +345,7 @@ Analyze images using on-device vision models. Upload or capture images for capti
 
 Real-time hand gesture recognition powered by MediaPipe Hands:
 
-- Detects traditional Sicilian gestures (*"Ma che vuoi?"*, *"Perfetto"*, *"Mamma mia"*, etc.)
+- Detects traditional Sicilian gestures (_"Ma che vuoi?"_, _"Perfetto"_, _"Mamma mia"_, etc.)
 - Audio-visual feedback with cultural explanations and folklore context
 - Runs at 30+ FPS directly in the browser via WebCam
 
@@ -369,17 +403,17 @@ Assistive vision assistant for visually impaired users:
 
 RAG-powered active learning platform. Upload documents (PDF, DOCX, PPTX, HTML, TXT, MD) and generate:
 
-| Tool          | Description                                      |
-| ------------- | ------------------------------------------------ |
-| **Chat Q&A**  | Ask questions with source citations              |
-| **Mind Map**  | Auto-generate Mermaid.js mind maps               |
-| **Quiz**      | Multiple-choice quizzes with timer and scoring   |
-| **Flashcards**| Anki-compatible CSV export                       |
-| **Study Plan**| Structured timeline with milestones              |
-| **Summary**   | Comprehensive document summaries                 |
-| **Fill Blanks**| Cloze exercises from key facts                  |
-| **Matching**  | Term ↔ Definition matching exercises             |
-| **Open Q&A**  | Thought-provoking questions with AI feedback     |
+| Tool            | Description                                    |
+| --------------- | ---------------------------------------------- |
+| **Chat Q&A**    | Ask questions with source citations            |
+| **Mind Map**    | Auto-generate Mermaid.js mind maps             |
+| **Quiz**        | Multiple-choice quizzes with timer and scoring |
+| **Flashcards**  | Anki-compatible CSV export                     |
+| **Study Plan**  | Structured timeline with milestones            |
+| **Summary**     | Comprehensive document summaries               |
+| **Fill Blanks** | Cloze exercises from key facts                 |
+| **Matching**    | Term ↔ Definition matching exercises           |
+| **Open Q&A**    | Thought-provoking questions with AI feedback   |
 
 ---
 
@@ -442,7 +476,8 @@ llmInference = await LlmInference.createFromOptions(genai, {
 The MediaPipe library is loaded as an **ES module** via CDN using dynamic `import()`:
 
 ```javascript
-const mediapipe = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai');
+const mediapipe =
+  await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai");
 ```
 
 **Caching:** Models are cached in IndexedDB (`InesModelCacheDB`) and `sessionStorage` for instant reload on page refresh. The caching layer checks IndexedDB first, then falls back to a local `/models/` URL, and finally shows the loader overlay.
@@ -471,13 +506,13 @@ Each tab has a dedicated system prompt optimized for its task. Context from the 
 
 ## Browser Requirements
 
-| Requirement  | Details                                                                                |
-| ------------ | -------------------------------------------------------------------------------------- |
-| **Browser**  | Chrome 113+ or Edge 113+ (WebGPU required)                                             |
-| **WebGPU**   | Must be enabled (default in Chrome 113+)                                               |
-| **RAM**      | 4 GB minimum; 8 GB recommended for 2B+ models                                          |
-| **GPU**      | Any modern integrated or discrete GPU with WebGPU support                              |
-| **HTTPS**    | Required only for the Meeting tab (Web Speech API)                                     |
+| Requirement  | Details                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Browser**  | Chrome 113+ or Edge 113+ (WebGPU required)                                                                                           |
+| **WebGPU**   | Must be enabled (default in Chrome 113+)                                                                                             |
+| **RAM**      | 4 GB minimum; 8 GB recommended for 2B+ models                                                                                        |
+| **GPU**      | Any modern integrated or discrete GPU with WebGPU support                                                                            |
+| **HTTPS**    | Required only for the Meeting tab (Web Speech API)                                                                                   |
 | **Internet** | Only on first load — `@mediapipe/tasks-genai` (CDN) and Vision `.task` models (cached in IndexedDB). Inference is then fully offline |
 
 Firefox does not support WebGPU by default. Safari has partial WebGPU support; compatibility with MediaPipe is not guaranteed.
@@ -486,19 +521,19 @@ Firefox does not support WebGPU by default. Safari has partial WebGPU support; c
 
 ## Privacy Guarantee
 
-| Data                      | Where it goes                                                         |
-| ------------------------- | --------------------------------------------------------------------- |
-| Your prompts and messages | **Stays in browser memory**                                           |
-| Uploaded documents        | **Stays in browser IndexedDB** (your device only)                     |
-| Email text                | **Stays in browser memory**                                           |
-| Meeting audio             | **Processed by Web Speech API** (browser-native, OS-level)            |
-| Meeting transcripts       | **Stays in browser memory**                                           |
-| Todo list                 | **Stored in `localStorage`** (your device only)                       |
-| Knowledge base            | **Stored in IndexedDB** (your device only)                            |
-| The LLM model file        | **Stays in browser memory** — never uploaded                          |
-| CDN requests              | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load) |
+| Data                      | Where it goes                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------- |
+| Your prompts and messages | **Stays in browser memory**                                                             |
+| Uploaded documents        | **Stays in browser IndexedDB** (your device only)                                       |
+| Email text                | **Stays in browser memory**                                                             |
+| Meeting audio             | **Processed by Web Speech API** (browser-native, OS-level)                              |
+| Meeting transcripts       | **Stays in browser memory**                                                             |
+| Todo list                 | **Stored in `localStorage`** (your device only)                                         |
+| Knowledge base            | **Stored in IndexedDB** (your device only)                                              |
+| The LLM model file        | **Stays in browser memory** — never uploaded                                            |
+| CDN requests              | `cdn.jsdelivr.net` for the MediaPipe JS library (once, on first load)                   |
 | Vision models             | `storage.googleapis.com` MediaPipe `.task` models (Vision tab, cached after first load) |
-| Google Fonts              | `fonts.googleapis.com` for UI fonts                                   |
+| Google Fonts              | `fonts.googleapis.com` for UI fonts                                                     |
 
 No analytics. No telemetry. No accounts. No backend server.
 
@@ -512,7 +547,7 @@ No analytics. No telemetry. No accounts. No backend server.
 - **Large model load time** — a 4B model can take 2+ minutes to initialize on integrated graphics
 - **WebGPU required** — no CPU-only fallback; MediaPipe will fail on older hardware
 - **RAG is keyword-based** — no vector embeddings; retrieval quality depends on keyword overlap with the query
-- **Single shared model** — all thirteen tabs share one `LlmInference` instance with no concurrent requests
+- **Single shared model** — all 21 tabs share one `LlmInference` instance with no concurrent requests
 
 ---
 

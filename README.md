@@ -2,7 +2,7 @@
 
 > **Run a small language model entirely in your browser. No server. No API key. No data leaving your device.**
 
-INES is an **Angular 22 PWA** that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use thirteen specialized AI-powered tools — all completely offline after the initial CDN load.
+INES is an **Angular 22 PWA** that brings on-device AI to the browser using Google's [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) and WebGPU acceleration. Load a Gemma model once, and use twenty-one specialized AI-, vision-, and gesture-powered tools — all completely offline after the initial CDN load.
 
 ---
 
@@ -15,14 +15,23 @@ INES is an **Angular 22 PWA** that brings on-device AI to the browser using Goog
 - [Getting Started](#getting-started)
 - [Features](#features)
   - [Chat](#-chat)
+  - [Voice Assistant](#-voice-assistant)
+  - [Second Brain](#-second-brain)
   - [Email Assistant](#-email-assistant)
   - [Meeting Recorder](#-meeting-recorder)
   - [Translator](#-translator)
   - [Daily Planner](#-daily-planner)
+  - [Expenses (Spese)](#-expenses-spese)
   - [Coding Assistant](#-coding-assistant)
   - [DevAgent](#-devagent)
   - [Agents](#-agents)
   - [Vision](#-vision)
+  - [Sicilian Gestures (Gesti Siciliani)](#-sicilian-gestures-gesti-siciliani)
+  - [Pinch Scroll](#-pinch-scroll)
+  - [Head Cursor](#-head-cursor)
+  - [Background Replacer (Sfondo)](#-background-replacer-sfondo)
+  - [OCR & PII Redaction](#-ocr--pii-redaction)
+  - [Vision Assist](#-vision-assist)
   - [Learning Center](#-learning-center)
   - [Knowledge Manager](#-knowledge-manager)
   - [Slides](#-slides)
@@ -201,6 +210,26 @@ A general-purpose conversational assistant with **multi-turn memory**. The last 
 
 ---
 
+### Voice Assistant
+
+Continuous hands-free voice interaction powered by Web Speech recognition and local intent parsing.
+
+- **Wake word support:** Optional "Hey Ines" activation on startup
+- **Spoken responses:** Natural text-to-speech feedback
+- **Quick commands:** Add reminders, tasks, check status, or trigger actions completely hands-free
+
+---
+
+### Second Brain
+
+Hierarchical personal knowledge repository combining local document storage and semantic chunk retrieval.
+
+- Categorize notes and knowledge into custom folders
+- Instant similarity search and contextual QA against your personal archive
+- 100% private and persisted locally via IndexedDB
+
+---
+
 ### Email Assistant
 
 Paste any email and apply AI-powered transformations in one click.
@@ -243,6 +272,17 @@ A smart task manager with manual entry and **AI-generated daily plans**.
 
 ---
 
+### Expenses (Spese)
+
+Comprehensive on-device personal and business expense tracking:
+
+- Track one-off and recurring expenses with monthly amortisation
+- Categorize spending (work, personal, utilities, food, etc.) with custom tags
+- Filter by date ranges, categories, and payment methods
+- Export and import data locally in IndexedDB
+
+---
+
 ### Coding Assistant
 
 Multi-file code editor with AI-powered code generation, sandbox preview, copy and download. Supports diverse programming languages.
@@ -264,6 +304,64 @@ Create and manage custom AI agents with specialized system prompts, skills, and 
 ### Vision
 
 Analyze images using on-device vision models. Upload or capture images for captioning, object detection, and visual Q&A — all processed locally.
+
+---
+
+### Sicilian Gestures (Gesti Siciliani)
+
+Real-time hand gesture recognition powered by MediaPipe Hands:
+
+- Detects traditional Sicilian gestures (*"Ma che vuoi?"*, *"Perfetto"*, *"Mamma mia"*, etc.)
+- Audio-visual feedback with cultural explanations and folklore context
+- Runs at 30+ FPS directly in the browser via WebCam
+
+---
+
+### Pinch Scroll
+
+Hands-free touchless web navigation:
+
+- Control page scrolling and zooming purely using hand pinch gestures
+- Smooth physics and momentum simulation
+
+---
+
+### Head Cursor
+
+Accessible head tracking pointer control:
+
+- Control cursor movement and clicking using head pose and eye/blink gestures
+- 100% on-device MediaPipe Face Mesh processing for complete privacy
+
+---
+
+### Background Replacer (Sfondo)
+
+Real-time virtual background replacement for webcam video:
+
+- Live portrait segmentation without green screen
+- Replace background with presets (London, Paris, Rome, Tokyo, Palermo) or custom images
+- Blur and virtual studio lighting effects
+
+---
+
+### OCR & PII Redaction
+
+Document scanning and GDPR-compliant sensitive data protection:
+
+- On-device text recognition with **Tesseract.js** (`ita+eng`)
+- Automatic pattern matching for sensitive personal information (PII): Emails, IBAN, Italian Codice Fiscale, Credit Cards (Luhn check), Partita IVA, Phone numbers, and IP addresses
+- Interactive canvas redactor: mask private data visually and copy sanitized text
+
+---
+
+### Vision Assist
+
+Assistive vision assistant for visually impaired users:
+
+- Real-time scene captioning and OCR reading from camera stream
+- Spoken audio descriptions via Web Speech synthesis
+- Zero network dependency
 
 ---
 

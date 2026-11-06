@@ -272,6 +272,9 @@ export class ExpenseService {
   // ── IndexedDB persistence ──
 
   private ensureDB(): Promise<IDBDatabase> {
+    if (typeof indexedDB === 'undefined') {
+      return Promise.reject(new Error('IndexedDB is not available in this environment'));
+    }
     if (this.db) return Promise.resolve(this.db);
     if (this.initPromise) return this.initPromise.then(() => this.db!);
     this.initPromise = new Promise((resolve, reject) => {
@@ -332,6 +335,7 @@ export class ExpenseService {
   }
 
   async load(): Promise<void> {
+    if (typeof indexedDB === 'undefined') return;
     this.loading.set(true);
     try {
       const list = await this.getAll();

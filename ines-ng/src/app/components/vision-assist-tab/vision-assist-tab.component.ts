@@ -8,7 +8,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ButtonComponent } from '../../shared/components/button/button.component';
 import { CaptioningService } from '../../core/services/captioning.service';
 import { OcrService } from '../../core/services/ocr.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -22,7 +21,7 @@ const VOICE_KEY = 'ines.vision-assist.voice';
 @Component({
   selector: 'app-vision-assist-tab',
   standalone: true,
-  imports: [MatIconModule, ButtonComponent],
+  imports: [MatIconModule],
   templateUrl: './vision-assist-tab.component.html',
   styleUrl: './vision-assist-tab.component.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },

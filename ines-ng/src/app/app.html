@@ -67,27 +67,67 @@
 
   <!-- Main panels -->
   <main id="main">
-    <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
+    @defer (when activeTab() === 'assistant'; prefetch on idle) {
+      <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
+    }
     <app-chat-tab [hidden]="activeTab() !== 'chat'" />
-    <app-email-tab [hidden]="activeTab() !== 'email'" />
-    <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
-    <app-translate-tab [hidden]="activeTab() !== 'translate'" />
-    <app-todo-tab [hidden]="activeTab() !== 'todo'" />
-    <app-expenses-tab [hidden]="activeTab() !== 'expenses'" />
-    <app-coding-tab [hidden]="activeTab() !== 'coding'" />
-    <app-agents-tab [hidden]="activeTab() !== 'agents'" />
-    <app-vision-tab [hidden]="activeTab() !== 'vision'" />
-    <app-sicilian-gestures-tab [hidden]="activeTab() !== 'sicilian'" />
-    <app-pinch-scroll-tab [hidden]="activeTab() !== 'pinch-scroll'" />
-    <app-head-cursor-tab [hidden]="activeTab() !== 'head-cursor'" />
-    <app-background-tab [hidden]="activeTab() !== 'background'" />
-    <app-pii-ocr-tab [hidden]="activeTab() !== 'pii-ocr'" />
-    <app-vision-assist-tab [hidden]="activeTab() !== 'vision-assist'" />
-    <app-presentation-tab [hidden]="activeTab() !== 'presentation'" />
-    <app-project-tab [hidden]="activeTab() !== 'project'" />
-    <app-brain-tab [hidden]="activeTab() !== 'brain'" />
-    <app-dev-agent-tab [hidden]="activeTab() !== 'dev-agent'" />
-    <app-learning-tab [hidden]="activeTab() !== 'learning'" />
+    @defer (when activeTab() === 'email'; prefetch on idle) {
+      <app-email-tab [hidden]="activeTab() !== 'email'" />
+    }
+    @defer (when activeTab() === 'meeting'; prefetch on idle) {
+      <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
+    }
+    @defer (when activeTab() === 'translate'; prefetch on idle) {
+      <app-translate-tab [hidden]="activeTab() !== 'translate'" />
+    }
+    @defer (when activeTab() === 'todo'; prefetch on idle) {
+      <app-todo-tab [hidden]="activeTab() !== 'todo'" />
+    }
+    @defer (when activeTab() === 'expenses'; prefetch on idle) {
+      <app-expenses-tab [hidden]="activeTab() !== 'expenses'" />
+    }
+    @defer (when activeTab() === 'coding'; prefetch on idle) {
+      <app-coding-tab [hidden]="activeTab() !== 'coding'" />
+    }
+    @defer (when activeTab() === 'agents'; prefetch on idle) {
+      <app-agents-tab [hidden]="activeTab() !== 'agents'" />
+    }
+    @defer (when activeTab() === 'vision'; prefetch on idle) {
+      <app-vision-tab [hidden]="activeTab() !== 'vision'" />
+    }
+    @defer (when activeTab() === 'sicilian'; prefetch on idle) {
+      <app-sicilian-gestures-tab [hidden]="activeTab() !== 'sicilian'" />
+    }
+    @defer (when activeTab() === 'pinch-scroll'; prefetch on idle) {
+      <app-pinch-scroll-tab [hidden]="activeTab() !== 'pinch-scroll'" />
+    }
+    @defer (when activeTab() === 'head-cursor'; prefetch on idle) {
+      <app-head-cursor-tab [hidden]="activeTab() !== 'head-cursor'" />
+    }
+    @defer (when activeTab() === 'background'; prefetch on idle) {
+      <app-background-tab [hidden]="activeTab() !== 'background'" />
+    }
+    @defer (when activeTab() === 'pii-ocr'; prefetch on idle) {
+      <app-pii-ocr-tab [hidden]="activeTab() !== 'pii-ocr'" />
+    }
+    @defer (when activeTab() === 'vision-assist'; prefetch on idle) {
+      <app-vision-assist-tab [hidden]="activeTab() !== 'vision-assist'" />
+    }
+    @defer (when activeTab() === 'presentation'; prefetch on idle) {
+      <app-presentation-tab [hidden]="activeTab() !== 'presentation'" />
+    }
+    @defer (when activeTab() === 'project'; prefetch on idle) {
+      <app-project-tab [hidden]="activeTab() !== 'project'" />
+    }
+    @defer (when activeTab() === 'brain'; prefetch on idle) {
+      <app-brain-tab [hidden]="activeTab() !== 'brain'" />
+    }
+    @defer (when activeTab() === 'dev-agent'; prefetch on idle) {
+      <app-dev-agent-tab [hidden]="activeTab() !== 'dev-agent'" />
+    }
+    @defer (when activeTab() === 'learning'; prefetch on idle) {
+      <app-learning-tab [hidden]="activeTab() !== 'learning'" />
+    }
   </main>
 </div>
 

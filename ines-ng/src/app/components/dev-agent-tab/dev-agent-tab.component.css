@@ -854,14 +854,6 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-.project-overview-body {
-  padding: 6px 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: expandIn 0.2s ease;
-}
-
 .overview-row {
   display: flex;
   align-items: center;

@@ -1,6 +1,5 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ButtonComponent } from '../../shared/components/button/button.component';
 import { OcrService, OcrWord } from '../../core/services/ocr.service';
 import { PiiMatch, detectPii, joinWords, wordsForMatch } from '../../core/services/pii';
 import { ToastService } from '../../core/services/toast.service';
@@ -9,7 +8,7 @@ import { errorMessage } from '../../core/services/camera';
 @Component({
   selector: 'app-pii-ocr-tab',
   standalone: true,
-  imports: [MatIconModule, ButtonComponent],
+  imports: [MatIconModule],
   templateUrl: './pii-ocr-tab.component.html',
   styleUrl: './pii-ocr-tab.component.css',
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },

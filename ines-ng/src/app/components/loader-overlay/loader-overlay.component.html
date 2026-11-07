@@ -4,28 +4,31 @@
     class="fixed inset-0 z-[200] bg-[var(--bg-0)] flex flex-row items-center justify-center gap-[72px] p-10 overflow-y-auto max-lg:flex-col max-lg:gap-8 max-lg:p-8 max-lg:justify-start"
   >
     <div
-      class="flex flex-col items-center justify-center gap-5 max-w-[380px] ani-left max-lg:max-w-full max-lg:ani-up"
+      class="flex flex-col items-center justify-center gap-6 max-w-[420px] ani-left max-lg:max-w-full max-lg:ani-up"
     >
-      <img
-        src="logo.png"
-        alt="INES Logo"
-        class="w-[280px] max-w-full h-auto object-contain max-lg:w-[200px]"
-        style="
-          filter: drop-shadow(0 0 35px rgba(99, 179, 255, 0.18));
-          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        "
-      />
+      <div class="logo-orbit" aria-hidden="true">
+        <img src="ines-mark.svg" alt="INES Logo" class="logo-emblem" />
+      </div>
       @if (showText()) {
-        <div
-          class="font-[var(--font-ui)] font-extrabold text-[32px] -tracking-[0.03em] bg-gradient-to-r from-[var(--accent-blue)] via-[var(--accent-green)] to-[var(--accent-purple)] bg-clip-text text-transparent text-center"
-        >
-          Intelligent Neural Edge System
+        <div class="flex flex-col items-center gap-2.5">
+          <div
+            class="font-[var(--font-ui)] font-extrabold text-[54px] leading-none -tracking-[0.04em] bg-gradient-to-r from-[var(--accent-blue)] via-[var(--accent-green)] to-[var(--accent-purple)] bg-clip-text text-transparent text-center"
+          >
+            INES
+          </div>
+          <div
+            class="font-[var(--font-ui)] font-semibold text-[15px] tracking-[0.08em] text-[var(--text-1)] text-center"
+          >
+            Intelligent Neural Edge System
+          </div>
         </div>
       }
       <div
-        class="text-[var(--text-2)] font-[var(--font-mono)] text-[11px] tracking-[0.08em] text-center opacity-80"
+        class="flex items-center gap-3 text-[var(--text-2)] font-[var(--font-mono)] text-[11px] tracking-[0.16em] text-center"
       >
+        <span class="h-px w-8 bg-[var(--border)]"></span>
         ON-DEVICE · PRIVATE · ZERO CLOUD
+        <span class="h-px w-8 bg-[var(--border)]"></span>
       </div>
     </div>
 

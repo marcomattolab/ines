@@ -93,3 +93,98 @@
   transition: width 0.3s ease;
   border-radius: 2px;
 }
+
+/* ── Restyled INES emblem hero ── */
+.logo-orbit {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  max-width: 78vw;
+  max-height: 78vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-orbit::before {
+  content: '';
+  position: absolute;
+  inset: 28px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(130, 183, 255, 0.3),
+    rgba(94, 227, 180, 0.12) 45%,
+    transparent 70%
+  );
+  filter: blur(28px);
+  animation: haloPulse 4.5s ease-in-out infinite;
+  z-index: 0;
+}
+
+.logo-orbit::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(130, 183, 255, 0.55) 90deg,
+    rgba(94, 227, 180, 0.45) 160deg,
+    rgba(191, 146, 255, 0.55) 250deg,
+    transparent 310deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: orbitSpin 9s linear infinite;
+  filter: blur(0.5px);
+}
+
+.logo-emblem {
+  position: relative;
+  z-index: 1;
+  width: 196px;
+  height: 196px;
+  max-width: 52vw;
+  max-height: 52vw;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 26px rgba(99, 179, 255, 0.28));
+  animation: emblemFloat 6s ease-in-out infinite;
+}
+
+@keyframes orbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes haloPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes emblemFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-orbit {
+    width: 230px;
+    height: 230px;
+  }
+}

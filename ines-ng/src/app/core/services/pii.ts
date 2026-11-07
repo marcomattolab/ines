@@ -66,14 +66,14 @@ const RULES: Rule[] = [
     re: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,4})?\b/g,
     validate: iban,
   },
-  { kind: 'Codice fiscale', re: /\b[A-Z]{6}\d{2}[A-EHLMPR-T]\d{2}[A-Z]\d{3}[A-Z]\b/gi },
-  { kind: 'Carta di pagamento', re: /\b(?:\d[ -]?){13,19}\b/g, validate: luhn },
-  { kind: 'Partita IVA', re: /\b(?:IT\s?)?\d{11}\b/g, validate: partitaIva },
+  { kind: 'Tax code', re: /\b[A-Z]{6}\d{2}[A-EHLMPR-T]\d{2}[A-Z]\d{3}[A-Z]\b/gi },
+  { kind: 'Payment card', re: /\b(?:\d[ -]?){13,19}\b/g, validate: luhn },
+  { kind: 'VAT number', re: /\b(?:IT\s?)?\d{11}\b/g, validate: partitaIva },
   {
-    kind: 'Telefono',
+    kind: 'Phone',
     re: /(?:(?:\+|00)\d{1,3}[\s.-]?)?\b(?:3\d{2}[\s.-]?\d{6,7}|0\d{1,3}[\s./-]?\d{5,8})\b/g,
   },
-  { kind: 'Indirizzo IP', re: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g },
+  { kind: 'IP address', re: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g },
 ];
 
 export function detectPii(text: string): PiiMatch[] {

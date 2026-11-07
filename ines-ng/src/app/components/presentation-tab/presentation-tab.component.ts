@@ -317,7 +317,7 @@ export class PresentationTabComponent implements OnInit, OnDestroy {
         const snippet = full.slice(0, 180).replace(/\n/g, ' ');
         console.warn('[Presentation] no slides detected — raw output:', full.slice(0, 500));
         this.toast.error(
-          `Nessuna slide rilevata (output ${full.length} char): ${snippet}${full.length > 180 ? '…' : ''}`,
+          `No slides detected (output ${full.length} chars): ${snippet}${full.length > 180 ? '…' : ''}`,
           7000,
         );
       } else {

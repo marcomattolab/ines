@@ -33,12 +33,12 @@ export class CaptioningService {
     this.worker?.terminate();
     this.status.set('loading');
     this.progress.set(0);
-    this.message.set('Avvio…');
+    this.message.set('Starting…');
 
     const worker = new Worker(new URL('./captioning.worker', import.meta.url), { type: 'module' });
     this.worker = worker;
     worker.onmessage = ({ data }) => this.onMessage(data);
-    worker.onerror = (e) => this.fail(new Error(e.message || 'Errore nel worker'));
+    worker.onerror = (e) => this.fail(new Error(e.message || 'Worker error'));
 
     this.ready = new Promise<void>((resolve, reject) => (this.readyHandlers = { resolve, reject }));
     this.ready.catch(() => undefined);
@@ -78,7 +78,7 @@ export class CaptioningService {
       case 'ready':
         this.status.set('ready');
         this.progress.set(100);
-        this.message.set('Modello pronto');
+        this.message.set('Model ready');
         this.readyHandlers?.resolve();
         break;
       case 'result':

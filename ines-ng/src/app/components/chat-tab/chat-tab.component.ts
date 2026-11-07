@@ -231,7 +231,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const isImage = file.type.startsWith('image/');
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (!isImage && !isPdf) {
-      this.toast.error("Allega un'immagine o un PDF");
+      this.toast.error('Attach an image or a PDF');
       return;
     }
     const preview = isImage ? await this.readFileDataUrl(file) : undefined;
@@ -248,7 +248,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
         ? await this.ocr.recognize(file)
         : await this.textProc.extractTextFromPdf(file);
       this.attachedFile.update((a) => (a ? { ...a, text: text || null, busy: false } : a));
-      if (!text) this.toast.show('Nessun testo rilevato nel file');
+      if (!text) this.toast.show('No text detected in the file');
     } catch {
       this.attachedFile.update((a) => (a ? { ...a, text: null, busy: false } : a));
     }
@@ -318,15 +318,15 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     // Include the extracted text of the attached image/PDF in the model input.
     let modelText = text;
     if (file) {
-      const label = file.kind === 'image' ? 'Immagine allegata' : 'PDF allegato';
+      const label = file.kind === 'image' ? 'Attached image' : 'Attached PDF';
       const part = file.text
-        ? `\n\n[${label}: ${file.name}]\nTesto estratto:\n${file.text}`
-        : `\n\n[${label}: ${file.name} — nessun testo rilevato]`;
+        ? `\n\n[${label}: ${file.name}]\nExtracted text:\n${file.text}`
+        : `\n\n[${label}: ${file.name} — no text detected]`;
       modelText = text ? text + part : part.trim();
     }
 
     const displayText =
-      text || (file ? (file.kind === 'pdf' ? `[PDF: ${file.name}]` : '[Immagine]') : '');
+      text || (file ? (file.kind === 'pdf' ? `[PDF: ${file.name}]` : '[Image]') : '');
 
     this.generating.set(true);
     this.abortController = new AbortController();

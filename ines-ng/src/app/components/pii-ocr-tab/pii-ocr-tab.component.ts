@@ -73,19 +73,19 @@ export class PiiOcrTabComponent {
       if (!blob) return;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'documento-oscurato.png';
+      a.download = 'redacted-document.png';
       a.click();
       URL.revokeObjectURL(a.href);
     }, 'image/png');
-    this.toast.success('Immagine oscurata scaricata');
+    this.toast.success('Redacted image downloaded');
   }
 
   protected async copyText(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.redactedText());
-      this.toast.success('Testo copiato negli appunti');
+      this.toast.success('Text copied to clipboard');
     } catch {
-      this.toast.error('Impossibile copiare il testo');
+      this.toast.error('Cannot copy the text');
     }
   }
 

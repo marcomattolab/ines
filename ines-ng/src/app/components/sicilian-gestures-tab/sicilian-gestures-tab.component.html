@@ -6,11 +6,9 @@
           fontIcon="back_hand"
           class="text-accent-amber w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Gesti siciliani
+        Sicilian Gestures
       </div>
-      <div class="panel-desc">
-        Hand landmarker on-device · vocabolario siciliano e azioni dal vivo
-      </div>
+      <div class="panel-desc">Hand landmarker on-device · Sicilian vocabulary and live actions</div>
     </div>
     <app-button
       [variant]="status() === 'running' ? 'danger' : 'primary'"
@@ -18,7 +16,7 @@
       (onClick)="status() === 'running' ? stop() : start()"
     >
       <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
-      {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+      {{ status() === 'running' ? 'Stop' : 'Start webcam' }}
     </app-button>
   </div>
 
@@ -66,7 +64,7 @@
             <span
               class="px-2 py-1 bg-black/60 backdrop-blur-md rounded-md font-[var(--font-mono)] text-[10px] text-[var(--text-2)]"
             >
-              azioni: {{ log().length }} · mi piace: {{ likes() }}
+              actions: {{ log().length }} · likes: {{ likes() }}
             </span>
           </div>
         }
@@ -75,7 +73,7 @@
       @if (status() === 'loading') {
         <div class="flex items-center gap-3 text-accent-amber text-sm">
           <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
-          Carico il modello della mano…
+          Loading hand model…
         </div>
       }
       @if (error()) {
@@ -90,21 +88,18 @@
             [checked]="voice()"
             (change)="onVoice($event)"
           />
-          Voce
+          Voice
         </label>
         <button class="btn-secondary" (click)="clear()">
           <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
-          Svuota registro
+          Clear log
         </button>
       </div>
 
       <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
-        <li>· Tieni la mano a 40–60 cm dalla camera, con una buona luce.</li>
-        <li>· Un gesto scatta quando resta fermo per un attimo; cambia gesto per ripeterlo.</li>
-        <li>
-          · I gesti nuovi (telefono, OK, dita incrociate, pistola) richiedono una mano ben
-          illuminata.
-        </li>
+        <li>· Hold your hand 40–60 cm from the camera, with good lighting.</li>
+        <li>· A gesture triggers when it stays still for a moment; change gesture to repeat it.</li>
+        <li>· New gestures (phone, OK, crossed fingers, gun) need a well-lit hand.</li>
       </ul>
     </section>
 
@@ -112,7 +107,7 @@
     <div class="w-[380px] shrink-0 flex flex-col gap-4 overflow-y-auto min-h-0 pr-1">
       <section class="rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
-          Gesti e vocabolario siciliano
+          Sicilian gestures and vocabulary
         </h2>
         <div class="gesture-grid">
           @for (g of gestures; track g.id) {
@@ -130,7 +125,7 @@
 
       <section class="rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-3">
-          Registro azioni
+          Action log
         </h2>
         @if (log().length) {
           <ol class="log">
@@ -146,7 +141,7 @@
           </ol>
         } @else {
           <p class="text-xs text-[var(--text-2)] italic opacity-60">
-            Fai un gesto per vederne l'azione qui.
+            Make a gesture to see its action here.
           </p>
         }
       </section>

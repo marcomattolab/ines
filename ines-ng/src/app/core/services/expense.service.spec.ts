@@ -132,8 +132,8 @@ describe('ExpenseService — month amortisation', () => {
       }),
     ]);
     const md = svc.generateMarkdown(2026, 3);
-    expect(md).toContain('Spese Casa');
-    expect(md).toContain('Luce');
+    expect(md).toContain('Home Expenses');
+    expect(md).toContain('Electricity');
     expect(md).toContain('€ 100.00');
   });
 
@@ -211,10 +211,10 @@ describe('ExpenseService — CSV export', () => {
     ]);
     const lines = svc.generateMonthCsv(2026, 3).split('\n');
     expect(lines[0]).toBe(
-      'data,nucleo,categoria,descrizione,fornitore,importo,quota mensile,frequenza,fonte,allegato',
+      'date,household,category,description,vendor,amount,monthly share,frequency,source,attachment',
     );
     expect(lines[1]).toContain('2026-03-01');
-    expect(lines[1]).toContain('Luce');
+    expect(lines[1]).toContain('Electricity');
     expect(lines[1]).toContain('Bolletta luce');
     expect(lines[1]).toContain('Enel');
     expect(lines[1]).toContain('100.00');
@@ -246,7 +246,7 @@ describe('ExpenseService — CSV export', () => {
       }),
     ]);
     const lines = svc.generateYearCsv(2026).split('\n');
-    expect(lines[0]).toContain('mese');
-    expect(lines.some((l) => l.includes('marzo') && l.includes('2026-03-01'))).toBe(true);
+    expect(lines[0]).toContain('month');
+    expect(lines.some((l) => l.includes('March') && l.includes('2026-03-01'))).toBe(true);
   });
 });

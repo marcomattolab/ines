@@ -30,16 +30,14 @@ describe('pii service — detectPii', () => {
   it('detects Italian Codice Fiscale', () => {
     const text = 'CF: RSSMRA85M01H501Z del dichiarante';
     const matches = detectPii(text);
-    expect(matches.some((m) => m.kind === 'Codice fiscale' && m.value === 'RSSMRA85M01H501Z')).toBe(
-      true,
-    );
+    expect(matches.some((m) => m.kind === 'Tax code' && m.value === 'RSSMRA85M01H501Z')).toBe(true);
   });
 
   it('detects valid credit card number conforming to Luhn', () => {
     // 4532 0151 1284 3211 passes Luhn algorithm
     const text = 'Carta: 4532 0151 1284 3211';
     const matches = detectPii(text);
-    const cardMatch = matches.find((m) => m.kind === 'Carta di pagamento');
+    const cardMatch = matches.find((m) => m.kind === 'Payment card');
     expect(cardMatch).toBeDefined();
     expect(cardMatch?.value).toBe('4532 0151 1284 3211');
   });
@@ -47,7 +45,7 @@ describe('pii service — detectPii', () => {
   it('rejects credit card number with invalid Luhn', () => {
     const text = 'Carta: 4532 0151 1284 3212';
     const matches = detectPii(text);
-    const cardMatch = matches.find((m) => m.kind === 'Carta di pagamento');
+    const cardMatch = matches.find((m) => m.kind === 'Payment card');
     expect(cardMatch).toBeUndefined();
   });
 
@@ -55,7 +53,7 @@ describe('pii service — detectPii', () => {
     // Partita IVA with valid checksum (12345678903)
     const text = 'P.IVA 12345678903';
     const matches = detectPii(text);
-    const pivaMatch = matches.find((m) => m.kind === 'Partita IVA');
+    const pivaMatch = matches.find((m) => m.kind === 'VAT number');
     expect(pivaMatch).toBeDefined();
     expect(pivaMatch?.value).toBe('12345678903');
   });
@@ -63,14 +61,14 @@ describe('pii service — detectPii', () => {
   it('detects Italian mobile and landline telephone numbers', () => {
     const text = 'Cell: +39 340 1234567 oppure fisso 02 1234567';
     const matches = detectPii(text);
-    const phones = matches.filter((m) => m.kind === 'Telefono');
+    const phones = matches.filter((m) => m.kind === 'Phone');
     expect(phones.length).toBeGreaterThanOrEqual(1);
   });
 
   it('detects IPv4 addresses', () => {
     const text = 'Server host: 192.168.1.100 port 80';
     const matches = detectPii(text);
-    const ipMatch = matches.find((m) => m.kind === 'Indirizzo IP');
+    const ipMatch = matches.find((m) => m.kind === 'IP address');
     expect(ipMatch).toBeDefined();
     expect(ipMatch?.value).toBe('192.168.1.100');
   });

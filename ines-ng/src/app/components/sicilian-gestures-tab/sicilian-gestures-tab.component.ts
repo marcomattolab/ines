@@ -80,20 +80,20 @@ export class SicilianGesturesTabComponent implements OnDestroy {
   protected readonly gestures: Gesture[] = [
     {
       id: 'open',
-      name: 'Mano aperta',
+      name: 'Open hand',
       sicilian: 'Basta!',
-      meaning: 'Fermati / Basta',
+      meaning: 'Stop / Enough',
       emoji: '🖐',
       action: () => {
         this.stop();
-        return 'Ferma la webcam';
+        return 'Stop webcam';
       },
     },
     {
       id: 'fist',
-      name: 'Pugno',
+      name: 'Fist',
       sicilian: 'Nienti!',
-      meaning: 'Niente / Chiudi',
+      meaning: 'Nothing / Close',
       emoji: '✊',
       action: () => {
         this.log.set([]);
@@ -102,71 +102,71 @@ export class SicilianGesturesTabComponent implements OnDestroy {
     },
     {
       id: 'horns',
-      name: 'Corna',
+      name: 'Horns',
       sicilian: 'Si u bàbbaluci!',
-      meaning: 'Contro il malocchio',
+      meaning: 'Against the evil eye',
       emoji: '🤘',
       action: () => {
         this.settings.lightTheme.update((v) => !v);
         return this.settings.lightTheme()
-          ? 'Tema chiaro attivato'
-          : 'Tema scuro attivato: protezione dal malocchio';
+          ? 'Light theme enabled'
+          : 'Dark theme enabled: protection from the evil eye';
       },
     },
     {
       id: 'pigna',
-      name: 'A pigna',
+      name: 'Pine cone',
       sicilian: 'Chì booi?',
-      meaning: 'Che vuoi? / Ma chi ti credi?',
+      meaning: 'What do you want? / Who do you think you are?',
       emoji: '🤌',
       action: () => SICILIAN_PHRASES[Math.floor(Math.random() * SICILIAN_PHRASES.length)],
     },
     {
       id: 'thumbup',
-      name: 'Pollice su',
+      name: 'Thumbs up',
       sicilian: 'Braaavu!',
-      meaning: 'Tutto a posto / Bravo',
+      meaning: 'All good / Well done',
       emoji: '👍',
       action: () => {
         this.likes.update((n) => n + 1);
-        return 'Mi piace +1';
+        return 'Like +1';
       },
     },
     {
       id: 'thumbdown',
-      name: 'Pollice giù',
+      name: 'Thumbs down',
       sicilian: 'Mi siddìia!',
-      meaning: 'Non mi va',
+      meaning: "I don't feel like it",
       emoji: '👎',
       action: () => {
         this.likes.update((n) => n - 1);
-        return 'Mi piace −1';
+        return 'Like −1';
       },
     },
     {
       id: 'peace',
-      name: 'V di pace',
+      name: 'Peace sign',
       sicilian: 'Pigghiamouni u cafè!',
-      meaning: 'Pace',
+      meaning: 'Peace',
       emoji: '✌️',
       action: () => this.copyToClipboard('Paci!'),
     },
     {
       id: 'one',
-      name: 'Indice su',
+      name: 'Index finger up',
       sicilian: 'Staccùra!',
-      meaning: 'Attento / Ascolta',
+      meaning: 'Watch out / Listen',
       emoji: '☝️',
       action: () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        return 'Scorri in cima alla pagina';
+        return 'Scroll to top of page';
       },
     },
     {
       id: 'call',
-      name: 'Telefono',
+      name: 'Phone',
       sicilian: 'Ti chiamu!',
-      meaning: 'Ti chiamo',
+      meaning: "I'll call you",
       emoji: '🤙',
       action: () => this.copyToClipboard('Ti chiamu!'),
     },
@@ -174,7 +174,7 @@ export class SicilianGesturesTabComponent implements OnDestroy {
       id: 'ok',
       name: 'OK',
       sicilian: 'Ok, Un ci su probblemi!',
-      meaning: 'Va bene / Perfetto',
+      meaning: 'OK / Perfect',
       emoji: '👌',
       action: () => {
         this.toast.success('Ok, Un ci su probblemi!');
@@ -183,20 +183,20 @@ export class SicilianGesturesTabComponent implements OnDestroy {
     },
     {
       id: 'crossed',
-      name: 'Dita incrociate',
+      name: 'Crossed fingers',
       sicilian: 'Speriaaaaamo!',
-      meaning: 'Buona fortuna / Speriamo',
+      meaning: 'Good luck / Hopefully',
       emoji: '🤞',
       action: () => this.copyToClipboard('Speriaaaaamo!'),
     },
     {
       id: 'gun',
-      name: 'Pistola',
+      name: 'Gun',
       sicilian: 'Forza Palermo!',
-      meaning: 'Forza Palermo',
+      meaning: 'Go Palermo',
       emoji: '🔫',
       action: () => {
-        this.toast.show('Bang! Forza Palermo 💥');
+        this.toast.show('Bang! Go Palermo 💥');
         return 'Bang!';
       },
     },
@@ -227,7 +227,7 @@ export class SicilianGesturesTabComponent implements OnDestroy {
 
   protected currentLabel(): string {
     const g = this.currentGesture();
-    return g ? `${g.emoji} ${g.sicilian}` : 'Mano non rilevata';
+    return g ? `${g.emoji} ${g.sicilian}` : 'No hand detected';
   }
 
   protected clear(): void {
@@ -239,12 +239,12 @@ export class SicilianGesturesTabComponent implements OnDestroy {
     const p = navigator.clipboard?.writeText(text);
     if (p) {
       void p
-        .then(() => this.toast.success(`Copiato: ${text}`))
-        .catch(() => this.toast.error('Impossibile copiare'));
+        .then(() => this.toast.success(`Copied: ${text}`))
+        .catch(() => this.toast.error('Cannot copy'));
     } else {
-      this.toast.error('Copiare non è disponibile');
+      this.toast.error('Copying is not available');
     }
-    return `Copia «${text}» negli appunti`;
+    return `Copy “${text}” to clipboard`;
   }
 
   async start(): Promise<void> {
@@ -317,7 +317,7 @@ export class SicilianGesturesTabComponent implements OnDestroy {
 
   private startCamera(video: HTMLVideoElement): Promise<{ stop: () => void }> {
     if (!navigator.mediaDevices?.getUserMedia) {
-      return Promise.reject(new Error('Webcam non disponibile: serve HTTPS oppure localhost.'));
+      return Promise.reject(new Error('Webcam unavailable: HTTPS or localhost required.'));
     }
     return navigator.mediaDevices
       .getUserMedia({

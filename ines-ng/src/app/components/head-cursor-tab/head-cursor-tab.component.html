@@ -6,15 +6,15 @@
           fontIcon="accessibility_new"
           class="text-accent-rose w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Cursore con la testa
+        Head Cursor
       </div>
-      <div class="panel-desc">Muovi il viso per spostare il puntatore · clic con occhi o bocca</div>
+      <div class="panel-desc">Move your face to move the pointer · click with eyes or mouth</div>
     </div>
     <div class="flex gap-2">
       @if (status() === 'running') {
         <app-button variant="secondary" (onClick)="calibrate()">
           <mat-icon fontIcon="center_focus_strong" class="text-sm w-4 h-4"></mat-icon>
-          Calibra il centro
+          Calibrate center
         </app-button>
       }
       <app-button
@@ -23,7 +23,7 @@
         (onClick)="status() === 'running' ? stop() : start()"
       >
         <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
-        {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+        {{ status() === 'running' ? 'Stop' : 'Start webcam' }}
       </app-button>
     </div>
   </div>
@@ -60,7 +60,7 @@
       @if (status() === 'loading') {
         <div class="flex items-center gap-3 text-accent-rose text-sm">
           <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
-          Carico il modello del viso…
+          Loading face model…
         </div>
       }
       @if (error()) {
@@ -68,17 +68,15 @@
       }
 
       <label class="text-sm text-[var(--text-1)]">
-        Come clicco
+        How I click
         <select (change)="onMode($event)" class="pill-select w-full mt-1 block">
-          <option value="blink" [selected]="mode() === 'blink'">
-            Occhi chiusi per 0,5 secondi
-          </option>
-          <option value="jaw" [selected]="mode() === 'jaw'">Bocca aperta</option>
+          <option value="blink" [selected]="mode() === 'blink'">Eyes closed for 0.5 seconds</option>
+          <option value="jaw" [selected]="mode() === 'jaw'">Mouth open</option>
         </select>
       </label>
 
       <label class="text-sm text-[var(--text-1)]">
-        Sensibilità: {{ gain() }}×
+        Sensitivity: {{ gain() }}×
         <input
           type="range"
           min="2"
@@ -91,33 +89,33 @@
       </label>
 
       <div>
-        <p class="text-xs text-[var(--text-2)] mb-1">Occhi chiusi</p>
+        <p class="text-xs text-[var(--text-2)] mb-1">Eyes closed</p>
         <div class="meter"><i [style.width.%]="blink() * 100"></i></div>
       </div>
       <div>
-        <p class="text-xs text-[var(--text-2)] mb-1">Bocca aperta</p>
+        <p class="text-xs text-[var(--text-2)] mb-1">Mouth open</p>
         <div class="meter"><i [style.width.%]="jaw() * 100"></i></div>
       </div>
-      <p class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">clic: {{ clicks() }}</p>
+      <p class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">clicks: {{ clicks() }}</p>
     </section>
 
     <section class="flex-1 rounded-2xl border border-white/10 bg-white/5 p-6 overflow-y-auto">
       <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-4">
-        Prova a colpire i bersagli
+        Try to hit the targets
       </h2>
       <div class="targets">
         @for (n of targets; track n) {
           <button class="target" [class.hit]="hits().has(n)" (click)="hit(n)">
-            Bersaglio {{ n }}
+            Target {{ n }}
           </button>
         }
       </div>
       <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)] mt-4">
         <li>
-          · Siediti a circa mezzo metro e guarda lo schermo. Premi «Calibra il centro» quando sei
-          comodo.
+          · Sit about half a meter away and look at the screen. Press “Calibrate center” when you're
+          comfortable.
         </li>
-        <li>· Il puntatore funziona su tutta la pagina, comprese le voci del menu a sinistra.</li>
+        <li>· The pointer works across the whole page, including the menu items on the left.</li>
       </ul>
     </section>
   </div>

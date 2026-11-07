@@ -98,12 +98,18 @@ export interface Nucleus {
 export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
   {
     value: 'acqua',
-    label: 'Acqua',
+    label: 'Water',
     icon: 'water_drop',
     color: 'text-sky-400',
     bg: 'bg-sky-400/10',
   },
-  { value: 'luce', label: 'Luce', icon: 'bolt', color: 'text-amber-300', bg: 'bg-amber-300/10' },
+  {
+    value: 'luce',
+    label: 'Electricity',
+    icon: 'bolt',
+    color: 'text-amber-300',
+    bg: 'bg-amber-300/10',
+  },
   {
     value: 'gas',
     label: 'Gas',
@@ -113,7 +119,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
   },
   {
     value: 'telefono',
-    label: 'Telefono',
+    label: 'Phone',
     icon: 'smartphone',
     color: 'text-emerald-400',
     bg: 'bg-emerald-400/10',
@@ -127,43 +133,43 @@ export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
   },
   {
     value: 'cibo',
-    label: 'Cibo',
+    label: 'Food',
     icon: 'restaurant',
     color: 'text-green-400',
     bg: 'bg-green-400/10',
   },
   {
     value: 'vestiti',
-    label: 'Vestiti',
+    label: 'Clothing',
     icon: 'checkroom',
     color: 'text-fuchsia-400',
     bg: 'bg-fuchsia-400/10',
   },
   {
     value: 'bellezza',
-    label: 'Bellezza',
+    label: 'Beauty',
     icon: 'spa',
     color: 'text-rose-400',
     bg: 'bg-rose-400/10',
   },
   {
     value: 'salute',
-    label: 'Salute',
+    label: 'Health',
     icon: 'favorite',
     color: 'text-red-400',
     bg: 'bg-red-400/10',
   },
   {
     value: 'trasporti',
-    label: 'Trasporti',
+    label: 'Transport',
     icon: 'directions_car',
     color: 'text-indigo-400',
     bg: 'bg-indigo-400/10',
   },
-  { value: 'casa', label: 'Casa', icon: 'home', color: 'text-violet-400', bg: 'bg-violet-400/10' },
+  { value: 'casa', label: 'Home', icon: 'home', color: 'text-violet-400', bg: 'bg-violet-400/10' },
   {
     value: 'altro',
-    label: 'Altro',
+    label: 'Other',
     icon: 'more_horiz',
     color: 'text-zinc-400',
     bg: 'bg-zinc-400/10',
@@ -171,11 +177,11 @@ export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
 ];
 
 export const EXPENSE_RECURRENCES: ExpenseRecurrenceDef[] = [
-  { value: 'once', label: 'Una tantum', periodMonths: 1 },
-  { value: 'monthly', label: 'Mensile', periodMonths: 1 },
-  { value: 'bimonthly', label: 'Bimestrale', periodMonths: 2 },
-  { value: 'quarterly', label: 'Trimestrale', periodMonths: 3 },
-  { value: 'annual', label: 'Annuale', periodMonths: 12 },
+  { value: 'once', label: 'One-time', periodMonths: 1 },
+  { value: 'monthly', label: 'Monthly', periodMonths: 1 },
+  { value: 'bimonthly', label: 'Bimonthly', periodMonths: 2 },
+  { value: 'quarterly', label: 'Quarterly', periodMonths: 3 },
+  { value: 'annual', label: 'Annual', periodMonths: 12 },
 ];
 
 const DB_NAME = 'InesExpensesDB';
@@ -199,12 +205,12 @@ Respond ONLY with a JSON object (no markdown, no backticks) in this format:
 Rules:
 - If the text is NOT about an expense, return {"isExpense": false}.
 - "amount" is a positive number in EUR (null if not found). Ignore the euro symbol.
-- "recurrence": "monthly" for monthly bills (e.g. phone, internet, streaming), "bimonthly" for bimestrale bills, "annual" for yearly fees, "once" otherwise.
+- "recurrence": "monthly" for monthly bills (e.g. phone, internet, streaming), "bimonthly" for bimonthly bills, "annual" for yearly fees, "once" otherwise.
 - Use "today" only when no date can be inferred; prefer explicit dates in the text.
 - "category" must be one of the allowed values.
 - "nucleus" is the letter (A, B, ...) of the family nucleus the expense belongs to, chosen from the nuclei list provided below. Match by the person name (e.g. "dentista di Andrea") or by the billing address (e.g. "via ...") mentioned in the text. If nothing matches, use "A".`;
 
-const SYSTEM_QUERY = `You are a personal home-finance assistant. Answer questions about home expenses using ONLY the Markdown data provided below. Reply in the user's language (usually Italian). Be concise and always include euro amounts when relevant. If the data does not contain the answer, say so.`;
+const SYSTEM_QUERY = `You are a personal home-finance assistant. Answer questions about home expenses using ONLY the Markdown data provided below. Reply in the user's language (usually English). Be concise and always include euro amounts when relevant. If the data does not contain the answer, say so.`;
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
@@ -443,7 +449,7 @@ export class ExpenseService {
       const added = await this.scanEmails(50);
       this.lastScanAt.set(Date.now());
       if (added > 0) {
-        this.toast.success(`Auto-scan: ${added} nuove spese rilevate`);
+        this.toast.success(`Auto-scan: ${added} new expenses detected`);
       }
     } catch {
       /* background scan errors are non-fatal */
@@ -579,8 +585,8 @@ export class ExpenseService {
     const saved = this.storage.get<Nucleus[]>('ines_expense_nuclei');
     if (Array.isArray(saved) && saved.length) return saved;
     return [
-      { id: 'nucleo-1', name: 'Casa nostra', members: [], addresses: [] },
-      { id: 'nucleo-2', name: 'Casa di papà', members: [], addresses: [] },
+      { id: 'nucleo-1', name: 'Our home', members: [], addresses: [] },
+      { id: 'nucleo-2', name: "Dad's home", members: [], addresses: [] },
     ];
   }
 
@@ -598,7 +604,7 @@ export class ExpenseService {
     return record;
   }
 
-  addNucleus(name = 'Nuovo nucleo'): void {
+  addNucleus(name = 'New household'): void {
     const nucleus: Nucleus = {
       id:
         'nucleo-' +
@@ -632,7 +638,7 @@ export class ExpenseService {
       const found = nuclei.find((n) => n.id === expense.nucleusId);
       if (found) return found;
     }
-    return nuclei[0] ?? { id: '', name: 'N/D', members: [], addresses: [] };
+    return nuclei[0] ?? { id: '', name: 'N/A', members: [], addresses: [] };
   }
 
   nucleusName(id: string | undefined): string {
@@ -680,7 +686,7 @@ export class ExpenseService {
 
   generateMarkdown(year: number, month: number, nucleusId?: string): string {
     const items = this.expensesForMonth(year, month, nucleusId);
-    const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('it-IT', {
+    const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('en-US', {
       month: 'long',
       year: 'numeric',
     });
@@ -688,18 +694,18 @@ export class ExpenseService {
     const cur = this.currency();
 
     const lines: string[] = [];
-    lines.push(`# Spese Casa — ${monthLabel}`);
+    lines.push(`# Home Expenses — ${monthLabel}`);
     lines.push('');
-    lines.push(`> Generato da INES il ${new Date().toLocaleString('it-IT')}`);
+    lines.push(`> Generated by INES on ${new Date().toLocaleString('en-US')}`);
     lines.push('');
 
     if (items.length === 0) {
-      lines.push('_Nessuna spesa registrata per questo mese._');
+      lines.push('_No expenses recorded this month._');
       return lines.join('\n');
     }
 
     lines.push(
-      '| Categoria | Nucleo | Descrizione | Fornitore | Quota mensile | Frequenza | Importo originale | Fonte | Allegato |',
+      '| Category | Household | Description | Vendor | Monthly share | Frequency | Original amount | Source | Attachment |',
     );
     lines.push('|---|---|---|---|---|---|---|---|---|');
     for (const { expense, share } of items) {
@@ -712,42 +718,42 @@ export class ExpenseService {
       const atts = expense.attachments?.length
         ? expense.attachments
         : expense.attachmentLink
-          ? [{ name: expense.attachmentName || 'allegato', link: expense.attachmentLink }]
+          ? [{ name: expense.attachmentName || 'attachment', link: expense.attachmentLink }]
           : [];
       const attachment = atts
-        .map((a, i) => `[${a.name || 'allegato ' + (i + 1)}](${a.link})`)
+        .map((a, i) => `[${a.name || 'attachment ' + (i + 1)}](${a.link})`)
         .join(' ');
       lines.push(
         `| ${cat} | ${this.mdEscape(this.nucleusName(expense.nucleusId))} | ${this.mdEscape(expense.description)} | ${this.mdEscape(expense.vendor || '')} | ${cur} ${share.toFixed(2)} | ${freq} | ${cur} ${expense.amount.toFixed(2)} | ${source} | ${attachment} |`,
       );
     }
     lines.push('');
-    lines.push(`## Totale ${monthLabel}: **${cur} ${total.toFixed(2)}**`);
+    lines.push(`## Total ${monthLabel}: **${cur} ${total.toFixed(2)}**`);
     lines.push('');
-    lines.push('## Totale per categoria');
+    lines.push('## Total by category');
     lines.push('');
     for (const ct of this.categoryTotals(year, month, nucleusId)) {
       lines.push(`- **${this.categoryDef(ct.category).label}**: ${cur} ${ct.total.toFixed(2)}`);
     }
     lines.push('');
-    lines.push('## Totale per nucleo');
+    lines.push('## Total by household');
     lines.push('');
     for (const n of this.nuclei()) {
       lines.push(`- **${n.name}**: ${cur} ${this.monthlyTotal(year, month, n.id).toFixed(2)}`);
     }
     lines.push('');
-    lines.push('## Spese ricorrenti / ammortizzate');
+    lines.push('## Recurring / amortized expenses');
     lines.push('');
     const recurring = items.filter((x) => x.expense.recurrence !== 'once');
     if (recurring.length === 0) {
-      lines.push('_Nessuna spesa ricorrente in questo mese._');
+      lines.push('_No recurring expenses this month._');
     } else {
       for (const { expense, share } of recurring) {
         const freq =
           this.recurrences.find((r) => r.value === expense.recurrence)?.label ?? expense.recurrence;
-        const end = expense.endDate ? ` · fino al ${expense.endDate}` : '';
+        const end = expense.endDate ? ` · until ${expense.endDate}` : '';
         lines.push(
-          `- ${expense.description} — ${cur} ${expense.amount.toFixed(2)} (${freq}) → ${cur} ${share.toFixed(2)}/mese${end}`,
+          `- ${expense.description} — ${cur} ${expense.amount.toFixed(2)} (${freq}) → ${cur} ${share.toFixed(2)}/month${end}`,
         );
       }
     }
@@ -761,20 +767,20 @@ export class ExpenseService {
 
   async downloadMonthMd(year: number, month: number): Promise<boolean> {
     const md = this.generateMarkdown(year, month);
-    const name = `spese-casa-${year}-${String(month).padStart(2, '0')}.md`;
+    const name = `home-expenses-${year}-${String(month).padStart(2, '0')}.md`;
     return this.dom.saveTextFile(md, name, 'text/markdown');
   }
 
   async downloadYearMd(year: number): Promise<boolean> {
     const md = this.generateYearMarkdown(year);
-    const name = `spese-casa-${year}.md`;
+    const name = `home-expenses-${year}.md`;
     return this.dom.saveTextFile(md, name, 'text/markdown');
   }
 
   async exportJson(): Promise<boolean> {
     return this.dom.saveTextFile(
       JSON.stringify(this.expenses(), null, 2),
-      'spese-casa.json',
+      'home-expenses.json',
       'application/json',
     );
   }
@@ -796,7 +802,7 @@ export class ExpenseService {
       const attachments = expense.attachments?.length
         ? expense.attachments
         : expense.attachmentLink
-          ? [{ name: expense.attachmentName || 'allegato', link: expense.attachmentLink }]
+          ? [{ name: expense.attachmentName || 'attachment', link: expense.attachmentLink }]
           : [];
       const attachment = attachments.map((a) => a.link || a.name).join(' ');
       return [
@@ -816,16 +822,16 @@ export class ExpenseService {
 
   generateMonthCsv(year: number, month: number): string {
     const header = [
-      'data',
-      'nucleo',
-      'categoria',
-      'descrizione',
-      'fornitore',
-      'importo',
-      'quota mensile',
-      'frequenza',
-      'fonte',
-      'allegato',
+      'date',
+      'household',
+      'category',
+      'description',
+      'vendor',
+      'amount',
+      'monthly share',
+      'frequency',
+      'source',
+      'attachment',
     ];
     const rows = this.csvRowsForMonth(year, month);
     return [header, ...rows].map((r) => r.map((c) => this.csvCell(c)).join(',')).join('\n');
@@ -833,21 +839,21 @@ export class ExpenseService {
 
   generateYearCsv(year: number): string {
     const header = [
-      'mese',
-      'data',
-      'nucleo',
-      'categoria',
-      'descrizione',
-      'fornitore',
-      'importo',
-      'quota mensile',
-      'frequenza',
-      'fonte',
-      'allegato',
+      'month',
+      'date',
+      'household',
+      'category',
+      'description',
+      'vendor',
+      'amount',
+      'monthly share',
+      'frequency',
+      'source',
+      'attachment',
     ];
     const rows: string[][] = [];
     for (let m = 1; m <= 12; m++) {
-      const label = new Date(year, m - 1, 1).toLocaleDateString('it-IT', { month: 'long' });
+      const label = new Date(year, m - 1, 1).toLocaleDateString('en-US', { month: 'long' });
       for (const row of this.csvRowsForMonth(year, m)) {
         rows.push([label, ...row]);
       }
@@ -857,13 +863,13 @@ export class ExpenseService {
 
   async downloadMonthCsv(year: number, month: number): Promise<boolean> {
     const csv = this.generateMonthCsv(year, month);
-    const name = `spese-casa-${year}-${String(month).padStart(2, '0')}.csv`;
+    const name = `home-expenses-${year}-${String(month).padStart(2, '0')}.csv`;
     return this.dom.saveTextFile(csv, name, 'text/csv');
   }
 
   async downloadYearCsv(year: number): Promise<boolean> {
     const csv = this.generateYearCsv(year);
-    const name = `spese-casa-${year}.csv`;
+    const name = `home-expenses-${year}.csv`;
     return this.dom.saveTextFile(csv, name, 'text/csv');
   }
 
@@ -880,7 +886,7 @@ export class ExpenseService {
     const recurrence = (parsed['recurrence'] as string) || 'once';
     return {
       isExpense: true,
-      description: (parsed['description'] as string) || 'Spesa',
+      description: (parsed['description'] as string) || 'Expense',
       vendor: (parsed['vendor'] as string) || undefined,
       category: validCategories.includes(category as ExpenseCategory)
         ? (category as ExpenseCategory)
@@ -900,12 +906,12 @@ export class ExpenseService {
     const list = nuclei
       .map((n, i) => {
         const letter = String.fromCharCode(65 + i);
-        const members = n.members.length ? n.members.join(', ') : 'nessun membro';
-        const addresses = n.addresses.length ? n.addresses.join(', ') : 'nessun indirizzo';
-        return `${letter}) ${n.name} — membri: ${members}; indirizzi: ${addresses}`;
+        const members = n.members.length ? n.members.join(', ') : 'no members';
+        const addresses = n.addresses.length ? n.addresses.join(', ') : 'no addresses';
+        return `${letter}) ${n.name} — members: ${members}; addresses: ${addresses}`;
       })
       .join('\n');
-    return `${SYSTEM_CATEGORIZE}\n\nNuclei familiari:\n${list}\n\nAssegna "nucleus" alla lettera del nucleo a cui appartiene la spesa, in base alla persona citata (es. "dentista di Andrea") o all'indirizzo di fatturazione (es. "via ..."). Se nessun elemento corrisponde, usa "A".`;
+    return `${SYSTEM_CATEGORIZE}\n\nHouseholds:\n${list}\n\nAssign "nucleus" to the letter of the household the expense belongs to, based on the person mentioned (e.g. "Andrea's dentist") or the billing address (e.g. "via ..."). If nothing matches, use "A".`;
   }
 
   private parseNucleus(raw: unknown): string | undefined {
@@ -961,19 +967,19 @@ export class ExpenseService {
       this.scanTotal.set(emails.length);
       this.log(
         labels.length
-          ? `Fetched ${emails.length} emails (inbox + etichette: ${labels.join(', ')}).`
+          ? `Fetched ${emails.length} emails (inbox + labels: ${labels.join(', ')}).`
           : `Fetched ${emails.length} emails from inbox.`,
       );
 
       for (const email of emails) {
         this.scanProgress.update((n) => n + 1);
         // Self-generated tracking emails are a trace, not a new expense.
-        if (email.subject.trim().startsWith('[Spese]')) {
-          this.log(`⏭ ${email.subject.slice(0, 40)} — email di tracciamento saltata`);
+        if (email.subject.trim().startsWith('[Expenses]')) {
+          this.log(`⏭ ${email.subject.slice(0, 40)} — tracking email skipped`);
           continue;
         }
         if (knownSourceIds.has(email.id)) {
-          this.log(`⏭ ${email.subject.slice(0, 40)} — già importata`);
+          this.log(`⏭ ${email.subject.slice(0, 40)} — already imported`);
           continue;
         }
         try {
@@ -985,7 +991,7 @@ export class ExpenseService {
           const dedupKey = this.dedupKeyOf('email', email.id, parsed.amount, date);
           if (this.expenses().some((e) => e.dedupKey === dedupKey)) continue;
           if (this.findDuplicate(parsed)) {
-            this.log(`⏭ ${parsed.description} — già presente (riconciliazione)`);
+            this.log(`⏭ ${parsed.description} — already present (reconciliation)`);
             continue;
           }
           const attachments: ExpenseAttachment[] = email.attachments.map((a) => ({
@@ -1015,7 +1021,7 @@ export class ExpenseService {
           this.scanAdded.set(added);
           this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
         } catch (e: any) {
-          this.log(`⚠ ${email.subject.slice(0, 40)} — ${e?.message ?? 'errore'}`);
+          this.log(`⚠ ${email.subject.slice(0, 40)} — ${e?.message ?? 'error'}`);
         }
       }
       if (added === 0) this.log('No new expenses detected.');
@@ -1081,7 +1087,7 @@ export class ExpenseService {
     if (file) {
       const dataUrl = await this.fileToDataUrl(file);
       const extracted = await this.extractAttachmentText(file);
-      if (extracted) fullText += `\n\nAllegato (${file.name}):\n${extracted.slice(0, 3000)}`;
+      if (extracted) fullText += `\n\nAttachment (${file.name}):\n${extracted.slice(0, 3000)}`;
       attachment = {
         filename: file.name,
         mimeType: file.type || 'application/octet-stream',
@@ -1097,7 +1103,7 @@ export class ExpenseService {
     const date = parsed.date || new Date().toISOString().slice(0, 10);
     const dedupKey = this.dedupKeyOf('telegram', sourceId, parsed.amount, date);
     const expense = await this.add({
-      description: parsed.description || 'Spesa',
+      description: parsed.description || 'Expense',
       vendor: parsed.vendor,
       category: parsed.category || 'altro',
       amount: parsed.amount,
@@ -1127,7 +1133,7 @@ export class ExpenseService {
       }
       if (file.type.startsWith('image/')) {
         const text = await this.ocr.recognize(file);
-        return text || `[Immagine: ${file.name} — nessun testo rilevato]`;
+        return text || `[Image: ${file.name} — no text detected]`;
       }
     } catch {
       /* ignore */
@@ -1140,20 +1146,20 @@ export class ExpenseService {
     const cat = this.categoryDef(expense.category).label;
     const freq =
       this.recurrences.find((r) => r.value === expense.recurrence)?.label ?? expense.recurrence;
-    const subject = `[Spese] ${cat} — ${expense.description}`;
+    const subject = `[Expenses] ${cat} — ${expense.description}`;
     const body = [
-      `Spesa registrata da INES`,
+      `Expense recorded by INES`,
       '',
-      `- Categoria: ${cat}`,
-      `- Nucleo: ${this.nucleusName(expense.nucleusId)}`,
-      `- Descrizione: ${expense.description}`,
-      `- Fornitore: ${expense.vendor || '-'}`,
-      `- Importo: ${this.currency()} ${expense.amount.toFixed(2)}`,
-      `- Data: ${expense.date}`,
-      `- Frequenza: ${freq}`,
-      `- Origine: ${expense.sourceType}`,
+      `- Category: ${cat}`,
+      `- Household: ${this.nucleusName(expense.nucleusId)}`,
+      `- Description: ${expense.description}`,
+      `- Vendor: ${expense.vendor || '-'}`,
+      `- Amount: ${this.currency()} ${expense.amount.toFixed(2)}`,
+      `- Date: ${expense.date}`,
+      `- Frequency: ${freq}`,
+      `- Source: ${expense.sourceType}`,
       '',
-      'Questa email è la fonte di verità per il tracciamento spese.',
+      'This email is the source of truth for expense tracking.',
     ].join('\n');
     return { subject, body };
   }
@@ -1163,7 +1169,7 @@ export class ExpenseService {
     const list = expense.attachments?.length
       ? expense.attachments
       : expense.attachmentLink
-        ? [{ name: expense.attachmentName || 'allegato', link: expense.attachmentLink }]
+        ? [{ name: expense.attachmentName || 'attachment', link: expense.attachmentLink }]
         : [];
     return list.map((a) => ({
       filename: a.name,
@@ -1225,7 +1231,7 @@ export class ExpenseService {
   }
 
   async importExpenses(list: unknown): Promise<number> {
-    if (!Array.isArray(list)) throw new Error('File JSON non valido: attesa una lista di spese.');
+    if (!Array.isArray(list)) throw new Error('Invalid JSON file: expected a list of expenses.');
     const rawList = list as Partial<Expense>[];
     const existingKeys = new Set(this.expenses().map((e) => e.dedupKey || e.id));
     let added = 0;
@@ -1301,18 +1307,18 @@ export class ExpenseService {
 
   generateYearMarkdown(year: number): string {
     const cur = this.currency();
-    const lines: string[] = [`# Spese Casa — Anno ${year}`, ''];
-    lines.push('| Mese | Totale |');
+    const lines: string[] = [`# Home Expenses — Year ${year}`, ''];
+    lines.push('| Month | Total |');
     lines.push('|---|---|');
     for (let m = 1; m <= 12; m++) {
       const t = this.monthlyTotal(year, m);
-      const label = new Date(year, m - 1, 1).toLocaleDateString('it-IT', { month: 'long' });
+      const label = new Date(year, m - 1, 1).toLocaleDateString('en-US', { month: 'long' });
       lines.push(`| ${label} | ${cur} ${t.toFixed(2)} |`);
     }
     lines.push('');
-    lines.push(`## Totale anno ${year}: **${cur} ${this.yearTotal(year).toFixed(2)}**`);
+    lines.push(`## Year total ${year}: **${cur} ${this.yearTotal(year).toFixed(2)}**`);
     lines.push('');
-    lines.push('## Totale per categoria (anno)');
+    lines.push('## Total by category (year)');
     lines.push('');
     for (const ct of this.yearlyCategoryTotals(year)) {
       lines.push(`- **${this.categoryDef(ct.category).label}**: ${cur} ${ct.total.toFixed(2)}`);

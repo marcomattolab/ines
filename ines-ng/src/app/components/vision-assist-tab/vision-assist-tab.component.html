@@ -6,9 +6,9 @@
           fontIcon="visibility"
           class="text-accent-purple w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Assistente visivo
+        Visual Assistant
       </div>
-      <div class="panel-desc">Descrivi una scena o leggi testi ad alta voce · on-device</div>
+      <div class="panel-desc">Describe a scene or read text aloud · on-device</div>
     </div>
   </div>
 
@@ -37,35 +37,35 @@
         @if (!cameraOn()) {
           <button class="btn-primary" (click)="start()">
             <mat-icon fontIcon="videocam" class="text-sm w-4 h-4"></mat-icon>
-            Avvia webcam
+            Start webcam
           </button>
         } @else {
           <button class="btn-secondary" (click)="stop()">
             <mat-icon fontIcon="videocam_off" class="text-sm w-4 h-4"></mat-icon>
-            Ferma webcam
+            Stop webcam
           </button>
         }
         <label class="btn-secondary cursor-pointer">
           <mat-icon fontIcon="upload" class="text-sm w-4 h-4"></mat-icon>
-          Carica immagine
+          Upload image
           <input type="file" accept="image/*" hidden (change)="onFile($event)" />
         </label>
       </div>
 
       <div>
-        <p class="text-sm text-[var(--text-1)] mb-2">Cosa vuoi fare?</p>
-        <div class="seg" role="group" aria-label="Modalità di analisi">
+        <p class="text-sm text-[var(--text-1)] mb-2">What do you want to do?</p>
+        <div class="seg" role="group" aria-label="Analysis mode">
           <button [class.on]="mode() === 'caption'" (click)="mode.set('caption')">
-            Descrivi la scena
+            Describe the scene
           </button>
-          <button [class.on]="mode() === 'ocr'" (click)="mode.set('ocr')">Leggi il testo</button>
+          <button [class.on]="mode() === 'ocr'" (click)="mode.set('ocr')">Read the text</button>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
         <button class="btn-primary" [disabled]="busy()" (click)="analyze()">
           <mat-icon fontIcon="auto_awesome" class="text-sm w-4 h-4"></mat-icon>
-          Analizza
+          Analyze
         </button>
         <label class="flex items-center gap-2 text-sm text-[var(--text-1)] cursor-pointer">
           <input
@@ -74,28 +74,28 @@
             [checked]="voice()"
             (change)="onVoice($event)"
           />
-          Leggi ad alta voce
+          Read aloud
         </label>
       </div>
 
       <div>
-        <p class="text-sm text-[var(--text-1)] mb-1">Voce dello speaker</p>
+        <p class="text-sm text-[var(--text-1)] mb-1">Speaker voice</p>
         <div class="flex gap-2">
           <select
             [value]="selectedVoiceUri()"
             (change)="onVoiceSelect($event)"
             class="pill-select flex-1"
           >
-            <option value="">Voce di sistema (predefinita)</option>
+            <option value="">System voice (default)</option>
             @for (v of voices(); track v.voiceURI) {
               <option [value]="v.voiceURI">{{ v.name }} · {{ v.lang }}</option>
             }
           </select>
-          <button class="btn-secondary" (click)="previewVoice()">Prova</button>
+          <button class="btn-secondary" (click)="previewVoice()">Test</button>
         </div>
         <p class="text-xs text-[var(--text-2)] mt-1">
-          La voce scelta vale per la modalità corrente ({{
-            mode() === 'caption' ? 'descrizione in inglese' : 'lettura testo in italiano'
+          The selected voice applies to the current mode ({{
+            mode() === 'caption' ? 'English description' : 'Italian text reading'
           }}).
         </p>
       </div>
@@ -103,7 +103,7 @@
       @if (busy()) {
         <div>
           <p class="text-sm text-[var(--text-2)]">
-            {{ mode() === 'caption' ? 'Analizzo la scena…' : 'Leggo il testo…' }}
+            {{ mode() === 'caption' ? 'Analyzing the scene…' : 'Reading the text…' }}
             {{ mode() === 'caption' ? caption.message() : ocr.progress() + '%' }}
           </p>
           <div class="meter mt-2">
@@ -116,11 +116,9 @@
       }
 
       <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
-        <li>
-          · La prima descrizione scarica un piccolo modello di visione (qualche decina di MB).
-        </li>
-        <li>· La voce usa la sintesi vocale del sistema operativo.</li>
-        <li>· La descrizione è in inglese: è la lingua del modello di riconoscimento immagini.</li>
+        <li>· The first description downloads a small vision model (a few tens of MB).</li>
+        <li>· The voice uses the operating system's speech synthesis.</li>
+        <li>· The description is in English: it's the language of the image recognition model.</li>
       </ul>
     </section>
 
@@ -133,17 +131,17 @@
           <span
             class="px-2 py-0.5 rounded-full border border-accent-purple/40 text-accent-purple text-[10px] font-bold uppercase w-fit"
           >
-            {{ mode() === 'caption' ? 'Descrizione' : 'Testo rilevato' }}
+            {{ mode() === 'caption' ? 'Description' : 'Detected text' }}
           </span>
           <p class="caption-text">{{ result() }}</p>
           <button class="btn-secondary" (click)="speak()">
             <mat-icon fontIcon="volume_up" class="text-sm w-4 h-4"></mat-icon>
-            Rileggi ad alta voce
+            Read aloud again
           </button>
         </div>
       } @else {
         <p class="text-sm text-[var(--text-2)] italic opacity-60">
-          Qui comparirà l'immagine con la descrizione o il testo rilevato, in caratteri grandi.
+          Here you'll see the image with the description or detected text, in large characters.
         </p>
       }
     </section>

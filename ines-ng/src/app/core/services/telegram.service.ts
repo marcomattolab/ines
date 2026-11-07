@@ -55,7 +55,7 @@ export class TelegramService {
   }
 
   async startPolling(): Promise<void> {
-    if (!this.botToken()) throw new Error('Inserisci prima il bot token di Telegram.');
+    if (!this.botToken()) throw new Error('Enter the Telegram bot token first.');
     if (this.running) return;
     this.running = true;
     this.polling.set(true);
@@ -100,7 +100,7 @@ export class TelegramService {
   }
 
   async sendMessage(text: string): Promise<void> {
-    if (!this.botToken() || !this.chatId()) throw new Error('Telegram non configurato');
+    if (!this.botToken() || !this.chatId()) throw new Error('Telegram not configured');
     const res = await fetch(`https://api.telegram.org/bot${this.botToken()}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -154,7 +154,7 @@ export class TelegramService {
       const path = meta.result.file_path;
       const fileRes = await fetch(`https://api.telegram.org/file/bot${this.botToken()}/${path}`);
       const blob = await fileRes.blob();
-      const name = path.split('/').pop() || 'allegato';
+      const name = path.split('/').pop() || 'attachment';
       return new File([blob], name, { type: blob.type || 'application/octet-stream' });
     } catch {
       return null;

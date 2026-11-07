@@ -51,11 +51,11 @@ export class ExpensesTabComponent {
 
   readonly panels: { id: Panel; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'add', label: 'Aggiungi', icon: 'add_circle' },
+    { id: 'add', label: 'Add', icon: 'add_circle' },
     { id: 'scan', label: 'Scan Email', icon: 'mail' },
-    { id: 'ask', label: 'Chiedi', icon: 'help' },
-    { id: 'schedule', label: 'Scadenzario', icon: 'event' },
-    { id: 'nuclei', label: 'Nuclei', icon: 'groups' },
+    { id: 'ask', label: 'Ask', icon: 'help' },
+    { id: 'schedule', label: 'Schedule', icon: 'event' },
+    { id: 'nuclei', label: 'Households', icon: 'groups' },
   ];
 
   // Manual add form
@@ -102,7 +102,7 @@ export class ExpensesTabComponent {
   readonly asking = signal(false);
 
   readonly monthLabel = computed(() =>
-    new Date(this.year(), this.month() - 1, 1).toLocaleDateString('it-IT', {
+    new Date(this.year(), this.month() - 1, 1).toLocaleDateString('en-US', {
       month: 'long',
       year: 'numeric',
     }),
@@ -137,7 +137,7 @@ export class ExpensesTabComponent {
         y -= 1;
       }
       out.push({
-        label: new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short' }),
+        label: new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' }),
         total: this.expenseSvc.monthlyTotal(y, m, this.nucleusParam()),
       });
     }
@@ -388,11 +388,11 @@ export class ExpensesTabComponent {
   }
 
   monthShort(m: number): string {
-    return new Date(2000, m - 1, 1).toLocaleDateString('it-IT', { month: 'short' });
+    return new Date(2000, m - 1, 1).toLocaleDateString('en-US', { month: 'short' });
   }
 
   formatTime(ts: number): string {
-    return new Date(ts).toLocaleString('it-IT', {
+    return new Date(ts).toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -401,7 +401,7 @@ export class ExpensesTabComponent {
   }
 
   formatDate(d: Date): string {
-    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   scheduleStatusClass(status: ScheduleItem['status']): string {
@@ -418,11 +418,11 @@ export class ExpensesTabComponent {
   scheduleStatusLabel(item: ScheduleItem): string {
     switch (item.status) {
       case 'scaduta':
-        return 'Scaduta';
+        return 'Overdue';
       case 'in-scadenza':
-        return 'In scadenza';
+        return 'Due soon';
       default:
-        return `Tra ${item.days} gg`;
+        return `In ${item.days} days`;
     }
   }
 
@@ -454,10 +454,10 @@ export class ExpensesTabComponent {
     const at = new Date(item.nextDue);
     at.setHours(9, 0, 0, 0);
     this.reminder.schedule(
-      `Scadenza spesa: ${item.expense.description} (${cur} ${item.expense.amount.toFixed(2)})`,
+      `Expense due: ${item.expense.description} (${cur} ${item.expense.amount.toFixed(2)})`,
       at.getTime(),
     );
-    this.toast.success(`Promemoria impostato per ${at.toLocaleDateString('it-IT')}`);
+    this.toast.success(`Reminder set for ${at.toLocaleDateString('en-US')}`);
   }
 
   private startOfToday(): Date {
@@ -491,7 +491,7 @@ export class ExpensesTabComponent {
     const amount = this.mAmount();
     const description = this.mDescription().trim();
     if (!description || amount === null || amount <= 0) {
-      this.toast.show('Inserisci descrizione e importo validi');
+      this.toast.show('Enter a valid description and amount');
       return;
     }
     const data = {
@@ -512,10 +512,10 @@ export class ExpensesTabComponent {
     const editing = this.editingId();
     if (editing) {
       await this.expenseSvc.update(editing, data);
-      this.toast.success('Spesa aggiornata');
+      this.toast.success('Expense updated');
     } else {
       await this.expenseSvc.add(data);
-      this.toast.success('Spesa aggiunta');
+      this.toast.success('Expense added');
     }
     this.resetManual();
   }
@@ -551,11 +551,9 @@ export class ExpensesTabComponent {
       const text = await file.text();
       const data = JSON.parse(text);
       const added = await this.expenseSvc.importExpenses(data);
-      this.toast.success(
-        added > 0 ? `${added} spese importate` : 'Nessuna nuova spesa da importare',
-      );
+      this.toast.success(added > 0 ? `${added} expenses imported` : 'No new expenses to import');
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Import fallito');
+      this.toast.error(e?.message ?? 'Import failed');
     }
     input.value = '';
   }
@@ -587,7 +585,7 @@ export class ExpensesTabComponent {
   async importFromTelegram(): Promise<void> {
     const text = this.tText().trim();
     if (!text && !this.tFile()) {
-      this.toast.show('Incolla il messaggio Telegram o allega un file');
+      this.toast.show('Paste the Telegram message or attach a file');
       return;
     }
     if (!this.llm.isReady()) {
@@ -601,19 +599,19 @@ export class ExpensesTabComponent {
         this.tFile() ?? undefined,
         this.tEmailMode(),
       );
-      this.toast.success(`Spesa classificata: ${expense.description}`);
+      this.toast.success(`Expense classified: ${expense.description}`);
       this.tText.set('');
       this.tFile.set(null);
       this.tFileName.set('');
       if (emailed) {
         this.toast.success(
           this.tEmailMode() === 'send'
-            ? 'Email di tracciamento inviata'
-            : 'Bozza email di tracciamento creata in Gmail',
+            ? 'Tracking email sent'
+            : 'Tracking email draft created in Gmail',
         );
       }
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Errore durante la classificazione');
+      this.toast.error(e?.message ?? 'Error during classification');
     } finally {
       this.expenseSvc.categorizing.set(false);
     }
@@ -621,7 +619,7 @@ export class ExpensesTabComponent {
 
   async trackExpense(expense: Expense, mode: 'draft' | 'send'): Promise<void> {
     if (!this.gmail.configured()) {
-      this.toast.error('Configura Gmail (Client ID) prima di creare email di tracciamento');
+      this.toast.error('Configure Gmail (Client ID) before creating tracking emails');
       return;
     }
     try {
@@ -629,19 +627,19 @@ export class ExpensesTabComponent {
       const attachments = this.expenseSvc.expenseAttachments(expense);
       if (mode === 'send') {
         await this.gmail.sendEmail(subject, body, attachments);
-        this.toast.success('Email di tracciamento inviata');
+        this.toast.success('Tracking email sent');
       } else {
         await this.gmail.createDraft(subject, body, attachments);
-        this.toast.success('Bozza creata in Gmail');
+        this.toast.success('Draft created in Gmail');
       }
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Errore Gmail');
+      this.toast.error(e?.message ?? 'Gmail error');
     }
   }
 
   saveTelegramConfig(): void {
     this.telegram.saveConfig(this.tBotToken(), this.tChatId());
-    this.toast.success('Configurazione Telegram salvata');
+    this.toast.success('Telegram configuration saved');
   }
 
   async togglePolling(): Promise<void> {
@@ -651,9 +649,9 @@ export class ExpensesTabComponent {
     }
     try {
       await this.telegram.startPolling();
-      this.toast.success('Polling Telegram avviato');
+      this.toast.success('Telegram polling started');
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Errore avvio Telegram');
+      this.toast.error(e?.message ?? 'Error starting Telegram');
     }
   }
 
@@ -664,7 +662,7 @@ export class ExpensesTabComponent {
     file?: File;
   }): Promise<void> {
     if (!this.llm.isReady()) {
-      this.toast.error('Carica il modello per elaborare i messaggi Telegram');
+      this.toast.error('Load the model to process Telegram messages');
       return;
     }
     try {
@@ -678,14 +676,14 @@ export class ExpensesTabComponent {
       try {
         const cur = this.expenseSvc.currency();
         const msg = emailed
-          ? `✓ Spesa registrata: ${expense.description} (${cur} ${expense.amount.toFixed(2)}) — bozza email creata`
-          : `✓ Spesa registrata: ${expense.description} (${cur} ${expense.amount.toFixed(2)})`;
+          ? `✓ Expense recorded: ${expense.description} (${cur} ${expense.amount.toFixed(2)}) — email draft created`
+          : `✓ Expense recorded: ${expense.description} (${cur} ${expense.amount.toFixed(2)})`;
         await this.telegram.sendMessage(msg);
       } catch {
         /* confirmation message is best-effort */
       }
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Errore elaborazione Telegram');
+      this.toast.error(e?.message ?? 'Error processing Telegram');
     }
   }
 
@@ -696,20 +694,20 @@ export class ExpensesTabComponent {
 
   async scanEmails(): Promise<void> {
     if (!this.gmail.configured()) {
-      this.toast.error('Configura Gmail (Client ID) prima di scansionare le email');
+      this.toast.error('Configure Gmail (Client ID) before scanning emails');
       return;
     }
     try {
       const added = await this.expenseSvc.scanEmails(this.scanLimit());
-      this.toast.success(added > 0 ? `${added} spese rilevate` : 'Nessuna nuova spesa');
+      this.toast.success(added > 0 ? `${added} expenses detected` : 'No new expenses');
     } catch (e: any) {
-      this.toast.error(e?.message ?? 'Errore scansione email');
+      this.toast.error(e?.message ?? 'Email scan error');
     }
   }
 
   async removeExpense(id: string): Promise<void> {
     await this.expenseSvc.remove(id);
-    this.toast.success('Spesa eliminata');
+    this.toast.success('Expense deleted');
   }
 
   async ask(): Promise<void> {
@@ -728,7 +726,7 @@ export class ExpensesTabComponent {
           : await this.expenseSvc.answerQuestion(q, this.year(), this.month());
       this.answer.set(res);
     } catch (e: any) {
-      this.answer.set(e?.message ?? 'Errore');
+      this.answer.set(e?.message ?? 'Error');
     } finally {
       this.asking.set(false);
     }
@@ -736,27 +734,27 @@ export class ExpensesTabComponent {
 
   async downloadMd(): Promise<void> {
     const native = await this.expenseSvc.downloadMonthMd(this.year(), this.month());
-    this.toast.success(native ? 'File MD salvato' : 'File MD scaricato');
+    this.toast.success(native ? 'MD file saved' : 'MD file downloaded');
   }
 
   async downloadYearMd(): Promise<void> {
     const native = await this.expenseSvc.downloadYearMd(this.year());
-    this.toast.success(native ? 'MD annuale salvato' : 'MD annuale scaricato');
+    this.toast.success(native ? 'Yearly MD saved' : 'Yearly MD downloaded');
   }
 
   async exportJson(): Promise<void> {
     const native = await this.expenseSvc.exportJson();
-    this.toast.success(native ? 'File JSON salvato' : 'File JSON scaricato');
+    this.toast.success(native ? 'JSON file saved' : 'JSON file downloaded');
   }
 
   async downloadCsv(): Promise<void> {
     const native = await this.expenseSvc.downloadMonthCsv(this.year(), this.month());
-    this.toast.success(native ? 'File CSV salvato' : 'File CSV scaricato');
+    this.toast.success(native ? 'CSV file saved' : 'CSV file downloaded');
   }
 
   async downloadYearCsv(): Promise<void> {
     const native = await this.expenseSvc.downloadYearCsv(this.year());
-    this.toast.success(native ? 'CSV annuale salvato' : 'CSV annuale scaricato');
+    this.toast.success(native ? 'Yearly CSV saved' : 'Yearly CSV downloaded');
   }
 
   openLink(url?: string): void {

@@ -73,7 +73,7 @@ export class VisionAssistTabComponent implements OnDestroy {
     const sample =
       this.mode() === 'caption'
         ? 'This is how the selected voice sounds.'
-        : 'Ecco come suona la voce selezionata.';
+        : 'This is how the selected voice sounds.';
     this.speech.speak('vision-assist-preview', sample, this.lang(), this.selectedVoiceUri());
   }
 
@@ -135,12 +135,12 @@ export class VisionAssistTabComponent implements OnDestroy {
       } else {
         const blob = await new Promise<Blob>((resolve, reject) =>
           canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error("Impossibile leggere l'immagine"))),
+            (b) => (b ? resolve(b) : reject(new Error('Cannot read the image'))),
             'image/png',
           ),
         );
         const text = joinWords(await this.ocr.recognizeWords(blob)).text.trim();
-        if (!text) this.error.set("Nessun testo riconosciuto nell'immagine.");
+        if (!text) this.error.set('No text recognized in the image.');
         else this.result.set(text);
       }
 
@@ -172,7 +172,7 @@ export class VisionAssistTabComponent implements OnDestroy {
       await new Promise((r) => setTimeout(r, 60));
     }
     await new Promise((r) => setTimeout(r, 150));
-    if (v.videoWidth === 0) throw new Error('La webcam non ha ancora prodotto un fotogramma.');
+    if (v.videoWidth === 0) throw new Error('The webcam has not produced a frame yet.');
   }
 
   private readVoicePrefs(): Record<string, string> {

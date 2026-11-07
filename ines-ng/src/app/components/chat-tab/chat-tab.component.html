@@ -159,7 +159,7 @@
         <img
           [src]="attachedFile()!.preview"
           class="w-10 h-10 rounded-lg object-cover border border-[var(--border)]"
-          alt="anteprima"
+          alt="preview"
         />
       } @else {
         <mat-icon fontIcon="picture_as_pdf" class="text-2xl text-rose-400"></mat-icon>
@@ -169,21 +169,21 @@
         <div class="text-[10px] font-[var(--font-mono)] text-[var(--text-2)]">
           @if (attachedFile()!.busy) {
             @if (attachedFile()!.kind === 'image') {
-              OCR in corso… {{ ocr.progress() }}%
+              Running OCR… {{ ocr.progress() }}%
             } @else {
-              Estrazione testo…
+              Extracting text…
             }
           } @else if (attachedFile()!.text) {
-            ✓ testo rilevato ({{ attachedFile()!.text!.length }} caratteri)
+            ✓ text detected ({{ attachedFile()!.text!.length }} characters)
           } @else {
-            nessun testo rilevato
+            no text detected
           }
         </div>
       </div>
       <button
         class="text-xs text-[var(--text-2)] hover:text-rose-400 transition-colors"
         (click)="removeAttachedFile()"
-        title="Rimuovi allegato"
+        title="Remove attachment"
       >
         <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
       </button>
@@ -200,7 +200,7 @@
         <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
       </button>
     }
-    <label class="cursor-pointer shrink-0" title="Allega immagine o PDF">
+    <label class="cursor-pointer shrink-0" title="Attach image or PDF">
       <input
         type="file"
         accept="image/*,.pdf,application/pdf"

@@ -6,10 +6,10 @@
           fontIcon="document_scanner"
           class="text-accent-amber w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        OCR e dati personali
+        OCR & personal data
       </div>
       <div class="panel-desc">
-        Leggi un documento e oscura i dati personali · Tesseract.js on-device
+        Read a document and redact personal data · Tesseract.js on-device
       </div>
     </div>
   </div>
@@ -17,7 +17,7 @@
   <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
     <section class="w-[380px] shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto">
       <label class="text-sm text-[var(--text-1)]">
-        Immagine del documento
+        Document image
         <input
           type="file"
           accept="image/*"
@@ -28,7 +28,7 @@
 
       @if (ocr.busy()) {
         <div>
-          <p class="text-sm text-[var(--text-2)]">Leggo il testo… {{ ocr.progress() }}%</p>
+          <p class="text-sm text-[var(--text-2)]">Reading text… {{ ocr.progress() }}%</p>
           <div class="meter mt-2"><i [style.width.%]="ocr.progress()"></i></div>
         </div>
       }
@@ -38,11 +38,9 @@
 
       @if (matches().length) {
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">
-          Dati trovati ({{ matches().length }})
+          Data found ({{ matches().length }})
         </h2>
-        <p class="text-xs text-[var(--text-2)]">
-          Togli la spunta per lasciare visibile un elemento.
-        </p>
+        <p class="text-xs text-[var(--text-2)]">Uncheck to keep an item visible.</p>
         <div class="space-y-1">
           @for (m of matches(); track m.id) {
             <label
@@ -67,8 +65,8 @@
         </div>
       } @else if (done() && !ocr.busy()) {
         <p class="text-xs text-[var(--text-2)]">
-          Nessun dato personale riconosciuto. Il riconoscimento usa regole su formati noti, quindi
-          nomi e indirizzi non vengono individuati.
+          No personal data recognized. Detection uses rules for known formats, so names and
+          addresses are not detected.
         </p>
       }
 
@@ -76,11 +74,11 @@
         <div class="flex gap-2">
           <button class="btn-primary" (click)="download()">
             <mat-icon fontIcon="download" class="text-sm w-4 h-4"></mat-icon>
-            Scarica immagine oscurata
+            Download redacted image
           </button>
           <button class="btn-secondary" (click)="copyText()">
             <mat-icon fontIcon="content_copy" class="text-sm w-4 h-4"></mat-icon>
-            Copia testo
+            Copy text
           </button>
         </div>
       }
@@ -92,14 +90,14 @@
       <canvas #canvas class="canvas-doc"></canvas>
       @if (done()) {
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mt-4 mb-2">
-          Testo oscurato
+          Redacted text
         </h2>
         <pre class="font-[var(--font-mono)] text-xs whitespace-pre-wrap text-[var(--text-1)] m-0">{{
           redactedText()
         }}</pre>
       } @else if (!ocr.busy()) {
         <p class="text-sm text-[var(--text-2)] italic opacity-60">
-          Qui vedrai il documento con le parti riservate coperte.
+          Here you'll see the document with the sensitive parts covered.
         </p>
       }
     </section>

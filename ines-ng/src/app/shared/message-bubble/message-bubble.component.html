@@ -8,7 +8,7 @@
   </div>
   <div class="msg-bubble" [class.cursor-blink]="streaming()">
     @if (role() === 'user' && image()) {
-      <img [src]="image()" class="msg-image" alt="Allegato" />
+      <img [src]="image()" class="msg-image" alt="Attachment" />
     }
     <div class="msg-content" #content [innerHTML]="safeHtml()"></div>
     @if (role() === 'user' && text()) {

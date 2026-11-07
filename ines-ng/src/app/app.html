@@ -14,7 +14,72 @@
 
 <div id="app">
   <!-- Sidebar -->
-  <nav id="sidebar" class="flex flex-col items-center gap-2.5 shrink-0 z-10">
+  <nav id="sidebar" class="flex flex-col items-center gap-2 shrink-0 z-10">
+    <!-- Macro-Area Workspace Switcher -->
+    <div class="workspace-switcher flex flex-col items-center w-full gap-1 mb-1">
+      <div
+        class="workspace-segmented flex items-center justify-between w-full p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]"
+      >
+        <button
+          type="button"
+          class="ws-seg-btn"
+          [class.active]="activeWorkspace() === 'all'"
+          (click)="setWorkspace('all')"
+          title="Tutte le schede"
+          aria-label="Tutte le schede"
+        >
+          <mat-icon fontIcon="apps" class="ws-seg-icon"></mat-icon>
+        </button>
+        <button
+          type="button"
+          class="ws-seg-btn"
+          [class.active]="activeWorkspace() === 'productivity'"
+          (click)="setWorkspace('productivity')"
+          title="Workspace Produttività (Chat, Voice, Brain, Todo, Spese...)"
+          aria-label="Workspace Produttività"
+        >
+          <mat-icon fontIcon="dashboard" class="ws-seg-icon"></mat-icon>
+        </button>
+        <button
+          type="button"
+          class="ws-seg-btn"
+          [class.active]="activeWorkspace() === 'dev'"
+          (click)="setWorkspace('dev')"
+          title="Sviluppo & Studio (Code, DevAgent, Slides, Learning...)"
+          aria-label="Sviluppo & Studio"
+        >
+          <mat-icon fontIcon="terminal" class="ws-seg-icon"></mat-icon>
+        </button>
+        <button
+          type="button"
+          class="ws-seg-btn"
+          [class.active]="activeWorkspace() === 'vision'"
+          (click)="setWorkspace('vision')"
+          title="Vision & AI Labs (Vision Assist, OCR PII, Gesti...)"
+          aria-label="Vision & AI Labs"
+        >
+          <mat-icon fontIcon="visibility" class="ws-seg-icon"></mat-icon>
+        </button>
+      </div>
+
+      <!-- Quick Command Palette Trigger Button -->
+      <button
+        type="button"
+        class="palette-trigger-btn flex items-center justify-between w-full px-2 py-1.5 rounded-lg text-[var(--text-2)] hover:text-[var(--text-0)] bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] transition-all cursor-pointer text-xs"
+        (click)="openCommandPalette()"
+        title="Apri Command Palette (⌘K)"
+      >
+        <span class="flex items-center gap-1.5 font-mono text-[11px]">
+          <mat-icon fontIcon="search" class="text-xs w-3.5 h-3.5"></mat-icon>
+          Cerca
+        </span>
+        <kbd class="text-[9px] px-1 py-0.5 rounded bg-white/10 font-mono text-[var(--text-2)]"
+          >⌘K</kbd
+        >
+      </button>
+    </div>
+
+    <!-- Tab buttons -->
     @for (item of displayItems(); track item.tab.id) {
       @if (item.divider) {
         <div class="sidebar-divider"></div>
@@ -27,7 +92,7 @@
         [class.active]="activeTab() === item.tab.id"
         [style.--tab-color]="item.tab.color"
         (click)="activeTab.set(item.tab.id)"
-        [attr.title]="item.tab.label"
+        [attr.title]="item.tab.label + ': ' + item.tab.description"
         [attr.aria-label]="
           item.tab.label + ' tab' + (activeTab() === item.tab.id ? ', selected' : '')
         "
@@ -40,7 +105,7 @@
           ></mat-icon>
         </span>
         <span
-          class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none"
+          class="font-[var(--font-ui)] text-[10px] font-semibold tracking-[0.04em] uppercase leading-none text-center"
           >{{ item.tab.label }}</span
         >
         @if (item.tab.id === 'expenses' && expense.unseenCount() > 0) {
@@ -195,50 +260,145 @@
   }
 </div>
 
-<!-- Command Palette -->
+<!-- Command Palette Omni Modal -->
 @if (commandPaletteOpen()) {
   <div
-    class="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] bg-black/70 backdrop-blur-sm"
-    (click)="commandPaletteOpen.set(false)"
+    class="fixed inset-0 z-[500] flex items-start justify-center pt-[10vh] px-4 bg-black/75 backdrop-blur-md"
+    (click)="closeCommandPalette()"
   >
     <div
-      class="w-full max-w-lg bg-[var(--bg-1)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden"
+      class="w-full max-w-xl bg-[var(--bg-1)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       (click)="$event.stopPropagation()"
     >
-      <div class="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]">
-        <mat-icon fontIcon="search" class="text-[var(--text-2)] text-sm w-4 h-4"></mat-icon>
+      <!-- Search Input Header -->
+      <div
+        class="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border)] bg-white/[0.02]"
+      >
+        <mat-icon
+          fontIcon="search"
+          class="text-[var(--accent-blue)] text-lg w-5 h-5 shrink-0"
+        ></mat-icon>
         <input
-          class="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-0)] placeholder:text-[var(--text-2)]"
-          placeholder="Search tabs..."
+          class="flex-1 bg-transparent border-none outline-none text-base text-[var(--text-0)] placeholder:text-[var(--text-2)] font-[var(--font-body)]"
+          placeholder="Cerca schede, azioni rapide (todo:, spesa:, nota:) o strumenti..."
           [value]="commandQuery()"
           (input)="commandQuery.set($any($event.target).value)"
           autofocus
         />
-        <kbd class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-[var(--text-2)] font-mono"
+        @if (commandQuery()) {
+          <button
+            class="text-[var(--text-2)] hover:text-[var(--text-0)] p-1 rounded-full hover:bg-white/10"
+            (click)="commandQuery.set('')"
+            title="Cancella ricerca"
+          >
+            <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
+          </button>
+        }
+        <kbd
+          class="text-[10px] px-2 py-0.5 rounded bg-white/10 text-[var(--text-2)] font-mono border border-white/10"
           >ESC</kbd
         >
       </div>
-      <div class="max-h-72 overflow-y-auto py-2">
-        @for (tab of filteredTabs(); track tab.id) {
+
+      <!-- Quick Action Chips -->
+      <div
+        class="flex items-center gap-1.5 px-4 py-2 border-b border-[var(--border)] bg-black/20 overflow-x-auto text-xs"
+      >
+        <span
+          class="text-[10px] text-[var(--text-2)] uppercase tracking-wider font-mono mr-1 shrink-0"
+          >Azioni:</span
+        >
+        <button type="button" class="cmd-chip" (click)="commandQuery.set('todo: ')">
+          <mat-icon fontIcon="add_task" class="text-xs w-3 h-3 text-accent-purple"></mat-icon>
+          + Todo
+        </button>
+        <button type="button" class="cmd-chip" (click)="commandQuery.set('spesa: ')">
+          <mat-icon fontIcon="receipt_long" class="text-xs w-3 h-3 text-accent-green"></mat-icon>
+          + Spesa
+        </button>
+        <button type="button" class="cmd-chip" (click)="commandQuery.set('nota: ')">
+          <mat-icon fontIcon="psychology" class="text-xs w-3 h-3 text-accent-amber"></mat-icon>
+          + Nota Brain
+        </button>
+        <button type="button" class="cmd-chip" (click)="toggleTheme(); closeCommandPalette()">
+          <mat-icon
+            [fontIcon]="isLightTheme() ? 'dark_mode' : 'light_mode'"
+            class="text-xs w-3 h-3 text-accent-cyan"
+          ></mat-icon>
+          Tema
+        </button>
+      </div>
+
+      <!-- Results list -->
+      <div class="max-h-[55vh] overflow-y-auto py-2 px-2 flex flex-col gap-1">
+        @for (item of paletteItems(); track item.id; let idx = $index) {
           <button
-            class="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm hover:bg-white/5 transition-colors"
-            (click)="selectCommandTab(tab.id)"
+            type="button"
+            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-sm transition-all cursor-pointer"
+            [class.bg-white/10]="selectedPaletteIndex() === idx"
+            [class.hover:bg-white/5]="selectedPaletteIndex() !== idx"
+            (mouseenter)="selectedPaletteIndex.set(idx)"
+            (click)="item.action()"
           >
             <span
-              class="w-6 h-6 flex items-center justify-center rounded"
-              [style.color]="tab.color"
+              class="w-7 h-7 flex items-center justify-center rounded-lg shrink-0 bg-white/[0.06]"
+              [style.color]="item.color || 'var(--text-1)'"
             >
-              <mat-icon [fontIcon]="tab.icon" class="text-base w-4 h-4"></mat-icon>
+              <mat-icon [fontIcon]="item.icon" class="text-base w-4 h-4"></mat-icon>
             </span>
-            <span class="text-[var(--text-0)]">{{ tab.label }}</span>
-            <span class="ml-auto text-[10px] text-[var(--text-2)] font-mono">{{
-              tab.category || ''
-            }}</span>
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="text-[var(--text-0)] font-medium truncate">{{ item.title }}</span>
+              @if (item.subtitle) {
+                <span class="text-[11px] text-[var(--text-2)] truncate">{{ item.subtitle }}</span>
+              }
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span
+                class="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.06] text-[var(--text-2)] font-mono"
+              >
+                {{ item.category }}
+              </span>
+              @if (item.shortcut) {
+                <kbd
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-[var(--accent-blue)] font-mono"
+                >
+                  {{ item.shortcut }}
+                </kbd>
+              }
+            </div>
           </button>
         }
-        @if (filteredTabs().length === 0) {
-          <div class="px-4 py-3 text-sm text-[var(--text-2)] text-center">No tabs found</div>
+        @if (paletteItems().length === 0) {
+          <div
+            class="px-4 py-8 text-sm text-[var(--text-2)] text-center flex flex-col items-center gap-2"
+          >
+            <mat-icon
+              fontIcon="search_off"
+              class="text-2xl text-[var(--text-2)] opacity-60"
+            ></mat-icon>
+            <span>Nessun risultato trovato per "{{ commandQuery() }}"</span>
+            <span class="text-xs text-[var(--text-2)] opacity-80">
+              Prova con <code class="text-[var(--accent-blue)]">todo:</code>,
+              <code class="text-[var(--accent-green)]">spesa:</code> o
+              <code class="text-[var(--accent-purple)]">nota:</code>
+            </span>
+          </div>
         }
+      </div>
+
+      <!-- Footer keyboard navigation hint -->
+      <div
+        class="flex items-center justify-between px-4 py-2 border-t border-[var(--border)] bg-black/30 text-[11px] text-[var(--text-2)] font-mono"
+      >
+        <span class="flex items-center gap-2">
+          <span
+            ><kbd class="px-1 py-0.2 rounded bg-white/10">↑</kbd
+            ><kbd class="px-1 py-0.2 rounded bg-white/10 ml-0.5">↓</kbd> naviga</span
+          >
+          <span class="opacity-40">|</span>
+          <span><kbd class="px-1 py-0.2 rounded bg-white/10">↵</kbd> seleziona</span>
+        </span>
+        <span><kbd class="px-1 py-0.2 rounded bg-white/10">ESC</kbd> chiudi</span>
       </div>
     </div>
   </div>

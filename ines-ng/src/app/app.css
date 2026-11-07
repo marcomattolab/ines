@@ -1,7 +1,7 @@
 #app {
   position: fixed;
-  top: 44px;
-  bottom: 32px;
+  top: 48px;
+  bottom: 36px;
   left: 0;
   right: 0;
   display: flex;
@@ -12,7 +12,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 32px;
+  height: 36px;
   z-index: 100;
   background: rgba(10, 11, 16, 0.65);
   backdrop-filter: blur(28px) saturate(190%);
@@ -59,8 +59,8 @@
 }
 
 #sidebar {
-  width: 100px;
-  min-width: 100px;
+  width: 112px;
+  min-width: 112px;
   padding: 18px 10px 20px;
   background: var(
     --sidebar-bg,
@@ -96,29 +96,31 @@
 
 .tab-btn {
   width: calc(100% - 4px);
-  min-height: 64px;
+  min-height: 66px;
   padding: 0 8px;
-  border-radius: 16px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
   color: var(--text-1);
   transition: all 0.35s var(--spring-easing);
 }
 
 .tab-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 .tab-btn.active {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  border-color: color-mix(in srgb, var(--tab-color, var(--accent-blue)) 60%, transparent);
   color: var(--tab-color, var(--accent-blue));
   box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.28),
-    0 0 18px var(--tab-color, var(--accent-blue)) inset;
-  transform: scale(1.04);
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 22px -6px var(--tab-color, var(--accent-blue)),
+    0 0 12px var(--tab-color, var(--accent-blue)) inset;
+  transform: scale(1.05);
 }
 
 .tab-btn.active::before {
@@ -160,7 +162,7 @@
   background: var(--accent-rose);
   color: #0a0a0a;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 16px;
   text-align: center;
@@ -281,7 +283,7 @@
 
 .sidebar-header {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -292,7 +294,7 @@
 }
 
 #sidebar {
-  min-height: calc(100vh - 76px);
+  min-height: calc(100vh - 84px);
 }
 
 @media (max-width: 768px) {
@@ -395,7 +397,7 @@
 }
 
 #sidebar {
-  min-height: calc(100vh - 76px);
+  min-height: calc(100vh - 84px);
 }
 
 body.theme-light #sidebar {
@@ -483,10 +485,11 @@ body.theme-light .tab-btn.active {
 
 .ws-seg-btn.active {
   color: var(--accent-blue);
-  background: rgba(130, 183, 255, 0.14);
+  background: linear-gradient(180deg, rgba(130, 183, 255, 0.22), rgba(130, 183, 255, 0.08));
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.4),
-    0 0 10px rgba(130, 183, 255, 0.2);
+    0 0 12px rgba(130, 183, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .ws-seg-icon {

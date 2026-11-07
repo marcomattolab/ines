@@ -1,19 +1,19 @@
 <div
-  class="h-11 bg-[var(--bg-1)] border-b border-[var(--border)] flex items-center justify-between px-5 backdrop-blur-md"
+  class="h-12 bg-[var(--bg-1)] border-b border-[var(--border)] flex items-center justify-between px-5 backdrop-blur-md"
 >
   <div class="flex items-center gap-2.5 cursor-pointer transition-transform hover:scale-[1.03]">
     <img
       src="ines-logo.png"
       alt="INES Logo"
-      class="w-6 h-6 object-contain"
-      style="filter: drop-shadow(0 2px 6px rgba(99, 179, 255, 0.4))"
+      class="w-7 h-7 object-contain"
+      style="filter: drop-shadow(0 2px 8px rgba(99, 179, 255, 0.5))"
     />
     <span
-      class="font-[var(--font-ui)] font-extrabold text-base -tracking-[0.01em] bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] bg-clip-text text-transparent"
+      class="font-[var(--font-ui)] font-extrabold text-lg -tracking-[0.01em] bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] bg-clip-text text-transparent"
       >INES</span
     >
   </div>
-  <div class="flex items-center gap-2.5 font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">
+  <div class="flex items-center gap-2.5 font-[var(--font-mono)] text-xs text-[var(--text-2)]">
     <div class="status-dot" [class]="llm.modelStatus()"></div>
     <span class="flex items-center gap-1">
       @switch (llm.modelStatus()) {

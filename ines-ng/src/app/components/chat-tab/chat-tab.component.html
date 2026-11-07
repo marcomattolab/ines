@@ -93,12 +93,12 @@
   >
     @for (group of groupedTemplates(); track group.category) {
       <span
-        class="template-cat text-[9px] font-mono uppercase tracking-widest text-[var(--text-2)] shrink-0"
+        class="template-cat text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)] shrink-0"
         >{{ group.category }}</span
       >
       @for (tmpl of group.templates; track tmpl.id) {
         <button
-          class="suggestion-chip text-[10px] whitespace-nowrap shrink-0"
+          class="suggestion-chip text-[11px] whitespace-nowrap shrink-0"
           (click)="applyTemplate(tmpl)"
           [attr.title]="tmpl.text"
         >
@@ -115,7 +115,7 @@
       }
     }
     <button
-      class="suggestion-chip text-[10px] whitespace-nowrap shrink-0"
+      class="suggestion-chip text-[11px] whitespace-nowrap shrink-0"
       (click)="showTemplateForm.set(!showTemplateForm())"
       [attr.title]="showTemplateForm() ? 'Hide form' : 'Create custom template'"
     >

@@ -6,11 +6,9 @@
           fontIcon="wallpaper"
           class="text-accent-green w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Sfondo intelligente
+        Smart Background
       </div>
-      <div class="panel-desc">
-        Segmentazione in tempo reale · sfoca, colora o sostituisci lo sfondo
-      </div>
+      <div class="panel-desc">Real-time segmentation · blur, color or replace background</div>
     </div>
     <app-button
       [variant]="status() === 'running' ? 'danger' : 'primary'"
@@ -18,7 +16,7 @@
       (onClick)="status() === 'running' ? stop() : start()"
     >
       <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
-      {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+      {{ status() === 'running' ? 'Stop' : 'Start Camera' }}
     </app-button>
   </div>
 
@@ -27,7 +25,7 @@
       @if (status() === 'loading') {
         <div class="flex items-center gap-3 text-accent-green text-sm">
           <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
-          Carico il modello di segmentazione…
+          Loading segmentation model…
         </div>
       }
       @if (error()) {
@@ -42,18 +40,18 @@
       }
 
       <label class="text-sm text-[var(--text-1)]">
-        Sfondo
+        Background
         <select (change)="onMode($event)" class="pill-select w-full mt-1 block">
-          <option value="blur" [selected]="mode() === 'blur'">Sfocato</option>
-          <option value="color" [selected]="mode() === 'color'">Colore pieno</option>
-          <option value="image" [selected]="mode() === 'image'">Immagine mia</option>
+          <option value="blur" [selected]="mode() === 'blur'">Blur</option>
+          <option value="color" [selected]="mode() === 'color'">Solid Color</option>
+          <option value="image" [selected]="mode() === 'image'">Custom Image</option>
         </select>
       </label>
 
       @switch (mode()) {
         @case ('blur') {
           <label class="text-sm text-[var(--text-1)]">
-            Intensità: {{ blur() }} px
+            Blur strength: {{ blur() }} px
             <input
               type="range"
               min="4"
@@ -67,7 +65,7 @@
         }
         @case ('color') {
           <label class="text-sm text-[var(--text-1)]">
-            Colore
+            Color
             <input
               type="color"
               [value]="color()"
@@ -78,16 +76,16 @@
         }
         @case ('image') {
           <label class="text-sm text-[var(--text-1)]">
-            Sfondo predefinito
+            Preset background
             <select (change)="onPreset($event)" class="pill-select w-full mt-1 block">
-              <option value="" [selected]="preset() === ''">— Carica da file —</option>
+              <option value="" [selected]="preset() === ''">— Upload from file —</option>
               @for (p of presets; track p.id) {
                 <option [value]="p.id" [selected]="preset() === p.id">{{ p.label }}</option>
               }
             </select>
           </label>
           <label class="text-sm text-[var(--text-1)]">
-            Oppure carica un'immagine
+            Or upload an image
             <input
               type="file"
               accept="image/*"
@@ -105,11 +103,12 @@
           [checked]="invert()"
           (change)="onInvert($event)"
         />
-        Inverti la maschera (se vedi te sfocato invece dello sfondo)
+        Invert mask (if foreground is blurred instead of background)
       </label>
 
       <p class="text-xs text-[var(--text-2)] font-[var(--font-mono)]">
-        Il modello separa te dallo sfondo frame per frame. Il video non viene registrato né inviato.
+        The on-device model segments person from background frame by frame. Video is neither
+        recorded nor transmitted.
       </p>
     </section>
 
@@ -121,7 +120,7 @@
         <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
           <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
           <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">
-            Output non disponibile
+            Camera Output Offline
           </p>
         </div>
       }

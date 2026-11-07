@@ -48,9 +48,9 @@ export class BackgroundTabComponent implements OnDestroy {
   // Tokyo: "Tokyo - Sunset Skyline" di Fred Cherrygarden (CC BY-SA 4.0)
   protected readonly presets: BgPreset[] = [
     { id: 'palermo', label: 'Palermo', url: '/backgrounds/palermo.jpg' },
-    { id: 'roma', label: 'Roma', url: '/backgrounds/roma.jpg' },
-    { id: 'paris', label: 'Parigi', url: '/backgrounds/paris.jpg' },
-    { id: 'london', label: 'Londra', url: '/backgrounds/london.jpg' },
+    { id: 'roma', label: 'Rome', url: '/backgrounds/roma.jpg' },
+    { id: 'paris', label: 'Paris', url: '/backgrounds/paris.jpg' },
+    { id: 'london', label: 'London', url: '/backgrounds/london.jpg' },
     { id: 'tokyo', label: 'Tokyo', url: '/backgrounds/tokyo.jpg' },
   ];
 

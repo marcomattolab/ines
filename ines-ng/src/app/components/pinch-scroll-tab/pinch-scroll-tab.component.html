@@ -9,7 +9,7 @@
         Pinch &amp; Scroll
       </div>
       <div class="panel-desc">
-        Scorri e clicca pizzicando pollice e indice · MediaPipe Hand Landmarker
+        Scroll and click by pinching thumb and index · MediaPipe Hand Landmarker
       </div>
     </div>
     <app-button
@@ -18,7 +18,7 @@
       (onClick)="status() === 'running' ? stop() : start()"
     >
       <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
-      {{ status() === 'running' ? 'Ferma' : 'Avvia webcam' }}
+      {{ status() === 'running' ? 'Stop' : 'Start Camera' }}
     </app-button>
   </div>
 
@@ -58,7 +58,7 @@
       @if (status() === 'loading') {
         <div class="flex items-center gap-3 text-accent-cyan text-sm">
           <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
-          Carico il modello della mano…
+          Loading hand landmarker model…
         </div>
       }
       @if (error()) {
@@ -73,15 +73,15 @@
           [class.border-white/10]="!pinching()"
           [class.text-[var(--text-2)]]="!pinching()"
         >
-          {{ pinching() ? 'Pizzico attivo' : 'Mano aperta' }}
+          {{ pinching() ? 'Pinch Active' : 'Open Hand' }}
         </span>
         <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">
-          distanza: {{ ratio() }} · clic: {{ clicks() }}
+          distance: {{ ratio() }} · clicks: {{ clicks() }}
         </span>
       </div>
 
       <label class="text-sm text-[var(--text-1)]">
-        Velocità di scorrimento: {{ gain() }}×
+        Scroll speed: {{ gain() }}×
         <input
           type="range"
           min="1"
@@ -94,9 +94,9 @@
       </label>
 
       <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
-        <li>· Tieni la mano a 40–60 cm dalla camera, con una buona luce.</li>
-        <li>· Per scorrere verso il basso, trascina la mano verso l'alto.</li>
-        <li>· Un pizzico rapido clicca dove si trova il cursore.</li>
+        <li>· Hold hand 40–60 cm from camera with good lighting.</li>
+        <li>· Drag hand upward to scroll down.</li>
+        <li>· A quick pinch clicks where the cursor is placed.</li>
       </ul>
     </section>
 
@@ -105,11 +105,11 @@
         @for (n of cards; track n) {
           <div class="card" [class.liked]="liked().has(n)">
             <div>
-              <strong>Scheda {{ n + 1 }}</strong>
-              <div class="text-[var(--text-2)] text-xs">Pizzica sul pulsante per attivarlo.</div>
+              <strong>Card {{ n + 1 }}</strong>
+              <div class="text-[var(--text-2)] text-xs">Pinch the button to trigger it.</div>
             </div>
             <button class="btn-secondary" [class.btn-primary]="liked().has(n)" (click)="toggle(n)">
-              {{ liked().has(n) ? 'Salvata' : 'Salva' }}
+              {{ liked().has(n) ? 'Saved' : 'Save' }}
             </button>
           </div>
         }

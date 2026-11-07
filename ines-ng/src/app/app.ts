@@ -84,16 +84,16 @@ export interface PaletteItem {
 }
 
 const TABS: TabDef[] = [
-  // Produttività & Workspace
+  // Productivity & Workspace
   {
     id: 'chat',
     icon: 'message-square',
     label: 'Chat',
     color: 'var(--tab-chat)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Chat conversazionale con AI on-device',
-    keywords: ['chat', 'messaggi', 'conversazione', 'ia', 'ai', 'gemma', 'domande'],
+    categoryLabel: 'Productivity',
+    description: 'Conversational on-device AI chat',
+    keywords: ['chat', 'messages', 'conversazione', 'messaggi', 'ia', 'ai', 'gemma', 'questions'],
   },
   {
     id: 'assistant',
@@ -101,9 +101,9 @@ const TABS: TabDef[] = [
     label: 'Voice',
     color: 'var(--tab-assistant)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Assistente vocale hands-free con wake word',
-    keywords: ['voce', 'voice', 'audio', 'microfono', 'parla', 'assistente', 'dettatura'],
+    categoryLabel: 'Productivity',
+    description: 'Hands-free voice assistant with wake word',
+    keywords: ['voice', 'voce', 'audio', 'mic', 'microfono', 'speak', 'parla', 'assistant'],
   },
   {
     id: 'brain',
@@ -111,9 +111,9 @@ const TABS: TabDef[] = [
     label: 'Brain',
     color: 'var(--tab-brain)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Second Brain: note e memoria semantica RAG',
-    keywords: ['brain', 'note', 'memoria', 'appunti', 'second brain', 'archivio', 'rag'],
+    categoryLabel: 'Productivity',
+    description: 'Second Brain: notes & semantic RAG memory',
+    keywords: ['brain', 'notes', 'note', 'memoria', 'memory', 'appunti', 'second brain', 'rag'],
   },
   {
     id: 'todo',
@@ -121,19 +121,19 @@ const TABS: TabDef[] = [
     label: 'Todo',
     color: 'var(--tab-todo)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Attività, cose da fare e promemoria',
-    keywords: ['todo', 'task', 'promemoria', 'compiti', 'attività', 'da fare'],
+    categoryLabel: 'Productivity',
+    description: 'Tasks, to-do list & reminders',
+    keywords: ['todo', 'task', 'tasks', 'reminders', 'promemoria', 'compiti', 'activities'],
   },
   {
     id: 'expenses',
     icon: 'receipt_long',
-    label: 'Spese',
+    label: 'Expenses',
     color: 'var(--tab-expenses)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Tracciamento spese, budget e OCR scontrini',
-    keywords: ['spese', 'soldi', 'budget', 'scontrini', 'costi', 'finanze', 'ricevute'],
+    categoryLabel: 'Productivity',
+    description: 'Expense tracking, budgets & receipt OCR',
+    keywords: ['expenses', 'spese', 'money', 'soldi', 'budget', 'receipts', 'scontrini', 'finance'],
   },
   {
     id: 'email',
@@ -141,9 +141,9 @@ const TABS: TabDef[] = [
     label: 'Email',
     color: 'var(--tab-email)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Posta elettronica Gmail e riassunti automatici',
-    keywords: ['email', 'posta', 'gmail', 'messaggi', 'lettere'],
+    categoryLabel: 'Productivity',
+    description: 'Gmail inbox management & smart digests',
+    keywords: ['email', 'mail', 'posta', 'gmail', 'inbox', 'messages'],
   },
   {
     id: 'meeting',
@@ -151,9 +151,9 @@ const TABS: TabDef[] = [
     label: 'Meeting',
     color: 'var(--tab-meeting)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Trascrizione e verbale riunioni',
-    keywords: ['meeting', 'riunione', 'verbale', 'trascrizione', 'audio'],
+    categoryLabel: 'Productivity',
+    description: 'Meeting transcription & automatic summary',
+    keywords: ['meeting', 'audio', 'riunione', 'verbale', 'transcription', 'trascrizione'],
   },
   {
     id: 'translate',
@@ -161,21 +161,21 @@ const TABS: TabDef[] = [
     label: 'Translate',
     color: 'var(--tab-translate)',
     category: 'productivity',
-    categoryLabel: 'Produttività',
-    description: 'Traduzione istantanea multilingua on-device',
-    keywords: ['translate', 'traduttore', 'lingue', 'italiano', 'inglese'],
+    categoryLabel: 'Productivity',
+    description: 'On-device instant multilingual translator',
+    keywords: ['translate', 'traduttore', 'languages', 'lingue', 'english', 'italian'],
   },
 
-  // Sviluppo & Studio
+  // Development & Studio
   {
     id: 'coding',
     icon: 'code',
     label: 'Code',
     color: 'var(--tab-coding)',
     category: 'dev',
-    categoryLabel: 'Sviluppo & Studio',
-    description: 'Generazione ed editor di codice assistito',
-    keywords: ['code', 'coding', 'programmazione', 'script', 'dev', 'typescript', 'python'],
+    categoryLabel: 'Dev & Studio',
+    description: 'Code assistant, editor & generation',
+    keywords: ['code', 'coding', 'editor', 'programming', 'dev', 'typescript', 'python'],
   },
   {
     id: 'dev-agent',
@@ -183,9 +183,9 @@ const TABS: TabDef[] = [
     label: 'DevAgent',
     color: 'var(--tab-dev-agent)',
     category: 'dev',
-    categoryLabel: 'Sviluppo & Studio',
-    description: 'Agente autonomo per task di sviluppo',
-    keywords: ['devagent', 'agente', 'developer', 'automation', 'terminale'],
+    categoryLabel: 'Dev & Studio',
+    description: 'Autonomous developer agent for tasks',
+    keywords: ['devagent', 'agent', 'developer', 'automation', 'terminal', 'coding agent'],
   },
   {
     id: 'presentation',
@@ -193,9 +193,9 @@ const TABS: TabDef[] = [
     label: 'Slides',
     color: 'var(--tab-presentation)',
     category: 'dev',
-    categoryLabel: 'Sviluppo & Studio',
-    description: 'Generatore slide e presentazioni PPTX',
-    keywords: ['slides', 'powerpoint', 'presentazioni', 'deck', 'pptx'],
+    categoryLabel: 'Dev & Studio',
+    description: 'Presentation & PPTX slide deck generator',
+    keywords: ['slides', 'powerpoint', 'presentation', 'deck', 'presentazioni', 'pptx'],
   },
   {
     id: 'learning',
@@ -203,9 +203,9 @@ const TABS: TabDef[] = [
     label: 'Learning',
     color: 'var(--tab-learning)',
     category: 'dev',
-    categoryLabel: 'Sviluppo & Studio',
-    description: 'Quiz, flashcard e apprendimento guidato',
-    keywords: ['learning', 'studio', 'quiz', 'flashcard', 'corso', 'apprendimento'],
+    categoryLabel: 'Dev & Studio',
+    description: 'Interactive quizzes, flashcards & study',
+    keywords: ['learning', 'study', 'quiz', 'flashcard', 'course', 'apprendimento', 'studio'],
   },
   {
     id: 'project',
@@ -213,31 +213,31 @@ const TABS: TabDef[] = [
     label: 'Project',
     color: 'var(--tab-project)',
     category: 'dev',
-    categoryLabel: 'Sviluppo & Studio',
-    description: 'Documenti di progetto e base di conoscenza',
-    keywords: ['project', 'progetti', 'documenti', 'cartelle', 'file'],
+    categoryLabel: 'Dev & Studio',
+    description: 'Project documents & local knowledge base',
+    keywords: ['project', 'documents', 'files', 'folders', 'progetti', 'documenti'],
   },
 
   // Vision & AI Labs
   {
     id: 'vision-assist',
     icon: 'remove_red_eye',
-    label: 'Assistente',
+    label: 'Vision Assist',
     color: 'var(--tab-vision-assist)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Descrizione visiva scena e webcam',
-    keywords: ['vision assist', 'assistente visivo', 'webcam', 'occhi', 'scena'],
+    description: 'Visual scene description via webcam',
+    keywords: ['vision assist', 'visual assistant', 'webcam', 'eyes', 'scene', 'camera'],
   },
   {
     id: 'pii-ocr',
     icon: 'document_scanner',
-    label: 'OCR PII',
+    label: 'OCR & PII',
     color: 'var(--tab-pii-ocr)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Riconoscimento testo e oscuramento privacy',
-    keywords: ['ocr', 'pii', 'privacy', 'anonimizzazione', 'scanner', 'testo'],
+    description: 'Document OCR & sensitive PII anonymization',
+    keywords: ['ocr', 'pii', 'privacy', 'anonymization', 'scanner', 'text', 'document'],
   },
   {
     id: 'vision',
@@ -246,18 +246,18 @@ const TABS: TabDef[] = [
     color: 'var(--tab-vision)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Computer vision MediaPipe e object detection',
-    keywords: ['vision', 'mediapipe', 'oggetti', 'telecamera', 'webcam'],
+    description: 'MediaPipe computer vision & object detection',
+    keywords: ['vision', 'mediapipe', 'objects', 'detection', 'camera', 'webcam'],
   },
   {
     id: 'sicilian',
     icon: 'back_hand',
-    label: 'Gesti',
+    label: 'Gestures',
     color: 'var(--tab-sicilian)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Riconoscimento gesti della mano e gesti siciliani',
-    keywords: ['gesti', 'mani', 'hand', 'siciliani', 'gesture'],
+    description: 'Hand & regional gestures recognition',
+    keywords: ['gestures', 'hands', 'gesti', 'sicilian', 'gesture recognition'],
   },
   {
     id: 'pinch-scroll',
@@ -266,8 +266,8 @@ const TABS: TabDef[] = [
     color: 'var(--tab-pinch-scroll)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Controllo dello scorrimento con gesture pinch',
-    keywords: ['pinch', 'scroll', 'gesture', 'mani'],
+    description: 'Hands-free page scrolling via pinch gesture',
+    keywords: ['pinch', 'scroll', 'gesture', 'hands', 'touchless'],
   },
   {
     id: 'head-cursor',
@@ -276,18 +276,18 @@ const TABS: TabDef[] = [
     color: 'var(--tab-head-cursor)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Puntatore mouse controllato con i movimenti della testa',
-    keywords: ['head', 'cursor', 'testa', 'faccia', 'puntatore', 'accessibilità'],
+    description: 'Face tracking & head-controlled cursor',
+    keywords: ['head', 'cursor', 'face', 'accessibility', 'pointer', 'tracking'],
   },
   {
     id: 'background',
     icon: 'wallpaper',
-    label: 'Sfondo',
+    label: 'Background',
     color: 'var(--tab-background)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Segmentazione e rimozione sfondo in tempo reale',
-    keywords: ['sfondo', 'background', 'green screen', 'segmentazione', 'video'],
+    description: 'Real-time background blur & green screen',
+    keywords: ['background', 'green screen', 'segmentation', 'video', 'sfondo', 'blur'],
   },
   {
     id: 'agents',
@@ -296,8 +296,8 @@ const TABS: TabDef[] = [
     color: 'var(--tab-agents)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'Configurazione agenti autonomi e libreria skills',
-    keywords: ['agents', 'agenti', 'skills', 'orchestrator'],
+    description: 'Autonomous agent catalog & skill orchestrator',
+    keywords: ['agents', 'skills', 'orchestrator', 'agenti', 'tools'],
   },
 ];
 
@@ -411,14 +411,12 @@ export class AppComponent implements OnInit {
       items.push({
         id: 'quick-todo',
         type: 'quick-action',
-        title: text ? `Aggiungi to-do: "${text}"` : 'Crea nuova attività To-Do...',
-        subtitle: text
-          ? 'Premi Invio per salvare subito nella lista To-Do'
-          : 'Scrivi il testo dopo todo:',
-        category: 'Azione Rapida',
+        title: text ? `Add to-do: "${text}"` : 'Create new To-Do task...',
+        subtitle: text ? 'Press Enter to save to To-Do list' : 'Type task text after todo:',
+        category: 'Quick Action',
         icon: 'add_task',
         color: 'var(--accent-purple)',
-        shortcut: '↵ Invio',
+        shortcut: '↵ Enter',
         action: () => {
           if (text) {
             this.parseAndAddTodo(text);
@@ -430,19 +428,19 @@ export class AppComponent implements OnInit {
     }
 
     // 2. Direct Quick Action: Expense
-    if (/^(spesa|costo|expense):\s*/i.test(rawQ)) {
-      const text = rawQ.replace(/^(spesa|costo|expense):\s*/i, '').trim();
+    if (/^(expense|spesa|costo):\s*/i.test(rawQ)) {
+      const text = rawQ.replace(/^(expense|spesa|costo):\s*/i, '').trim();
       items.push({
         id: 'quick-expense',
         type: 'quick-action',
-        title: text ? `Registra spesa: "${text}"` : 'Registra nuova spesa...',
+        title: text ? `Record expense: "${text}"` : 'Record new expense...',
         subtitle: text
-          ? 'Premi Invio per registrare nel database spese'
-          : 'Es: spesa: 14.50 pranzo di lavoro',
-        category: 'Azione Rapida',
+          ? 'Press Enter to save to local expenses database'
+          : 'E.g.: expense: 14.50 team lunch',
+        category: 'Quick Action',
         icon: 'receipt_long',
         color: 'var(--tab-expenses)',
-        shortcut: '↵ Invio',
+        shortcut: '↵ Enter',
         action: async () => {
           if (text) {
             await this.parseAndAddExpense(text);
@@ -454,19 +452,17 @@ export class AppComponent implements OnInit {
     }
 
     // 3. Direct Quick Action: Brain Note
-    if (/^(nota|brain|note):\s*/i.test(rawQ)) {
-      const text = rawQ.replace(/^(nota|brain|note):\s*/i, '').trim();
+    if (/^(note|brain|nota):\s*/i.test(rawQ)) {
+      const text = rawQ.replace(/^(note|brain|nota):\s*/i, '').trim();
       items.push({
         id: 'quick-note',
         type: 'quick-action',
-        title: text ? `Salva nel Second Brain: "${text}"` : 'Cattura pensiero o appunto...',
-        subtitle: text
-          ? 'Premi Invio per salvare tra le note del Second Brain'
-          : 'Scrivi il testo dopo nota:',
-        category: 'Azione Rapida',
+        title: text ? `Save to Second Brain: "${text}"` : 'Capture thought or note...',
+        subtitle: text ? 'Press Enter to save to Second Brain notes' : 'Type note text after note:',
+        category: 'Quick Action',
         icon: 'psychology',
         color: 'var(--tab-brain)',
-        shortcut: '↵ Invio',
+        shortcut: '↵ Enter',
         action: () => {
           if (text) {
             this.parseAndAddBrainNote(text);
@@ -477,14 +473,18 @@ export class AppComponent implements OnInit {
       return items;
     }
 
-    // Quick Action Prefills when searching action keywords
-    if (!lowerQ || 'nuovo todo task promemoria aggiungi'.includes(lowerQ)) {
+    // Quick Action Suggestions when searching action keywords
+    if (
+      !lowerQ ||
+      'new add todo task reminder create'.includes(lowerQ) ||
+      'nuovo todo task promemoria aggiungi'.includes(lowerQ)
+    ) {
       items.push({
         id: 'action-suggest-todo',
         type: 'quick-action',
-        title: 'Nuova attività To-Do',
-        subtitle: 'Digita todo: <testo> per aggiungere un task al volo',
-        category: 'Azioni Rapide',
+        title: 'New To-Do task',
+        subtitle: 'Type todo: <text> to add a task quickly',
+        category: 'Quick Actions',
         icon: 'add_task',
         color: 'var(--accent-purple)',
         shortcut: 'todo:',
@@ -494,34 +494,42 @@ export class AppComponent implements OnInit {
       });
     }
 
-    if (!lowerQ || 'nuova spesa costo budget scontrino euro'.includes(lowerQ)) {
+    if (
+      !lowerQ ||
+      'new expense cost budget money spend receipt'.includes(lowerQ) ||
+      'nuova spesa costo budget scontrino euro'.includes(lowerQ)
+    ) {
       items.push({
         id: 'action-suggest-expense',
         type: 'quick-action',
-        title: 'Registra nuova spesa',
-        subtitle: 'Digita spesa: <importo> <descrizione> per tracciare una spesa',
-        category: 'Azioni Rapide',
+        title: 'Record new expense',
+        subtitle: 'Type expense: <amount> <description> to log an expense',
+        category: 'Quick Actions',
         icon: 'receipt_long',
         color: 'var(--accent-green)',
-        shortcut: 'spesa:',
+        shortcut: 'expense:',
         action: () => {
-          this.commandQuery.set('spesa: ');
+          this.commandQuery.set('expense: ');
         },
       });
     }
 
-    if (!lowerQ || 'nota appunto brain memoria secondo cervello'.includes(lowerQ)) {
+    if (
+      !lowerQ ||
+      'note capture thought brain memory idea'.includes(lowerQ) ||
+      'nota appunto brain memoria secondo cervello'.includes(lowerQ)
+    ) {
       items.push({
         id: 'action-suggest-note',
         type: 'quick-action',
-        title: 'Cattura pensiero nel Brain',
-        subtitle: 'Digita nota: <testo> per archiviare nel Second Brain',
-        category: 'Azioni Rapide',
+        title: 'Capture thought in Brain',
+        subtitle: 'Type note: <text> to store in Second Brain',
+        category: 'Quick Actions',
         icon: 'psychology',
         color: 'var(--tab-brain)',
-        shortcut: 'nota:',
+        shortcut: 'note:',
         action: () => {
-          this.commandQuery.set('nota: ');
+          this.commandQuery.set('note: ');
         },
       });
     }
@@ -531,9 +539,9 @@ export class AppComponent implements OnInit {
       {
         id: 'sys-theme',
         type: 'system',
-        title: this.isLightTheme() ? 'Passa al Tema Scuro' : 'Passa al Tema Chiaro',
-        subtitle: "Inverte la palette cromatica dell'interfaccia",
-        category: 'Sistema',
+        title: this.isLightTheme() ? 'Switch to Dark Theme' : 'Switch to Light Theme',
+        subtitle: 'Toggle interface color palette',
+        category: 'System',
         icon: this.isLightTheme() ? 'dark_mode' : 'light_mode',
         color: 'var(--accent-amber)',
         action: () => {
@@ -544,9 +552,9 @@ export class AppComponent implements OnInit {
       {
         id: 'sys-model',
         type: 'system',
-        title: 'Gestione Modello AI On-Device',
-        subtitle: `Stato: ${this.llm.modelStatus()} (${this.llm.modelName()})`,
-        category: 'Sistema',
+        title: 'On-Device AI Model Manager',
+        subtitle: `Status: ${this.llm.modelStatus()} (${this.llm.modelName()})`,
+        category: 'System',
         icon: 'bolt',
         color: 'var(--accent-blue)',
         action: () => {
@@ -557,9 +565,9 @@ export class AppComponent implements OnInit {
       {
         id: 'sys-settings',
         type: 'system',
-        title: 'Impostazioni & Personalizzazione',
-        subtitle: 'Ordina o nascondi le schede, lingua e wake word',
-        category: 'Sistema',
+        title: 'Settings & Personalization',
+        subtitle: 'Reorder or hide tabs, language and wake word',
+        category: 'System',
         icon: 'settings',
         color: 'var(--text-1)',
         action: () => {
@@ -570,9 +578,9 @@ export class AppComponent implements OnInit {
       {
         id: 'sys-info',
         type: 'system',
-        title: 'Informazioni su INES',
-        subtitle: 'Architettura edge AI, privacy e dettagli tecnici',
-        category: 'Sistema',
+        title: 'About INES',
+        subtitle: 'Edge AI architecture, privacy and technical details',
+        category: 'System',
         icon: 'info',
         color: 'var(--accent-rose)',
         action: () => {
@@ -747,7 +755,7 @@ export class AppComponent implements OnInit {
     const isPriority = /!|urgente|urgent/i.test(clean);
     const text = clean.replace(/!|urgente|urgent/gi, '').trim();
     this.todoService.add(text || clean, isPriority ? 'priority' : 'normal');
-    this.toast.success(`To-Do aggiunto: "${text || clean}"${isPriority ? ' (Prioritario)' : ''}`);
+    this.toast.success(`To-Do added: "${text || clean}"${isPriority ? ' (Priority)' : ''}`);
   }
 
   async parseAndAddExpense(raw: string): Promise<void> {
@@ -761,7 +769,7 @@ export class AppComponent implements OnInit {
       amount = parseFloat(valStr.replace(',', '.'));
       desc = clean.replace(numMatch[0], '').replace(/\s+/g, ' ').trim();
     }
-    if (!desc) desc = 'Spesa rapida';
+    if (!desc) desc = 'Quick expense';
     await this.expense.add({
       amount: isNaN(amount) ? 0 : amount,
       description: desc,
@@ -770,14 +778,14 @@ export class AppComponent implements OnInit {
       recurrence: 'once',
       sourceType: 'manual',
     });
-    this.toast.success(`Spesa registrata: ${amount > 0 ? amount + ' € ' : ''}(${desc})`);
+    this.toast.success(`Expense recorded: ${amount > 0 ? amount + ' € ' : ''}(${desc})`);
   }
 
   parseAndAddBrainNote(raw: string): void {
     const clean = raw.trim();
     if (!clean) return;
     this.secondBrain.capture(clean, 'typed');
-    this.toast.success('Nota salvata nel Second Brain');
+    this.toast.success('Note saved to Second Brain');
   }
 
   handleKeyboard(e: KeyboardEvent) {

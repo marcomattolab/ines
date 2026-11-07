@@ -482,9 +482,11 @@ body.theme-light .tab-btn.active {
 }
 
 .ws-seg-btn.active {
-  color: var(--text-0);
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  color: var(--accent-blue);
+  background: rgba(130, 183, 255, 0.14);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 10px rgba(130, 183, 255, 0.2);
 }
 
 .ws-seg-icon {

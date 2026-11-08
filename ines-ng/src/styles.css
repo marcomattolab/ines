@@ -59,6 +59,7 @@
   --tab-project: #5ee3b4;
   --tab-brain: #bf92ff;
   --tab-dev-agent: #a78bfa;
+  --tab-tic-tac-toe: #f472b6;
 
   --accent-cyan: #56d9ff;
   --radius: 20px;
@@ -755,6 +756,7 @@ select:focus-visible,
   --tab-knowledge: #2563eb;
   --tab-project: #7c3aed;
   --tab-dev-agent: #8b5cf6;
+  --tab-tic-tac-toe: #db2777;
 
   color-scheme: light;
 }

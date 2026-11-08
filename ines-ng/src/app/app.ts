@@ -16,6 +16,7 @@ import { VisionTabComponent } from './components/vision-tab/vision-tab.component
 import { SicilianGesturesTabComponent } from './components/sicilian-gestures-tab/sicilian-gestures-tab.component';
 import { PinchScrollTabComponent } from './components/pinch-scroll-tab/pinch-scroll-tab.component';
 import { HeadCursorTabComponent } from './components/head-cursor-tab/head-cursor-tab.component';
+import { TicTacToeTabComponent } from './components/tic-tac-toe-tab/tic-tac-toe-tab.component';
 import { BackgroundTabComponent } from './components/background-tab/background-tab.component';
 import { PiiOcrTabComponent } from './components/pii-ocr-tab/pii-ocr-tab.component';
 import { VisionAssistTabComponent } from './components/vision-assist-tab/vision-assist-tab.component';
@@ -47,6 +48,7 @@ export type Tab =
   | 'sicilian'
   | 'pinch-scroll'
   | 'head-cursor'
+  | 'tic-tac-toe'
   | 'background'
   | 'pii-ocr'
   | 'vision-assist'
@@ -280,6 +282,16 @@ const TABS: TabDef[] = [
     keywords: ['head', 'cursor', 'face', 'accessibility', 'pointer', 'tracking'],
   },
   {
+    id: 'tic-tac-toe',
+    icon: 'grid_on',
+    label: 'Tris',
+    color: 'var(--tab-tic-tac-toe)',
+    category: 'vision',
+    categoryLabel: 'Vision & Labs',
+    description: 'Two-player tic-tac-toe with mouse, pinch or head cursor',
+    keywords: ['tris', 'tic tac toe', 'tictactoe', 'game', 'gioco', 'two player', 'x', 'o', 'play'],
+  },
+  {
     id: 'background',
     icon: 'wallpaper',
     label: 'Background',
@@ -325,6 +337,7 @@ const TABS: TabDef[] = [
     SicilianGesturesTabComponent,
     PinchScrollTabComponent,
     HeadCursorTabComponent,
+    TicTacToeTabComponent,
     BackgroundTabComponent,
     PiiOcrTabComponent,
     VisionAssistTabComponent,

@@ -169,6 +169,9 @@
     @defer (when activeTab() === 'head-cursor'; prefetch on idle) {
       <app-head-cursor-tab [hidden]="activeTab() !== 'head-cursor'" />
     }
+    @defer (when activeTab() === 'tic-tac-toe'; prefetch on idle) {
+      <app-tic-tac-toe-tab [hidden]="activeTab() !== 'tic-tac-toe'" />
+    }
     @defer (when activeTab() === 'background'; prefetch on idle) {
       <app-background-tab [hidden]="activeTab() !== 'background'" />
     }

@@ -1,0 +1,236 @@
+<div class="flex flex-col flex-1 overflow-hidden">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">
+        <mat-icon
+          fontIcon="grid_on"
+          class="text-accent-cyan w-[18px] h-[18px] text-[18px]"
+        ></mat-icon>
+        Tris
+      </div>
+      <div class="panel-desc">Two-player tic-tac-toe · mouse, pinch or head cursor</div>
+    </div>
+    <div class="flex gap-2">
+      @if (status() === 'running' && mode() === 'head') {
+        <app-button variant="secondary" (onClick)="calibrate()">
+          <mat-icon fontIcon="center_focus_strong" class="text-sm w-4 h-4"></mat-icon>
+          Calibrate
+        </app-button>
+      }
+      <app-button variant="secondary" (onClick)="reset()">
+        <mat-icon fontIcon="replay" class="text-sm w-4 h-4"></mat-icon>
+        New round
+      </app-button>
+      @if (mode() !== 'mouse') {
+        <app-button
+          [variant]="status() === 'running' ? 'danger' : 'primary'"
+          [disabled]="status() === 'loading'"
+          (onClick)="status() === 'running' ? stop() : start()"
+        >
+          <mat-icon [fontIcon]="status() === 'running' ? 'videocam_off' : 'videocam'"></mat-icon>
+          {{ status() === 'running' ? 'Stop' : 'Start camera' }}
+        </app-button>
+      }
+    </div>
+  </div>
+
+  <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
+    <section class="w-[360px] shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto">
+      <div class="segmented" role="group" aria-label="Input mode">
+        @for (m of modes; track m.id) {
+          <button
+            type="button"
+            class="seg-btn"
+            [class.active]="mode() === m.id"
+            (click)="setMode(m.id)"
+          >
+            <mat-icon [fontIcon]="m.icon" class="text-sm w-4 h-4"></mat-icon>
+            {{ m.label }}
+          </button>
+        }
+      </div>
+
+      @if (mode() === 'mouse') {
+        <div
+          class="flex flex-col items-center justify-center gap-3 text-[var(--text-2)] rounded-2xl border border-white/10 bg-white/5 p-6 text-center"
+        >
+          <mat-icon fontIcon="mouse" class="text-5xl w-12 h-12"></mat-icon>
+          <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Mouse &amp; Touch</p>
+          <p class="text-xs font-[var(--font-mono)]">
+            Click or tap a cell to place your mark. No camera needed.
+          </p>
+        </div>
+      } @else {
+        <div
+          class="relative aspect-[4/3] bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+        >
+          @if (status() !== 'running') {
+            <div class="flex flex-col items-center gap-4 text-[var(--text-2)]">
+              <mat-icon fontIcon="videocam_off" class="text-6xl w-16 h-16"></mat-icon>
+              <p class="font-[var(--font-ui)] uppercase tracking-widest text-xs">Camera Offline</p>
+            </div>
+          }
+          <video
+            #video
+            class="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+            [class.opacity-0]="status() !== 'running'"
+            autoplay
+            playsinline
+            muted
+          ></video>
+          <canvas
+            #overlay
+            class="absolute inset-0 w-full h-full object-cover scale-x-[-1] pointer-events-none"
+          ></canvas>
+          @if (status() === 'running') {
+            <div
+              class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2"
+            >
+              <span class="w-2 h-2 bg-accent-green rounded-full animate-pulse"></span>
+              <span class="text-[10px] font-bold uppercase tracking-tighter">Live</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (status() === 'loading') {
+        <div class="flex items-center gap-3 text-accent-cyan text-sm">
+          <mat-icon fontIcon="sync" class="text-base w-4 h-4 animate-spin"></mat-icon>
+          Loading {{ mode() === 'pinch' ? 'hand' : 'face' }} model…
+        </div>
+      }
+      @if (error()) {
+        <p class="text-accent-rose text-sm">{{ error() }}</p>
+      }
+
+      @if (mode() === 'head') {
+        <label class="text-sm text-[var(--text-1)]">
+          How I click
+          <select (change)="onHeadClick($event)" class="pill-select w-full mt-1 block">
+            <option value="blink" [selected]="headClick() === 'blink'">
+              Eyes closed for 0.5 seconds
+            </option>
+            <option value="jaw" [selected]="headClick() === 'jaw'">Mouth open</option>
+          </select>
+        </label>
+      }
+
+      @if (mode() !== 'mouse') {
+        <label class="text-sm text-[var(--text-1)]">
+          Sensitivity: {{ gain() }}×
+          <input
+            type="range"
+            min="2"
+            max="10"
+            step="0.5"
+            [value]="gain()"
+            (input)="onGain($event)"
+            class="w-full mt-1 accent-[var(--accent-cyan)]"
+          />
+        </label>
+      }
+
+      @if (mode() === 'head') {
+        <div>
+          <p class="text-xs text-[var(--text-2)] mb-1">Eyes closed</p>
+          <div class="meter"><i [style.width.%]="blink() * 100"></i></div>
+        </div>
+        <div>
+          <p class="text-xs text-[var(--text-2)] mb-1">Mouth open</p>
+          <div class="meter"><i [style.width.%]="jaw() * 100"></i></div>
+        </div>
+      }
+      @if (mode() === 'pinch') {
+        <div class="flex items-center gap-3">
+          <span
+            class="px-3 py-1 rounded-full border text-[11px] font-semibold"
+            [class.border-accent-cyan/40]="pinching()"
+            [class.text-accent-cyan]="pinching()"
+            [class.border-white/10]="!pinching()"
+            [class.text-[var(--text-2)]]="!pinching()"
+          >
+            {{ pinching() ? 'Pinch Active' : 'Open Hand' }}
+          </span>
+          <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">
+            distance: {{ ratio() }}
+          </span>
+        </div>
+      }
+
+      @if (mode() !== 'mouse') {
+        <p class="font-[var(--font-mono)] text-[11px] text-[var(--text-2)]">
+          moves: {{ clicks() }}
+        </p>
+        <ul class="space-y-1 text-xs text-[var(--text-2)] font-[var(--font-mono)]">
+          @if (mode() === 'pinch') {
+            <li>· Hold your hand 40–60 cm from the camera with good lighting.</li>
+            <li>· Move the cursor between your fingers, then quick-pinch to drop X or O.</li>
+          } @else {
+            <li>· Sit about half a meter away and look at the screen.</li>
+            <li>
+              · Press “Calibrate” when comfortable, then blink or open your mouth to drop a mark.
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section
+      #stage
+      class="stage flex-1 relative rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center p-6 overflow-hidden"
+    >
+      <div class="flex flex-col items-center gap-6 w-full">
+        <div class="flex items-center gap-3">
+          <span
+            class="px-3 py-1 rounded-full border text-xs font-semibold font-[var(--font-ui)]"
+            [class.border-accent-cyan/40]="!gameOver() && currentPlayer() === 'X'"
+            [class.text-accent-cyan]="!gameOver() && currentPlayer() === 'X'"
+            [class.border-accent-rose/40]="!gameOver() && currentPlayer() === 'O'"
+            [class.text-accent-rose]="!gameOver() && currentPlayer() === 'O'"
+            [class.border-white/10]="gameOver()"
+            [class.text-[var(--text-2)]]="gameOver()"
+          >
+            {{ statusText() }}
+          </span>
+        </div>
+
+        <div class="board" [class.over]="gameOver()">
+          @for (i of cells; track i) {
+            <button
+              type="button"
+              class="cell"
+              [class.x]="board()[i] === 'X'"
+              [class.o]="board()[i] === 'O'"
+              [class.win]="winningCells().has(i)"
+              [disabled]="!!board()[i] || gameOver()"
+              [attr.aria-label]="'Cell ' + (i + 1) + (board()[i] ? ', ' + board()[i] : ', empty')"
+              (click)="place(i)"
+            >
+              {{ board()[i] ?? '' }}
+            </button>
+          }
+        </div>
+
+        <div class="flex items-center gap-4 font-[var(--font-mono)] text-sm text-[var(--text-1)]">
+          <span>X · {{ score().X }}</span>
+          <span>O · {{ score().O }}</span>
+          <button
+            type="button"
+            class="text-xs text-[var(--text-2)] hover:text-[var(--text-0)] underline underline-offset-2 transition-colors cursor-pointer"
+            (click)="resetScore()"
+          >
+            reset score
+          </button>
+        </div>
+      </div>
+
+      <div
+        #cursor
+        class="cursor"
+        [class.down]="pinching()"
+        [class.cursor-x]="currentPlayer() === 'X'"
+        [class.cursor-o]="currentPlayer() === 'O'"
+      ></div>
+    </section>
+  </div>
+</div>

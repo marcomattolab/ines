@@ -26,11 +26,8 @@ describe('voice-intent — normalizeType', () => {
   });
 
   it('maps the new task types', () => {
-    expect(normalizeType('email')).toBe('email');
-    expect(normalizeType('write_email')).toBe('email');
     expect(normalizeType('translate')).toBe('translate');
     expect(normalizeType('create_agent')).toBe('create-agent');
-    expect(normalizeType('summarize_gmail')).toBe('summarize-gmail');
   });
 
   it('maps remember and recall', () => {
@@ -57,10 +54,6 @@ describe('voice-intent — normalizeType', () => {
 });
 
 describe('voice-intent — parseByRules', () => {
-  it('navigates on "apri email"', () => {
-    expect(parseByRules('apri email')).toEqual([{ type: 'navigate', text: 'email' }]);
-  });
-
   it('navigates on "vai su meeting"', () => {
     expect(parseByRules('vai su meeting')).toEqual([{ type: 'navigate', text: 'meeting' }]);
   });
@@ -112,15 +105,6 @@ describe('voice-intent — parseByRules', () => {
 
   // ── New command types ──
 
-  it('drafts an email', () => {
-    expect(parseByRules('scrivi una email a marco')).toEqual([
-      { type: 'email', text: 'scrivi una email a marco' },
-    ]);
-    expect(parseByRules('write an email to John')).toEqual([
-      { type: 'email', text: 'write an email to John' },
-    ]);
-  });
-
   it('translates', () => {
     expect(parseByRules('traduci ciao in francese')).toEqual([
       { type: 'translate', text: 'traduci ciao in francese' },
@@ -133,36 +117,6 @@ describe('voice-intent — parseByRules', () => {
   it('creates an agent', () => {
     expect(parseByRules('crea un agente che scrive codice')).toEqual([
       { type: 'create-agent', text: 'crea un agente che scrive codice' },
-    ]);
-  });
-
-  it('create-agent wins over gmail even when "email" is mentioned', () => {
-    expect(parseByRules('crea un agente che riassume le email')).toEqual([
-      { type: 'create-agent', text: 'crea un agente che riassume le email' },
-    ]);
-  });
-
-  it('summarizes gmail', () => {
-    expect(parseByRules('riassumi le email')).toEqual([
-      { type: 'summarize-gmail', text: 'riassumi le email' },
-    ]);
-    expect(parseByRules('summarize my emails')).toEqual([
-      { type: 'summarize-gmail', text: 'summarize my emails' },
-    ]);
-  });
-
-  it('summarizes gmail with informal phrasing', () => {
-    expect(parseByRules('riassuntomi le ultime 2 email')).toEqual([
-      { type: 'summarize-gmail', text: 'riassuntomi le ultime 2 email' },
-    ]);
-    expect(parseByRules('fammi il riassunto delle ultime due email')).toEqual([
-      { type: 'summarize-gmail', text: 'fammi il riassunto delle ultime due email' },
-    ]);
-  });
-
-  it('gmail wins over recall for "search my emails"', () => {
-    expect(parseByRules('search my emails')).toEqual([
-      { type: 'summarize-gmail', text: 'search my emails' },
     ]);
   });
 
@@ -198,12 +152,6 @@ describe('voice-intent — parseByRules', () => {
     expect(parseByRules('riassumi la giornata')).toEqual([{ type: 'digest', text: '' }]);
     expect(parseByRules('summarize my day')).toEqual([{ type: 'digest', text: '' }]);
     expect(parseByRules('daily digest')).toEqual([{ type: 'digest', text: '' }]);
-  });
-
-  it('gmail still wins over digest for "riassumi le email"', () => {
-    expect(parseByRules('riassumi le email')).toEqual([
-      { type: 'summarize-gmail', text: 'riassumi le email' },
-    ]);
   });
 
   it('sets a reminder when a time is present', () => {

@@ -1,7 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { LlmService } from './llm.service';
 import { JsonParserService } from './json-parser.service';
-import { GmailService, GmailFullEmail, GmailAttachment } from './gmail.service';
 import { TextProcessingService } from './text-processing.service';
 import { DomUtilsService } from './dom-utils.service';
 import { OcrService } from './ocr.service';
@@ -51,7 +50,7 @@ export interface Expense {
   attachmentLink?: string;
   /** All attachments (multi-attachment emails). */
   attachments?: ExpenseAttachment[];
-  /** Raw source message id (Gmail message id / Telegram message id). */
+  /** Raw source message id (Telegram message id). */
   sourceId?: string;
   /** Deduplication key computed from source + amount + date. */
   dedupKey?: string;
@@ -216,7 +215,6 @@ const SYSTEM_QUERY = `You are a personal home-finance assistant. Answer question
 export class ExpenseService {
   private readonly llm = inject(LlmService);
   private readonly jsonParser = inject(JsonParserService);
-  private readonly gmail = inject(GmailService);
   private readonly textProc = inject(TextProcessingService);
   private readonly dom = inject(DomUtilsService);
   private readonly ocr = inject(OcrService);
@@ -226,16 +224,7 @@ export class ExpenseService {
   readonly expenses = signal<Expense[]>([]);
   readonly currency = signal<string>(this.storage.get<string>('ines_expense_currency') ?? '€');
   readonly loading = signal(false);
-  readonly scanning = signal(false);
   readonly categorizing = signal(false);
-  readonly scanLog = signal<string[]>([]);
-  readonly scanProgress = signal(0);
-  readonly scanTotal = signal(0);
-  readonly scanAdded = signal(0);
-  /** Extra Gmail labels to scan (comma-separated), e.g. "scontrini, ricevute". */
-  readonly scanLabels = signal<string>(this.storage.get<string>('ines_expense_scan_labels') ?? '');
-  /** Number of emails to scan manually (0 = all). */
-  readonly scanMax = signal<number>(this.storage.get<number>('ines_expense_scan_max') ?? 0);
   /** Family nuclei (households) used to split expenses. */
   readonly nuclei = signal<Nucleus[]>(this.loadNuclei());
   /** Budgets per nucleus: nucleusId -> (category -> amount). */
@@ -243,12 +232,6 @@ export class ExpenseService {
     this.loadBudgets(),
   );
 
-  // Auto-scan email (periodic background polling)
-  readonly autoScan = signal<boolean>(this.storage.get<boolean>('ines_expense_autoscan') ?? false);
-  readonly autoScanMinutes = signal<number>(
-    this.storage.get<number>('ines_expense_autoscan_minutes') ?? 60,
-  );
-  readonly lastScanAt = signal<number | null>(null);
   /** Expenses detected in the background since the user last opened the tab. */
   readonly unseenCount = signal(0);
 
@@ -257,8 +240,6 @@ export class ExpenseService {
   }
 
   private db: IDBDatabase | null = null;
-  private autoScanTimer: ReturnType<typeof setInterval> | null = null;
-  private autoScanFirstRun: ReturnType<typeof setTimeout> | null = null;
   private initPromise: Promise<void> | null = null;
 
   readonly categories = EXPENSE_CATEGORIES;
@@ -272,7 +253,6 @@ export class ExpenseService {
 
   constructor() {
     void this.load();
-    if (this.autoScan()) this.startAutoScan();
   }
 
   // ── IndexedDB persistence ──
@@ -402,60 +382,6 @@ export class ExpenseService {
 
   // ── Auto-scan email ──
 
-  setAutoScan(enabled: boolean): void {
-    this.autoScan.set(enabled);
-    this.storage.set('ines_expense_autoscan', enabled);
-    if (enabled) {
-      this.startAutoScan();
-    } else {
-      this.stopAutoScan();
-    }
-  }
-
-  setAutoScanMinutes(minutes: number): void {
-    const m = Math.max(5, Math.round(minutes) || 60);
-    this.autoScanMinutes.set(m);
-    this.storage.set('ines_expense_autoscan_minutes', m);
-    if (this.autoScan() && this.autoScanTimer) {
-      this.stopAutoScan();
-      this.startAutoScan();
-    }
-  }
-
-  startAutoScan(): void {
-    this.stopAutoScan();
-    if (!this.autoScan()) return;
-    const intervalMs = this.autoScanMinutes() * 60 * 1000;
-    this.autoScanTimer = setInterval(() => void this.tickAutoScan(), intervalMs);
-    // Kick off a first scan shortly after enabling (model may still be loading).
-    this.autoScanFirstRun = setTimeout(() => void this.tickAutoScan(), 5000);
-  }
-
-  stopAutoScan(): void {
-    if (this.autoScanTimer) {
-      clearInterval(this.autoScanTimer);
-      this.autoScanTimer = null;
-    }
-    if (this.autoScanFirstRun) {
-      clearTimeout(this.autoScanFirstRun);
-      this.autoScanFirstRun = null;
-    }
-  }
-
-  private async tickAutoScan(): Promise<void> {
-    if (!this.llm.isReady() || !this.gmail.configured()) return;
-    if (this.scanning()) return;
-    try {
-      const added = await this.scanEmails(50);
-      this.lastScanAt.set(Date.now());
-      if (added > 0) {
-        this.toast.success(`Auto-scan: ${added} new expenses detected`);
-      }
-    } catch {
-      /* background scan errors are non-fatal */
-    }
-  }
-
   // ── Month helpers (handles bimonthly/annual amortisation) ──
 
   periodMonths(rec: ExpenseRecurrence): number {
@@ -570,17 +496,6 @@ export class ExpenseService {
     this.storage.set('ines_expense_currency', sym);
   }
 
-  setScanLabels(value: string): void {
-    this.scanLabels.set(value);
-    this.storage.set('ines_expense_scan_labels', value);
-  }
-
-  setScanMax(value: number): void {
-    const n = Math.max(0, Math.round(value) || 0);
-    this.scanMax.set(n);
-    this.storage.set('ines_expense_scan_max', n);
-  }
-
   private loadNuclei(): Nucleus[] {
     const saved = this.storage.get<Nucleus[]>('ines_expense_nuclei');
     if (Array.isArray(saved) && saved.length) return saved;
@@ -668,7 +583,7 @@ export class ExpenseService {
   /**
    * Reconciliation across sources: an expense is a duplicate when the same
    * description + amount already exists in the same month (e.g. a Telegram
-   * expense that also arrives as a tracking email).
+   * expense that is re-imported).
    */
   private findDuplicate(parsed: CategorizedExpense): boolean {
     const desc = (parsed.description || '').trim().toLowerCase();
@@ -939,142 +854,11 @@ export class ExpenseService {
     });
   }
 
-  // ── Email scanning ──
-
-  async scanEmails(maxTotal?: number): Promise<number> {
-    if (!this.llm.isReady()) throw new Error('Load the model first!');
-    this.scanning.set(true);
-    this.scanLog.set([]);
-    this.scanProgress.set(0);
-    this.scanTotal.set(0);
-    this.scanAdded.set(0);
-    let added = 0;
-    try {
-      const labels = this.scanLabels()
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      // Without maxTotal the scan walks every Gmail page (whole history).
-      const total = maxTotal ?? Number.MAX_SAFE_INTEGER;
-      const pageSize = 50;
-      // Fast skip: don't re-fetch messages already imported in a previous scan.
-      const knownSourceIds = new Set(
-        this.expenses()
-          .map((e) => e.sourceId)
-          .filter((id): id is string => !!id),
-      );
-      const emails = await this.gmail.fetchFullMessages(pageSize, labels, total, knownSourceIds);
-      this.scanTotal.set(emails.length);
-      this.log(
-        labels.length
-          ? `Fetched ${emails.length} emails (inbox + labels: ${labels.join(', ')}).`
-          : `Fetched ${emails.length} emails from inbox.`,
-      );
-
-      for (const email of emails) {
-        this.scanProgress.update((n) => n + 1);
-        // Self-generated tracking emails are a trace, not a new expense.
-        if (email.subject.trim().startsWith('[Expenses]')) {
-          this.log(`⏭ ${email.subject.slice(0, 40)} — tracking email skipped`);
-          continue;
-        }
-        if (knownSourceIds.has(email.id)) {
-          this.log(`⏭ ${email.subject.slice(0, 40)} — already imported`);
-          continue;
-        }
-        try {
-          const text = await this.emailToText(email);
-          const parsed = await this.categorize(text);
-          if (!parsed || !parsed.isExpense) continue;
-          if (parsed.amount === undefined) continue;
-          const date = parsed.date || new Date().toISOString().slice(0, 10);
-          const dedupKey = this.dedupKeyOf('email', email.id, parsed.amount, date);
-          if (this.expenses().some((e) => e.dedupKey === dedupKey)) continue;
-          if (this.findDuplicate(parsed)) {
-            this.log(`⏭ ${parsed.description} — already present (reconciliation)`);
-            continue;
-          }
-          const attachments: ExpenseAttachment[] = email.attachments.map((a) => ({
-            name: a.filename,
-            link: a.dataUrl,
-          }));
-          const firstAtt = email.attachments[0];
-          await this.add({
-            description: parsed.description || email.subject,
-            vendor: parsed.vendor,
-            category: parsed.category || 'altro',
-            amount: parsed.amount,
-            date,
-            recurrence: parsed.recurrence || 'once',
-            sourceType: 'email',
-            sourceLabel: email.from,
-            sourceLink: `https://mail.google.com/mail/u/0/#inbox/${email.id}`,
-            sourceId: email.id,
-            dedupKey,
-            attachmentName: firstAtt?.filename,
-            attachmentLink: firstAtt?.dataUrl,
-            attachments,
-            note: email.subject,
-            nucleusId: parsed.nucleusId,
-          });
-          added++;
-          this.scanAdded.set(added);
-          this.log(`✓ ${parsed.description} — € ${parsed.amount.toFixed(2)} (${parsed.category})`);
-        } catch (e: any) {
-          this.log(`⚠ ${email.subject.slice(0, 40)} — ${e?.message ?? 'error'}`);
-        }
-      }
-      if (added === 0) this.log('No new expenses detected.');
-      if (added > 0) this.unseenCount.update((n) => n + added);
-      return added;
-    } finally {
-      this.scanning.set(false);
-    }
-  }
-
-  private async emailToText(email: GmailFullEmail): Promise<string> {
-    const parts: string[] = [];
-    parts.push(`Subject: ${email.subject}`);
-    parts.push(`From: ${email.from}`);
-    if (email.labels.length) parts.push(`Gmail labels: ${email.labels.join(', ')}`);
-    if (email.body) parts.push(`Body:\n${email.body.slice(0, 4000)}`);
-    for (const att of email.attachments) {
-      parts.push(`Attachment: ${att.filename} (${att.mimeType})`);
-      const extracted = await this.extractAttachmentDataUrlText(att);
-      if (extracted) parts.push(`Attachment text:\n${extracted.slice(0, 3000)}`);
-    }
-    return parts.join('\n');
-  }
-
-  /** Extracts readable text from a Gmail PDF/DOCX/image attachment (data URL). */
-  private async extractAttachmentDataUrlText(att: GmailAttachment): Promise<string> {
-    try {
-      const ext = att.filename.split('.').pop()?.toLowerCase();
-      const res = await fetch(att.dataUrl);
-      const blob = await res.blob();
-      const file = new File([blob], att.filename, { type: att.mimeType });
-      if (['pdf', 'docx', 'txt', 'md', 'html', 'pptx'].includes(ext || '')) {
-        return await this.textProc.extractTextFromFile(file);
-      }
-      if (att.mimeType.startsWith('image/')) {
-        return await this.ocr.recognize(file);
-      }
-      return '';
-    } catch {
-      return '';
-    }
-  }
-
-  private log(msg: string): void {
-    this.scanLog.update((list) => [...list, msg]);
-  }
-
   // ── Telegram / manual import ──
 
   /**
    * Parses a Telegram-style message (text + optional image/PDF) into an
-   * expense and returns it. Optionally creates/sends a tracking email in
-   * Gmail so the email remains the single source of truth.
+   * expense and returns it. Fully local: the expense is stored on-device only.
    */
   async addFromTelegram(
     text: string,
@@ -1141,67 +925,16 @@ export class ExpenseService {
     return '';
   }
 
-  /** Builds the tracking email body + subject for a given expense. */
-  buildTrackingEmail(expense: Expense): { subject: string; body: string } {
-    const cat = this.categoryDef(expense.category).label;
-    const freq =
-      this.recurrences.find((r) => r.value === expense.recurrence)?.label ?? expense.recurrence;
-    const subject = `[Expenses] ${cat} — ${expense.description}`;
-    const body = [
-      `Expense recorded by INES`,
-      '',
-      `- Category: ${cat}`,
-      `- Household: ${this.nucleusName(expense.nucleusId)}`,
-      `- Description: ${expense.description}`,
-      `- Vendor: ${expense.vendor || '-'}`,
-      `- Amount: ${this.currency()} ${expense.amount.toFixed(2)}`,
-      `- Date: ${expense.date}`,
-      `- Frequency: ${freq}`,
-      `- Source: ${expense.sourceType}`,
-      '',
-      'This email is the source of truth for expense tracking.',
-    ].join('\n');
-    return { subject, body };
-  }
-
-  /** Builds the attachment list for a tracking email from an expense record. */
-  expenseAttachments(expense: Expense): { filename: string; mimeType: string; dataUrl: string }[] {
-    const list = expense.attachments?.length
-      ? expense.attachments
-      : expense.attachmentLink
-        ? [{ name: expense.attachmentName || 'attachment', link: expense.attachmentLink }]
-        : [];
-    return list.map((a) => ({
-      filename: a.name,
-      mimeType: a.link.split(';')[0].split(':')[1] || 'application/octet-stream',
-      dataUrl: a.link,
-    }));
-  }
-
   /**
-   * Full ingestion pipeline for an incoming Telegram message: categorise,
-   * store locally, then create/send the tracking email in Gmail so the email
-   * remains the single source of truth.
+   * Full ingestion pipeline for an incoming Telegram message: categorise and
+   * store locally. No cloud access — INES is a fully edge AI system.
    */
   async ingestTelegram(
     text: string,
     file?: File,
-    emailMode: 'draft' | 'send' | 'none' = 'draft',
     sourceId?: string,
-  ): Promise<{ expense: Expense; parsed: CategorizedExpense; emailed: boolean }> {
-    const { expense, parsed } = await this.addFromTelegram(text, file, sourceId);
-    let emailed = false;
-    if (emailMode !== 'none' && this.gmail.configured()) {
-      const { subject, body } = this.buildTrackingEmail(expense);
-      const attachments = this.expenseAttachments(expense);
-      if (emailMode === 'send') {
-        await this.gmail.sendEmail(subject, body, attachments);
-      } else {
-        await this.gmail.createDraft(subject, body, attachments);
-      }
-      emailed = true;
-    }
-    return { expense, parsed, emailed };
+  ): Promise<{ expense: Expense; parsed: CategorizedExpense }> {
+    return this.addFromTelegram(text, file, sourceId);
   }
 
   async answerQuestion(question: string, year: number, month: number): Promise<string> {

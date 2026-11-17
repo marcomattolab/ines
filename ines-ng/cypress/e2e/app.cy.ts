@@ -42,12 +42,6 @@ describe('INES Application E2E', () => {
 
   // ── Tab Switching ──
 
-  it('should switch to Email tab', () => {
-    cy.get('.tab-btn').contains('Email').click();
-    cy.get('app-email-tab').should('be.visible');
-    cy.contains('Email Assistant').should('be.visible');
-  });
-
   it('should switch to Meeting tab', () => {
     cy.get('.tab-btn').contains('Meeting').click();
     cy.get('app-meeting-tab').should('be.visible');

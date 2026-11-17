@@ -74,15 +74,23 @@ export class MessageBubbleComponent implements AfterViewChecked {
     () => this.speech.speaking() && this.speech.activeId() === this.msgId,
   );
 
-  safeHtml(): SafeHtml {
-    return renderMessageHtml(
+  /**
+   * Memoized rendered HTML. `marked.parse` + `DomSanitizer.sanitize` are the
+   * two most expensive operations in the chat, so they must only run when the
+   * text/role actually change — not on every token streamed by the parent
+   * (computed signals cache their value between change-detection passes).
+   */
+  readonly safeHtml = computed<SafeHtml>(() =>
+    renderMessageHtml(
       this.text(),
       this.role(),
       (html) => this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '',
-    );
-  }
+    ),
+  );
 
   private mermaidP: Promise<any> | null = null;
+  private lastMermaidText = '';
+
   private getMermaid(): Promise<any> {
     if (!this.mermaidP) {
       this.mermaidP = import('mermaid').then((m) => {
@@ -95,6 +103,12 @@ export class MessageBubbleComponent implements AfterViewChecked {
 
   ngAfterViewChecked() {
     if (this.role() !== 'ai' || this.streaming()) return;
+    // Skip the DOM scan unless the text actually changed — this hook runs on
+    // every change-detection pass of the parent list, including while another
+    // message is streaming, and querySelectorAll is not free.
+    const text = this.text();
+    if (text === this.lastMermaidText) return;
+    this.lastMermaidText = text;
     const el = this.contentEl()?.nativeElement;
     if (!el) return;
     const blocks = el.querySelectorAll('code.language-mermaid:not([data-rendered])');

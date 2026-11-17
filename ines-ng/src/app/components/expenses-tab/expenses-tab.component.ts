@@ -8,7 +8,6 @@ import {
   ExpenseRecurrence,
   ExpenseSourceType,
 } from '../../core/services/expense.service';
-import { GmailService } from '../../core/services/gmail.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TelegramService } from '../../core/services/telegram.service';
@@ -16,7 +15,7 @@ import { OcrService } from '../../core/services/ocr.service';
 import { ReminderService } from '../../core/services/reminder.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
-type Panel = 'dashboard' | 'add' | 'scan' | 'ask' | 'schedule' | 'nuclei';
+type Panel = 'dashboard' | 'add' | 'ask' | 'schedule' | 'nuclei';
 
 interface ScheduleItem {
   expense: Expense;
@@ -37,7 +36,6 @@ interface ScheduleItem {
 })
 export class ExpensesTabComponent {
   readonly expenseSvc = inject(ExpenseService);
-  readonly gmail = inject(GmailService);
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   readonly telegram = inject(TelegramService);
@@ -52,7 +50,6 @@ export class ExpensesTabComponent {
   readonly panels: { id: Panel; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'add', label: 'Add', icon: 'add_circle' },
-    { id: 'scan', label: 'Scan Email', icon: 'mail' },
     { id: 'ask', label: 'Ask', icon: 'help' },
     { id: 'schedule', label: 'Schedule', icon: 'event' },
     { id: 'nuclei', label: 'Households', icon: 'groups' },
@@ -77,7 +74,6 @@ export class ExpensesTabComponent {
   readonly tText = signal('');
   readonly tFile = signal<File | null>(null);
   readonly tFileName = signal('');
-  readonly tEmailMode = signal<'draft' | 'send'>('draft');
 
   // Telegram bot (long polling) config
   readonly tBotToken = signal(this.telegram.botToken());
@@ -594,46 +590,15 @@ export class ExpensesTabComponent {
     }
     this.expenseSvc.categorizing.set(true);
     try {
-      const { expense, emailed } = await this.expenseSvc.ingestTelegram(
-        text,
-        this.tFile() ?? undefined,
-        this.tEmailMode(),
-      );
+      const { expense } = await this.expenseSvc.ingestTelegram(text, this.tFile() ?? undefined);
       this.toast.success(`Expense classified: ${expense.description}`);
       this.tText.set('');
       this.tFile.set(null);
       this.tFileName.set('');
-      if (emailed) {
-        this.toast.success(
-          this.tEmailMode() === 'send'
-            ? 'Tracking email sent'
-            : 'Tracking email draft created in Gmail',
-        );
-      }
     } catch (e: any) {
       this.toast.error(e?.message ?? 'Error during classification');
     } finally {
       this.expenseSvc.categorizing.set(false);
-    }
-  }
-
-  async trackExpense(expense: Expense, mode: 'draft' | 'send'): Promise<void> {
-    if (!this.gmail.configured()) {
-      this.toast.error('Configure Gmail (Client ID) before creating tracking emails');
-      return;
-    }
-    try {
-      const { subject, body } = this.expenseSvc.buildTrackingEmail(expense);
-      const attachments = this.expenseSvc.expenseAttachments(expense);
-      if (mode === 'send') {
-        await this.gmail.sendEmail(subject, body, attachments);
-        this.toast.success('Tracking email sent');
-      } else {
-        await this.gmail.createDraft(subject, body, attachments);
-        this.toast.success('Draft created in Gmail');
-      }
-    } catch (e: any) {
-      this.toast.error(e?.message ?? 'Gmail error');
     }
   }
 
@@ -666,42 +631,17 @@ export class ExpensesTabComponent {
       return;
     }
     try {
-      const { expense, emailed } = await this.expenseSvc.ingestTelegram(
-        item.text,
-        item.file,
-        'draft',
-        item.id,
-      );
+      const { expense } = await this.expenseSvc.ingestTelegram(item.text, item.file, item.id);
       this.toast.success(`Telegram → ${expense.description}`);
       try {
         const cur = this.expenseSvc.currency();
-        const msg = emailed
-          ? `✓ Expense recorded: ${expense.description} (${cur} ${expense.amount.toFixed(2)}) — email draft created`
-          : `✓ Expense recorded: ${expense.description} (${cur} ${expense.amount.toFixed(2)})`;
+        const msg = `✓ Expense recorded: ${expense.description} (${cur} ${expense.amount.toFixed(2)})`;
         await this.telegram.sendMessage(msg);
       } catch {
         /* confirmation message is best-effort */
       }
     } catch (e: any) {
       this.toast.error(e?.message ?? 'Error processing Telegram');
-    }
-  }
-
-  scanLimit(): number | undefined {
-    const n = this.expenseSvc.scanMax();
-    return n > 0 ? n : undefined;
-  }
-
-  async scanEmails(): Promise<void> {
-    if (!this.gmail.configured()) {
-      this.toast.error('Configure Gmail (Client ID) before scanning emails');
-      return;
-    }
-    try {
-      const added = await this.expenseSvc.scanEmails(this.scanLimit());
-      this.toast.success(added > 0 ? `${added} expenses detected` : 'No new expenses');
-    } catch (e: any) {
-      this.toast.error(e?.message ?? 'Email scan error');
     }
   }
 

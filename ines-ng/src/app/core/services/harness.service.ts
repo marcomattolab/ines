@@ -8,7 +8,7 @@ import { VoiceTaskType } from './voice-intent';
  * everything else is a peripheral/tool the CPU can call:
  *   - answer / translate         → language peripherals
  *   - todo / remember / recall   → memory & task management (filesystem)
- *   - email / gmail / navigate   → I/O and integrations
+ *   - navigate                   → UI navigation
  *   - create-agent               → spawning new programs (agents)
  */
 
@@ -43,13 +43,7 @@ export const TOOL_CATALOG: ToolDef[] = [
     label: 'Open section',
     icon: 'open_in_new',
     description:
-      'open a section; text must be exactly one of: chat, email, meeting, translate, todo, coding, agents, vision, learning, presentation, project',
-  },
-  {
-    type: 'email',
-    label: 'Draft email',
-    icon: 'mail',
-    description: 'draft an email (text = what the email should say and to whom)',
+      'open a section; text must be exactly one of: chat, meeting, translate, todo, coding, agents, vision, learning, presentation, project',
   },
   {
     type: 'translate',
@@ -62,12 +56,6 @@ export const TOOL_CATALOG: ToolDef[] = [
     label: 'Create agent',
     icon: 'smart_toy',
     description: 'create an AI agent (text = what the agent should do)',
-  },
-  {
-    type: 'summarize-gmail',
-    label: 'Summarize Gmail',
-    icon: 'mark_email_read',
-    description: 'summarize the user Gmail inbox (text = "")',
   },
   {
     type: 'remember',
@@ -85,7 +73,7 @@ export const TOOL_CATALOG: ToolDef[] = [
     type: 'digest',
     label: 'Daily digest',
     icon: 'today',
-    description: 'summarize the day from tasks, notes and recent emails (text = "")',
+    description: 'summarize the day from tasks and notes (text = "")',
   },
   {
     type: 'reminder',

@@ -136,9 +136,6 @@
       <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
     }
     <app-chat-tab [hidden]="activeTab() !== 'chat'" />
-    @defer (when activeTab() === 'email'; prefetch on idle) {
-      <app-email-tab [hidden]="activeTab() !== 'email'" />
-    }
     @defer (when activeTab() === 'meeting'; prefetch on idle) {
       <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
     }

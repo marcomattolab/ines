@@ -5,7 +5,7 @@
       <div>
         <div class="panel-title text-white">Home Expenses</div>
         <div class="panel-desc text-zinc-400">
-          Household expense dashboard · local agent for email, PDF and Telegram
+          Household expense dashboard · local agent for PDF and Telegram
         </div>
       </div>
     </div>
@@ -315,7 +315,7 @@
               }
               @if (catTotals().length === 0) {
                 <div class="col-span-full text-center text-sm text-[var(--text-2)] py-8">
-                  No expenses this month. Use <b>Add</b> or <b>Scan Email</b>.
+                  No expenses this month. Use <b>Add</b> to record one.
                 </div>
               }
             </div>
@@ -539,13 +539,6 @@
                       }
                       <button class="icon-btn" (click)="editExpense(item.expense)" title="Edit">
                         <mat-icon fontIcon="edit" class="scale-75"></mat-icon>
-                      </button>
-                      <button
-                        class="icon-btn"
-                        (click)="trackExpense(item.expense, 'draft')"
-                        title="Create tracking email draft"
-                      >
-                        <mat-icon fontIcon="drafts" class="scale-75"></mat-icon>
                       </button>
                       <button
                         class="icon-btn text-rose-400"
@@ -786,13 +779,12 @@
                   <span>Source</span>
                   <select class="input" [(ngModel)]="mSourceType">
                     <option value="manual">Manual</option>
-                    <option value="email">Email</option>
                     <option value="telegram">Telegram</option>
                   </select>
                 </label>
                 <label class="field">
                   <span>Source label</span>
-                  <input class="input" [(ngModel)]="mSourceLabel" placeholder="Email / Telegram" />
+                  <input class="input" [(ngModel)]="mSourceLabel" placeholder="Telegram" />
                 </label>
                 <label class="field">
                   <span>Source link</span>
@@ -831,7 +823,7 @@
                 class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
               >
                 Paste the message (text) and/or attach an image or PDF. The agent categorizes the
-                expense and creates a tracking email in Gmail (source of truth).
+                expense and stores it locally on your device.
               </p>
               <label class="field">
                 <span>Telegram message</span>
@@ -856,20 +848,8 @@
                 </div>
               }
               <div class="flex items-center gap-3 mt-3">
-                <label
-                  class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer"
-                >
-                  <input type="radio" name="emailMode" value="draft" [(ngModel)]="tEmailMode" />
-                  Save draft
-                </label>
-                <label
-                  class="text-xs text-[var(--text-1)] flex items-center gap-1.5 cursor-pointer"
-                >
-                  <input type="radio" name="emailMode" value="send" [(ngModel)]="tEmailMode" />
-                  Send email
-                </label>
                 <span class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)]">
-                  Gmail: {{ gmail.configured() ? 'configured' : 'not configured' }}
+                  Fully on-device — nothing is sent to any email provider.
                 </span>
               </div>
               <button
@@ -930,121 +910,6 @@
                 }
               </div>
             </div>
-          </div>
-        </div>
-      }
-
-      @case ('scan') {
-        <div class="flex-1 overflow-y-auto px-5 py-5">
-          <div class="form-card max-w-2xl">
-            <div class="form-card-title">
-              <mat-icon fontIcon="mail" class="text-sm w-4 h-4 text-emerald-300"></mat-icon>
-              Email scan (Gmail)
-            </div>
-            <p
-              class="text-[11px] text-[var(--text-2)] font-[var(--font-mono)] leading-relaxed mb-3"
-            >
-              The agent reads the emails in your inbox, extracts text and attachments (PDFs), uses
-              Gmail labels as hints and classifies expenses automatically. Detected expenses are
-              saved locally.
-            </p>
-            <label class="field mb-3">
-              <span>Gmail labels to scan (comma-separated)</span>
-              <input
-                class="input"
-                [ngModel]="expenseSvc.scanLabels()"
-                (ngModelChange)="expenseSvc.setScanLabels($event)"
-                placeholder="receipts, invoices, bills"
-              />
-            </label>
-            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
-              Beyond the inbox: emails archived under these labels (e.g. <b>receipts</b>) are
-              included in the scan.
-            </p>
-            <label class="field mb-3">
-              <span>Number of emails to scan (0 = all)</span>
-              <input
-                class="input w-32"
-                type="number"
-                min="0"
-                step="1"
-                [value]="expenseSvc.scanMax()"
-                (change)="expenseSvc.setScanMax($any($event.target).valueAsNumber)"
-              />
-            </label>
-            <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mb-3">
-              Set a number to scan smaller batches (recommended to stay under the Gmail quota).
-              <b>0</b> = scan all emails. Auto-scan stays at 50 per cycle.
-            </p>
-            <div class="flex items-center gap-3 flex-wrap">
-              <button class="primary-btn" (click)="scanEmails()" [disabled]="expenseSvc.scanning()">
-                @if (expenseSvc.scanning()) {
-                  Scanning…
-                } @else {
-                  Scan emails
-                }
-              </button>
-              @if (expenseSvc.scanning() && expenseSvc.scanTotal() > 0) {
-                <span class="text-sm font-[var(--font-mono)] text-emerald-300">
-                  {{ expenseSvc.scanProgress() }}/{{ expenseSvc.scanTotal() }} · new
-                  {{ expenseSvc.scanAdded() }}
-                </span>
-              }
-              <span class="text-xs text-[var(--text-2)]">
-                Gmail status: <b class="text-[var(--text-1)]">{{ gmail.status() }}</b>
-              </span>
-            </div>
-            @if (gmail.status() === 'unconfigured') {
-              <div class="mt-3 text-xs text-amber-300">
-                Configure the Google OAuth Client ID from settings (Voice/Settings tab) to use email
-                scanning.
-              </div>
-            }
-
-            <div class="border-t border-[var(--border)] mt-4 pt-4">
-              <div class="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
-                  id="autoscan"
-                  [checked]="expenseSvc.autoScan()"
-                  (change)="expenseSvc.setAutoScan($any($event.target).checked)"
-                  class="cursor-pointer"
-                />
-                <label for="autoscan" class="text-xs text-[var(--text-1)] cursor-pointer">
-                  Periodic automatic scan
-                </label>
-              </div>
-              @if (expenseSvc.autoScan()) {
-                <div class="flex items-end gap-3 flex-wrap">
-                  <label class="field">
-                    <span>Every (minutes)</span>
-                    <input
-                      class="input w-28"
-                      type="number"
-                      min="5"
-                      step="5"
-                      [value]="expenseSvc.autoScanMinutes()"
-                      (change)="expenseSvc.setAutoScanMinutes($any($event.target).valueAsNumber)"
-                    />
-                  </label>
-                  <span class="text-[11px] font-[var(--font-mono)] text-[var(--text-2)] pb-1">
-                    @if (expenseSvc.lastScanAt()) {
-                      Last scan: {{ formatTime(expenseSvc.lastScanAt()!) }}
-                    } @else {
-                      No automatic scan run yet
-                    }
-                  </span>
-                </div>
-                <p class="text-[10px] text-[var(--text-2)] font-[var(--font-mono)] mt-2">
-                  Requires a loaded model and configured Gmail; otherwise the attempt is silently
-                  skipped.
-                </p>
-              }
-            </div>
-
-            @if (expenseSvc.scanLog().length) {
-              <pre class="scan-log mt-4">{{ expenseSvc.scanLog().join('\n') }}</pre>
-            }
           </div>
         </div>
       }

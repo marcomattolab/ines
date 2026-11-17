@@ -44,78 +44,12 @@
         ></mat-icon>
         Wake
       </app-button>
-      <app-button variant="secondary" size="sm" (onClick)="showSettings.set(!showSettings())">
-        <mat-icon fontIcon="settings" class="text-sm w-3.5 h-3.5"></mat-icon>
-      </app-button>
-      <app-button variant="danger" size="sm" (onClick)="assistant.clear()">
+      <app-button variant="secondary" size="sm" (onClick)="assistant.clear()">
         <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
         Clear
       </app-button>
     </div>
   </div>
-
-  <!-- Settings -->
-  @if (showSettings()) {
-    <div
-      class="mx-6 mt-4 bg-[var(--bg-2)] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3"
-    >
-      <div class="text-[10px] font-mono uppercase tracking-widest text-[var(--text-2)]">
-        Gmail connection
-      </div>
-      <div class="flex items-center gap-2">
-        <input
-          class="flex-1 bg-[var(--bg-3)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--text-0)] outline-none placeholder:text-[var(--text-2)] font-mono"
-          placeholder="Google OAuth Client ID (…apps.googleusercontent.com)"
-          [ngModel]="gmailClientId()"
-          (ngModelChange)="gmailClientId.set($event)"
-        />
-        <app-button variant="primary" size="sm" (onClick)="saveGmailClientId()">
-          <mat-icon fontIcon="save" class="text-sm w-3.5 h-3.5"></mat-icon>
-          Save
-        </app-button>
-        <app-button
-          variant="secondary"
-          size="sm"
-          [disabled]="gmail.connecting()"
-          (onClick)="testGmail()"
-        >
-          <mat-icon
-            [fontIcon]="gmail.connecting() ? 'hourglass_empty' : 'cable'"
-            [class.animate-spin]="gmail.connecting()"
-            class="text-sm w-3.5 h-3.5"
-          ></mat-icon>
-          Test
-        </app-button>
-      </div>
-      <div class="text-[11px] text-[var(--text-2)] leading-relaxed">
-        @switch (gmail.status()) {
-          @case ('ok') {
-            <span class="text-accent-green">✓ Connected. Say “summarize my emails”.</span>
-          }
-          @case ('connecting') {
-            <span class="text-accent-blue">Connecting…</span>
-          }
-          @case ('error') {
-            <span class="text-accent-rose">✗ Failed.</span>
-          }
-          @case ('configured') {
-            <span class="text-accent-green">✓ Client ID saved — press “Test”.</span>
-          }
-          @default {
-            <span class="text-accent-amber">Not configured yet.</span>
-          }
-        }
-        @if (gmail.lastError()) {
-          <div class="mt-1.5 text-accent-rose break-words">{{ gmail.lastError() }}</div>
-        }
-        <div class="mt-1.5">
-          Setup: in Google Cloud Console create an OAuth Client ID (type “Web application”), add
-          <span class="text-[var(--text-0)] font-mono">http://localhost:4200</span> to Authorized
-          JavaScript origins, and enable the Gmail API.
-        </div>
-      </div>
-    </div>
-  }
 
   <div class="flex-1 overflow-y-auto flex flex-col items-center gap-6 px-6 py-8">
     <!-- Mic orb -->
@@ -276,10 +210,9 @@
 
     <!-- Help hint -->
     <div class="text-[11px] font-mono text-[var(--text-2)] text-center max-w-md leading-relaxed">
-      Try: “add call the client, then prepare the slides” · “open email” · “what are my tasks?” ·
-      “draft an email to John” · “translate hello into French” · “summarize my emails” · “remember
-      that the meeting is on Monday” · “search my brain for the project” · “summarize my day” ·
-      “remind me to call John in 1 hour”
+      Try: “add call the client, then prepare the slides” · “open meeting” · “what are my tasks?” ·
+      “translate hello into French” · “remember that the meeting is on Monday” · “search my brain
+      for the project” · “summarize my day” · “remind me to call John in 1 hour”
     </div>
   </div>
 </div>

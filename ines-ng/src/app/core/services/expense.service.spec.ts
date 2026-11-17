@@ -9,7 +9,6 @@ import { TestBed } from '@angular/core/testing';
 import { ExpenseService, Expense } from './expense.service';
 import { LlmService } from './llm.service';
 import { JsonParserService } from './json-parser.service';
-import { GmailService } from './gmail.service';
 import { TextProcessingService } from './text-processing.service';
 import { DomUtilsService } from './dom-utils.service';
 import { OcrService } from './ocr.service';
@@ -39,7 +38,6 @@ describe('ExpenseService — month amortisation', () => {
         ExpenseService,
         { provide: LlmService, useValue: {} },
         { provide: JsonParserService, useValue: {} },
-        { provide: GmailService, useValue: {} },
         { provide: TextProcessingService, useValue: {} },
         { provide: DomUtilsService, useValue: {} },
         { provide: OcrService, useValue: {} },
@@ -186,7 +184,6 @@ describe('ExpenseService — CSV export', () => {
         ExpenseService,
         { provide: LlmService, useValue: {} },
         { provide: JsonParserService, useValue: {} },
-        { provide: GmailService, useValue: {} },
         { provide: TextProcessingService, useValue: {} },
         { provide: DomUtilsService, useValue: {} },
         { provide: OcrService, useValue: {} },

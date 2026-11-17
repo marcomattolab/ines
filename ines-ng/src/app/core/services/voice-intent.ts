@@ -11,10 +11,8 @@ export type VoiceTaskType =
   | 'todo'
   | 'navigate'
   | 'list-todos'
-  | 'email'
   | 'translate'
   | 'create-agent'
-  | 'summarize-gmail'
   | 'remember'
   | 'recall'
   | 'digest'
@@ -30,7 +28,6 @@ export interface ParsedTask {
 export const TAB_LABELS: Record<string, string> = {
   assistant: 'Voice',
   chat: 'Chat',
-  email: 'Email',
   meeting: 'Meeting',
   translate: 'Translate',
   todo: 'Todo',
@@ -64,26 +61,11 @@ export function normalizeType(type?: string): VoiceTaskType | null {
   if (['listtodos', 'list', 'readtodos', 'readtasks', 'todos', 'listtasks'].includes(v)) {
     return 'list-todos';
   }
-  if (['email', 'draftemail', 'composeemail', 'writeemail', 'createemail'].includes(v)) {
-    return 'email';
-  }
   if (['translate', 'translation', 'translateto'].includes(v)) {
     return 'translate';
   }
   if (['createagent', 'newagent', 'makeagent', 'agent'].includes(v)) {
     return 'create-agent';
-  }
-  if (
-    [
-      'summarizegmail',
-      'gmail',
-      'gmailemail',
-      'emailsummary',
-      'reademails',
-      'summarizeemails',
-    ].includes(v)
-  ) {
-    return 'summarize-gmail';
   }
   if (['remember', 'note', 'capture', 'savenote', 'addnote', 'memorize', 'memo'].includes(v)) {
     return 'remember';
@@ -108,7 +90,6 @@ export function normalizeType(type?: string): VoiceTaskType | null {
 }
 
 const TAB_KEYWORDS: { pattern: RegExp; tab: string }[] = [
-  { pattern: /\b(email|mail|posta|inbox)\b/i, tab: 'email' },
   { pattern: /\b(meeting|meetings|riunione|riunioni|riunione)\b/i, tab: 'meeting' },
   { pattern: /\b(translate|translation|traduttore|traduci|traduzione)\b/i, tab: 'translate' },
   { pattern: /\b(todo|todos|compiti|attivita|attività|task)\b/i, tab: 'todo' },
@@ -135,14 +116,6 @@ const TODO_RE =
 
 const CREATE_AGENT_RE =
   /\b(crea|create|new|nuovo|make|aggiungi)\s+(un\s+|an?\s+|a\s+)?(agente|agent|assistente personalizzato)\b/i;
-
-const GMAIL_VERB_RE =
-  /\b(riassumi|riassumimi|riassuntomi|riassunto|riepiloga|riepilogo|sintetizza|sintesi|sommario|summarize|summarise|summary|leggi|read|check|controlla|search|cerca|find|trova|dimmi|fammi|quali|what)\b/i;
-
-const GMAIL_OBJ_RE = /\b(email|e-mail|emails|mail|gmail|posta|inbox)\b/i;
-
-const EMAIL_DRAFT_RE =
-  /\b(scrivi|scrivimi|write|compose|draft|bozza|prepara|redigi)\s+(un'?|una\s+|una|an?\s+|a\s+|the\s+)?(email|e-mail|mail|message)\b/i;
 
 const TRANSLATE_RE = /\b(traduci|translate|traduzione|translate\s+this)\b/i;
 
@@ -202,10 +175,6 @@ export function parseByRules(text: string): ParsedTask[] {
     return [{ type: 'create-agent', text: clean }];
   }
 
-  if (GMAIL_VERB_RE.test(clean) && GMAIL_OBJ_RE.test(clean)) {
-    return [{ type: 'summarize-gmail', text: clean }];
-  }
-
   if (DIGEST_RE.test(clean)) {
     return [{ type: 'digest', text: '' }];
   }
@@ -213,10 +182,6 @@ export function parseByRules(text: string): ParsedTask[] {
   if (OPEN_RE.test(clean)) {
     const tab = matchTab(clean);
     if (tab) return [{ type: 'navigate', text: tab }];
-  }
-
-  if (EMAIL_DRAFT_RE.test(clean)) {
-    return [{ type: 'email', text: clean }];
   }
 
   if (TRANSLATE_RE.test(clean)) {

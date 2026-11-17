@@ -6,7 +6,6 @@ import { JsonParserService } from './json-parser.service';
 import { ToastService } from './toast.service';
 import { KnowledgeManagerService } from './knowledge-manager.service';
 import { AgentService } from './agent.service';
-import { GmailService } from './gmail.service';
 import { SecondBrainService } from './second-brain.service';
 import { ReminderService } from './reminder.service';
 import { parseReminder } from './reminder-parse';
@@ -44,11 +43,6 @@ const SYSTEM_ANSWER = `You are INES, a friendly, precise voice assistant.
 Answer in the same language as the user. Be concise and conversational, suitable to be read aloud.
 Avoid markdown, bullet lists, code blocks or emojis unless strictly requested.`;
 
-const SYSTEM_EMAIL_DRAFT = `You are INES, a professional email writing assistant.
-Write a concise, clear email based on the user's spoken request.
-Output ONLY the email body — no subject line, no "Subject:", no preamble or explanation.
-Use the same language as the user.`;
-
 const SYSTEM_TRANSLATE = `You are a translator. Translate the user's text into the language they requested
 (e.g. "in francese" means French, "in inglese" means English, "to spanish" means Spanish).
 Output ONLY the translation, nothing else.`;
@@ -58,15 +52,9 @@ Respond ONLY with a JSON object (no markdown, no backticks) in this exact format
 {"name":"Short agent name","description":"One sentence describing what the agent does","systemPrompt":"Detailed system prompt instructing the agent how to behave"}
 Use the same language as the user.`;
 
-const SYSTEM_DIGEST = `You are INES. Provide the user's daily digest from their tasks, notes, and (if present) recent emails.
+const SYSTEM_DIGEST = `You are INES. Provide the user's daily digest from their tasks and notes.
 Summarize concisely: what is on the agenda, the key notes, and any action items.
 Suitable to be read aloud. Answer in the same language as the user. Keep it under 150 words.`;
-
-const SYSTEM_GMAIL = `You are INES, a Gmail assistant with access to the user's inbox emails (sender, subject and a short preview for each one).
-Fulfill the user's request precisely:
-- If they ask for a summary, summarize the most important emails, senders and action items.
-- If they ask to categorize, group or count emails by category, group them into logical categories (e.g. by sender domain or type: Google, GitHub, social, newsletters, personal, work, etc.) and show a markdown table with a "Category" column and the "Number of emails" for each, plus the top senders.
-Use the same language as the user. Be structured and complete. The emails are provided below — never claim you cannot access them.`;
 
 @Injectable({ providedIn: 'root' })
 export class VoiceAssistantService {
@@ -77,7 +65,6 @@ export class VoiceAssistantService {
   readonly toast = inject(ToastService);
   readonly km = inject(KnowledgeManagerService);
   readonly agents = inject(AgentService);
-  readonly gmail = inject(GmailService);
   readonly brain = inject(SecondBrainService);
   readonly reminders = inject(ReminderService);
   private readonly storage = inject(StorageService);
@@ -106,8 +93,6 @@ export class VoiceAssistantService {
 
   /** Set to a tab id when INES must navigate; consumed by AppComponent. */
   readonly requestedTab = signal<string | null>(null);
-  /** Email draft produced by voice, consumed by EmailTabComponent. */
-  readonly emailDraft = signal<string | null>(null);
 
   private history: ChatMessage[] = [];
   private speechQueue: string[] = [];
@@ -170,7 +155,6 @@ export class VoiceAssistantService {
     this.tasks.set([]);
     this.log.set([]);
     this.transcript.set('');
-    this.emailDraft.set(null);
     this.history = [];
     this.speechQueue = [];
   }
@@ -219,8 +203,7 @@ export class VoiceAssistantService {
           .map((t) => ({ type: normalizeType(t?.type), text: String(t?.text ?? '') }))
           .filter(
             (t): t is ParsedTask =>
-              t.type !== null &&
-              (t.text.trim().length > 0 || t.type === 'list-todos' || t.type === 'summarize-gmail'),
+              t.type !== null && (t.text.trim().length > 0 || t.type === 'list-todos'),
           );
       } catch {
         /* fall through to rules */
@@ -286,17 +269,11 @@ export class VoiceAssistantService {
       case 'answer':
         return this.answerQuestion(task.text);
 
-      case 'email':
-        return this.draftEmail(task.text);
-
       case 'translate':
         return this.translate(task.text);
 
       case 'create-agent':
         return this.createAgent(task.text);
-
-      case 'summarize-gmail':
-        return this.summarizeGmail(task.text);
 
       case 'remember':
         return this.remember(task.text);
@@ -357,21 +334,6 @@ export class VoiceAssistantService {
     return answer;
   }
 
-  private async draftEmail(description: string): Promise<string> {
-    if (!this.llm.isReady()) {
-      throw new Error('Load the model to draft emails.');
-    }
-    let draft = '';
-    await this.llm.generate(SYSTEM_EMAIL_DRAFT, description, [], (_, __, full) => {
-      draft = full;
-    });
-    this.emailDraft.set(draft.trim());
-    this.requestedTab.set('email');
-    this.addLog('ai', `✉ Email drafted:\n${draft}`);
-    this.enqueueSpeech('Email drafted and ready in the Email section.');
-    return 'Email draft ready';
-  }
-
   private async translate(text: string): Promise<string> {
     if (!this.llm.isReady()) {
       throw new Error('Load the model to translate.');
@@ -413,58 +375,6 @@ export class VoiceAssistantService {
     return `Agent "${agent.name}" created`;
   }
 
-  private async summarizeGmail(text = ''): Promise<string> {
-    if (!this.gmail.configured()) {
-      throw new Error(
-        'Gmail is not configured. Open INES Voice settings and enter your Google OAuth Client ID.',
-      );
-    }
-    const categorize = this.isCategorizeRequest(text);
-    const emails = await this.gmail.fetchInbox(this.extractEmailCount(text));
-    if (emails.length === 0) {
-      this.addLog('ai', 'No recent inbox emails found');
-      this.enqueueSpeech('No recent emails in your inbox.');
-      return 'No emails found';
-    }
-    if (!this.llm.isReady()) {
-      throw new Error('Load the model to summarize emails.');
-    }
-    const joined = emails
-      .map((e) => `From: ${e.from}\nSubject: ${e.subject}\n${e.snippet}`)
-      .join('\n\n---\n\n');
-    const request = text.trim() || 'Summarize my recent inbox emails.';
-    let summary = '';
-    await this.llm.generate(
-      SYSTEM_GMAIL,
-      `User request: ${request}\n\nInbox emails:\n${joined}`,
-      [],
-      (_, __, full) => {
-        summary = full;
-      },
-    );
-    this.addLog('ai', summary);
-    this.enqueueSpeech(summary);
-    return categorize
-      ? `Categorized ${emails.length} emails`
-      : `Summarized ${emails.length} emails`;
-  }
-
-  private isCategorizeRequest(text: string): boolean {
-    return /(categor|classif|group|table|tabella|categoria|categorie|count|conta|quanti|quante)/i.test(
-      text,
-    );
-  }
-
-  private extractEmailCount(text: string): number {
-    if (/\b(all|tutti|tutte|every|categor|table|tabella)\b/i.test(text)) return 50;
-    const m = text.match(/(\d+)\s*(?:email|e-?mail|mail|messaggi|messages)\b/i);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n >= 1 && n <= 50) return n;
-    }
-    return 25;
-  }
-
   private remember(text: string): string {
     const clean = text
       .replace(
@@ -498,14 +408,6 @@ export class VoiceAssistantService {
 
     const todos = this.todos.todos().filter((t) => !t.done);
     const notes = this.brain.notes().slice(0, 10);
-    let emails: { id: string; from: string; subject: string; snippet: string }[] = [];
-    if (this.gmail.configured()) {
-      try {
-        emails = await this.gmail.fetchInbox(5);
-      } catch {
-        /* Gmail is optional in the digest */
-      }
-    }
 
     const lines: string[] = [];
     lines.push(`## Tasks (${todos.length})`);
@@ -514,10 +416,6 @@ export class VoiceAssistantService {
     );
     lines.push(`## Notes (${notes.length})`);
     notes.forEach((n) => lines.push(`- ${n.text}`));
-    if (emails.length) {
-      lines.push(`## Recent emails (${emails.length})`);
-      emails.forEach((e) => lines.push(`- ${e.from}: ${e.subject}`));
-    }
 
     let summary = '';
     await this.llm.generate(SYSTEM_DIGEST, lines.join('\n'), [], (_, __, full) => {

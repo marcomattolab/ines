@@ -6,7 +6,6 @@ import { LearningTabComponent } from './components/learning-tab/learning-tab.com
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { InfoModalComponent } from './components/info-modal/info-modal.component';
 import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
-import { EmailTabComponent } from './components/email-tab/email-tab.component';
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
@@ -38,7 +37,6 @@ export type Tab =
   | 'assistant'
   | 'chat'
   | 'brain'
-  | 'email'
   | 'meeting'
   | 'translate'
   | 'todo'
@@ -136,16 +134,6 @@ const TABS: TabDef[] = [
     categoryLabel: 'Productivity',
     description: 'Expense tracking, budgets & receipt OCR',
     keywords: ['expenses', 'spese', 'money', 'soldi', 'budget', 'receipts', 'scontrini', 'finance'],
-  },
-  {
-    id: 'email',
-    icon: 'mail',
-    label: 'Email',
-    color: 'var(--tab-email)',
-    category: 'productivity',
-    categoryLabel: 'Productivity',
-    description: 'Gmail inbox management & smart digests',
-    keywords: ['email', 'mail', 'posta', 'gmail', 'inbox', 'messages'],
   },
   {
     id: 'meeting',
@@ -323,7 +311,6 @@ const TABS: TabDef[] = [
     LoaderOverlayComponent,
     InfoModalComponent,
     ChatTabComponent,
-    EmailTabComponent,
     MeetingTabComponent,
     TranslateTabComponent,
     TodoTabComponent,

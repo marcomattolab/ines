@@ -250,7 +250,11 @@ export class TicTacToeTabComponent implements OnDestroy {
     const size = Math.hypot(hand[0].x - hand[9].x, hand[0].y - hand[9].y) || 1;
     const ratio = Math.hypot(thumb.x - index.x, thumb.y - index.y) / size;
     this.ratio.set(Math.round(ratio * 100) / 100);
-    const on = this.pinchOn ? ratio < 0.42 : ratio < 0.28;
+    // Hysteresis with more forgiving thresholds: pinch must close clearly to
+    // start (0.32) and open clearly to release (0.46). This avoids the
+    // previous behaviour where a quick pinch never registered because the
+    // distance ratio hovered around the single 0.28 threshold.
+    const on = this.pinchOn ? ratio < 0.46 : ratio < 0.32;
 
     const tx = clamp((1 - (thumb.x + index.x) / 2 - 0.12) / 0.76);
     const ty = clamp(((thumb.y + index.y) / 2 - 0.12) / 0.76);
@@ -264,8 +268,10 @@ export class TicTacToeTabComponent implements OnDestroy {
     const now = performance.now();
     if (on && !this.pinchOn) {
       this.press = { t: now, x: this.pos.x, y: this.pos.y };
-    } else if (!on && this.pinchOn && now - this.press.t < 450) {
-      this.clickAt(rect, this.press.x, this.press.y);
+    } else if (!on && this.pinchOn && now - this.press.t < 600) {
+      // Click at the *release* position, so the cursor can be moved while
+      // pinching and still drop the mark where it ends up.
+      this.clickAt(rect, this.pos.x, this.pos.y);
     }
     this.pinchOn = on;
     this.pinching.set(on);
@@ -321,7 +327,11 @@ export class TicTacToeTabComponent implements OnDestroy {
   private clickAt(rect: DOMRect, x: number, y: number): void {
     const px = rect.left + x * rect.width;
     const py = rect.top + y * rect.height;
-    const target = document.elementFromPoint(px, py)?.closest<HTMLElement>('button');
+    // Prefer the game cell itself; fall back to any button under the cursor.
+    // Disabled (already-filled) cells are intentionally ignored by .click().
+    const el = document.elementFromPoint(px, py);
+    const target =
+      el?.closest<HTMLElement>('button.cell') ?? el?.closest<HTMLElement>('button') ?? null;
     if (!target) return;
     target.click();
     this.clicks.update((n) => n + 1);

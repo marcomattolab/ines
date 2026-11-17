@@ -35,11 +35,11 @@ describe('SettingsService', () => {
   });
 
   it('updates tab ordering and resets settings', () => {
-    service.setOrder(['todo', 'chat', 'email']);
-    expect(service.tabOrder()).toEqual(['todo', 'chat', 'email']);
+    service.setOrder(['todo', 'chat', 'meeting']);
+    expect(service.tabOrder()).toEqual(['todo', 'chat', 'meeting']);
 
-    service.toggle('email');
-    expect(service.hiddenTabs()).toContain('email');
+    service.toggle('meeting');
+    expect(service.hiddenTabs()).toContain('meeting');
 
     service.reset();
     expect(service.tabOrder()).toEqual([]);

@@ -43,7 +43,7 @@ export const TOOL_CATALOG: ToolDef[] = [
     label: 'Open section',
     icon: 'open_in_new',
     description:
-      'open a section; text must be exactly one of: chat, meeting, translate, todo, coding, agents, vision, learning, presentation, project',
+      'open a section; text must be exactly one of: chat, meeting, translate, todo, coding, agents, vision, learning, project',
   },
   {
     type: 'translate',

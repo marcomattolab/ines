@@ -172,9 +172,6 @@
     @defer (when activeTab() === 'vision-assist') {
       <app-vision-assist-tab [hidden]="activeTab() !== 'vision-assist'" />
     }
-    @defer (when activeTab() === 'presentation') {
-      <app-presentation-tab [hidden]="activeTab() !== 'presentation'" />
-    }
     @defer (when activeTab() === 'project') {
       <app-project-tab [hidden]="activeTab() !== 'project'" />
     }

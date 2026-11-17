@@ -37,11 +37,25 @@ export class JsonParserService {
       cleaned = codeBlock[1].trim();
     }
 
-    const objMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (objMatch) return objMatch[0];
+    // Prefer the bracket type matching the leading character: an array of
+    // objects contains braces, so the object regex would otherwise truncate it
+    // to an invalid "{...},{...}" snippet.
+    if (cleaned.startsWith('[')) {
+      const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+      if (arrMatch) return arrMatch[0];
+    }
+    if (cleaned.startsWith('{')) {
+      const objMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (objMatch) return objMatch[0];
+    }
 
+    // Embedded fallback (surrounding prose): try array before object for the
+    // same reason.
     const arrMatch = cleaned.match(/\[[\s\S]*\]/);
     if (arrMatch) return arrMatch[0];
+
+    const objMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (objMatch) return objMatch[0];
 
     return '';
   }

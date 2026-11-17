@@ -58,6 +58,13 @@ Hope this helps!`;
       expect(service.parseArray('["apple", "banana"]')).toEqual(['apple', 'banana']);
     });
 
+    it('parses an array of objects without truncating to a brace snippet', () => {
+      expect(service.parseArray('[{"type":"title"},{"type":"bullets"}]')).toEqual([
+        { type: 'title' },
+        { type: 'bullets' },
+      ]);
+    });
+
     it('returns empty array when JSON is not an array', () => {
       expect(service.parseArray('{"key": "value"}')).toEqual([]);
       expect(service.parseArray('invalid')).toEqual([]);

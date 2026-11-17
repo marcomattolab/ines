@@ -19,7 +19,6 @@ import { TicTacToeTabComponent } from './components/tic-tac-toe-tab/tic-tac-toe-
 import { BackgroundTabComponent } from './components/background-tab/background-tab.component';
 import { PiiOcrTabComponent } from './components/pii-ocr-tab/pii-ocr-tab.component';
 import { VisionAssistTabComponent } from './components/vision-assist-tab/vision-assist-tab.component';
-import { PresentationTabComponent } from './components/presentation-tab/presentation-tab.component';
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
@@ -49,7 +48,6 @@ export type Tab =
   | 'pii-ocr'
   | 'vision-assist'
   | 'learning'
-  | 'presentation'
   | 'project'
   | 'dev-agent';
 
@@ -163,16 +161,6 @@ const TABS: TabDef[] = [
     categoryLabel: 'Dev & Studio',
     description: 'Autonomous developer agent for tasks',
     keywords: ['devagent', 'agent', 'developer', 'automation', 'terminal', 'coding agent'],
-  },
-  {
-    id: 'presentation',
-    icon: 'description',
-    label: 'Slides',
-    color: 'var(--tab-presentation)',
-    category: 'dev',
-    categoryLabel: 'Dev & Studio',
-    description: 'Presentation & PPTX slide deck generator',
-    keywords: ['slides', 'powerpoint', 'presentation', 'deck', 'presentazioni', 'pptx'],
   },
   {
     id: 'learning',
@@ -302,7 +290,6 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     CodingTabComponent,
-    PresentationTabComponent,
     ProjectTabComponent,
     DevAgentTabComponent,
     LearningTabComponent,

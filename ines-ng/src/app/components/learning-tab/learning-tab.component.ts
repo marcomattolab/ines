@@ -24,6 +24,8 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SlideDeckService, SLIDE_COLOR_THEMES } from '../../core/services/slide-deck.service';
 import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
 
 type SubTab =
@@ -35,7 +37,8 @@ type SubTab =
   | 'summary'
   | 'fillblanks'
   | 'matching'
-  | 'openq';
+  | 'openq'
+  | 'slides';
 
 interface QuizQuestion {
   question: string;
@@ -77,6 +80,8 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   readonly assistant = inject(VoiceAssistantService);
   private readonly jsonParser = inject(JsonParserService);
   private readonly dom = inject(DomUtilsService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly deck = inject(SlideDeckService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 
@@ -90,6 +95,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     { id: 'fillblanks', icon: 'edit_note', label: 'Fill Blanks', color: 'text-orange-400' },
     { id: 'matching', icon: 'compare_arrows', label: 'Matching', color: 'text-indigo-400' },
     { id: 'openq', icon: 'question_answer', label: 'Open Q&A', color: 'text-emerald-400' },
+    { id: 'slides', icon: 'slideshow', label: 'Slides', color: 'text-amber-400' },
   ];
 
   activeSubTab = signal<SubTab>('chat');
@@ -126,6 +132,13 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   openAnswer = signal('');
   openFeedback = signal('');
 
+  slideTopic = signal('');
+  slideCountCustom = signal(10);
+  slideHtml = signal('');
+  slideCount = signal(0);
+  slideCurrent = signal(0);
+  slideError = signal('');
+
   studyPlan = signal('');
   summaryText = signal('');
 
@@ -149,6 +162,14 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     const q = this.searchQuery().toLowerCase();
     if (!q) return this.km.documents();
     return this.km.documents().filter((d) => d.name.toLowerCase().includes(q));
+  });
+
+  readonly slideSafeHtml = computed<SafeHtml>(() => {
+    const html = this.slideHtml();
+    if (!html) return this.sanitizer.bypassSecurityTrustHtml('');
+    const active = Math.max(1, this.slideCurrent() || 1);
+    const css = `<style>.slide{display:none!important}.slide[data-slide-number="${active}"]{display:flex!important}</style>`;
+    return this.sanitizer.bypassSecurityTrustHtml(html.replace('</head>', css + '</head>'));
   });
 
   @HostListener('window:lm-regen')
@@ -888,6 +909,76 @@ Answer: ${a}`;
       /* fail silently */
     }
     this.isGenerating.set(false);
+  }
+
+  // ── Slides ──
+
+  async generateSlides() {
+    const topic = this.slideTopic().trim();
+    if (!topic || this.isGenerating()) return;
+    if (!this.llm.isReady()) {
+      this.toast.error('Load the model first!');
+      return;
+    }
+    if (this.km.documents().length === 0) {
+      this.toast.error('Upload documents first.');
+      return;
+    }
+
+    this.isGenerating.set(true);
+    this.activeSubTab.set('slides');
+    this.slideHtml.set('');
+    this.slideCount.set(0);
+    this.slideCurrent.set(0);
+    this.slideError.set('');
+
+    try {
+      const context = await this.km.getRagContext(topic, 8, 4000);
+      const deck = await this.deck.generate({
+        topic,
+        context: context || undefined,
+        slideCount: this.slideCountCustom(),
+        style: 'modern',
+        colors: SLIDE_COLOR_THEMES.professional,
+        logo: 'INES',
+        author: '',
+        contact: '',
+        logoImage: null,
+      });
+      this.slideHtml.set(deck.html);
+      this.slideCount.set(deck.slides.length);
+      this.slideCurrent.set(1);
+      this.toast.success(`Presentation generated! ${deck.slides.length} slides`);
+    } catch (e: any) {
+      this.slideError.set(String(e?.message ?? e ?? ''));
+      this.toast.error('Slide generation failed — try again.');
+    }
+
+    this.isGenerating.set(false);
+  }
+
+  slidePrev() {
+    this.slideCurrent.update((c) => Math.max(1, c - 1));
+  }
+
+  slideNext() {
+    this.slideCurrent.update((c) => Math.min(this.slideCount(), c + 1));
+  }
+
+  downloadSlidesHtml() {
+    if (!this.slideHtml()) return;
+    this.dom.downloadText(this.slideHtml(), 'presentation.html', 'text/html');
+    this.toast.success('HTML downloaded');
+  }
+
+  async downloadSlidesPptx() {
+    if (!this.slideHtml()) return;
+    try {
+      await this.deck.downloadPptx(this.slideHtml(), 'INES');
+      this.toast.success('PPTX downloaded!');
+    } catch (e: any) {
+      this.toast.error(e?.message ?? 'PPTX export failed');
+    }
   }
 
   // ── TTS ──

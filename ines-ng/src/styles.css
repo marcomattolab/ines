@@ -53,7 +53,6 @@
   --tab-pii-ocr: #facc15;
   --tab-vision-assist: #e879f9;
   --tab-learning: #60a5fa;
-  --tab-presentation: #fb923c;
   --tab-knowledge: #c4b5fd;
   --tab-project: #5ee3b4;
   --tab-brain: #bf92ff;
@@ -751,7 +750,6 @@ select:focus-visible,
   --tab-pii-ocr: #ca8a04;
   --tab-vision-assist: #c026d3;
   --tab-learning: #ea580c;
-  --tab-presentation: #dc2626;
   --tab-knowledge: #2563eb;
   --tab-project: #7c3aed;
   --tab-dev-agent: #8b5cf6;
@@ -983,22 +981,6 @@ body.theme-light app-learning-tab .bg-black\/40 {
 
 body.theme-light app-learning-tab .bg-black\/60 {
   background-color: rgba(255, 255, 255, 0.9) !important;
-}
-
-body.theme-light app-presentation-tab .bg-\[\#000000\],
-body.theme-light app-presentation-tab [style*='background:#000'] {
-  background-color: #f5f6f8 !important;
-}
-
-/* ── Light theme: presentation tab ── */
-body.theme-light app-presentation-tab .left-panel,
-body.theme-light app-presentation-tab [style*='background: rgba(13, 16, 23'] {
-  background: rgba(255, 255, 255, 0.7) !important;
-  color: #111827 !important;
-}
-
-body.theme-light app-presentation-tab .bg-\[\#000000\] {
-  background-color: #f5f6f8 !important;
 }
 
 /* ── Light theme: learning tab ── */

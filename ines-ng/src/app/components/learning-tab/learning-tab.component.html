@@ -826,6 +826,108 @@
           }
         </div>
       }
+      <!-- ── Slides ── -->
+      @if (activeSubTab() === 'slides') {
+        <div class="flex-1 flex flex-col min-h-0">
+          <div class="flex items-center gap-2 p-3 border-b border-[var(--border)] shrink-0">
+            <mat-icon class="text-amber-400 scale-75">slideshow</mat-icon>
+            <input
+              class="flex-1 min-w-0 bg-[var(--bg-1)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/40"
+              placeholder="Slide deck topic (uses your uploaded documents)..."
+              [value]="slideTopic()"
+              (input)="slideTopic.set($any($event.target).value)"
+              (keydown.enter)="generateSlides()"
+            />
+            <select
+              class="bg-[var(--bg-1)] border border-[var(--border)] rounded-xl px-2 py-2 text-sm outline-none"
+              [value]="slideCountCustom()"
+              (change)="slideCountCustom.set(+$any($event.target).value)"
+            >
+              @for (n of [5, 8, 10, 12, 15]; track n) {
+                <option [value]="n">{{ n }} slides</option>
+              }
+            </select>
+            <app-button
+              variant="primary"
+              (onClick)="generateSlides()"
+              [disabled]="isGenerating() || !slideTopic().trim() || !llm.isReady()"
+            >
+              <mat-icon class="scale-75">auto_awesome</mat-icon> Generate
+            </app-button>
+          </div>
+
+          <div class="flex-1 relative min-h-0 bg-black">
+            @if (!slideHtml() && !isGenerating()) {
+              <div class="empty-state">
+                <mat-icon class="empty-icon scale-150 text-amber-400">slideshow</mat-icon>
+                <h3 class="text-base font-bold font-[var(--font-ui)]">Slide Deck</h3>
+                <p class="empty-text">Generate a presentation from your uploaded documents.</p>
+              </div>
+            }
+            @if (isGenerating()) {
+              <div class="empty-state">
+                <mat-icon class="text-amber-400 animate-spin scale-150">hourglass_empty</mat-icon>
+                <p class="text-sm text-[var(--text-2)]">Generating slides...</p>
+              </div>
+            }
+            @if (slideError()) {
+              <div class="m-3 p-3 rounded-xl border border-rose-400/30 bg-rose-500/5">
+                <pre
+                  class="text-[11px] text-rose-300 font-mono whitespace-pre-wrap max-h-32 overflow-auto"
+                  >{{ slideError() }}</pre
+                >
+              </div>
+            }
+            @if (slideHtml()) {
+              <iframe
+                class="w-full h-full border-0 absolute inset-0"
+                [srcdoc]="slideSafeHtml()"
+                sandbox=""
+              ></iframe>
+              <div
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 rounded-full bg-black/70 border border-white/10 px-3 py-1.5 backdrop-blur"
+              >
+                <button
+                  class="text-white/80 hover:text-white disabled:opacity-30 cursor-pointer"
+                  (click)="slidePrev()"
+                  [disabled]="slideCurrent() <= 1"
+                >
+                  <mat-icon class="scale-75">chevron_left</mat-icon>
+                </button>
+                <span class="text-[11px] font-[var(--font-mono)] text-[var(--text-1)]"
+                  >{{ slideCurrent() }} / {{ slideCount() }}</span
+                >
+                <button
+                  class="text-white/80 hover:text-white disabled:opacity-30 cursor-pointer"
+                  (click)="slideNext()"
+                  [disabled]="slideCurrent() >= slideCount()"
+                >
+                  <mat-icon class="scale-75">chevron_right</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="flex items-center gap-2 p-3 border-t border-[var(--border)] shrink-0">
+            <app-button
+              variant="ghost"
+              size="sm"
+              (onClick)="downloadSlidesHtml()"
+              [disabled]="!slideHtml()"
+            >
+              <mat-icon class="scale-75">code</mat-icon> HTML
+            </app-button>
+            <app-button
+              variant="ghost"
+              size="sm"
+              (onClick)="downloadSlidesPptx()"
+              [disabled]="!slideHtml()"
+            >
+              <mat-icon class="scale-75">slideshow</mat-icon> PPTX
+            </app-button>
+          </div>
+        </div>
+      }
     </main>
   </div>
 </div>

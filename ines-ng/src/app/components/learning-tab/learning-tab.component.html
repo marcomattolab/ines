@@ -35,6 +35,21 @@
     </app-button>
   </div>
 
+  <!-- Tools bar -->
+  <nav class="hub-nav" aria-label="Learning tools">
+    @for (item of toolNav; track item.id) {
+      <button
+        type="button"
+        class="hub-chip"
+        [class.active]="activeSubTab() === item.id"
+        (click)="selectSubTab(item.id)"
+      >
+        <mat-icon [fontIcon]="item.icon" class="text-sm w-4 h-4 {{ item.color }}"></mat-icon>
+        {{ item.label }}
+      </button>
+    }
+  </nav>
+
   <div class="flex flex-1 overflow-hidden">
     <!-- Left Sidebar -->
     <aside
@@ -135,36 +150,6 @@
                 </div>
               }
             </div>
-          </div>
-        }
-      </div>
-
-      <!-- Tools nav (collapsible) -->
-      <div class="mt-auto border-t border-[var(--border)]">
-        <button
-          (click)="collapsedTools.set(!collapsedTools())"
-          class="section-header w-full flex items-center gap-2 px-3 py-2 text-[var(--text-2)] hover:text-[var(--text-0)] transition-colors"
-        >
-          <mat-icon class="scale-50 chevron-icon" [class.open]="!collapsedTools()"
-            >chevron_right</mat-icon
-          >
-          <span class="text-[9px] font-bold uppercase tracking-widest">Learning Tools</span>
-        </button>
-        @if (!collapsedTools()) {
-          <div class="p-3 pt-0 space-y-1">
-            @for (item of toolNav; track item.id) {
-              <button
-                (click)="selectSubTab(item.id)"
-                class="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors"
-                [class.bg-white/8]="activeSubTab() === item.id"
-                [class.text-[var(--text-0)]]="activeSubTab() === item.id"
-                [class.text-[var(--text-2)]]="activeSubTab() !== item.id"
-                [class.hover:bg-white/5]="activeSubTab() !== item.id"
-              >
-                <mat-icon class="scale-50 {{ item.color }}">{{ item.icon }}</mat-icon>
-                {{ item.label }}
-              </button>
-            }
           </div>
         }
       </div>

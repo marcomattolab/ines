@@ -87,11 +87,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   readonly toolNav: { id: SubTab; icon: string; label: string; color: string }[] = [
     { id: 'chat', icon: 'chat', label: 'Chat Q&A', color: 'text-blue-400' },
+    { id: 'summary', icon: 'summarize', label: 'Summary', color: 'text-rose-400' },
     { id: 'mindmap', icon: 'account_tree', label: 'Mind Map', color: 'text-purple-400' },
+    { id: 'plan', icon: 'calendar_month', label: 'Study Plan', color: 'text-cyan-400' },
     { id: 'quiz', icon: 'quiz', label: 'Quiz', color: 'text-amber-400' },
     { id: 'flashcards', icon: 'style', label: 'Flashcards', color: 'text-green-400' },
-    { id: 'plan', icon: 'calendar_month', label: 'Study Plan', color: 'text-cyan-400' },
-    { id: 'summary', icon: 'summarize', label: 'Summary', color: 'text-rose-400' },
     { id: 'fillblanks', icon: 'edit_note', label: 'Fill Blanks', color: 'text-orange-400' },
     { id: 'matching', icon: 'compare_arrows', label: 'Matching', color: 'text-indigo-400' },
     { id: 'openq', icon: 'question_answer', label: 'Open Q&A', color: 'text-emerald-400' },
@@ -156,7 +156,6 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   searchQuery = signal('');
   collapsedDocs = signal(false);
-  collapsedTools = signal(false);
 
   readonly filteredDocs = computed(() => {
     const q = this.searchQuery().toLowerCase();

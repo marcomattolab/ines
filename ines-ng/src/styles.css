@@ -597,6 +597,59 @@ select:focus-visible,
   margin-top: 2px;
 }
 
+/* Hub tabs (grouped sub-navigation) */
+.hub {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.hub-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: rgba(13, 16, 23, 0.35);
+}
+.hub-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+.hub-chip:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-0);
+}
+.hub-chip.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-0);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.hub-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
 /* Chat Messages */
 .chat-area {
   flex: 1;

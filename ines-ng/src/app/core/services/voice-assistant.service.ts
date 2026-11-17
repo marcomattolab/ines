@@ -369,7 +369,7 @@ export class VoiceAssistantService {
       systemPrompt: data.systemPrompt,
       skillIds: [],
     });
-    this.requestedTab.set('agents');
+    this.requestedTab.set('code');
     this.addLog('ai', `🤖 Created agent "${agent.name}"`);
     this.enqueueSpeech(`Agent ${agent.name} created.`);
     return `Agent "${agent.name}" created`;

@@ -26,18 +26,14 @@ export interface ParsedTask {
 
 /** Tab ids understood by the app, with a human label for spoken feedback. */
 export const TAB_LABELS: Record<string, string> = {
-  assistant: 'Voice',
-  chat: 'Chat',
+  assistant: 'Assistant',
+  knowledge: 'Knowledge',
+  todo: 'Todo',
   meeting: 'Meeting',
   translate: 'Translate',
-  todo: 'Todo',
-  coding: 'Code',
-  agents: 'Agents',
-  vision: 'Vision',
+  code: 'Code',
   learning: 'Learning',
-  project: 'Project',
-  brain: 'Brain',
-  'dev-agent': 'DevAgent',
+  labs: 'Labs',
 };
 
 export const VALID_TABS = new Set(Object.keys(TAB_LABELS));
@@ -92,15 +88,15 @@ const TAB_KEYWORDS: { pattern: RegExp; tab: string }[] = [
   { pattern: /\b(meeting|meetings|riunione|riunioni|riunione)\b/i, tab: 'meeting' },
   { pattern: /\b(translate|translation|traduttore|traduci|traduzione)\b/i, tab: 'translate' },
   { pattern: /\b(todo|todos|compiti|attivita|attività|task)\b/i, tab: 'todo' },
-  { pattern: /\b(coding|code|codice|programmazione|developer|sviluppo)\b/i, tab: 'coding' },
-  { pattern: /\b(agents|agent|agenti|agente)\b/i, tab: 'agents' },
-  { pattern: /\b(vision|vista|immagini)\b/i, tab: 'vision' },
+  { pattern: /\b(coding|code|codice|programmazione|developer|sviluppo)\b/i, tab: 'code' },
+  { pattern: /\b(dev\s?agent|sviluppatore)\b/i, tab: 'code' },
+  { pattern: /\b(agents|agent|agenti|agente)\b/i, tab: 'code' },
   { pattern: /\b(learning|studio|studi|formazione)\b/i, tab: 'learning' },
   { pattern: /\b(slides|presentation|presentazione|diapositive)\b/i, tab: 'learning' },
-  { pattern: /\b(project|progetto|progetti)\b/i, tab: 'project' },
-  { pattern: /\b(brain|cervello|second\s+brain)\b/i, tab: 'brain' },
-  { pattern: /\b(dev\s?agent|sviluppatore)\b/i, tab: 'dev-agent' },
-  { pattern: /\b(chat|conversazione)\b/i, tab: 'chat' },
+  { pattern: /\b(project|progetto|progetti)\b/i, tab: 'knowledge' },
+  { pattern: /\b(brain|cervello|second\s+brain|conoscenza|knowledge)\b/i, tab: 'knowledge' },
+  { pattern: /\b(vision|vista|immagini|labs|lab|esperimenti|sperimentale)\b/i, tab: 'labs' },
+  { pattern: /\b(chat|conversazione)\b/i, tab: 'assistant' },
   { pattern: /\b(voice|voce|assistente)\b/i, tab: 'assistant' },
 ];
 

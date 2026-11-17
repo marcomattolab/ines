@@ -202,7 +202,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   }
 
   openSecondBrain() {
-    this.assistant.navigateTo('brain');
+    this.assistant.navigateTo('knowledge');
   }
 
   ngAfterViewInit() {

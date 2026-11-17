@@ -129,60 +129,27 @@
 
   <!-- Main panels -->
   <main id="main">
-    @defer (when activeTab() === 'assistant') {
-      <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
+    <app-assistant-tab [hidden]="activeTab() !== 'assistant'" />
+    @defer (when activeTab() === 'knowledge') {
+      <app-knowledge-tab [hidden]="activeTab() !== 'knowledge'" />
     }
-    <app-chat-tab [hidden]="activeTab() !== 'chat'" />
+    @defer (when activeTab() === 'todo') {
+      <app-todo-tab [hidden]="activeTab() !== 'todo'" />
+    }
     @defer (when activeTab() === 'meeting') {
       <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
     }
     @defer (when activeTab() === 'translate') {
       <app-translate-tab [hidden]="activeTab() !== 'translate'" />
     }
-    @defer (when activeTab() === 'todo') {
-      <app-todo-tab [hidden]="activeTab() !== 'todo'" />
-    }
-    @defer (when activeTab() === 'coding') {
-      <app-coding-tab [hidden]="activeTab() !== 'coding'" />
-    }
-    @defer (when activeTab() === 'agents') {
-      <app-agents-tab [hidden]="activeTab() !== 'agents'" />
-    }
-    @defer (when activeTab() === 'vision') {
-      <app-vision-tab [hidden]="activeTab() !== 'vision'" />
-    }
-    @defer (when activeTab() === 'sicilian') {
-      <app-sicilian-gestures-tab [hidden]="activeTab() !== 'sicilian'" />
-    }
-    @defer (when activeTab() === 'pinch-scroll') {
-      <app-pinch-scroll-tab [hidden]="activeTab() !== 'pinch-scroll'" />
-    }
-    @defer (when activeTab() === 'head-cursor') {
-      <app-head-cursor-tab [hidden]="activeTab() !== 'head-cursor'" />
-    }
-    @defer (when activeTab() === 'tic-tac-toe') {
-      <app-tic-tac-toe-tab [hidden]="activeTab() !== 'tic-tac-toe'" />
-    }
-    @defer (when activeTab() === 'background') {
-      <app-background-tab [hidden]="activeTab() !== 'background'" />
-    }
-    @defer (when activeTab() === 'pii-ocr') {
-      <app-pii-ocr-tab [hidden]="activeTab() !== 'pii-ocr'" />
-    }
-    @defer (when activeTab() === 'vision-assist') {
-      <app-vision-assist-tab [hidden]="activeTab() !== 'vision-assist'" />
-    }
-    @defer (when activeTab() === 'project') {
-      <app-project-tab [hidden]="activeTab() !== 'project'" />
-    }
-    @defer (when activeTab() === 'brain') {
-      <app-brain-tab [hidden]="activeTab() !== 'brain'" />
-    }
-    @defer (when activeTab() === 'dev-agent') {
-      <app-dev-agent-tab [hidden]="activeTab() !== 'dev-agent'" />
+    @defer (when activeTab() === 'code') {
+      <app-code-tab [hidden]="activeTab() !== 'code'" />
     }
     @defer (when activeTab() === 'learning') {
       <app-learning-tab [hidden]="activeTab() !== 'learning'" />
+    }
+    @defer (when activeTab() === 'labs') {
+      <app-labs-tab [hidden]="activeTab() !== 'labs'" />
     }
   </main>
 </div>

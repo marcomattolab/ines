@@ -1,0 +1,23 @@
+<div class="hub">
+  <nav class="hub-nav" aria-label="Assistant tools">
+    @for (t of tools; track t.id) {
+      <button
+        type="button"
+        class="hub-chip"
+        [class.active]="active() === t.id"
+        (click)="active.set(t.id)"
+      >
+        <mat-icon [fontIcon]="t.icon" class="text-sm w-4 h-4 {{ t.color }}"></mat-icon>
+        {{ t.label }}
+      </button>
+    }
+  </nav>
+
+  <div class="hub-content">
+    @if (active() === 'chat') {
+      <app-chat-tab />
+    } @else if (active() === 'voice') {
+      <app-voice-tab />
+    }
+  </div>
+</div>

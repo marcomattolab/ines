@@ -2,54 +2,32 @@ import { Component, signal, inject, OnInit, computed, effect } from '@angular/co
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
+import { AssistantTabComponent } from './components/assistant-tab/assistant-tab.component';
+import { KnowledgeTabComponent } from './components/knowledge-tab/knowledge-tab.component';
+import { CodeTabComponent } from './components/code-tab/code-tab.component';
+import { LabsTabComponent } from './components/labs-tab/labs-tab.component';
 import { LearningTabComponent } from './components/learning-tab/learning-tab.component';
 import { LoaderOverlayComponent } from './components/loader-overlay/loader-overlay.component';
 import { InfoModalComponent } from './components/info-modal/info-modal.component';
-import { ChatTabComponent } from './components/chat-tab/chat-tab.component';
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
-import { CodingTabComponent } from './components/coding-tab/coding-tab.component';
-import { AgentsTabComponent } from './components/agents-tab/agents-tab.component';
-import { VisionTabComponent } from './components/vision-tab/vision-tab.component';
-import { SicilianGesturesTabComponent } from './components/sicilian-gestures-tab/sicilian-gestures-tab.component';
-import { PinchScrollTabComponent } from './components/pinch-scroll-tab/pinch-scroll-tab.component';
-import { HeadCursorTabComponent } from './components/head-cursor-tab/head-cursor-tab.component';
-import { TicTacToeTabComponent } from './components/tic-tac-toe-tab/tic-tac-toe-tab.component';
-import { BackgroundTabComponent } from './components/background-tab/background-tab.component';
-import { PiiOcrTabComponent } from './components/pii-ocr-tab/pii-ocr-tab.component';
-import { VisionAssistTabComponent } from './components/vision-assist-tab/vision-assist-tab.component';
-import { ProjectTabComponent } from './components/project-tab/project-tab.component';
-import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
 import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
 import { TodoService } from './core/services/todo.service';
 import { SecondBrainService } from './core/services/second-brain.service';
-import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
-import { BrainTabComponent } from './components/brain-tab/brain-tab.component';
 
 export type Tab =
   | 'assistant'
-  | 'chat'
-  | 'brain'
+  | 'knowledge'
+  | 'todo'
   | 'meeting'
   | 'translate'
-  | 'todo'
-  | 'coding'
-  | 'agents'
-  | 'vision'
-  | 'sicilian'
-  | 'pinch-scroll'
-  | 'head-cursor'
-  | 'tic-tac-toe'
-  | 'background'
-  | 'pii-ocr'
-  | 'vision-assist'
+  | 'code'
   | 'learning'
-  | 'project'
-  | 'dev-agent';
+  | 'labs';
 
 export type TabCategory = 'productivity' | 'dev' | 'vision';
 export type WorkspaceFilter = 'all' | 'productivity' | 'dev' | 'vision';
@@ -81,34 +59,24 @@ export interface PaletteItem {
 const TABS: TabDef[] = [
   // Productivity & Workspace
   {
-    id: 'chat',
-    icon: 'message-square',
-    label: 'Chat',
+    id: 'assistant',
+    icon: 'smart_toy',
+    label: 'Assistant',
     color: 'var(--tab-chat)',
     category: 'productivity',
     categoryLabel: 'Productivity',
-    description: 'Conversational on-device AI chat',
-    keywords: ['chat', 'messages', 'conversazione', 'messaggi', 'ia', 'ai', 'gemma', 'questions'],
+    description: 'On-device AI chat & voice assistant',
+    keywords: ['assistant', 'chat', 'voice', 'voce', 'ai', 'gemma', 'conversazione', 'messaggi'],
   },
   {
-    id: 'assistant',
-    icon: 'record_voice_over',
-    label: 'Voice',
-    color: 'var(--tab-assistant)',
-    category: 'productivity',
-    categoryLabel: 'Productivity',
-    description: 'Hands-free voice assistant with wake word',
-    keywords: ['voice', 'voce', 'audio', 'mic', 'microfono', 'speak', 'parla', 'assistant'],
-  },
-  {
-    id: 'brain',
+    id: 'knowledge',
     icon: 'psychology',
-    label: 'Brain',
+    label: 'Knowledge',
     color: 'var(--tab-brain)',
     category: 'productivity',
     categoryLabel: 'Productivity',
-    description: 'Second Brain: notes & semantic RAG memory',
-    keywords: ['brain', 'notes', 'note', 'memoria', 'memory', 'appunti', 'second brain', 'rag'],
+    description: 'Second Brain, notes, documents & semantic memory',
+    keywords: ['knowledge', 'brain', 'notes', 'note', 'memoria', 'appunti', 'rag', 'documenti'],
   },
   {
     id: 'todo',
@@ -143,24 +111,14 @@ const TABS: TabDef[] = [
 
   // Development & Studio
   {
-    id: 'coding',
+    id: 'code',
     icon: 'code',
     label: 'Code',
     color: 'var(--tab-coding)',
     category: 'dev',
     categoryLabel: 'Dev & Studio',
-    description: 'Code assistant, editor & generation',
-    keywords: ['code', 'coding', 'editor', 'programming', 'dev', 'typescript', 'python'],
-  },
-  {
-    id: 'dev-agent',
-    icon: 'smart_toy',
-    label: 'DevAgent',
-    color: 'var(--tab-dev-agent)',
-    category: 'dev',
-    categoryLabel: 'Dev & Studio',
-    description: 'Autonomous developer agent for tasks',
-    keywords: ['devagent', 'agent', 'developer', 'automation', 'terminal', 'coding agent'],
+    description: 'Code assistant, DevAgent & agent catalog',
+    keywords: ['code', 'coding', 'devagent', 'agents', 'programming', 'automation', 'typescript'],
   },
   {
     id: 'learning',
@@ -169,110 +127,20 @@ const TABS: TabDef[] = [
     color: 'var(--tab-learning)',
     category: 'dev',
     categoryLabel: 'Dev & Studio',
-    description: 'Interactive quizzes, flashcards & study',
-    keywords: ['learning', 'study', 'quiz', 'flashcard', 'course', 'apprendimento', 'studio'],
-  },
-  {
-    id: 'project',
-    icon: 'folder',
-    label: 'Project',
-    color: 'var(--tab-project)',
-    category: 'dev',
-    categoryLabel: 'Dev & Studio',
-    description: 'Project documents & local knowledge base',
-    keywords: ['project', 'documents', 'files', 'folders', 'progetti', 'documenti'],
+    description: 'Quizzes, flashcards, slides & study tools',
+    keywords: ['learning', 'study', 'quiz', 'flashcard', 'slides', 'apprendimento', 'studio'],
   },
 
   // Vision & AI Labs
   {
-    id: 'vision-assist',
-    icon: 'remove_red_eye',
-    label: 'Vision Assist',
-    color: 'var(--tab-vision-assist)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Visual scene description via webcam',
-    keywords: ['vision assist', 'visual assistant', 'webcam', 'eyes', 'scene', 'camera'],
-  },
-  {
-    id: 'pii-ocr',
-    icon: 'document_scanner',
-    label: 'OCR & PII',
-    color: 'var(--tab-pii-ocr)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Document OCR & sensitive PII anonymization',
-    keywords: ['ocr', 'pii', 'privacy', 'anonymization', 'scanner', 'text', 'document'],
-  },
-  {
-    id: 'vision',
-    icon: 'visibility',
-    label: 'Vision',
+    id: 'labs',
+    icon: 'science',
+    label: 'Labs',
     color: 'var(--tab-vision)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
-    description: 'MediaPipe computer vision & object detection',
-    keywords: ['vision', 'mediapipe', 'objects', 'detection', 'camera', 'webcam'],
-  },
-  {
-    id: 'sicilian',
-    icon: 'back_hand',
-    label: 'Gestures',
-    color: 'var(--tab-sicilian)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Hand & regional gestures recognition',
-    keywords: ['gestures', 'hands', 'gesti', 'sicilian', 'gesture recognition'],
-  },
-  {
-    id: 'pinch-scroll',
-    icon: 'touch_app',
-    label: 'Pinch',
-    color: 'var(--tab-pinch-scroll)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Hands-free page scrolling via pinch gesture',
-    keywords: ['pinch', 'scroll', 'gesture', 'hands', 'touchless'],
-  },
-  {
-    id: 'head-cursor',
-    icon: 'face',
-    label: 'Head Cursor',
-    color: 'var(--tab-head-cursor)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Face tracking & head-controlled cursor',
-    keywords: ['head', 'cursor', 'face', 'accessibility', 'pointer', 'tracking'],
-  },
-  {
-    id: 'tic-tac-toe',
-    icon: 'grid_on',
-    label: 'Tris',
-    color: 'var(--tab-tic-tac-toe)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Two-player tic-tac-toe with mouse, pinch or head cursor',
-    keywords: ['tris', 'tic tac toe', 'tictactoe', 'game', 'gioco', 'two player', 'x', 'o', 'play'],
-  },
-  {
-    id: 'background',
-    icon: 'wallpaper',
-    label: 'Background',
-    color: 'var(--tab-background)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Real-time background blur & green screen',
-    keywords: ['background', 'green screen', 'segmentation', 'video', 'sfondo', 'blur'],
-  },
-  {
-    id: 'agents',
-    icon: 'support_agent',
-    label: 'Agents',
-    color: 'var(--tab-agents)',
-    category: 'vision',
-    categoryLabel: 'Vision & Labs',
-    description: 'Autonomous agent catalog & skill orchestrator',
-    keywords: ['agents', 'skills', 'orchestrator', 'agenti', 'tools'],
+    description: 'Vision, gestures, OCR, camera & AI experiments',
+    keywords: ['labs', 'vision', 'camera', 'gestures', 'ocr', 'experiments', 'webcam', 'ai'],
   },
 ];
 
@@ -281,27 +149,16 @@ const TABS: TabDef[] = [
   standalone: true,
   imports: [
     StatusBarComponent,
-    VoiceTabComponent,
-    BrainTabComponent,
+    AssistantTabComponent,
+    KnowledgeTabComponent,
+    CodeTabComponent,
+    LabsTabComponent,
     LoaderOverlayComponent,
     InfoModalComponent,
-    ChatTabComponent,
     MeetingTabComponent,
     TranslateTabComponent,
     TodoTabComponent,
-    CodingTabComponent,
-    ProjectTabComponent,
-    DevAgentTabComponent,
     LearningTabComponent,
-    AgentsTabComponent,
-    VisionTabComponent,
-    SicilianGesturesTabComponent,
-    PinchScrollTabComponent,
-    HeadCursorTabComponent,
-    TicTacToeTabComponent,
-    BackgroundTabComponent,
-    PiiOcrTabComponent,
-    VisionAssistTabComponent,
     FormsModule,
     MatIconModule,
   ],
@@ -313,7 +170,7 @@ const TABS: TabDef[] = [
 })
 export class AppComponent implements OnInit {
   tabs = TABS;
-  activeTab = signal<Tab>('chat');
+  activeTab = signal<Tab>('assistant');
   overlayOpen = signal(true);
   infoOpen = signal(false);
   commandPaletteOpen = signal(false);

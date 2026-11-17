@@ -58,8 +58,8 @@ describe('voice-intent — parseByRules', () => {
     expect(parseByRules('vai su meeting')).toEqual([{ type: 'navigate', text: 'meeting' }]);
   });
 
-  it('navigates to coding on "mostra codice"', () => {
-    expect(parseByRules('mostra il codice')).toEqual([{ type: 'navigate', text: 'coding' }]);
+  it('navigates to code on "mostra codice"', () => {
+    expect(parseByRules('mostra il codice')).toEqual([{ type: 'navigate', text: 'code' }]);
   });
 
   it('adds a todo', () => {
@@ -144,8 +144,8 @@ describe('voice-intent — parseByRules', () => {
     ]);
   });
 
-  it('navigates to the brain tab', () => {
-    expect(parseByRules('apri il brain')).toEqual([{ type: 'navigate', text: 'brain' }]);
+  it('navigates to the knowledge tab', () => {
+    expect(parseByRules('apri il brain')).toEqual([{ type: 'navigate', text: 'knowledge' }]);
   });
 
   it('daily digest', () => {

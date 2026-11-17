@@ -1,0 +1,36 @@
+<div class="hub">
+  <nav class="hub-nav" aria-label="Labs tools">
+    @for (t of tools; track t.id) {
+      <button
+        type="button"
+        class="hub-chip"
+        [class.active]="active() === t.id"
+        (click)="active.set(t.id)"
+        [attr.title]="t.label"
+      >
+        <mat-icon [fontIcon]="t.icon" class="text-sm w-4 h-4 {{ t.color }}"></mat-icon>
+        {{ t.label }}
+      </button>
+    }
+  </nav>
+
+  <div class="hub-content">
+    @if (active() === 'vision') {
+      <app-vision-tab />
+    } @else if (active() === 'assist') {
+      <app-vision-assist-tab />
+    } @else if (active() === 'ocr') {
+      <app-pii-ocr-tab />
+    } @else if (active() === 'gestures') {
+      <app-sicilian-gestures-tab />
+    } @else if (active() === 'pinch') {
+      <app-pinch-scroll-tab />
+    } @else if (active() === 'cursor') {
+      <app-head-cursor-tab />
+    } @else if (active() === 'background') {
+      <app-background-tab />
+    } @else if (active() === 'tris') {
+      <app-tic-tac-toe-tab />
+    }
+  </div>
+</div>

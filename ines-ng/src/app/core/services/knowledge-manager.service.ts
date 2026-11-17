@@ -179,7 +179,18 @@ export class KnowledgeManagerService extends BaseIndexedDbService<
 
     const existingDocs = await this.getAllFromStore<KnowledgeDocument>('documents');
     const existingHashes = new Set(existingDocs.map((d) => d.hash));
-    const existingIds = new Set(existingDocs.map((d) => d.id));
+
+    const existingQAs = await this.getAllFromStore<KnowledgeQA>(QA_STORE);
+    const existingQaIds = new Set(existingQAs.map((q) => q.id));
+
+    // Pre-index imported chunks by their source doc id so the import stays
+    // linear instead of re-filtering the full chunk list for every document.
+    const chunksByDocId = new Map<string, KnowledgeChunk[]>();
+    for (const c of payload.chunks) {
+      const list = chunksByDocId.get(c.docId);
+      if (list) list.push(c);
+      else chunksByDocId.set(c.docId, [c]);
+    }
 
     const tx = db.transaction(['documents', 'chunks', QA_STORE], 'readwrite');
     const docStore = tx.objectStore('documents');
@@ -195,15 +206,17 @@ export class KnowledgeManagerService extends BaseIndexedDbService<
       docStore.put({ ...doc, id: newId });
       docsAdded++;
 
-      const docChunks = payload.chunks.filter((c) => c.docId === doc.id);
-      for (const c of docChunks) {
-        chunkStore.put({ ...c, id: crypto.randomUUID(), docId: newId });
-        chunksAdded++;
+      const docChunks = chunksByDocId.get(doc.id);
+      if (docChunks) {
+        for (const c of docChunks) {
+          chunkStore.put({ ...c, id: crypto.randomUUID(), docId: newId });
+          chunksAdded++;
+        }
       }
     }
 
     for (const qa of payload.qas || []) {
-      if (!existingIds.has(qa.id)) {
+      if (!existingQaIds.has(qa.id)) {
         qaStore.put(qa);
         qasAdded++;
       }

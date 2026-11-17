@@ -49,6 +49,12 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
   private db: IDBDatabase | null = null;
   private initPromise: Promise<void> | null = null;
   private embeddingsBackfilled = false;
+  /**
+   * In-memory chunk cache for the keyword RAG path. Embeddings are stripped so
+   * keyword scoring never materializes the (potentially large) float vectors;
+   * the semantic path keeps reading them from the store directly.
+   */
+  private chunksCache: TChunk[] | null = null;
 
   protected documentStore = 'documents';
   protected chunkStore = 'chunks';
@@ -127,6 +133,21 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
   async loadDocuments(): Promise<void> {
     const docs = await this.getAllFromStore<TDoc>(this.documentStore);
     this.documents.set(docs);
+    this.invalidateChunksCache();
+  }
+
+  /** Returns the embedding-free chunk cache, loading it from the store once. */
+  private async loadChunksCache(): Promise<TChunk[]> {
+    if (!this.chunksCache) {
+      const all = await this.getAllFromStore<TChunk>(this.chunkStore);
+      this.chunksCache = all.map((c) => ({ ...c, embedding: undefined }));
+    }
+    return this.chunksCache;
+  }
+
+  /** Drops the chunk cache; it will be rebuilt lazily on the next keyword query. */
+  protected invalidateChunksCache(): void {
+    this.chunksCache = null;
   }
 
   protected computeHash(text: string): Promise<string> {
@@ -183,15 +204,20 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
 
       docStore.put(doc);
 
+      // Hash chunks in parallel — crypto.subtle.digest is async and this avoids
+      // a serial await round-trip per chunk on large documents.
+      const chunkHashes = await Promise.all(rawChunks.map((raw) => this.computeHash(raw.text)));
+
+      const createdChunks: TChunk[] = [];
       for (let i = 0; i < rawChunks.length; i++) {
         const raw = rawChunks[i];
-        const chunkHash = await this.computeHash(raw.text);
-        const chunk: BaseChunk = {
+        const chunk = {
           id: crypto.randomUUID(),
           ...raw,
-          hash: chunkHash,
+          hash: chunkHashes[i],
           embedding: chunkEmbeddings[i] ?? undefined,
-        };
+        } as TChunk;
+        createdChunks.push(chunk);
         chunkStore.put(chunk);
       }
 
@@ -201,6 +227,10 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
       });
 
       this.documents.update((list) => [...list, doc as TDoc]);
+      if (this.chunksCache) {
+        const stripped = createdChunks.map((c) => ({ ...c, embedding: undefined }));
+        this.chunksCache = [...this.chunksCache, ...stripped];
+      }
     } finally {
       this.isProcessing.set(false);
       this.processingStatus.set('');
@@ -289,7 +319,7 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
       return new RegExp(`\\b${escaped}\\b`, 'gi');
     });
 
-    const allChunks = await this.getAllFromStore<TChunk>(this.chunkStore);
+    const allChunks = await this.loadChunksCache();
     if (allChunks.length === 0) return [];
 
     const scored: ChunkWithScore<TChunk>[] = [];
@@ -360,16 +390,25 @@ export abstract class BaseIndexedDbService<TDoc extends BaseDocument, TChunk ext
     });
 
     this.documents.update((list) => list.filter((d) => d.id !== id));
+    if (this.chunksCache) {
+      this.chunksCache = this.chunksCache.filter((c) => c.docId !== id);
+    }
   }
 
   async clearAll(): Promise<void> {
     await this.clearStore(this.documentStore);
     await this.clearStore(this.chunkStore);
     this.documents.set([]);
+    this.chunksCache = null;
   }
 
   async countChunks(): Promise<number> {
-    const chunks = await this.getAllFromStore<TChunk>(this.chunkStore);
-    return chunks.length;
+    const db = await this.ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.chunkStore, 'readonly');
+      const request = tx.objectStore(this.chunkStore).count();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
   }
 }

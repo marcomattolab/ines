@@ -23,7 +23,6 @@ import { PresentationTabComponent } from './components/presentation-tab/presenta
 import { ProjectTabComponent } from './components/project-tab/project-tab.component';
 import { DevAgentTabComponent } from './components/dev-agent-tab/dev-agent-tab.component';
 import { ToastService } from './core/services/toast.service';
-import { ExpenseService } from './core/services/expense.service';
 import { LlmService } from './core/services/llm.service';
 import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
@@ -31,7 +30,6 @@ import { TodoService } from './core/services/todo.service';
 import { SecondBrainService } from './core/services/second-brain.service';
 import { VoiceTabComponent } from './components/voice-tab/voice-tab.component';
 import { BrainTabComponent } from './components/brain-tab/brain-tab.component';
-import { ExpensesTabComponent } from './components/expenses-tab/expenses-tab.component';
 
 export type Tab =
   | 'assistant'
@@ -53,8 +51,7 @@ export type Tab =
   | 'learning'
   | 'presentation'
   | 'project'
-  | 'dev-agent'
-  | 'expenses';
+  | 'dev-agent';
 
 export type TabCategory = 'productivity' | 'dev' | 'vision';
 export type WorkspaceFilter = 'all' | 'productivity' | 'dev' | 'vision';
@@ -124,16 +121,6 @@ const TABS: TabDef[] = [
     categoryLabel: 'Productivity',
     description: 'Tasks, to-do list & reminders',
     keywords: ['todo', 'task', 'tasks', 'reminders', 'promemoria', 'compiti', 'activities'],
-  },
-  {
-    id: 'expenses',
-    icon: 'receipt_long',
-    label: 'Expenses',
-    color: 'var(--tab-expenses)',
-    category: 'productivity',
-    categoryLabel: 'Productivity',
-    description: 'Expense tracking, budgets & receipt OCR',
-    keywords: ['expenses', 'spese', 'money', 'soldi', 'budget', 'receipts', 'scontrini', 'finance'],
   },
   {
     id: 'meeting',
@@ -328,7 +315,6 @@ const TABS: TabDef[] = [
     BackgroundTabComponent,
     PiiOcrTabComponent,
     VisionAssistTabComponent,
-    ExpensesTabComponent,
     FormsModule,
     MatIconModule,
   ],
@@ -353,7 +339,6 @@ export class AppComponent implements OnInit {
   readonly llm = inject(LlmService);
   readonly assistant = inject(VoiceAssistantService);
   readonly settings = inject(SettingsService);
-  readonly expense = inject(ExpenseService);
   readonly todoService = inject(TodoService);
   readonly secondBrain = inject(SecondBrainService);
 
@@ -427,31 +412,7 @@ export class AppComponent implements OnInit {
       return items;
     }
 
-    // 2. Direct Quick Action: Expense
-    if (/^(expense|spesa|costo):\s*/i.test(rawQ)) {
-      const text = rawQ.replace(/^(expense|spesa|costo):\s*/i, '').trim();
-      items.push({
-        id: 'quick-expense',
-        type: 'quick-action',
-        title: text ? `Record expense: "${text}"` : 'Record new expense...',
-        subtitle: text
-          ? 'Press Enter to save to local expenses database'
-          : 'E.g.: expense: 14.50 team lunch',
-        category: 'Quick Action',
-        icon: 'receipt_long',
-        color: 'var(--tab-expenses)',
-        shortcut: '↵ Enter',
-        action: async () => {
-          if (text) {
-            await this.parseAndAddExpense(text);
-            this.closeCommandPalette();
-          }
-        },
-      });
-      return items;
-    }
-
-    // 3. Direct Quick Action: Brain Note
+    // 2. Direct Quick Action: Brain Note
     if (/^(note|brain|nota):\s*/i.test(rawQ)) {
       const text = rawQ.replace(/^(note|brain|nota):\s*/i, '').trim();
       items.push({
@@ -490,26 +451,6 @@ export class AppComponent implements OnInit {
         shortcut: 'todo:',
         action: () => {
           this.commandQuery.set('todo: ');
-        },
-      });
-    }
-
-    if (
-      !lowerQ ||
-      'new expense cost budget money spend receipt'.includes(lowerQ) ||
-      'nuova spesa costo budget scontrino euro'.includes(lowerQ)
-    ) {
-      items.push({
-        id: 'action-suggest-expense',
-        type: 'quick-action',
-        title: 'Record new expense',
-        subtitle: 'Type expense: <amount> <description> to log an expense',
-        category: 'Quick Actions',
-        icon: 'receipt_long',
-        color: 'var(--accent-green)',
-        shortcut: 'expense:',
-        action: () => {
-          this.commandQuery.set('expense: ');
         },
       });
     }
@@ -758,29 +699,6 @@ export class AppComponent implements OnInit {
     this.toast.success(`To-Do added: "${text || clean}"${isPriority ? ' (Priority)' : ''}`);
   }
 
-  async parseAndAddExpense(raw: string): Promise<void> {
-    const clean = raw.trim();
-    if (!clean) return;
-    const numMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*€|€\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)/);
-    let amount = 0;
-    let desc = clean;
-    if (numMatch) {
-      const valStr = numMatch[1] || numMatch[2] || numMatch[3];
-      amount = parseFloat(valStr.replace(',', '.'));
-      desc = clean.replace(numMatch[0], '').replace(/\s+/g, ' ').trim();
-    }
-    if (!desc) desc = 'Quick expense';
-    await this.expense.add({
-      amount: isNaN(amount) ? 0 : amount,
-      description: desc,
-      date: new Date().toISOString().slice(0, 10),
-      category: 'altro',
-      recurrence: 'once',
-      sourceType: 'manual',
-    });
-    this.toast.success(`Expense recorded: ${amount > 0 ? amount + ' € ' : ''}(${desc})`);
-  }
-
   parseAndAddBrainNote(raw: string): void {
     const clean = raw.trim();
     if (!clean) return;
@@ -894,12 +812,6 @@ export class AppComponent implements OnInit {
     if (vis.length === 0) return;
     if (!vis.some((t) => t.id === this.activeTab())) {
       this.selectCommandTab(vis[0].id);
-    }
-  });
-
-  private expenseSeenEffect = effect(() => {
-    if (this.activeTab() === 'expenses') {
-      this.expense.markSeen();
     }
   });
 }

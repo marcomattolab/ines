@@ -3,6 +3,75 @@ import { Injectable, signal } from '@angular/core';
 /** Wake word for the always-listening mode: "INES", "hey INES", "ehi INES", … */
 const WAKE_RE = /\b(?:hey\s+|ehi\s+|ok\s+)?ines\b/i;
 
+/**
+ * Punctuation normalization rules — hoisted to module scope so they are not
+ * rebuilt on every speech-recognition result.
+ */
+const PUNCTUATION_RULES: [RegExp, string][] = [
+  [/\bcomma\b/gi, ','],
+  [/\bperiod\b/gi, '.'],
+  [/\bdot\b/gi, '.'],
+  [/\bfull stop\b/gi, '.'],
+  [/\bquestion mark\b/gi, '?'],
+  [/\bexclamation point\b/gi, '!'],
+  [/\bexclamation mark\b/gi, '!'],
+  [/\bnew line\b/gi, '\n'],
+  [/\bnewline\b/gi, '\n'],
+  [/\bnext line\b/gi, '\n'],
+  [/\bcolon\b/gi, ':'],
+  [/\bsemicolon\b/gi, ';'],
+  [/\bopen paren\b/gi, '('],
+  [/\bopen parenthesis\b/gi, '('],
+  [/\bclose paren\b/gi, ')'],
+  [/\bclose parenthesis\b/gi, ')'],
+  [/\bdash\b/gi, '-'],
+  [/\bhyphen\b/gi, '-'],
+  [/\bslash\b/gi, '/'],
+  [/\bforward slash\b/gi, '/'],
+  [/\bbackslash\b/gi, '\\'],
+  [/\basterisk\b/gi, '*'],
+  [/\bhash\b/gi, '#'],
+  [/\bhashtag\b/gi, '#'],
+  [/\bat sign\b/gi, '@'],
+  [/\bampersand\b/gi, '&'],
+  [/\bpercent\b/gi, '%'],
+  [/\bdollar sign\b/gi, '$'],
+  [/\beuro sign\b/gi, '€'],
+  [/\bdouble quote\b/gi, '"'],
+  [/\bsingle quote\b/gi, "'"],
+];
+
+/**
+ * Whitespace-cleanup rules, applied in order after punctuation normalization.
+ */
+const SPACE_CLEAN_RULES: [RegExp, string][] = [
+  [/\s+,/g, ','],
+  [/\s+\./g, '.'],
+  [/\s+\?/g, '?'],
+  [/\s+!/g, '!'],
+  [/\s+:/g, ':'],
+  [/\s+;/g, ';'],
+  [/\s+\)/g, ')'],
+  [/\(\s+/g, '('],
+  [/\s+-/g, '-'],
+  [/\s+\//g, '/'],
+  [/\s+@/g, '@'],
+  [/\s+#/g, '#'],
+  [/\s+&/g, '&'],
+  [/\s+\*/g, '*'],
+  [/\s+\\/g, '\\'],
+  [/\s+\$/g, '$'],
+  [/\s+%/g, '%'],
+  [/\s+"/g, '"'],
+  [/\s+'/g, "'"],
+  [/\n\s+/g, '\n'],
+  [/\s+(?=\n)/g, ''],
+  [/\.\s*\./g, '.'],
+  [/,\s*\./g, '.'],
+  [/,\s+,/g, ','],
+  [/[^\S\n]{2,}/g, ' '],
+];
+
 @Injectable({ providedIn: 'root' })
 export class SpeechService {
   readonly speaking = signal<boolean>(false);
@@ -332,74 +401,18 @@ export class SpeechService {
   }
 
   private normalizePunctuation(text: string): string {
-    const rules: [RegExp, string][] = [
-      [/\bcomma\b/gi, ','],
-      [/\bperiod\b/gi, '.'],
-      [/\bdot\b/gi, '.'],
-      [/\bfull stop\b/gi, '.'],
-      [/\bquestion mark\b/gi, '?'],
-      [/\bexclamation point\b/gi, '!'],
-      [/\bexclamation mark\b/gi, '!'],
-      [/\bnew line\b/gi, '\n'],
-      [/\bnewline\b/gi, '\n'],
-      [/\bnext line\b/gi, '\n'],
-      [/\bcolon\b/gi, ':'],
-      [/\bsemicolon\b/gi, ';'],
-      [/\bopen paren\b/gi, '('],
-      [/\bopen parenthesis\b/gi, '('],
-      [/\bclose paren\b/gi, ')'],
-      [/\bclose parenthesis\b/gi, ')'],
-      [/\bdash\b/gi, '-'],
-      [/\bhyphen\b/gi, '-'],
-      [/\bslash\b/gi, '/'],
-      [/\bforward slash\b/gi, '/'],
-      [/\bbackslash\b/gi, '\\'],
-      [/\basterisk\b/gi, '*'],
-      [/\bhash\b/gi, '#'],
-      [/\bhashtag\b/gi, '#'],
-      [/\bat sign\b/gi, '@'],
-      [/\bampersand\b/gi, '&'],
-      [/\bpercent\b/gi, '%'],
-      [/\bdollar sign\b/gi, '$'],
-      [/\beuro sign\b/gi, '€'],
-      [/\bdouble quote\b/gi, '"'],
-      [/\bsingle quote\b/gi, "'"],
-    ];
-
     let result = text;
-    for (const [regex, replacement] of rules) {
+    for (const [regex, replacement] of PUNCTUATION_RULES) {
       result = result.replace(regex, replacement);
     }
-
     return this.cleanPunctuationSpaces(result);
   }
 
   private cleanPunctuationSpaces(text: string): string {
-    return text
-      .replace(/\s+,/g, ',')
-      .replace(/\s+\./g, '.')
-      .replace(/\s+\?/g, '?')
-      .replace(/\s+!/g, '!')
-      .replace(/\s+:/g, ':')
-      .replace(/\s+;/g, ';')
-      .replace(/\s+\)/g, ')')
-      .replace(/\(\s+/g, '(')
-      .replace(/\s+-/g, '-')
-      .replace(/\s+\//g, '/')
-      .replace(/\s+@/g, '@')
-      .replace(/\s+#/g, '#')
-      .replace(/\s+&/g, '&')
-      .replace(/\s+\*/g, '*')
-      .replace(/\s+\\/g, '\\')
-      .replace(/\s+\$/g, '$')
-      .replace(/\s+%/g, '%')
-      .replace(/\s+"/g, '"')
-      .replace(/\s+'/g, "'")
-      .replace(/\n\s+/g, '\n')
-      .replace(/\s+(?=\n)/g, '')
-      .replace(/\.\s*\./g, '.')
-      .replace(/,\s*\./g, '.')
-      .replace(/,\s+,/g, ',')
-      .replace(/[^\S\n]{2,}/g, ' ');
+    let result = text;
+    for (const [regex, replacement] of SPACE_CLEAN_RULES) {
+      result = result.replace(regex, replacement);
+    }
+    return result;
   }
 }

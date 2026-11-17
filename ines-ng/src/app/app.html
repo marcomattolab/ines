@@ -35,7 +35,7 @@
           class="ws-seg-btn"
           [class.active]="activeWorkspace() === 'productivity'"
           (click)="setWorkspace('productivity')"
-          title="Productivity Workspace (Chat, Voice, Brain, Todo, Expenses...)"
+          title="Productivity Workspace (Chat, Voice, Brain, Todo...)"
           aria-label="Productivity Workspace"
         >
           <mat-icon fontIcon="dashboard" class="ws-seg-icon"></mat-icon>
@@ -108,9 +108,6 @@
           class="font-[var(--font-ui)] text-[11px] font-semibold tracking-[0.04em] uppercase leading-none text-center"
           >{{ item.tab.label }}</span
         >
-        @if (item.tab.id === 'expenses' && expense.unseenCount() > 0) {
-          <span class="tab-badge">{{ expense.unseenCount() }}</span>
-        }
       </button>
     }
     <div class="flex-1"></div>
@@ -132,65 +129,62 @@
 
   <!-- Main panels -->
   <main id="main">
-    @defer (when activeTab() === 'assistant'; prefetch on idle) {
+    @defer (when activeTab() === 'assistant') {
       <app-voice-tab [hidden]="activeTab() !== 'assistant'" />
     }
     <app-chat-tab [hidden]="activeTab() !== 'chat'" />
-    @defer (when activeTab() === 'meeting'; prefetch on idle) {
+    @defer (when activeTab() === 'meeting') {
       <app-meeting-tab [hidden]="activeTab() !== 'meeting'" />
     }
-    @defer (when activeTab() === 'translate'; prefetch on idle) {
+    @defer (when activeTab() === 'translate') {
       <app-translate-tab [hidden]="activeTab() !== 'translate'" />
     }
-    @defer (when activeTab() === 'todo'; prefetch on idle) {
+    @defer (when activeTab() === 'todo') {
       <app-todo-tab [hidden]="activeTab() !== 'todo'" />
     }
-    @defer (when activeTab() === 'expenses'; prefetch on idle) {
-      <app-expenses-tab [hidden]="activeTab() !== 'expenses'" />
-    }
-    @defer (when activeTab() === 'coding'; prefetch on idle) {
+    @defer (when activeTab() === 'coding') {
       <app-coding-tab [hidden]="activeTab() !== 'coding'" />
     }
-    @defer (when activeTab() === 'agents'; prefetch on idle) {
+    @defer (when activeTab() === 'agents') {
       <app-agents-tab [hidden]="activeTab() !== 'agents'" />
     }
-    @defer (when activeTab() === 'vision'; prefetch on idle) {
+    @defer (when activeTab() === 'vision') {
       <app-vision-tab [hidden]="activeTab() !== 'vision'" />
     }
-    @defer (when activeTab() === 'sicilian'; prefetch on idle) {
+    @defer (when activeTab() === 'sicilian') {
       <app-sicilian-gestures-tab [hidden]="activeTab() !== 'sicilian'" />
     }
-    @defer (when activeTab() === 'pinch-scroll'; prefetch on idle) {
+    @defer (when activeTab() === 'pinch-scroll') {
       <app-pinch-scroll-tab [hidden]="activeTab() !== 'pinch-scroll'" />
     }
-    @defer (when activeTab() === 'head-cursor'; prefetch on idle) {
+    @defer (when activeTab() === 'head-cursor') {
       <app-head-cursor-tab [hidden]="activeTab() !== 'head-cursor'" />
     }
-    @defer (when activeTab() === 'tic-tac-toe'; prefetch on idle) {
+    @defer (when activeTab() === 'tic-tac-toe') {
       <app-tic-tac-toe-tab [hidden]="activeTab() !== 'tic-tac-toe'" />
     }
-    @defer (when activeTab() === 'background'; prefetch on idle) {
+    @defer (when activeTab() === 'background') {
       <app-background-tab [hidden]="activeTab() !== 'background'" />
     }
-    @defer (when activeTab() === 'pii-ocr'; prefetch on idle) {
+    @defer (when activeTab() === 'pii-ocr') {
       <app-pii-ocr-tab [hidden]="activeTab() !== 'pii-ocr'" />
     }
-    @defer (when activeTab() === 'vision-assist'; prefetch on idle) {
+    @defer (when activeTab() === 'vision-assist') {
       <app-vision-assist-tab [hidden]="activeTab() !== 'vision-assist'" />
     }
-    @defer (when activeTab() === 'presentation'; prefetch on idle) {
+    @defer (when activeTab() === 'presentation') {
       <app-presentation-tab [hidden]="activeTab() !== 'presentation'" />
     }
-    @defer (when activeTab() === 'project'; prefetch on idle) {
+    @defer (when activeTab() === 'project') {
       <app-project-tab [hidden]="activeTab() !== 'project'" />
     }
-    @defer (when activeTab() === 'brain'; prefetch on idle) {
+    @defer (when activeTab() === 'brain') {
       <app-brain-tab [hidden]="activeTab() !== 'brain'" />
     }
-    @defer (when activeTab() === 'dev-agent'; prefetch on idle) {
+    @defer (when activeTab() === 'dev-agent') {
       <app-dev-agent-tab [hidden]="activeTab() !== 'dev-agent'" />
     }
-    @defer (when activeTab() === 'learning'; prefetch on idle) {
+    @defer (when activeTab() === 'learning') {
       <app-learning-tab [hidden]="activeTab() !== 'learning'" />
     }
   </main>
@@ -280,7 +274,7 @@
         ></mat-icon>
         <input
           class="flex-1 bg-transparent border-none outline-none text-base text-[var(--text-0)] placeholder:text-[var(--text-2)] font-[var(--font-body)]"
-          placeholder="Search tabs, quick actions (todo:, expense:, note:), or tools..."
+          placeholder="Search tabs, quick actions (todo:, note:), or tools..."
           [value]="commandQuery()"
           (input)="commandQuery.set($any($event.target).value)"
           autofocus
@@ -311,10 +305,6 @@
         <button type="button" class="cmd-chip" (click)="commandQuery.set('todo: ')">
           <mat-icon fontIcon="add_task" class="text-xs w-3 h-3 text-accent-purple"></mat-icon>
           + To-Do
-        </button>
-        <button type="button" class="cmd-chip" (click)="commandQuery.set('expense: ')">
-          <mat-icon fontIcon="receipt_long" class="text-xs w-3 h-3 text-accent-green"></mat-icon>
-          + Expense
         </button>
         <button type="button" class="cmd-chip" (click)="commandQuery.set('note: ')">
           <mat-icon fontIcon="psychology" class="text-xs w-3 h-3 text-accent-amber"></mat-icon>
@@ -378,8 +368,7 @@
             ></mat-icon>
             <span>No results found for "{{ commandQuery() }}"</span>
             <span class="text-xs text-[var(--text-2)] opacity-80">
-              Try typing <code class="text-[var(--accent-blue)]">todo:</code>,
-              <code class="text-[var(--accent-green)]">expense:</code> or
+              Try typing <code class="text-[var(--accent-blue)]">todo:</code> or
               <code class="text-[var(--accent-purple)]">note:</code>
             </span>
           </div>

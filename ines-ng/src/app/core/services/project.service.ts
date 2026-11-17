@@ -43,21 +43,16 @@ export class ProjectService extends BaseIndexedDbService<ProjectDocument, Projec
     const docStore = tx.objectStore('documents');
     const chunkStore = tx.objectStore('chunks');
 
+    // Fire every put synchronously and await the transaction once: awaiting each
+    // request individually both serializes the writes and risks an auto-commit
+    // when the event loop yields with no pending requests.
     for (const doc of data.documents) {
-      await new Promise<void>((resolve, reject) => {
-        const req = docStore.put(doc);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-      });
+      docStore.put(doc);
     }
 
     if (data.chunks) {
       for (const chunk of data.chunks) {
-        await new Promise<void>((resolve, reject) => {
-          const req = chunkStore.put(chunk);
-          req.onsuccess = () => resolve();
-          req.onerror = () => reject(req.error);
-        });
+        chunkStore.put(chunk);
       }
     }
 
@@ -65,5 +60,8 @@ export class ProjectService extends BaseIndexedDbService<ProjectDocument, Projec
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+
+    // Refresh the in-memory document list and drop the chunk cache.
+    await this.loadDocuments();
   }
 }

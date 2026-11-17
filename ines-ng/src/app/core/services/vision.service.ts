@@ -40,10 +40,40 @@ export type FaceOverlayType =
   | 'sunglasses'
   | 'skull';
 
+/** Shallow equality for the blendshape scores map (avoids per-frame notifications). */
+function shallowRecordEqual(a: Record<string, number>, b: Record<string, number>): boolean {
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  for (const k of ka) if (a[k] !== b[k]) return false;
+  return true;
+}
+
+function stringArrayEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/**
+ * Landmark arrays change every frame while a hand/pose is tracked, so we only
+ * suppress the very common empty↔empty notifications — deep-comparing full
+ * landmark arrays on every frame would be wasted work.
+ */
+function landmarksEqual(a: unknown[][], b: unknown[][]): boolean {
+  if (a === b) return true;
+  return a.length === 0 && b.length === 0;
+}
+
+function poseEqual(a: unknown[], b: unknown[]): boolean {
+  if (a === b) return true;
+  return a.length === 0 && b.length === 0;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VisionService {
   readonly emotion = signal<DetectedEmotion>('Neutral');
-  readonly emotionScores = signal<Record<string, number>>({});
+  readonly emotionScores = signal<Record<string, number>>({}, { equal: shallowRecordEqual });
   readonly gesture = signal<DetectedGesture>('None');
   readonly gestureScore = signal(0);
   readonly faceCount = signal(0);
@@ -52,9 +82,9 @@ export class VisionService {
   readonly isRunning = signal(false);
   readonly heartRate = signal(0);
   readonly engagement = signal(0);
-  readonly handLandmarks = signal<any[][]>([]);
-  readonly poseLandmarks = signal<any[]>([]);
-  readonly handedness = signal<string[]>([]);
+  readonly handLandmarks = signal<any[][]>([], { equal: landmarksEqual });
+  readonly poseLandmarks = signal<any[]>([], { equal: poseEqual });
+  readonly handedness = signal<string[]>([], { equal: stringArrayEqual });
 
   private _landmarks: any[] = [];
   get faceLandmarks(): any[] {

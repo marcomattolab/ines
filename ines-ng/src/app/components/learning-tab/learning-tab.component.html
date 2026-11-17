@@ -42,6 +42,7 @@
         type="button"
         class="hub-chip"
         [class.active]="activeSubTab() === item.id"
+        [style.--chip-accent]="item.hex"
         (click)="selectSubTab(item.id)"
       >
         <mat-icon [fontIcon]="item.icon" class="text-sm w-4 h-4 {{ item.color }}"></mat-icon>

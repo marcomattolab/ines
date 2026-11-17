@@ -14,10 +14,22 @@ type CodeTool = 'coding' | 'dev-agent' | 'agents';
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class CodeTabComponent {
-  readonly tools: { id: CodeTool; icon: string; label: string; color: string }[] = [
-    { id: 'coding', icon: 'code', label: 'Code', color: 'text-sky-400' },
-    { id: 'dev-agent', icon: 'smart_toy', label: 'DevAgent', color: 'text-violet-400' },
-    { id: 'agents', icon: 'support_agent', label: 'Agents', color: 'text-emerald-400' },
+  readonly tools: { id: CodeTool; icon: string; label: string; color: string; hex: string }[] = [
+    { id: 'coding', icon: 'code', label: 'Code', color: 'text-sky-400', hex: '#38bdf8' },
+    {
+      id: 'dev-agent',
+      icon: 'smart_toy',
+      label: 'DevAgent',
+      color: 'text-violet-400',
+      hex: '#a78bfa',
+    },
+    {
+      id: 'agents',
+      icon: 'support_agent',
+      label: 'Agents',
+      color: 'text-emerald-400',
+      hex: '#34d399',
+    },
   ];
 
   readonly active = signal<CodeTool>('coding');

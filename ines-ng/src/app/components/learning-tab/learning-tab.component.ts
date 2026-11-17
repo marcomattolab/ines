@@ -85,17 +85,53 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
 
-  readonly toolNav: { id: SubTab; icon: string; label: string; color: string }[] = [
-    { id: 'chat', icon: 'chat', label: 'Chat Q&A', color: 'text-blue-400' },
-    { id: 'summary', icon: 'summarize', label: 'Summary', color: 'text-rose-400' },
-    { id: 'mindmap', icon: 'account_tree', label: 'Mind Map', color: 'text-purple-400' },
-    { id: 'plan', icon: 'calendar_month', label: 'Study Plan', color: 'text-cyan-400' },
-    { id: 'quiz', icon: 'quiz', label: 'Quiz', color: 'text-amber-400' },
-    { id: 'flashcards', icon: 'style', label: 'Flashcards', color: 'text-green-400' },
-    { id: 'fillblanks', icon: 'edit_note', label: 'Fill Blanks', color: 'text-orange-400' },
-    { id: 'matching', icon: 'compare_arrows', label: 'Matching', color: 'text-indigo-400' },
-    { id: 'openq', icon: 'question_answer', label: 'Open Q&A', color: 'text-emerald-400' },
-    { id: 'slides', icon: 'slideshow', label: 'Slides', color: 'text-amber-400' },
+  readonly toolNav: { id: SubTab; icon: string; label: string; color: string; hex: string }[] = [
+    { id: 'chat', icon: 'chat', label: 'Chat Q&A', color: 'text-blue-400', hex: '#60a5fa' },
+    { id: 'summary', icon: 'summarize', label: 'Summary', color: 'text-rose-400', hex: '#fb7185' },
+    {
+      id: 'mindmap',
+      icon: 'account_tree',
+      label: 'Mind Map',
+      color: 'text-purple-400',
+      hex: '#c084fc',
+    },
+    {
+      id: 'plan',
+      icon: 'calendar_month',
+      label: 'Study Plan',
+      color: 'text-cyan-400',
+      hex: '#22d3ee',
+    },
+    { id: 'quiz', icon: 'quiz', label: 'Quiz', color: 'text-amber-400', hex: '#fbbf24' },
+    {
+      id: 'flashcards',
+      icon: 'style',
+      label: 'Flashcards',
+      color: 'text-green-400',
+      hex: '#4ade80',
+    },
+    {
+      id: 'fillblanks',
+      icon: 'edit_note',
+      label: 'Fill Blanks',
+      color: 'text-orange-400',
+      hex: '#fb923c',
+    },
+    {
+      id: 'matching',
+      icon: 'compare_arrows',
+      label: 'Matching',
+      color: 'text-indigo-400',
+      hex: '#818cf8',
+    },
+    {
+      id: 'openq',
+      icon: 'question_answer',
+      label: 'Open Q&A',
+      color: 'text-emerald-400',
+      hex: '#34d399',
+    },
+    { id: 'slides', icon: 'slideshow', label: 'Slides', color: 'text-amber-400', hex: '#fbbf24' },
   ];
 
   activeSubTab = signal<SubTab>('chat');

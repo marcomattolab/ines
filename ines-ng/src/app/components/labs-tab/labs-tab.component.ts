@@ -37,15 +37,45 @@ type LabTool =
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class LabsTabComponent {
-  readonly tools: { id: LabTool; icon: string; label: string; color: string }[] = [
-    { id: 'vision', icon: 'visibility', label: 'Vision', color: 'text-sky-400' },
-    { id: 'assist', icon: 'remove_red_eye', label: 'Vision Assist', color: 'text-cyan-400' },
-    { id: 'ocr', icon: 'document_scanner', label: 'OCR & PII', color: 'text-amber-400' },
-    { id: 'gestures', icon: 'back_hand', label: 'Gestures', color: 'text-amber-300' },
-    { id: 'pinch', icon: 'touch_app', label: 'Pinch Scroll', color: 'text-teal-400' },
-    { id: 'cursor', icon: 'face', label: 'Head Cursor', color: 'text-indigo-400' },
-    { id: 'background', icon: 'wallpaper', label: 'Background', color: 'text-lime-400' },
-    { id: 'tris', icon: 'grid_on', label: 'Tris', color: 'text-rose-400' },
+  readonly tools: { id: LabTool; icon: string; label: string; color: string; hex: string }[] = [
+    { id: 'vision', icon: 'visibility', label: 'Vision', color: 'text-sky-400', hex: '#38bdf8' },
+    {
+      id: 'assist',
+      icon: 'remove_red_eye',
+      label: 'Vision Assist',
+      color: 'text-cyan-400',
+      hex: '#22d3ee',
+    },
+    {
+      id: 'ocr',
+      icon: 'document_scanner',
+      label: 'OCR & PII',
+      color: 'text-amber-400',
+      hex: '#fbbf24',
+    },
+    {
+      id: 'gestures',
+      icon: 'back_hand',
+      label: 'Gestures',
+      color: 'text-amber-300',
+      hex: '#fcd34d',
+    },
+    {
+      id: 'pinch',
+      icon: 'touch_app',
+      label: 'Pinch Scroll',
+      color: 'text-teal-400',
+      hex: '#2dd4bf',
+    },
+    { id: 'cursor', icon: 'face', label: 'Head Cursor', color: 'text-indigo-400', hex: '#818cf8' },
+    {
+      id: 'background',
+      icon: 'wallpaper',
+      label: 'Background',
+      color: 'text-lime-400',
+      hex: '#a3e635',
+    },
+    { id: 'tris', icon: 'grid_on', label: 'Tris', color: 'text-rose-400', hex: '#fb7185' },
   ];
 
   readonly active = signal<LabTool>('vision');

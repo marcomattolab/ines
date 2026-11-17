@@ -13,10 +13,17 @@ type AssistantTool = 'chat' | 'voice';
   host: { class: 'flex flex-1 overflow-hidden min-w-0' },
 })
 export class AssistantTabComponent {
-  readonly tools: { id: AssistantTool; icon: string; label: string; color: string }[] = [
-    { id: 'chat', icon: 'message-square', label: 'Chat', color: 'text-blue-400' },
-    { id: 'voice', icon: 'record_voice_over', label: 'Voice', color: 'text-cyan-400' },
-  ];
+  readonly tools: { id: AssistantTool; icon: string; label: string; color: string; hex: string }[] =
+    [
+      { id: 'chat', icon: 'message-square', label: 'Chat', color: 'text-blue-400', hex: '#60a5fa' },
+      {
+        id: 'voice',
+        icon: 'record_voice_over',
+        label: 'Voice',
+        color: 'text-cyan-400',
+        hex: '#22d3ee',
+      },
+    ];
 
   readonly active = signal<AssistantTool>('chat');
 }

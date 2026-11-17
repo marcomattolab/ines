@@ -5,6 +5,7 @@
         type="button"
         class="hub-chip"
         [class.active]="active() === t.id"
+        [style.--chip-accent]="t.hex"
         (click)="active.set(t.id)"
         [attr.title]="t.label"
       >

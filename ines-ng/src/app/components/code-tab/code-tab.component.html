@@ -5,6 +5,7 @@
         type="button"
         class="hub-chip"
         [class.active]="active() === t.id"
+        [style.--chip-accent]="t.hex"
         (click)="active.set(t.id)"
       >
         <mat-icon [fontIcon]="t.icon" class="text-sm w-4 h-4 {{ t.color }}"></mat-icon>

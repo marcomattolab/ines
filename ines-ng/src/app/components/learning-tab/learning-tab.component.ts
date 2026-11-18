@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   HostListener,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -84,6 +85,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   private readonly deck = inject(SlideDeckService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
+  readonly chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');
 
   readonly toolNav: { id: SubTab; icon: string; label: string; color: string; hex: string }[] = [
     { id: 'chat', icon: 'chat', label: 'Chat Q&A', color: 'text-blue-400', hex: '#60a5fa' },
@@ -152,7 +154,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   quizSecondsLeft = signal(0);
   private timerHandle: any = null;
 
-  flashcardsText = signal('');
+  flashcards = signal<{ front: string; back: string }[]>([]);
 
   fillBlanks = signal<FillBlank[]>([]);
   fillBlankAnswers = signal<string[]>([]);
@@ -182,7 +184,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   savedQAs = signal<KnowledgeQA[]>([]);
   showClearConfirm = signal(false);
 
-  isMindMapPlaceholder = true;
+  isMindMapPlaceholder = signal(true);
   showMindMapOnRight = signal(false);
   zoomLevel = signal(1.0);
   panX = signal(0);
@@ -192,6 +194,18 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   searchQuery = signal('');
   collapsedDocs = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (!this.messages().length) return;
+      const el = this.chatArea()?.nativeElement;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight;
+        });
+      }
+    });
+  }
 
   readonly filteredDocs = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -248,14 +262,23 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   selectSubTab(tab: SubTab) {
     this.activeSubTab.set(tab);
-    if (
-      tab === 'mindmap' &&
-      this.isMindMapPlaceholder &&
-      this.km.documents().length > 0 &&
-      !this.isGenerating() &&
-      this.llm.isReady()
-    ) {
-      this.generateMindMap();
+    if (tab === 'mindmap') {
+      if (
+        this.isMindMapPlaceholder() &&
+        this.km.documents().length > 0 &&
+        !this.isGenerating() &&
+        this.llm.isReady()
+      ) {
+        this.generateMindMap();
+      } else if (this.isMindMapPlaceholder()) {
+        setTimeout(
+          () =>
+            this.renderMindMap(
+              'mindmap\n  root((Learning Center))\n    (Upload documents to start)',
+            ),
+          0,
+        );
+      }
     }
     if (
       tab === 'quiz' &&
@@ -268,7 +291,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     }
     if (
       tab === 'flashcards' &&
-      !this.flashcardsText() &&
+      this.flashcards().length === 0 &&
       this.km.documents().length > 0 &&
       !this.isGenerating() &&
       this.llm.isReady()
@@ -355,7 +378,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   async clearAll() {
     await this.km.clearAll();
     this.messages.set([]);
-    this.flashcardsText.set('');
+    this.flashcards.set([]);
     this.studyPlan.set('');
     this.summaryText.set('');
     this.quizQuestions.set([]);
@@ -364,12 +387,19 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     this.openQuestion.set('');
     this.savedQAs.set([]);
     this.totalChunks.set(0);
-    this.isMindMapPlaceholder = true;
+    this.isMindMapPlaceholder.set(true);
     this.renderMindMap('mindmap\n  root((Learning Center))\n    (Upload documents to start)');
     this.toast.show('All cleared');
   }
 
   // ── Chat ──
+
+  onChatKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void this.sendMessage();
+    }
+  }
 
   async sendMessage() {
     const text = this.userInput().trim();
@@ -470,9 +500,12 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       const result = await this.llm.generate(system, 'Generate a mindmap.', trimmed, () => {});
       const code = this.cleanMermaidCode(result);
       await this.renderMindMap(code);
-      this.isMindMapPlaceholder = false;
+      this.isMindMapPlaceholder.set(false);
     } catch (err: any) {
-      this.isMindMapPlaceholder = true;
+      this.isMindMapPlaceholder.set(true);
+      await this.renderMindMap(
+        'mindmap\n  root((Learning Center))\n    (Upload documents to start)',
+      );
       this.toast.error(
         'Mind map generation failed — try again or upload more documents for better context.',
       );
@@ -688,19 +721,69 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
         [],
         () => {},
       );
-      this.flashcardsText.set(result);
+      const pairs = this.parseFlashcards(result);
+      this.flashcards.set(pairs);
+      if (pairs.length === 0) {
+        this.toast.error('Flashcards generated no valid Q&A pairs — try again.');
+      }
     } catch (err: any) {
-      this.flashcardsText.set('Error: ' + err.message);
+      this.flashcards.set([]);
+      this.toast.error('Flashcard generation failed: ' + err.message);
     }
     this.isGenerating.set(false);
   }
 
   downloadFlashcards() {
-    const csv = this.flashcardsText();
-    if (!csv.trim()) return;
-    const lines = csv.split('\n').filter((l) => l.includes('","'));
-    this.dom.downloadText('front,back\n' + lines.join('\n'), 'flashcards.csv');
+    const cards = this.flashcards();
+    if (!cards.length) return;
+    const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = 'front,back\n' + cards.map((c) => `${quote(c.front)},${quote(c.back)}`).join('\n');
+    this.dom.downloadText(csv, 'flashcards.csv');
     this.toast.success('Downloaded');
+  }
+
+  private parseFlashcards(raw: string): { front: string; back: string }[] {
+    const text = raw.replace(/```(?:csv)?/gi, '').trim();
+    const pairs: { front: string; back: string }[] = [];
+    for (const line of text.split('\n')) {
+      const t = line.trim();
+      if (!t) continue;
+      const cells = this.parseCsvCells(t);
+      if (cells.length >= 2 && cells[0] && cells[1]) {
+        pairs.push({ front: cells[0], back: cells.slice(1).join(', ') });
+      }
+    }
+    return pairs;
+  }
+
+  private parseCsvCells(line: string): string[] {
+    const cells: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          cur += ch;
+        }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        cells.push(cur);
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    cells.push(cur);
+    return cells.map((c) => c.trim());
   }
 
   // ── Study Plan ──

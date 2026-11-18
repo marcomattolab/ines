@@ -2,12 +2,24 @@ export interface CameraHandle {
   stop(): void;
 }
 
-export async function startCamera(video: HTMLVideoElement): Promise<CameraHandle> {
+export interface CameraOptions {
+  width?: number;
+  height?: number;
+}
+
+export async function startCamera(
+  video: HTMLVideoElement,
+  options: CameraOptions = {},
+): Promise<CameraHandle> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error('Webcam non disponibile: serve HTTPS oppure localhost.');
   }
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+    video: {
+      width: { ideal: options.width ?? 640 },
+      height: { ideal: options.height ?? 480 },
+      facingMode: 'user',
+    },
     audio: false,
   });
   video.srcObject = stream;

@@ -161,7 +161,7 @@
       <!-- ── Chat ── -->
       @if (activeSubTab() === 'chat') {
         <div class="flex-1 flex flex-col min-h-0">
-          <div class="chat-area flex-1">
+          <div #chatArea class="chat-area flex-1">
             @if (messages().length === 0) {
               <div class="empty-state">
                 <mat-icon class="empty-icon scale-150 text-blue-400">school</mat-icon>
@@ -204,7 +204,7 @@
               class="input-field"
               [value]="userInput()"
               (input)="userInput.set($any($event.target).value)"
-              (keydown.enter)="$event.preventDefault(); sendMessage()"
+              (keydown)="onChatKeydown($event)"
               placeholder="Ask about your study materials..."
               [disabled]="!llm.isReady() || isGenerating()"
               rows="1"
@@ -246,7 +246,7 @@
               <mat-icon class="scale-50">center_focus_strong</mat-icon>
             </button>
             <div class="flex-1"></div>
-            @if (isMindMapPlaceholder) {
+            @if (isMindMapPlaceholder()) {
               <button
                 (click)="generateMindMap()"
                 [disabled]="isGenerating()"
@@ -264,6 +264,16 @@
               </button>
             }
           </div>
+          @if (isGenerating()) {
+            <div
+              class="absolute inset-0 z-10 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-2 text-sm text-[var(--text-1)]">
+                <mat-icon class="text-purple-400 animate-spin">hourglass_empty</mat-icon>
+                Generating mind map…
+              </div>
+            </div>
+          }
           <div
             class="flex-1 overflow-hidden"
             (pointerdown)="onPanDown($event)"
@@ -273,10 +283,10 @@
             style="cursor: grab"
           >
             <div
+              class="mermaid-stage"
               [style.transform]="
                 'translate(' + panX() + 'px,' + panY() + 'px) scale(' + zoomLevel() + ')'
               "
-              style="transform-origin: center center"
             >
               <div #mermaidContainer class="mermaid-container"></div>
             </div>
@@ -292,7 +302,18 @@
               <mat-icon class="empty-icon scale-150 text-amber-400">quiz</mat-icon>
               <h3 class="text-base font-bold font-[var(--font-ui)]">Test Your Knowledge</h3>
               <p class="empty-text">Generate a multiple-choice quiz from your documents.</p>
-              <div class="flex items-center gap-2 mt-4 text-xs text-[var(--text-2)]">
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
+              <div
+                class="flex flex-wrap items-center gap-2 mt-4 text-xs text-[var(--text-2)] justify-center"
+              >
                 <span>Questions:</span>
                 <button
                   (click)="decQuestions()"
@@ -303,6 +324,20 @@
                 <span class="font-mono w-6 text-center">{{ numQuizQuestions() }}</span>
                 <button
                   (click)="incQuestions()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  +
+                </button>
+                <span class="ml-3">Options:</span>
+                <button
+                  (click)="decOptions()"
+                  class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
+                >
+                  −
+                </button>
+                <span class="font-mono w-6 text-center">{{ numQuizOptions() }}</span>
+                <button
+                  (click)="incOptions()"
                   class="w-6 h-6 rounded bg-white/5 flex items-center justify-center"
                 >
                   +
@@ -325,7 +360,7 @@
               <app-button
                 variant="primary"
                 (onClick)="generateQuiz()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Quiz</app-button
               >
@@ -355,7 +390,6 @@
                   [class.border-red-500/30]="selectedAnswers()[i] !== q.answer"
                   [class.bg-green-500/5]="selectedAnswers()[i] === q.answer"
                   [class.bg-red-500/5]="selectedAnswers()[i] !== q.answer"
-                  [class.border-white/10]="true"
                 >
                   <p class="text-sm font-semibold">{{ i + 1 }}. {{ q.question }}</p>
                   <div class="mt-2 space-y-1">
@@ -463,15 +497,24 @@
       <!-- ── Flashcards ── -->
       @if (activeSubTab() === 'flashcards') {
         <div class="flex-1 overflow-y-auto p-6">
-          @if (!flashcardsText()) {
+          @if (flashcards().length === 0) {
             <div class="empty-state">
               <mat-icon class="empty-icon scale-150 text-green-400">style</mat-icon>
               <h3 class="text-base font-bold font-[var(--font-ui)]">Flashcards</h3>
               <p class="empty-text">Generate Anki-compatible flashcards from your documents.</p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateFlashcards()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate</app-button
               >
@@ -480,27 +523,25 @@
             <div class="max-w-2xl mx-auto">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-sm font-bold font-[var(--font-ui)]">Generated Flashcards</h3>
-                <app-button variant="primary" size="sm" (onClick)="downloadFlashcards()"
-                  >Download CSV</app-button
-                >
+                <div class="flex gap-2">
+                  <app-button
+                    variant="secondary"
+                    size="sm"
+                    (onClick)="generateFlashcards()"
+                    [disabled]="isGenerating()"
+                    >Regenerate</app-button
+                  >
+                  <app-button variant="primary" size="sm" (onClick)="downloadFlashcards()"
+                    >Download CSV</app-button
+                  >
+                </div>
               </div>
               <div class="space-y-2">
-                @for (
-                  line of flashcardsText()
-                    .split('\n')
-                    .filter((l) => l.includes('","'));
-                  track $index
-                ) {
-                  @if (line.split('","').length >= 2) {
-                    <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-1)]">
-                      <p class="text-xs font-semibold text-blue-400">
-                        Q: {{ line.split('","')[0].replace(/^"/, '') }}
-                      </p>
-                      <p class="text-xs text-[var(--text-1)] mt-2">
-                        A: {{ line.split('","')[1].replace(/"$/, '') }}
-                      </p>
-                    </div>
-                  }
+                @for (card of flashcards(); track $index) {
+                  <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-1)]">
+                    <p class="text-xs font-semibold text-blue-400">Q: {{ card.front }}</p>
+                    <p class="text-xs text-[var(--text-1)] mt-2">A: {{ card.back }}</p>
+                  </div>
                 }
               </div>
             </div>
@@ -518,10 +559,19 @@
               <p class="empty-text">
                 Generate a structured study plan with timeline and milestones.
               </p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateStudyPlan()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Plan</app-button
               >
@@ -560,10 +610,19 @@
               <mat-icon class="empty-icon scale-150 text-rose-400">summarize</mat-icon>
               <h3 class="text-base font-bold font-[var(--font-ui)]">Document Summary</h3>
               <p class="empty-text">Generate a comprehensive summary of all uploaded documents.</p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateSummary()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Summary</app-button
               >
@@ -602,10 +661,19 @@
               <mat-icon class="empty-icon scale-150 text-orange-400">edit_note</mat-icon>
               <h3 class="text-base font-bold font-[var(--font-ui)]">Fill in the Blanks</h3>
               <p class="empty-text">Practice key concepts with cloze exercises.</p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateFillBlanks()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Exercises</app-button
               >
@@ -679,10 +747,19 @@
               <mat-icon class="empty-icon scale-150 text-indigo-400">compare_arrows</mat-icon>
               <h3 class="text-base font-bold font-[var(--font-ui)]">Matching Exercise</h3>
               <p class="empty-text">Match terms with their correct definitions.</p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateMatching()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Pairs</app-button
               >
@@ -762,10 +839,19 @@
               <p class="empty-text">
                 Practice with thought-provoking questions and get AI feedback on your answers.
               </p>
+              @if (km.documents().length === 0) {
+                <p class="text-[11px] text-amber-400">
+                  Upload documents on the left to get started.
+                </p>
+              } @else if (llm.modelStatus() === 'loading') {
+                <p class="text-[11px] text-amber-400">Loading the language model…</p>
+              } @else if (!llm.isReady()) {
+                <p class="text-[11px] text-amber-400">Load the language model to generate.</p>
+              }
               <app-button
                 variant="primary"
                 (onClick)="generateOpenQuestion()"
-                [disabled]="isGenerating()"
+                [disabled]="isGenerating() || km.documents().length === 0 || !llm.isReady()"
                 className="mt-4"
                 >Generate Question</app-button
               >

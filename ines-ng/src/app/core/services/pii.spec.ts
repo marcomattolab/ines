@@ -77,6 +77,49 @@ describe('pii service — detectPii', () => {
     const text = 'Questo è un testo semplice senza informazioni sensibili.';
     expect(detectPii(text)).toEqual([]);
   });
+
+  it('detects custom terms (e.g. names)', () => {
+    const text = 'Il paziente Mario Rossi è stato dimesso oggi.';
+    const matches = detectPii(text, { terms: [{ value: 'Mario Rossi', label: 'Name' }] });
+    expect(matches).toHaveLength(1);
+    expect(matches[0].kind).toBe('Name');
+    expect(matches[0].value).toBe('Mario Rossi');
+  });
+
+  it('detects medical terms only when the category is enabled', () => {
+    const text = 'Diagnosi: diabete tipo 2 con ipertensione.';
+    expect(detectPii(text).some((m) => m.kind === 'Medical')).toBe(false);
+    const matches = detectPii(text, { kinds: new Set(['medical']) });
+    const kinds = matches.map((m) => m.kind);
+    expect(kinds).toContain('Medical');
+    expect(kinds.every((k) => k === 'Medical')).toBe(true);
+  });
+
+  it('only runs the enabled rule categories', () => {
+    const text = 'Contattami a mario.rossi@example.com o al 02 1234567.';
+    const matches = detectPii(text, { kinds: new Set(['phone']) });
+    expect(matches.every((m) => m.kind === 'Phone')).toBe(true);
+    expect(matches.some((m) => m.value.includes('@'))).toBe(false);
+  });
+
+  it('detects capitalized first names via the names category', () => {
+    const text = 'Il signor Mario e la signora Giulia sono arrivati.';
+    const matches = detectPii(text, { kinds: new Set(['names']) });
+    expect(matches.every((m) => m.kind === 'Name')).toBe(true);
+    expect(matches.map((m) => m.value)).toEqual(expect.arrayContaining(['Mario', 'Giulia']));
+  });
+
+  it('ignores lowercase words that also look like names', () => {
+    const text = 'la rosa e il bruno del quadro';
+    expect(detectPii(text, { kinds: new Set(['names']) })).toEqual([]);
+  });
+
+  it('detects capitalized surnames via the surnames category', () => {
+    const text = 'Contratto di Mario Rossi e Anna Bianchi.';
+    const matches = detectPii(text, { kinds: new Set(['surnames']) });
+    expect(matches.every((m) => m.kind === 'Surname')).toBe(true);
+    expect(matches.map((m) => m.value)).toEqual(expect.arrayContaining(['Rossi', 'Bianchi']));
+  });
 });
 
 describe('pii service — joinWords & wordsForMatch', () => {

@@ -1,9 +1,20 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import * as pdfjsLib from 'pdfjs-dist';
 import { OcrService, OcrWord } from '../../core/services/ocr.service';
-import { PiiMatch, detectPii, joinWords, wordsForMatch } from '../../core/services/pii';
+import {
+  PII_CATEGORIES,
+  PII_RULES,
+  PiiMatch,
+  PiiTerm,
+  detectPii,
+  joinWords,
+  wordsForMatch,
+} from '../../core/services/pii';
 import { ToastService } from '../../core/services/toast.service';
 import { errorMessage } from '../../core/services/camera';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 @Component({
   selector: 'app-pii-ocr-tab',
@@ -21,10 +32,15 @@ export class PiiOcrTabComponent {
   protected readonly done = signal(false);
   protected readonly error = signal('');
   protected readonly excluded = signal<ReadonlySet<number>>(new Set());
+  protected readonly categories = PII_CATEGORIES;
+  protected readonly enabled = signal<ReadonlySet<string>>(new Set(PII_RULES.map((r) => r.id)));
 
   private readonly words = signal<OcrWord[]>([]);
+  private readonly terms = signal<PiiTerm[]>([]);
   private readonly joined = computed(() => joinWords(this.words()));
-  protected readonly matches = computed<PiiMatch[]>(() => detectPii(this.joined().text));
+  protected readonly matches = computed<PiiMatch[]>(() =>
+    detectPii(this.joined().text, { kinds: this.enabled(), terms: this.terms() }),
+  );
   private image?: ImageBitmap;
 
   protected readonly redactedText = computed(() => {
@@ -48,14 +64,55 @@ export class PiiOcrTabComponent {
     this.excluded.set(new Set());
     this.words.set([]);
     try {
-      this.image = await createImageBitmap(file);
+      const source = this.isPdf(file) ? await this.renderPdf(file) : file;
+      this.image = await createImageBitmap(source);
       this.paint();
-      this.words.set(await this.ocr.recognizeWords(file));
+      this.words.set(await this.ocr.recognizeWords(source));
       this.done.set(true);
       this.paint();
     } catch (err) {
       this.error.set(errorMessage(err));
     }
+  }
+
+  private isPdf(file: File): boolean {
+    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  }
+
+  /** Renders every PDF page into a single tall PNG for OCR and display. */
+  private async renderPdf(file: File): Promise<Blob> {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const targetWidth = 1800;
+    const pages: HTMLCanvasElement[] = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const base = page.getViewport({ scale: 1 });
+      const scale = targetWidth / base.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      const ctx = canvas.getContext('2d')!;
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      pages.push(canvas);
+    }
+    const width = Math.max(...pages.map((c) => c.width));
+    const height = pages.reduce((sum, c) => sum + c.height, 0);
+    const composed = document.createElement('canvas');
+    composed.width = width;
+    composed.height = height;
+    const ctx = composed.getContext('2d')!;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, width, height);
+    let y = 0;
+    for (const page of pages) {
+      ctx.drawImage(page, 0, y);
+      y += page.height;
+    }
+    const blob = await new Promise<Blob | null>((resolve) => composed.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('Could not render the PDF to an image.');
+    return blob;
   }
 
   protected toggle(id: number): void {
@@ -66,6 +123,28 @@ export class PiiOcrTabComponent {
       return next;
     });
     this.paint();
+  }
+
+  protected toggleCategory(id: string): void {
+    this.enabled.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    this.excluded.set(new Set());
+  }
+
+  protected onTerms(e: Event): void {
+    const value = (e.target as HTMLTextAreaElement).value;
+    this.terms.set(
+      value
+        .split(/[\n,]+/)
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .map((t) => ({ value: t })),
+    );
+    this.excluded.set(new Set());
   }
 
   protected download(): void {

@@ -80,7 +80,7 @@ export class VisionAssistTabComponent implements OnDestroy {
   protected async start(): Promise<void> {
     this.error.set('');
     try {
-      this.camera = await startCamera(this.video().nativeElement);
+      this.camera = await startCamera(this.video().nativeElement, { width: 1280, height: 720 });
       this.cameraOn.set(true);
     } catch (e) {
       this.error.set(errorMessage(e));
@@ -133,12 +133,7 @@ export class VisionAssistTabComponent implements OnDestroy {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         this.result.set(await this.caption.caption(imageData));
       } else {
-        const blob = await new Promise<Blob>((resolve, reject) =>
-          canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('Cannot read the image'))),
-            'image/png',
-          ),
-        );
+        const blob = await this.toBlob(this.enhanceForOcr(canvas));
         const text = joinWords(await this.ocr.recognizeWords(blob)).text.trim();
         if (!text) this.error.set('No text recognized in the image.');
         else this.result.set(text);
@@ -163,6 +158,29 @@ export class VisionAssistTabComponent implements OnDestroy {
     canvas.width = b.width;
     canvas.height = b.height;
     canvas.getContext('2d')!.drawImage(b, 0, 0);
+  }
+
+  private toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('Cannot read the image'))),
+        'image/png',
+      ),
+    );
+  }
+
+  /** Upscales and enhances the frame so Tesseract reads text more reliably. */
+  private enhanceForOcr(source: HTMLCanvasElement): HTMLCanvasElement {
+    const scale = Math.max(1, Math.min(2.5, 1600 / source.width));
+    const out = document.createElement('canvas');
+    out.width = Math.round(source.width * scale);
+    out.height = Math.round(source.height * scale);
+    const ctx = out.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.filter = 'grayscale(1) contrast(1.4) brightness(1.05)';
+    ctx.drawImage(source, 0, 0, out.width, out.height);
+    return out;
   }
 
   private async ensureFrame(): Promise<void> {

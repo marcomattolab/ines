@@ -9,7 +9,7 @@
         OCR & personal data
       </div>
       <div class="panel-desc">
-        Read a document and redact personal data · Tesseract.js on-device
+        Read a document (image or PDF) and redact personal data · Tesseract.js on-device
       </div>
     </div>
   </div>
@@ -17,14 +17,44 @@
   <div class="flex-1 flex p-6 gap-6 overflow-hidden min-h-0">
     <section class="w-[380px] shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto">
       <label class="text-sm text-[var(--text-1)]">
-        Document image
+        Document (image or PDF)
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           (change)="onFile($event)"
           class="block mt-1 text-xs text-[var(--text-2)]"
         />
       </label>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--text-2)] mb-2">
+          What to redact
+        </h2>
+        <div class="space-y-1">
+          @for (cat of categories; track cat.id) {
+            <label
+              class="flex items-center gap-2 px-1 py-0.5 rounded-lg hover:bg-white/5 cursor-pointer text-xs text-[var(--text-2)]"
+            >
+              <input
+                type="checkbox"
+                class="accent-[var(--accent-amber)] w-4 h-4 shrink-0"
+                [checked]="enabled().has(cat.id)"
+                (change)="toggleCategory(cat.id)"
+              />
+              {{ cat.label }}
+            </label>
+          }
+        </div>
+        <label class="block mt-3 text-xs text-[var(--text-2)]">
+          Extra terms (names, specific diagnoses…) — separate with commas or new lines
+          <textarea
+            rows="4"
+            (input)="onTerms($event)"
+            placeholder="Mario Rossi, diabete tipo 2"
+            class="block mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-[var(--text-1)] font-[var(--font-mono)] outline-none focus:border-[var(--accent-amber)]"
+          ></textarea>
+        </label>
+      </div>
 
       @if (ocr.busy()) {
         <div>
@@ -65,8 +95,8 @@
         </div>
       } @else if (done() && !ocr.busy()) {
         <p class="text-xs text-[var(--text-2)]">
-          No personal data recognized. Detection uses rules for known formats, so names and
-          addresses are not detected.
+          No personal data recognized. Enable more categories or add custom terms (names,
+          diagnoses…) above to broaden detection.
         </p>
       }
 

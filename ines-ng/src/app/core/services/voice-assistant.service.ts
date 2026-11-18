@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { SpeechService } from './speech.service';
 import { LlmService, ChatMessage } from './llm.service';
 import { TodoService } from './todo.service';
@@ -56,6 +56,9 @@ const SYSTEM_DIGEST = `You are INES. Provide the user's daily digest from their 
 Summarize concisely: what is on the agenda, the key notes, and any action items.
 Suitable to be read aloud. Answer in the same language as the user. Keep it under 150 words.`;
 
+const TASKS_STORAGE_KEY = 'ines_voice_tasks';
+const LOG_STORAGE_KEY = 'ines_voice_log';
+
 @Injectable({ providedIn: 'root' })
 export class VoiceAssistantService {
   readonly speech = inject(SpeechService);
@@ -99,6 +102,29 @@ export class VoiceAssistantService {
   private nextTaskId = 1;
   private nextLogId = 1;
   private processingQueue = false;
+
+  constructor() {
+    // Restore the previous session's task queue and conversation log.
+    try {
+      const tasks = this.storage.get<VoiceTask[]>(TASKS_STORAGE_KEY);
+      if (Array.isArray(tasks)) {
+        this.tasks.set(
+          tasks.map((t) => ({ ...t, status: t.status === 'running' ? 'queued' : t.status })),
+        );
+        this.nextTaskId = tasks.reduce((max, t) => Math.max(max, t.id), 0) + 1;
+      }
+      const log = this.storage.get<AssistantLogEntry[]>(LOG_STORAGE_KEY);
+      if (Array.isArray(log)) {
+        this.log.set(log);
+        this.nextLogId = log.reduce((max, l) => Math.max(max, l.id), 0) + 1;
+      }
+    } catch {
+      /* storage is best-effort */
+    }
+
+    effect(() => this.storage.set(TASKS_STORAGE_KEY, this.tasks()));
+    effect(() => this.storage.set(LOG_STORAGE_KEY, this.log()));
+  }
 
   // ── Listening (push-to-talk) ──
 

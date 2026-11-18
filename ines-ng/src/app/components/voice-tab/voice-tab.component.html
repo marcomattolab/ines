@@ -44,6 +44,15 @@
         ></mat-icon>
         Wake
       </app-button>
+      <app-button
+        variant="secondary"
+        size="sm"
+        (onClick)="copyConversation()"
+        title="Copy conversation"
+      >
+        <mat-icon fontIcon="content_copy" class="text-sm w-3.5 h-3.5"></mat-icon>
+        Copy
+      </app-button>
       <app-button variant="secondary" size="sm" (onClick)="assistant.clear()">
         <mat-icon fontIcon="delete_sweep" class="text-sm w-3.5 h-3.5"></mat-icon>
         Clear

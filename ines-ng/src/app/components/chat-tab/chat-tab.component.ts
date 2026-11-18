@@ -421,17 +421,24 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       if (this.history.length > MAX_HISTORY_LENGTH)
         this.history = this.history.slice(-MAX_HISTORY_LENGTH);
       this.tokenInfo.set(`${this.history.length} messages in history`);
-      this.persist();
     } catch (e: any) {
       this.typing.set(false);
-      const msg = e.message?.includes('INVALID_ARGUMENT')
-        ? '⚠️ The conversation is too long for this model. I cleared older messages — try asking again.'
-        : '❌ ' + e.message;
-      this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      if (e?.name === 'AbortError') {
+        this.messages.update((m) => [
+          ...m.map((msg) => (msg.id === aiId ? { ...msg, streaming: false } : msg)),
+          { id: this.nextId++, role: 'ai', text: '🛑 Generation stopped.' },
+        ]);
+      } else {
+        const msg = e.message?.includes('INVALID_ARGUMENT')
+          ? '⚠️ The conversation is too long for this model. I cleared older messages — try asking again.'
+          : '❌ ' + e.message;
+        this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      }
+    } finally {
+      this.persist();
+      this.generating.set(false);
+      this.abortController = null;
     }
-
-    this.generating.set(false);
-    this.abortController = null;
   }
 
   stopGeneration() {

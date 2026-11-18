@@ -54,6 +54,18 @@ export class VoiceTabComponent {
     else this.assistant.toggleListening();
   }
 
+  copyConversation(): void {
+    const text = this.assistant
+      .log()
+      .map((e) => `${e.role === 'user' ? 'You' : 'INES'}: ${e.text}`)
+      .join('\n\n');
+    if (!text) {
+      this.toast.show('No conversation to copy');
+      return;
+    }
+    this.dom.copyToClipboard(text).then(() => this.toast.success('Conversation copied!'));
+  }
+
   taskIcon(type: VoiceTask['type']): string {
     switch (type) {
       case 'todo':

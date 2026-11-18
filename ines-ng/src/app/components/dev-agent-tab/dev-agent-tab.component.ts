@@ -216,6 +216,27 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   // Collapsible sections
   showAgentsList = signal(true);
 
+  /** Directories skipped during repository scan (heavy or non-source). */
+  private readonly skipDirs = new Set([
+    'node_modules',
+    '.git',
+    'dist',
+    'build',
+    'out',
+    '.angular',
+    'coverage',
+    '.next',
+    '.nuxt',
+    'target',
+    'vendor',
+    '.venv',
+    'venv',
+    '__pycache__',
+    '.cache',
+    'bin',
+    'obj',
+  ]);
+
   // Quick file open
   quickOpenVisible = signal(false);
   quickOpenQuery = signal('');
@@ -239,6 +260,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
+  private abortCtrl: AbortController | null = null;
   showScrollBtn = signal(false);
 
   private dirHandle: FileSystemDirectoryHandle | null = null;
@@ -680,6 +702,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
   ) {
     for await (const [name, entry] of dirHandle.entries()) {
       if (entry.kind === 'directory') {
+        if (this.skipDirs.has(name)) continue;
         await this.scanDirectory(entry, prefix + name + '/', fileList, processQueue);
       } else {
         const fileHandle = entry as FileSystemFileHandle;
@@ -716,6 +739,7 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const relativePath = file.webkitRelativePath || file.name;
+      if (relativePath.split('/').some((seg) => this.skipDirs.has(seg))) continue;
       const parts = relativePath.split('/');
       if (!dirName && parts.length > 0) dirName = parts[0];
 
@@ -1118,41 +1142,63 @@ export class DevAgentTabComponent implements OnInit, OnDestroy {
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
     const aiId = this.nextId++;
+    this.abortCtrl = new AbortController();
+    const signal = this.abortCtrl.signal;
 
     try {
       let full = '';
-      await this.llm.generate(systemPrompt, text, trimmed, (_, done, fullText) => {
-        full = fullText;
-        if (this.typing()) {
-          this.typing.set(false);
-          this.messages.update((m) => [
-            ...m,
-            { id: aiId, role: 'ai', text: fullText, streaming: true },
-          ]);
-        } else {
-          this.messages.update((m) =>
-            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
-          );
-        }
-        if (done) {
-          const patches = this.extractCodeBlocks(fullText);
-          if (patches.length > 0) {
-            this.codePatches.set(patches);
-            this.showPatchesPanel.set(true);
+      await this.llm.generate(
+        systemPrompt,
+        text,
+        trimmed,
+        (_, done, fullText) => {
+          full = fullText;
+          if (this.typing()) {
+            this.typing.set(false);
+            this.messages.update((m) => [
+              ...m,
+              { id: aiId, role: 'ai', text: fullText, streaming: true },
+            ]);
+          } else {
+            this.messages.update((m) =>
+              m.map((msg) =>
+                msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg,
+              ),
+            );
           }
-        }
-        this.shouldScroll = true;
-      });
+          if (done) {
+            const patches = this.extractCodeBlocks(fullText);
+            if (patches.length > 0) {
+              this.codePatches.set(patches);
+              this.showPatchesPanel.set(true);
+            }
+          }
+          this.shouldScroll = true;
+        },
+        signal,
+      );
       this.history.push({ role: 'assistant', content: full });
     } catch (e: any) {
       this.typing.set(false);
-      const msg = e.message?.includes('INVALID_ARGUMENT')
-        ? 'Conversation too long. Try clearing older messages.'
-        : 'Error: ' + e.message;
-      this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      if (e?.name === 'AbortError') {
+        this.messages.update((m) => [
+          ...m.map((msg) => (msg.id === aiId ? { ...msg, streaming: false } : msg)),
+          { id: this.nextId++, role: 'ai', text: '🛑 Generation stopped.' },
+        ]);
+      } else {
+        const msg = e.message?.includes('INVALID_ARGUMENT')
+          ? 'Conversation too long. Try clearing older messages.'
+          : 'Error: ' + e.message;
+        this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      }
+    } finally {
+      this.abortCtrl = null;
+      this.generating.set(false);
     }
+  }
 
-    this.generating.set(false);
+  stopGeneration() {
+    this.abortCtrl?.abort();
   }
 
   private extractCodeBlocks(text: string): CodePatch[] {

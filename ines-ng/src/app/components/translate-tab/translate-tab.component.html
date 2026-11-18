@@ -108,9 +108,17 @@
   <div
     class="flex gap-2.5 items-center px-[22px] py-3 border-t border-[var(--border)] bg-[var(--bg-1)] shrink-0"
   >
-    <app-button variant="primary" (onClick)="translate()">
-      <mat-icon fontIcon="translate" class="text-sm w-3.5 h-3.5"></mat-icon>
-      Translate
+    <app-button
+      variant="primary"
+      (onClick)="translate()"
+      [disabled]="!inputText().trim() || translating()"
+    >
+      <mat-icon
+        [fontIcon]="translating() ? 'hourglass_empty' : 'translate'"
+        class="text-sm w-3.5 h-3.5"
+        [class.animate-spin]="translating()"
+      ></mat-icon>
+      {{ translating() ? 'Translating…' : 'Translate' }}
     </app-button>
     <label class="cursor-pointer">
       <input

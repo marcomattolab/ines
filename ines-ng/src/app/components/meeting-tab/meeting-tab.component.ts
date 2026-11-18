@@ -34,6 +34,7 @@ export class MeetingTabComponent implements OnDestroy {
 
   transcript = signal('');
   summary = signal('');
+  readonly summarizing = signal(false);
 
   readonly isTranscriptSpeaking = computed(
     () => this.speech.speaking() && this.speech.activeId() === 'meet-trans',
@@ -90,6 +91,7 @@ export class MeetingTabComponent implements OnDestroy {
       return;
     }
 
+    this.summarizing.set(true);
     this.summary.set('...');
     try {
       await this.llm.generate(
@@ -103,6 +105,8 @@ export class MeetingTabComponent implements OnDestroy {
         ? 'Transcript too long for the model.'
         : e.message;
       this.summary.set(msg);
+    } finally {
+      this.summarizing.set(false);
     }
   }
 

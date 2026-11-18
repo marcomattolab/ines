@@ -154,9 +154,13 @@
       </span>
     </label>
     <div class="flex-1"></div>
-    <app-button variant="primary" (onClick)="summarize()">
-      <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
-      Summarize Now
+    <app-button variant="primary" (onClick)="summarize()" [disabled]="summarizing()">
+      <mat-icon
+        [fontIcon]="summarizing() ? 'hourglass_empty' : 'refresh'"
+        class="text-sm w-3.5 h-3.5"
+        [class.animate-spin]="summarizing()"
+      ></mat-icon>
+      {{ summarizing() ? 'Summarizing…' : 'Summarize Now' }}
     </app-button>
   </div>
 </div>

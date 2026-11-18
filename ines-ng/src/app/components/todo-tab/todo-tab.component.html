@@ -462,9 +462,13 @@ Example: 'I have a demo at 3 PM, code review and team call'"
               timerText()
             }}</span>
           </div>
-          <app-button variant="primary" (onClick)="generate(aiInput)">
-            <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
-            Plan
+          <app-button variant="primary" (onClick)="generate(aiInput)" [disabled]="planning()">
+            <mat-icon
+              [fontIcon]="planning() ? 'hourglass_empty' : 'refresh'"
+              class="text-sm w-3.5 h-3.5"
+              [class.animate-spin]="planning()"
+            ></mat-icon>
+            {{ planning() ? 'Planning…' : 'Plan' }}
           </app-button>
         </div>
       </div>

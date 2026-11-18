@@ -6,6 +6,8 @@ import {
   OnDestroy,
   effect,
   HostListener,
+  ElementRef,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -73,9 +75,11 @@ export class TodoTabComponent implements OnDestroy {
   readonly timerText = this.speech.recordingTimer;
 
   aiMessages = signal<AiChat[]>([]);
+  readonly aiChatEl = viewChild<ElementRef<HTMLElement>>('aiChat');
   rightPanelWidth = signal(320);
   inputAreaHeight = signal(200);
   showClearConfirm = signal(false);
+  readonly planning = signal(false);
   filterTab = signal<FilterTab>('all');
   editingId = signal<number | null>(null);
   editText = signal('');
@@ -124,6 +128,15 @@ export class TodoTabComponent implements OnDestroy {
       const editing = this.editingId();
       if (editing !== null) {
         this.editText.set(this.todoSvc.todos().find((t) => t.id === editing)?.text || '');
+      }
+    });
+    effect(() => {
+      if (!this.aiMessages().length) return;
+      const el = this.aiChatEl()?.nativeElement;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight;
+        });
       }
     });
   }
@@ -293,6 +306,8 @@ export class TodoTabComponent implements OnDestroy {
       this.toast.show('Load the model first!');
       return;
     }
+    if (this.planning()) return;
+    this.planning.set(true);
 
     const userMsgId = this.nextId++;
     const typingId = this.nextId++;
@@ -347,6 +362,8 @@ export class TodoTabComponent implements OnDestroy {
           msg.id === typingId ? { ...msg, typing: false, text: '❌ ' + e.message } : msg,
         ),
       );
+    } finally {
+      this.planning.set(false);
     }
   }
 

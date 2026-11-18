@@ -1,4 +1,14 @@
-import { Component, signal, inject, computed, OnInit, HostListener } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  computed,
+  OnInit,
+  HostListener,
+  effect,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -73,6 +83,8 @@ export class ProjectTabComponent implements OnInit {
   previewChunks = signal<ProjectChunk[]>([]);
   selectedDocId = signal<string | null>(null);
 
+  readonly chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');
+
   readonly suggestionChips = [
     'Summarize the project architecture',
     'What are the main dependencies?',
@@ -81,6 +93,18 @@ export class ProjectTabComponent implements OnInit {
     'What APIs or endpoints are used?',
     'Key configuration settings',
   ];
+
+  constructor() {
+    effect(() => {
+      if (!this.messages().length) return;
+      const el = this.chatArea()?.nativeElement;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight;
+        });
+      }
+    });
+  }
 
   filteredDocs = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -172,6 +196,10 @@ export class ProjectTabComponent implements OnInit {
 
   useSuggestion(chip: string) {
     this.userInput.set(chip);
+    if (!this.llm.isReady()) {
+      this.toast.show('Load the model first!');
+      return;
+    }
     this.sendMessage();
   }
 

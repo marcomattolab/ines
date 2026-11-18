@@ -712,16 +712,25 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     this.isGenerating.set(true);
     this.activeSubTab.set('flashcards');
     const chunks = await this.km.getRelevantChunks('key concepts definitions terms', 10, 1500);
-    const system =
-      'Generate 15-20 flashcards (Q&A pairs). Output ONLY CSV: front,back. No headers. One per line.';
+    const system = `Generate 15-20 flashcards (question/answer pairs). Output ONLY a JSON array. Example:
+[{"front":"What is Angular?","back":"A TypeScript-based web framework by Google"}]
+
+Context:
+${chunks.map((c) => c.text).join('\n\n')}`;
     try {
-      const result = await this.llm.generate(
-        system,
-        `Context:\n${chunks.map((c) => c.text).join('\n\n')}\n\nGenerate flashcards:`,
-        [],
-        () => {},
-      );
-      const pairs = this.parseFlashcards(result);
+      const result = await this.llm.generate(system, 'Generate flashcards as JSON.', [], () => {});
+
+      // Primary: JSON output (like the other exercise generators).
+      let pairs = (this.jsonParser.parseArray<any>(result) || [])
+        .filter((c: any) => c && (c.front || c.question) && (c.back || c.answer))
+        .map((c: any) => ({
+          front: String(c.front ?? c.question),
+          back: String(c.back ?? c.answer),
+        }));
+
+      // Fallback: some models still return CSV or Q/A lines.
+      if (pairs.length === 0) pairs = this.parseFlashcards(result);
+
       this.flashcards.set(pairs);
       if (pairs.length === 0) {
         this.toast.error('Flashcards generated no valid Q&A pairs — try again.');
@@ -745,11 +754,35 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
   private parseFlashcards(raw: string): { front: string; back: string }[] {
     const text = raw.replace(/```(?:csv)?/gi, '').trim();
     const pairs: { front: string; back: string }[] = [];
+    const isHeader = (a: string, b: string) =>
+      /^front$/i.test(a.trim()) && /^back$/i.test(b.trim());
+
     for (const line of text.split('\n')) {
       const t = line.trim();
       if (!t) continue;
+
+      // Markdown table separator like |---|---|
+      if (/^\|?\s*:?-{2,}/.test(t)) continue;
+
+      // Markdown table row: | front | back |
+      const table = t.match(/^\|?\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|?$/);
+      if (table && !isHeader(table[1], table[2])) {
+        pairs.push({ front: table[1].trim(), back: table[2].trim() });
+        continue;
+      }
+
+      // Inline Q/A: "Q: … A: …" or "Question: … Answer: …"
+      const qa = t.match(
+        /^(?:q|question|front|f)\s*[:.\-]\s*(.+?)\s+(?:a|answer|back|b)\s*[:.\-]\s*(.+)$/i,
+      );
+      if (qa) {
+        pairs.push({ front: qa[1].trim(), back: qa[2].trim() });
+        continue;
+      }
+
+      // CSV: front,back
       const cells = this.parseCsvCells(t);
-      if (cells.length >= 2 && cells[0] && cells[1]) {
+      if (cells.length >= 2 && cells[0] && cells[1] && !isHeader(cells[0], cells[1])) {
         pairs.push({ front: cells[0], back: cells.slice(1).join(', ') });
       }
     }

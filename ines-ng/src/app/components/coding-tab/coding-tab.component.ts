@@ -22,6 +22,7 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import JSZip from 'jszip';
 
 interface UiMessage {
   id: number;
@@ -115,6 +116,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   private history: ChatMessage[] = [];
   private nextId = 1;
   private shouldScroll = false;
+  private abortCtrl: AbortController | null = null;
   showScrollBtn = signal(false);
   showClearConfirm = signal(false);
 
@@ -122,6 +124,16 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     const stored = this.storage.get<CodeFile[]>('ines_coding_files');
     if (Array.isArray(stored) && stored.length > 0) {
       this.files.set(stored);
+    }
+
+    const savedMessages = this.storage.get<UiMessage[]>('ines_coding_messages');
+    if (Array.isArray(savedMessages) && savedMessages.length > 0) {
+      this.messages.set(savedMessages.map((m) => ({ ...m, streaming: false })));
+      this.nextId = savedMessages.reduce((max, m) => Math.max(max, m.id), 0) + 1;
+    }
+    const savedHistory = this.storage.get<ChatMessage[]>('ines_coding_history');
+    if (Array.isArray(savedHistory)) {
+      this.history = savedHistory;
     }
   }
 
@@ -210,37 +222,85 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
     const trimmed = this.llm.trimConversation(systemPrompt, text, this.history.slice(-6, -1));
     const aiId = this.nextId++;
+    this.abortCtrl = new AbortController();
+    const signal = this.abortCtrl.signal;
 
     try {
       let full = '';
-      await this.llm.generate(systemPrompt, text, trimmed, (_, done, fullText) => {
-        full = fullText;
-        this.updateExtractedFiles(fullText);
+      await this.llm.generate(
+        systemPrompt,
+        text,
+        trimmed,
+        (_, done, fullText) => {
+          full = fullText;
+          this.updateExtractedFiles(fullText);
 
-        if (this.typing()) {
-          this.typing.set(false);
-          this.messages.update((m) => [
-            ...m,
-            { id: aiId, role: 'ai', text: fullText, streaming: true },
-          ]);
-        } else {
-          this.messages.update((m) =>
-            m.map((msg) => (msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg)),
-          );
-        }
-        this.shouldScroll = true;
-      });
+          if (this.typing()) {
+            this.typing.set(false);
+            this.messages.update((m) => [
+              ...m,
+              { id: aiId, role: 'ai', text: fullText, streaming: true },
+            ]);
+          } else {
+            this.messages.update((m) =>
+              m.map((msg) =>
+                msg.id === aiId ? { ...msg, text: fullText, streaming: !done } : msg,
+              ),
+            );
+          }
+          this.shouldScroll = true;
+        },
+        signal,
+      );
       this.history.push({ role: 'assistant', content: full });
       this.tokenInfo.set(`${this.history.length} messages in history`);
+      this.persistChat();
     } catch (e: any) {
       this.typing.set(false);
-      const msg = e.message?.includes('INVALID_ARGUMENT')
-        ? '⚠️ The conversation is too long for this model. I cleared older messages — try asking again.'
-        : '❌ ' + e.message;
-      this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      if (e?.name === 'AbortError') {
+        this.messages.update((m) => [
+          ...m.map((msg) => (msg.id === aiId ? { ...msg, streaming: false } : msg)),
+          { id: this.nextId++, role: 'ai', text: '🛑 Generation stopped.' },
+        ]);
+        this.tokenInfo.set('Generation stopped');
+      } else {
+        const msg = e.message?.includes('INVALID_ARGUMENT')
+          ? '⚠️ The conversation is too long for this model. I cleared older messages — try asking again.'
+          : '❌ ' + e.message;
+        this.messages.update((m) => [...m, { id: this.nextId++, role: 'ai', text: msg }]);
+      }
+      this.persistChat();
+    } finally {
+      this.abortCtrl = null;
+      this.generating.set(false);
     }
+  }
 
-    this.generating.set(false);
+  stopGeneration() {
+    this.abortCtrl?.abort();
+  }
+
+  private persistChat() {
+    this.storage.set(
+      'ines_coding_messages',
+      this.messages().map((m) => ({ ...m, streaming: false })),
+    );
+    this.storage.set('ines_coding_history', this.history);
+  }
+
+  async downloadAllFiles() {
+    const files = this.files();
+    if (files.length === 0) return;
+    const zip = new JSZip();
+    for (const f of files) zip.file(f.name, f.content);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ines-code.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toast.success(`${files.length} files downloaded (.zip)`);
   }
 
   private updateExtractedFiles(text: string) {
@@ -263,18 +323,18 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
 
   private parseCodeBlocks(text: string): CodeFile[] {
     const files: CodeFile[] = [];
-    const regex = /```(\w+)\n([\s\S]*?)```/g;
+    const regex = /```(\w*)\n([\s\S]*?)```/g;
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(text)) !== null) {
-      const language = match[1].toLowerCase();
+      const language = (match[1] || 'ts').toLowerCase();
       let content = match[2].trim();
 
       let name = this.fileNameForLang(language);
       const firstLine = content.split('\n')[0]?.trim() ?? '';
-      if (firstLine.startsWith('//') && firstLine.includes('.')) {
+      if (firstLine.startsWith('//')) {
         const candidate = firstLine.replace(/^\/\/\s*/, '').trim();
-        if (/\.(ts|html|css|scss)$/.test(candidate)) {
+        if (!/\s/.test(candidate) && /\.[a-z0-9]{1,8}$/i.test(candidate)) {
           name = candidate;
         }
       }
@@ -413,6 +473,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
     this.files.set([]);
     this.activeFileIndex.set(0);
     this.storage.remove('ines_coding_files');
+    this.persistChat();
   }
 
   async loadAngularDocs() {

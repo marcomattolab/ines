@@ -84,6 +84,11 @@
       <div class="token-info" [style.visibility]="tokenInfo() ? 'visible' : 'hidden'">
         {{ tokenInfo() }}
       </div>
+      @if (!llm.isReady()) {
+        <div class="px-[22px] pb-2 text-[11px] text-amber-400 font-[var(--font-mono)] shrink-0">
+          ⚠ Load the language model to start coding.
+        </div>
+      }
       <div class="h-resizer" (mousedown)="startHResize($event)"></div>
       <div class="input-zone" [style.height.px]="inputAreaHeight()">
         <textarea
@@ -92,14 +97,24 @@
           placeholder="Describe an Angular component, service, or feature (e.g., 'A signal-based data table with sorting and pagination')..."
           (keydown)="onKey($event)"
         ></textarea>
-        <app-button
-          variant="primary"
-          [disabled]="generating() || !llm.isReady()"
-          (onClick)="send()"
-          className="!rounded-full !w-11 !h-11 !p-0"
-        >
-          <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
-        </app-button>
+        @if (generating()) {
+          <app-button
+            variant="danger"
+            (onClick)="stopGeneration()"
+            className="!rounded-full !w-11 !h-11 !p-0"
+          >
+            <mat-icon fontIcon="stop" class="text-lg w-[18px] h-[18px]"></mat-icon>
+          </app-button>
+        } @else {
+          <app-button
+            variant="primary"
+            [disabled]="!llm.isReady()"
+            (onClick)="send()"
+            className="!rounded-full !w-11 !h-11 !p-0"
+          >
+            <mat-icon fontIcon="send" class="text-lg w-[18px] h-[18px]"></mat-icon>
+          </app-button>
+        }
       </div>
     </div>
 
@@ -153,6 +168,15 @@
           @if (files().length > 1) {
             <button class="btn-tertiary" (click)="copyAllCode()" title="Copy all files">
               <mat-icon class="scale-75">content_paste</mat-icon>
+            </button>
+          }
+          @if (files().length > 1) {
+            <button
+              class="btn-tertiary"
+              (click)="downloadAllFiles()"
+              title="Download all files (.zip)"
+            >
+              <mat-icon class="scale-75">folder_zip</mat-icon>
             </button>
           }
           @if (activeFile()) {
@@ -232,7 +256,7 @@
                 </div>
                 <!-- Code with syntax highlighting -->
                 <pre
-                  class="flex-1 m-0 overflow-visible whitespace-pre-wrap break-all font-[var(--font-mono)]"
+                  class="flex-1 m-0 overflow-visible whitespace-pre font-[var(--font-mono)]"
                 ><code [innerHTML]="highlightedCode()"></code></pre>
               </div>
             </div>

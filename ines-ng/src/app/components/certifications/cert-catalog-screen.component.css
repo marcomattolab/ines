@@ -1,8 +1,18 @@
 .cert-catalog-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 18px;
   margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.cert-catalog-header-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  min-width: 0;
 }
 
 .cert-catalog-icon {
@@ -141,11 +151,213 @@
   margin-top: 6px;
 }
 
+.cert-config-toggle {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 8px 14px;
+}
+
+.cert-config-toggle-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.cert-config-panel {
+  margin-bottom: 28px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-1);
+  box-shadow: var(--shadow-md);
+}
+
+.cert-config-title {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text-0);
+  margin-bottom: 8px;
+}
+
+.cert-config-intro {
+  font-size: 13px;
+  color: var(--text-1);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.cert-config-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.cert-config-step {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+}
+
+.cert-config-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent-blue) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 45%, transparent);
+  color: var(--accent-blue);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cert-config-step h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 4px;
+  font-family: var(--font-ui);
+}
+
+.cert-config-step p {
+  font-size: 12px;
+  color: var(--text-1);
+  line-height: 1.6;
+}
+
+.cert-config-step code,
+.cert-config-field code,
+.cert-config-intro code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-blue) 14%, transparent);
+  color: var(--accent-blue);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 30%, transparent);
+}
+
+.cert-config-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.cert-config-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.cert-config-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cert-config-block-head h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-0);
+  font-family: var(--font-ui);
+}
+
+.cert-config-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cert-config-action {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+.cert-config-action-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.cert-config-code {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-1);
+  white-space: pre;
+  background: var(--bg-0);
+}
+
+.cert-config-notes {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  padding: 14px;
+}
+
+.cert-config-notes h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 10px;
+  font-family: var(--font-ui);
+}
+
+.cert-config-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cert-config-field {
+  font-size: 12px;
+  color: var(--text-1);
+  line-height: 1.6;
+}
+
 @media (max-width: 480px) {
   .cert-catalog-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .cert-catalog-header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cert-config-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cert-config-panel {
+    padding: 16px;
+  }
+
+  .cert-config-blocks {
+    grid-template-columns: 1fr;
   }
 
   .cert-catalog-title {

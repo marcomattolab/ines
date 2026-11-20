@@ -1,17 +1,127 @@
 <div class="cert-container">
   <div class="cert-content">
     <div class="cert-catalog-header">
-      <div class="cert-catalog-icon">
-        <mat-icon fontIcon="emoji_events"></mat-icon>
+      <div class="cert-catalog-header-main">
+        <div class="cert-catalog-icon">
+          <mat-icon fontIcon="emoji_events"></mat-icon>
+        </div>
+        <div>
+          <h1 class="cert-catalog-title">Certification Hub</h1>
+          <p class="cert-catalog-subtitle">
+            Pick a certification path, then practice with instant feedback or run a full, timed exam
+            simulation. Progress is saved per course and works fully offline.
+          </p>
+        </div>
       </div>
-      <div>
-        <h1 class="cert-catalog-title">Certification Hub</h1>
-        <p class="cert-catalog-subtitle">
-          Pick a certification path, then practice with instant feedback or run a full, timed exam
-          simulation. Progress is saved per course and works fully offline.
-        </p>
-      </div>
+      <button
+        type="button"
+        class="btn-secondary cert-config-toggle"
+        (click)="showConfigGuide.set(!showConfigGuide())"
+      >
+        <mat-icon fontIcon="settings" class="cert-config-toggle-icon"></mat-icon>
+        {{ showConfigGuide() ? 'Hide configuration' : 'Course configuration' }}
+      </button>
     </div>
+
+    @if (showConfigGuide()) {
+      <div class="cert-config-panel">
+        <h2 class="cert-config-title">How to add a new course</h2>
+        <p class="cert-config-intro">
+          Courses are 100% data-driven: two JSON files are all you need. No code changes are
+          required to register a new certification.
+        </p>
+
+        <div class="cert-config-steps">
+          <div class="cert-config-step">
+            <span class="cert-config-step-num">1</span>
+            <div>
+              <h3>Create the question bank</h3>
+              <p>
+                Add a <code>your-course.json</code> file inside
+                <code>public/certifications/</code> containing an array of questions.
+              </p>
+            </div>
+          </div>
+          <div class="cert-config-step">
+            <span class="cert-config-step-num">2</span>
+            <div>
+              <h3>Register the course</h3>
+              <p>
+                Add one entry to <code>public/certifications/courses.json</code> with the course
+                name, description and the <code>fileName</code> of the question bank.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cert-config-blocks">
+          <div class="cert-config-block">
+            <div class="cert-config-block-head">
+              <h3>courses.json entry</h3>
+              <div class="cert-config-actions">
+                <button class="btn-tertiary cert-config-action" (click)="copyCourseEntry()">
+                  <mat-icon fontIcon="content_copy" class="cert-config-action-icon"></mat-icon>
+                  Copy
+                </button>
+                <button class="btn-tertiary cert-config-action" (click)="downloadCourseEntry()">
+                  <mat-icon fontIcon="download" class="cert-config-action-icon"></mat-icon>
+                  Download
+                </button>
+              </div>
+            </div>
+            <pre class="cert-config-code">{{ courseEntryTemplate }}</pre>
+          </div>
+
+          <div class="cert-config-block">
+            <div class="cert-config-block-head">
+              <h3>Question bank (fileName)</h3>
+              <div class="cert-config-actions">
+                <button class="btn-tertiary cert-config-action" (click)="copyQuestionTemplate()">
+                  <mat-icon fontIcon="content_copy" class="cert-config-action-icon"></mat-icon>
+                  Copy
+                </button>
+                <button
+                  class="btn-tertiary cert-config-action"
+                  (click)="downloadQuestionTemplate()"
+                >
+                  <mat-icon fontIcon="download" class="cert-config-action-icon"></mat-icon>
+                  Download
+                </button>
+              </div>
+            </div>
+            <pre class="cert-config-code">{{ questionTemplate }}</pre>
+          </div>
+        </div>
+
+        <div class="cert-config-notes">
+          <h3>Question fields reference</h3>
+          <div class="cert-config-fields">
+            <div class="cert-config-field">
+              <code>question</code> — the question text. To make it multi-choice write
+              <code>Choose two…</code>/<code>Choose three…</code> or use a multi-letter
+              <code>correct_answer</code>.
+            </div>
+            <div class="cert-config-field">
+              <code>options</code> — an object mapping letters (<code>A</code>–<code>E</code>) to
+              the option text.
+            </div>
+            <div class="cert-config-field">
+              <code>correct_answer</code> — the correct letters, e.g. <code>"B"</code>,
+              <code>"AC"</code> or <code>"A, C"</code>.
+            </div>
+            <div class="cert-config-field">
+              <code>discussion</code>, <code>vote_counts</code>, <code>community_answer</code>,
+              <code>most_voted</code>, <code>images</code> and <code>is_hotspot</code> are optional
+              but enrich the practice/review experience.
+            </div>
+            <div class="cert-config-field">
+              <code>fileName</code> is relative to <code>public/</code> and the question JSON must
+              keep the same object structure shown above.
+            </div>
+          </div>
+        </div>
+      </div>
+    }
 
     @if (catalog.loadingCourses()) {
       <div class="cert-loading-hint">

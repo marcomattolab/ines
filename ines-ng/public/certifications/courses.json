@@ -26,5 +26,47 @@
     "numQuestions": 12,
     "passThreshold": 70,
     "totalQuestions": 12
+  },
+  {
+    "id": "angular-dev",
+    "name": "Angular Developer",
+    "description": "Angular development certification based on the official angular.dev documentation: components, signals, templates, DI, routing and the modern control flow.",
+    "fileName": "certifications/angular-dev.json",
+    "badge": "Angular Certified",
+    "subtitle": "Official Docs",
+    "accent": "#dd0031",
+    "examTitle": "Angular Developer Certification",
+    "examInfo": "Multiple-choice certification covering core Angular concepts from the official angular.dev guides. A passing score is 70%.",
+    "numQuestions": 15,
+    "passThreshold": 70,
+    "totalQuestions": 15
+  },
+  {
+    "id": "python",
+    "name": "Python",
+    "description": "Python programming certification covering data structures, control flow, functions, OOP, decorators, lambdas and standard library modules.",
+    "fileName": "certifications/python.json",
+    "badge": "Python Certified",
+    "subtitle": "Core Language",
+    "accent": "#3776ab",
+    "examTitle": "Python Certification",
+    "examInfo": "Multiple-choice certification covering core Python language features. A passing score is 70%.",
+    "numQuestions": 15,
+    "passThreshold": 70,
+    "totalQuestions": 15
+  },
+  {
+    "id": "spring",
+    "name": "Spring",
+    "description": "Spring Framework and Spring Boot certification covering beans, dependency injection, REST controllers, transactions, configuration and Spring Data JPA.",
+    "fileName": "certifications/spring.json",
+    "badge": "Spring Certified",
+    "subtitle": "Boot & Core",
+    "accent": "#6db33f",
+    "examTitle": "Spring Certification",
+    "examInfo": "Multiple-choice certification covering Spring Framework and Spring Boot fundamentals. A passing score is 70%.",
+    "numQuestions": 15,
+    "passThreshold": 70,
+    "totalQuestions": 15
   }
 ]

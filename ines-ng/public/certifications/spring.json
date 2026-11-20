@@ -1,0 +1,317 @@
+[
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/definition.html",
+    "question_no": "Spring topic 1 question 1",
+    "question": "Which annotation marks a class as a Spring-managed service bean?",
+    "options": {
+      "A": "@Service",
+      "B": "@Entity",
+      "C": "@ControllerAdvice",
+      "D": "@Mapper"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @Service is a specialization of @Component for the service layer.",
+      "Selected Answer: A @Entity is JPA, @ControllerAdvice handles controller advice, @Mapper is MyBatis."
+    ],
+    "vote_counts": { "A": 93, "B": 3, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-autowire.html",
+    "question_no": "Spring topic 1 question 2",
+    "question": "Which annotation lets Spring inject a bean dependency automatically?",
+    "options": {
+      "A": "@Inject",
+      "B": "@Autowired",
+      "C": "@Resource",
+      "D": "@Qualifier"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B @Autowired injects a bean by type (optionally with @Qualifier to disambiguate).",
+      "Selected Answer: B @Inject and @Resource also work, but @Autowired is Spring's own annotation."
+    ],
+    "vote_counts": { "A": 6, "B": 90, "C": 2, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/factory-scopes.html",
+    "question_no": "Spring topic 1 question 3",
+    "question": "What is the default scope of a Spring bean?",
+    "options": {
+      "A": "singleton",
+      "B": "prototype",
+      "C": "request",
+      "D": "session"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A By default, one shared instance of a bean is created per container.",
+      "Selected Answer: A @Scope(\"prototype\") creates a new instance each time."
+    ],
+    "vote_counts": { "A": 92, "B": 5, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.spring.io/spring-boot/reference/using/using-the-springbootapplication-annotation.html",
+    "question_no": "Spring topic 1 question 4",
+    "question": "Which annotation marks the main class of a Spring Boot application?",
+    "options": {
+      "A": "@SpringBootConfiguration",
+      "B": "@EnableAutoConfiguration",
+      "C": "@SpringBootApplication",
+      "D": "@ComponentScan"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C @SpringBootApplication combines @Configuration, @EnableAutoConfiguration, and @ComponentScan.",
+      "Selected Answer: C It is placed on the class containing the main method."
+    ],
+    "vote_counts": { "A": 3, "B": 5, "C": 91, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html",
+    "question_no": "Spring topic 1 question 5",
+    "question": "What is the effect of @RestController?",
+    "options": {
+      "A": "It combines @Controller and @ResponseBody so methods return data directly",
+      "B": "It enables only HTML views",
+      "C": "It starts an embedded server",
+      "D": "It enables JDBC transactions"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @RestController = @Controller + @ResponseBody; return values are serialized (e.g. JSON).",
+      "Selected Answer: A It is the standard annotation for REST APIs."
+    ],
+    "vote_counts": { "A": 94, "B": 2, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-requestmapping.html",
+    "question_no": "Spring topic 1 question 6",
+    "question": "Which annotation maps HTTP GET requests to a handler method?",
+    "options": {
+      "A": "@PostMapping",
+      "B": "@GetMapping",
+      "C": "@PutMapping",
+      "D": "@DeleteMapping"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B @GetMapping is a shortcut for @RequestMapping(method = GET).",
+      "Selected Answer: B Each HTTP verb has a composed annotation."
+    ],
+    "vote_counts": { "A": 3, "B": 94, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/data-access/transaction.html",
+    "question_no": "Spring topic 1 question 7",
+    "question": "What does @Transactional do on a service method?",
+    "options": {
+      "A": "It serializes the method",
+      "B": "It caches the result",
+      "C": "It manages the database transaction around the method",
+      "D": "It logs the method calls"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C @Transactional begins a transaction and commits/rolls back based on the outcome.",
+      "Selected Answer: C By default it rolls back on RuntimeException/Error."
+    ],
+    "vote_counts": { "A": 2, "B": 3, "C": 93, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.spring.io/spring-boot/reference/features/external-config.html",
+    "question_no": "Spring topic 1 question 8",
+    "question": "Which file is the default source of external configuration in Spring Boot?",
+    "options": {
+      "A": "application.properties (or application.yml)",
+      "B": "spring.xml",
+      "C": "config.json",
+      "D": "beans.xml"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A application.properties / application.yml are loaded automatically from the classpath.",
+      "Selected Answer: A Profile-specific files such as application-dev.properties are also supported."
+    ],
+    "vote_counts": { "A": 95, "B": 2, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.spring.io/spring-boot/reference/using/build-tools/starters.html",
+    "question_no": "Spring topic 1 question 9",
+    "question": "What is a Spring Boot starter?",
+    "options": {
+      "A": "A tool for generating code",
+      "B": "A servlet container",
+      "C": "A testing framework",
+      "D": "A dependency descriptor that aggregates commonly used libraries"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: D Starters (e.g. spring-boot-starter-web) bring in a coherent set of dependencies.",
+      "Selected Answer: D They simplify dependency management."
+    ],
+    "vote_counts": { "A": 3, "B": 2, "C": 2, "D": 93 },
+    "most_voted": "D",
+    "community_answer": "D",
+    "correct_answer": "D"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/value-annotations.html",
+    "question_no": "Spring topic 1 question 10",
+    "question": "Which annotation injects a value from the application configuration?",
+    "options": {
+      "A": "@Property",
+      "B": "@Value",
+      "C": "@Config",
+      "D": "@Settings"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B @Value(\"${app.name}\") injects a property value (with optional defaults).",
+      "Selected Answer: B @ConfigurationProperties is a type-safe alternative."
+    ],
+    "vote_counts": { "A": 4, "B": 93, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html",
+    "question_no": "Spring topic 1 question 11",
+    "question": "Choose two Spring stereotype annotations.",
+    "options": {
+      "A": "@Component",
+      "B": "@Bean",
+      "C": "@Repository",
+      "D": "@Scope"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AC @Component and @Repository are stereotypes; @Service and @Controller are also stereotypes.",
+      "Selected Answer: AC @Bean declares a bean method and @Scope changes scope — neither is a stereotype."
+    ],
+    "vote_counts": { "A": 47, "B": 3, "C": 47, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A, C",
+    "correct_answer": "A, C"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html",
+    "question_no": "Spring topic 1 question 12",
+    "question": "What is the purpose of the @Bean annotation?",
+    "options": {
+      "A": "It declares a bean inside a @Configuration class",
+      "B": "It marks a class for component scanning",
+      "C": "It enables aspect-oriented programming",
+      "D": "It starts the embedded server"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @Bean on a method tells Spring to register the returned object as a bean.",
+      "Selected Answer: A It is used for explicit, programmatic bean definitions."
+    ],
+    "vote_counts": { "A": 92, "B": 4, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://spring.io/projects/spring-data-jpa",
+    "question_no": "Spring topic 1 question 13",
+    "question": "Which Spring module simplifies database access with ORM and repositories?",
+    "options": {
+      "A": "Spring Security",
+      "B": "Spring Data JPA",
+      "C": "Spring WebFlux",
+      "D": "Spring Batch"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Spring Data JPA provides repository abstractions over JPA/Hibernate.",
+      "Selected Answer: B CrudRepository and JpaRepository reduce boilerplate data access code."
+    ],
+    "vote_counts": { "A": 2, "B": 94, "C": 2, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/pathvariable.html",
+    "question_no": "Spring topic 1 question 14",
+    "question": "Which annotation binds a URL path segment to a method parameter?",
+    "options": {
+      "A": "@RequestParam",
+      "B": "@RequestBody",
+      "C": "@PathVariable",
+      "D": "@PathParam"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C @PathVariable binds /users/{id} to a parameter.",
+      "Selected Answer: C @RequestParam binds query parameters, @RequestBody binds the body."
+    ],
+    "vote_counts": { "A": 5, "B": 3, "C": 91, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html",
+    "question_no": "Spring topic 1 question 15",
+    "question": "In Spring's Inversion of Control container, who is responsible for creating and wiring beans?",
+    "options": {
+      "A": "The developer manually instantiates every object",
+      "B": "The Spring container (ApplicationContext)",
+      "C": "The Java compiler",
+      "D": "The database"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B The ApplicationContext creates beans and injects their dependencies.",
+      "Selected Answer: B This is the core idea of IoC/DI in Spring."
+    ],
+    "vote_counts": { "A": 2, "B": 95, "C": 1, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  }
+]

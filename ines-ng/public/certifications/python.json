@@ -1,0 +1,317 @@
+[
+  {
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "question_no": "Python topic 1 question 1",
+    "question": "Which of the following Python data types is immutable?",
+    "options": {
+      "A": "list",
+      "B": "dict",
+      "C": "set",
+      "D": "tuple"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: D Tuples are immutable; lists, dicts, and sets can be modified in place.",
+      "Selected Answer: D Strings, ints, and frozensets are also immutable."
+    ],
+    "vote_counts": { "A": 4, "B": 3, "C": 5, "D": 88 },
+    "most_voted": "D",
+    "community_answer": "D",
+    "correct_answer": "D"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "question_no": "Python topic 1 question 2",
+    "question": "Which keyword is used to define a function in Python?",
+    "options": {
+      "A": "def",
+      "B": "function",
+      "C": "func",
+      "D": "lambda"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Functions are defined with def name(parameters):",
+      "Selected Answer: A lambda creates anonymous functions only."
+    ],
+    "vote_counts": { "A": 96, "B": 1, "C": 1, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "question_no": "Python topic 1 question 3",
+    "question": "What is the result of the expression [x * 2 for x in range(3)]?",
+    "options": {
+      "A": "[1, 2, 3]",
+      "B": "[0, 2, 4]",
+      "C": "[2, 4, 6]",
+      "D": "(0, 2, 4)"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B range(3) yields 0, 1, 2; doubling each gives [0, 2, 4].",
+      "Selected Answer: B The result is a list because the comprehension uses square brackets."
+    ],
+    "vote_counts": { "A": 4, "B": 90, "C": 4, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/errors.html",
+    "question_no": "Python topic 1 question 4",
+    "question": "Which block is used to handle exceptions in Python?",
+    "options": {
+      "A": "catch / except",
+      "B": "try / catch",
+      "C": "try / except",
+      "D": "guard / rescue"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C Python uses try/except (optionally with else and finally).",
+      "Selected Answer: C catch and rescue are not Python keywords."
+    ],
+    "vote_counts": { "A": 3, "B": 4, "C": 92, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.python.org/3/library/functions.html",
+    "question_no": "Python topic 1 question 5",
+    "question": "What does the expression type(42) return?",
+    "options": {
+      "A": "<class 'int'>",
+      "B": "int",
+      "C": "42",
+      "D": "'42'"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A type() returns the type object, displayed as <class 'int'>.",
+      "Selected Answer: A int alone is the class name, but type(42) returns the class object."
+    ],
+    "vote_counts": { "A": 87, "B": 10, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/venv.html",
+    "question_no": "Python topic 1 question 6",
+    "question": "Which command creates a virtual environment in Python?",
+    "options": {
+      "A": "python -m pipenv",
+      "B": "python -m venv env",
+      "C": "python create venv",
+      "D": "python -v env"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B python -m venv <name> creates an isolated virtual environment.",
+      "Selected Answer: B The environment is activated with source env/bin/activate (Unix) or env\\Scripts\\activate (Windows)."
+    ],
+    "vote_counts": { "A": 6, "B": 91, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "question_no": "Python topic 1 question 7",
+    "question": "In a function signature, what does *args do?",
+    "options": {
+      "A": "Collects extra positional arguments into a tuple",
+      "B": "Collects extra keyword arguments into a dict",
+      "C": "Declares a required list parameter",
+      "D": "Multiplies the arguments"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A *args packs extra positional arguments into a tuple.",
+      "Selected Answer: A **kwargs collects extra keyword arguments into a dict."
+    ],
+    "vote_counts": { "A": 90, "B": 6, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.python.org/3/glossary.html",
+    "question_no": "Python topic 1 question 8",
+    "question": "What is a Python decorator?",
+    "options": {
+      "A": "A design pattern that creates classes",
+      "B": "A module for styling output",
+      "C": "A special comment that documents code",
+      "D": "A function that wraps/modifies another function"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: D A decorator takes a function and returns a new function, adding behavior.",
+      "Selected Answer: D Decorators are applied with the @decorator syntax."
+    ],
+    "vote_counts": { "A": 3, "B": 2, "C": 3, "D": 92 },
+    "most_voted": "D",
+    "community_answer": "D",
+    "correct_answer": "D"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "question_no": "Python topic 1 question 9",
+    "question": "Which built-in data structure guarantees that its elements are unique?",
+    "options": {
+      "A": "list",
+      "B": "tuple",
+      "C": "set",
+      "D": "dict"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C A set stores unique, hashable elements and supports set operations.",
+      "Selected Answer: C dict keys are also unique, but the question asks about the structure itself."
+    ],
+    "vote_counts": { "A": 2, "B": 2, "C": 93, "D": 3 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/classes.html",
+    "question_no": "Python topic 1 question 10",
+    "question": "In a class method, what does the first parameter self represent?",
+    "options": {
+      "A": "The current instance of the class",
+      "B": "The class itself",
+      "C": "The parent class",
+      "D": "The module"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A self refers to the instance on which the method was called.",
+      "Selected Answer: A cls in a @classmethod refers to the class instead."
+    ],
+    "vote_counts": { "A": 94, "B": 3, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.python.org/3/library/json.html",
+    "question_no": "Python topic 1 question 11",
+    "question": "Which standard library module is used to encode and decode JSON?",
+    "options": {
+      "A": "pickle",
+      "B": "json",
+      "C": "csv",
+      "D": "xml"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B json.dumps() encodes to JSON and json.loads() decodes JSON.",
+      "Selected Answer: B pickle serializes Python objects, not JSON."
+    ],
+    "vote_counts": { "A": 5, "B": 92, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "question_no": "Python topic 1 question 12",
+    "question": "Choose two Python data types that are mutable.",
+    "options": {
+      "A": "list",
+      "B": "dict",
+      "C": "tuple",
+      "D": "str"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AB Lists and dictionaries can be modified in place.",
+      "Selected Answer: AB Tuples and strings are immutable."
+    ],
+    "vote_counts": { "A": 46, "B": 46, "C": 4, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A, B",
+    "correct_answer": "A, B"
+  },
+  {
+    "url": "https://docs.python.org/3/library/functions.html",
+    "question_no": "Python topic 1 question 13",
+    "question": "What does len('hello') return?",
+    "options": {
+      "A": "4",
+      "B": "6",
+      "C": "5",
+      "D": "'hello'"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C len() returns the number of characters, and 'hello' has 5.",
+      "Selected Answer: C len works on any sized collection such as strings, lists, and dicts."
+    ],
+    "vote_counts": { "A": 2, "B": 2, "C": 95, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/classes.html",
+    "question_no": "Python topic 1 question 14",
+    "question": "Which keyword is used to define a class in Python?",
+    "options": {
+      "A": "class",
+      "B": "struct",
+      "C": "type",
+      "D": "object"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Classes are defined with class Name:",
+      "Selected Answer: A type() can also create classes dynamically, but class is the keyword."
+    ],
+    "vote_counts": { "A": 95, "B": 2, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "question_no": "Python topic 1 question 15",
+    "question": "What is a lambda in Python?",
+    "options": {
+      "A": "A named function with type annotations",
+      "B": "A small anonymous function defined inline",
+      "C": "A generator expression",
+      "D": "A class method"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B lambda args: expression creates an anonymous function.",
+      "Selected Answer: B Lambdas are commonly used with map, filter, and sorted key=."
+    ],
+    "vote_counts": { "A": 4, "B": 93, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  }
+]

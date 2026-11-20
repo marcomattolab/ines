@@ -1,0 +1,317 @@
+[
+  {
+    "url": "https://angular.dev/guide/components",
+    "question_no": "Angular topic 1 question 1",
+    "question": "Which decorator marks a TypeScript class as an Angular component?",
+    "options": {
+      "A": "@Component",
+      "B": "@Injectable",
+      "C": "@Directive",
+      "D": "@NgModule"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @Component declares a class as a component and links it to a template and styles.",
+      "Selected Answer: A @Directive is for directives, @Injectable for services, @NgModule for modules."
+    ],
+    "vote_counts": { "A": 92, "B": 3, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/components/inputs",
+    "question_no": "Angular topic 1 question 2",
+    "question": "Which decorator (or signal function) passes data from a parent component into a child component?",
+    "options": {
+      "A": "@Output",
+      "B": "@Input / input()",
+      "C": "@ViewChild",
+      "D": "@HostBinding"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B @Input (or the input() function) lets a parent bind a value into the child.",
+      "Selected Answer: B @Output is the opposite direction: child → parent."
+    ],
+    "vote_counts": { "A": 6, "B": 91, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://angular.dev/guide/signals",
+    "question_no": "Angular topic 1 question 3",
+    "question": "Which function creates a writable signal in modern Angular?",
+    "options": {
+      "A": "signal()",
+      "B": "observable()",
+      "C": "ref()",
+      "D": "state()"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A signal(initialValue) creates a writable signal whose value can be read and updated.",
+      "Selected Answer: A computed() derives a value from other signals."
+    ],
+    "vote_counts": { "A": 90, "B": 5, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/components/lifecycle",
+    "question_no": "Angular topic 1 question 4",
+    "question": "Choose two valid Angular component lifecycle hooks.",
+    "options": {
+      "A": "ngOnInit",
+      "B": "ngOnRender",
+      "C": "ngOnDestroy",
+      "D": "ngOnCreate"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AC ngOnInit runs once after inputs are set; ngOnDestroy runs before the component is destroyed.",
+      "Selected Answer: AC There is no ngOnRender or ngOnCreate hook in Angular."
+    ],
+    "vote_counts": { "A": 47, "B": 2, "C": 48, "D": 3 },
+    "most_voted": "C",
+    "community_answer": "A, C",
+    "correct_answer": "A, C"
+  },
+  {
+    "url": "https://angular.dev/guide/di",
+    "question_no": "Angular topic 1 question 5",
+    "question": "What is the primary role of Dependency Injection (DI) in Angular?",
+    "options": {
+      "A": "To provide dependencies to components and services without manually instantiating them",
+      "B": "To compile templates into JavaScript",
+      "C": "To manage HTTP requests",
+      "D": "To style components"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The injector creates and shares service instances and passes them where requested.",
+      "Selected Answer: A DI improves testability and decouples code."
+    ],
+    "vote_counts": { "A": 94, "B": 2, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/di",
+    "question_no": "Angular topic 1 question 6",
+    "question": "Which decorator marks a class as an injectable service and registers it at the root level?",
+    "options": {
+      "A": "@Injectable({ providedIn: 'root' })",
+      "B": "@Component({ providedIn: 'root' })",
+      "C": "@Service({ providedIn: 'root' })",
+      "D": "@Provider({ providedIn: 'root' })"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @Injectable({ providedIn: 'root' }) makes the service a singleton available app-wide.",
+      "Selected Answer: A This is the tree-shakable way to register a service."
+    ],
+    "vote_counts": { "A": 95, "B": 2, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/templates/binding",
+    "question_no": "Angular topic 1 question 7",
+    "question": "Which syntax enables two-way data binding on a form control?",
+    "options": {
+      "A": "[value]",
+      "B": "(change)",
+      "C": "[(ngModel)]",
+      "D": "#value"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C [(ngModel)] is the banana-in-a-box syntax combining property and event binding.",
+      "Selected Answer: C Two-way binding requires FormsModule for ngModel."
+    ],
+    "vote_counts": { "A": 5, "B": 4, "C": 89, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://angular.dev/guide/pipes",
+    "question_no": "Angular topic 1 question 8",
+    "question": "What is the purpose of an Angular pipe?",
+    "options": {
+      "A": "To transform data for display in a template",
+      "B": "To make HTTP requests",
+      "C": "To define routes",
+      "D": "To create services"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Pipes such as date, currency, and uppercase transform values in templates.",
+      "Selected Answer: A Custom pipes implement the PipeTransform interface."
+    ],
+    "vote_counts": { "A": 93, "B": 2, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/routing",
+    "question_no": "Angular topic 1 question 9",
+    "question": "Which element is the placeholder where routed components are rendered?",
+    "options": {
+      "A": "<router-link>",
+      "B": "<ng-content>",
+      "C": "<router-outlet>",
+      "D": "<ng-template>"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C <router-outlet> marks where the Router displays the active component.",
+      "Selected Answer: C <ng-content> is for content projection, not routing."
+    ],
+    "vote_counts": { "A": 4, "B": 3, "C": 92, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://angular.dev/cli",
+    "question_no": "Angular topic 1 question 10",
+    "question": "Which Angular CLI command creates a new workspace and application?",
+    "options": {
+      "A": "ng new",
+      "B": "ng create",
+      "C": "ng start",
+      "D": "ng init"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A ng new <name> scaffolds a new Angular workspace.",
+      "Selected Answer: A ng generate (ng g) is used to add files within an existing workspace."
+    ],
+    "vote_counts": { "A": 96, "B": 2, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/templates/control-flow",
+    "question_no": "Angular topic 1 question 11",
+    "question": "In Angular's new built-in control flow, which block renders a list of items?",
+    "options": {
+      "A": "@if",
+      "B": "@for",
+      "C": "@switch",
+      "D": "@defer"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B @for (item of items; track item.id) iterates over a collection.",
+      "Selected Answer: B @defer defers loading, @if and @switch are conditional."
+    ],
+    "vote_counts": { "A": 4, "B": 93, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://angular.dev/guide/components/host-elements",
+    "question_no": "Angular topic 1 question 12",
+    "question": "Which decorator lets a directive/component listen to events on its host element?",
+    "options": {
+      "A": "@HostListener",
+      "B": "@EventListener",
+      "C": "@ViewListener",
+      "D": "@DomListener"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @HostListener('click', ['$event']) listens to host DOM events.",
+      "Selected Answer: A @HostBinding binds a host property to a class field."
+    ],
+    "vote_counts": { "A": 90, "B": 4, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/templates",
+    "question_no": "Angular topic 1 question 13",
+    "question": "Which change detection strategy only re-checks a component when its inputs change?",
+    "options": {
+      "A": "Default",
+      "B": "OnPush",
+      "C": "Lazy",
+      "D": "Deferred"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B ChangeDetectionStrategy.OnPush skips checks unless a reference input changes or a signal is read in the template.",
+      "Selected Answer: B OnPush improves performance for pure/presentational components."
+    ],
+    "vote_counts": { "A": 7, "B": 89, "C": 2, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://angular.dev/guide/components/outputs",
+    "question_no": "Angular topic 1 question 14",
+    "question": "How does a child component send data back to its parent?",
+    "options": {
+      "A": "Using an @Output / output() emitter",
+      "B": "Using an @Input",
+      "C": "Using a pipe",
+      "D": "Using a structural directive"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A An @Output emitter (or output()) raises events that the parent listens to.",
+      "Selected Answer: A The parent subscribes with (eventName)=\"handler()\" syntax."
+    ],
+    "vote_counts": { "A": 92, "B": 4, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/components/standalone",
+    "question_no": "Angular topic 1 question 15",
+    "question": "What is a standalone component in Angular?",
+    "options": {
+      "A": "A component that must be declared in an NgModule",
+      "B": "A component that is self-contained and does not require an NgModule",
+      "C": "A component that only works offline",
+      "D": "A component rendered on the server only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Standalone components (standalone: true) declare their own imports and can be used without NgModules.",
+      "Selected Answer: B They are the default and recommended style in current Angular versions."
+    ],
+    "vote_counts": { "A": 4, "B": 93, "C": 1, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  }
+]

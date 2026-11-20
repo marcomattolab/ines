@@ -1,0 +1,154 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <!-- Top Bar -->
+    <div class="cert-topbar">
+      <button class="cert-btn-back" (click)="cancel.emit()">
+        <mat-icon fontIcon="arrow_back" class="cert-back-icon"></mat-icon>
+        Exit Exam
+      </button>
+
+      <div class="cert-exam-status-group">
+        <div
+          class="cert-timer-badge"
+          [class.warning]="isTimeWarning()"
+          [class.urgent]="isTimeUrgent()"
+        >
+          <mat-icon fontIcon="timer" class="cert-timer-icon"></mat-icon>
+          <span>{{ formattedTime() }}</span>
+        </div>
+
+        <button
+          class="btn-secondary"
+          [class.cert-active-mark]="exam.isCurrentMarkedForReview()"
+          (click)="exam.toggleMarkForReview()"
+        >
+          🚩 {{ exam.isCurrentMarkedForReview() ? 'Marked' : 'Mark for Review' }}
+        </button>
+
+        <button class="btn-secondary" (click)="showQuestionPalette.set(!showQuestionPalette())">
+          🔢 Grid ({{ exam.currentIndex() + 1 }}/{{ exam.questions().length }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Question Palette -->
+    @if (showQuestionPalette()) {
+      <div class="cert-palette-card">
+        <div class="cert-palette-header">
+          <span>Question Navigator</span>
+          <button class="btn-tertiary" (click)="showQuestionPalette.set(false)">✕</button>
+        </div>
+        <div class="cert-palette-grid">
+          @for (q of exam.questions(); track $index) {
+            <button
+              class="cert-palette-btn"
+              [class.current]="exam.currentIndex() === $index"
+              [class.answered]="
+                exam.selectedAnswers()[$index] && exam.selectedAnswers()[$index].length > 0
+              "
+              [class.marked]="exam.markedForReview().has($index)"
+              (click)="exam.goToQuestion($index); showQuestionPalette.set(false)"
+            >
+              {{ $index + 1 }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Question Card -->
+    @if (exam.currentQuestion(); as q) {
+      <div class="cert-card">
+        <div class="cert-question-header">
+          <span class="cert-question-number"
+            >Question {{ exam.currentIndex() + 1 }} of {{ exam.questions().length }}</span
+          >
+          @if (exam.isCurrentMarkedForReview()) {
+            <span class="cert-review-badge">FLAGGED FOR REVIEW</span>
+          }
+          @if (exam.isMultiChoice()) {
+            <span class="cert-badge-multi">Choose {{ exam.maxSelections() }}</span>
+          }
+        </div>
+
+        <div class="cert-question-text">{{ q.question }}</div>
+
+        @if (q.images && q.images.length > 0) {
+          <div class="cert-question-images">
+            @for (img of q.images; track img) {
+              <img [src]="img" alt="Question diagram" loading="lazy" />
+            }
+          </div>
+        }
+
+        <div class="cert-options-list">
+          @for (letter of optionKeys(); track letter) {
+            <div
+              class="cert-option-card"
+              [class.selected]="exam.currentSelectedOptions().includes(letter)"
+              (click)="onSelectOption(letter)"
+            >
+              <span class="cert-option-letter">{{ letter }}</span>
+              <span class="cert-option-text">{{ q.options[letter] }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Footer Nav -->
+      <div class="cert-bottom-nav">
+        <button
+          class="btn-secondary"
+          [disabled]="exam.currentIndex() === 0"
+          (click)="exam.prevQuestion()"
+        >
+          ← Previous
+        </button>
+
+        <button class="btn-primary" (click)="onFinishClick()">Submit & Finish Exam</button>
+
+        <button
+          class="btn-secondary"
+          [disabled]="exam.currentIndex() === exam.questions().length - 1"
+          (click)="exam.nextQuestion()"
+        >
+          Next →
+        </button>
+      </div>
+    }
+
+    <!-- Confirm Finish Modal -->
+    @if (showConfirmFinishModal()) {
+      <div class="cert-modal-backdrop">
+        <div class="cert-modal-card">
+          <div class="cert-modal-header">
+            <h3 class="cert-modal-title">Ready to finish?</h3>
+            <button class="btn-tertiary" (click)="cancelFinish()">✕</button>
+          </div>
+          <div class="cert-modal-body">
+            @if (unansweredCount() > 0) {
+              <div class="cert-warning-callout">
+                ⚠️ You still have <strong>{{ unansweredCount() }}</strong> unanswered questions!
+              </div>
+            } @else {
+              <p>You have answered all {{ exam.questions().length }} questions.</p>
+            }
+            @if (exam.markedForReview().size > 0) {
+              <p class="cert-review-note">
+                🚩 You marked <strong>{{ exam.markedForReview().size }}</strong> question(s) for
+                review.
+              </p>
+            }
+            <p class="cert-sub-text">
+              Once submitted, you will receive your final scaled score and full answer breakdown.
+            </p>
+          </div>
+          <div class="cert-modal-actions">
+            <button class="btn-secondary" (click)="cancelFinish()">Continue Exam</button>
+            <button class="btn-primary" (click)="confirmFinish()">Yes, Submit Exam</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

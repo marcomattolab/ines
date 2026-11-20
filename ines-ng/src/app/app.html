@@ -148,6 +148,9 @@
     @defer (when activeTab() === 'learning') {
       <app-learning-tab [hidden]="activeTab() !== 'learning'" />
     }
+    @defer (when activeTab() === 'certifications') {
+      <app-certifications-tab [hidden]="activeTab() !== 'certifications'" />
+    }
     @defer (when activeTab() === 'labs') {
       <app-labs-tab [hidden]="activeTab() !== 'labs'" />
     }

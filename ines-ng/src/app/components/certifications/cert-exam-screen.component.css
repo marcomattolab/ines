@@ -1,0 +1,25 @@
+.cert-back-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.cert-exam-status-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cert-timer-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 480px) {
+  .cert-exam-status-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

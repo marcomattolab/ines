@@ -1,0 +1,30 @@
+[
+  {
+    "id": "aws-ai-practitioner",
+    "name": "AWS AI Practitioner",
+    "description": "AWS Certified AI Practitioner (AIF-C01) exam preparation. 472 real-style questions with community discussions and vote distribution.",
+    "fileName": "certifications/aws-ai-practitioner.json",
+    "badge": "AWS Certified",
+    "subtitle": "AIF-C01",
+    "accent": "#ff9900",
+    "examTitle": "AWS Certified AI Practitioner",
+    "examInfo": "The AWS AIF-C01 exam uses a scaled scoring model from 100 to 1000. A passing score is typically 700/1000 (~70% correct).",
+    "numQuestions": 65,
+    "passThreshold": 70,
+    "totalQuestions": 472
+  },
+  {
+    "id": "java-oop",
+    "name": "Java OOP",
+    "description": "Java Object-Oriented Programming certification path. Practice inheritance, polymorphism, encapsulation, abstraction and design principles.",
+    "fileName": "certifications/java-oop.json",
+    "badge": "Java Certified",
+    "subtitle": "OOP Foundations",
+    "accent": "#f89820",
+    "examTitle": "Java OOP Certification",
+    "examInfo": "Multiple-choice certification covering core Object-Oriented Programming concepts in Java. A passing score is 70%.",
+    "numQuestions": 12,
+    "passThreshold": 70,
+    "totalQuestions": 12
+  }
+]

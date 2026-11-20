@@ -53,6 +53,7 @@
   --tab-pii-ocr: #facc15;
   --tab-vision-assist: #e879f9;
   --tab-learning: #60a5fa;
+  --tab-certifications: #ffd34d;
   --tab-knowledge: #c4b5fd;
   --tab-project: #5ee3b4;
   --tab-brain: #bf92ff;
@@ -813,6 +814,7 @@ select:focus-visible,
   --tab-pii-ocr: #ca8a04;
   --tab-vision-assist: #c026d3;
   --tab-learning: #ea580c;
+  --tab-certifications: #b45309;
   --tab-knowledge: #2563eb;
   --tab-project: #7c3aed;
   --tab-dev-agent: #8b5cf6;

@@ -1,0 +1,71 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <div class="cert-catalog-header">
+      <div class="cert-catalog-icon">
+        <mat-icon fontIcon="emoji_events"></mat-icon>
+      </div>
+      <div>
+        <h1 class="cert-catalog-title">Certification Hub</h1>
+        <p class="cert-catalog-subtitle">
+          Pick a certification path, then practice with instant feedback or run a full, timed exam
+          simulation. Progress is saved per course and works fully offline.
+        </p>
+      </div>
+    </div>
+
+    @if (catalog.loadingCourses()) {
+      <div class="cert-loading-hint">
+        <span class="cert-hint-dot"></span>
+        <span>Loading certification catalog…</span>
+      </div>
+    }
+
+    @if (catalog.error()) {
+      <div class="cert-error-banner">{{ catalog.error() }}</div>
+    }
+
+    <div class="cert-course-grid">
+      @for (course of catalog.courses(); track course.id) {
+        <button
+          type="button"
+          class="cert-course-card"
+          [style.--course-accent]="course.accent ?? 'var(--accent-blue)'"
+          (click)="select.emit(course.id)"
+        >
+          <span class="cert-course-badge">{{ course.badge ?? 'Certification' }}</span>
+          <span class="cert-course-name">{{ course.name }}</span>
+          @if (course.subtitle) {
+            <span class="cert-course-subtitle">{{ course.subtitle }}</span>
+          }
+          <span class="cert-course-desc">{{ course.description }}</span>
+          <span class="cert-course-meta">
+            @if (course.totalQuestions) {
+              <span class="cert-meta-item">
+                <mat-icon fontIcon="format_list_numbered" class="cert-meta-icon"></mat-icon>
+                {{ course.totalQuestions }} questions
+              </span>
+            }
+            @if (course.passThreshold) {
+              <span class="cert-meta-item">
+                <mat-icon fontIcon="verified" class="cert-meta-icon"></mat-icon>
+                Pass {{ course.passThreshold }}%
+              </span>
+            }
+          </span>
+          <span class="cert-course-cta">Open course →</span>
+        </button>
+      }
+    </div>
+
+    @if (!catalog.loadingCourses() && !catalog.error() && catalog.courses().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">school</mat-icon>
+        <h3 class="text-base font-bold font-[var(--font-ui)]">No courses configured yet</h3>
+        <p class="empty-text">
+          Add a course to <code>public/certifications/courses.json</code> with a name, description
+          and a <code>fileName</code> pointing to its question bank.
+        </p>
+      </div>
+    }
+  </div>
+</div>

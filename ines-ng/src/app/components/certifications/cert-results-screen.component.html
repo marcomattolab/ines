@@ -1,0 +1,67 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <div class="cert-card cert-results-card">
+      <div
+        class="cert-result-status-badge"
+        [class.passed]="result().passed"
+        [class.failed]="!result().passed"
+      >
+        @if (result().passed) {
+          <mat-icon fontIcon="emoji_events" class="cert-status-icon"></mat-icon>
+          <span>PASSED</span>
+        } @else {
+          <mat-icon fontIcon="warning" class="cert-status-icon"></mat-icon>
+          <span>FAILED</span>
+        }
+      </div>
+
+      <h1 class="cert-scaled-score">
+        {{ result().scaledScore }} <span class="cert-score-max">/ 1000</span>
+      </h1>
+      <p class="cert-score-desc">
+        Your score: <strong>{{ result().scorePercentage }}%</strong> · Required to pass:
+        <strong>{{ result().passThreshold }}%</strong>
+      </p>
+
+      <div class="cert-results-grid">
+        <div class="cert-metric-card">
+          <span class="cert-metric-val">{{ result().totalQuestions }}</span>
+          <span class="cert-metric-lbl">Total Questions</span>
+        </div>
+        <div class="cert-metric-card cert-metric-correct">
+          <span class="cert-metric-val cert-text-success">{{ result().correctCount }}</span>
+          <span class="cert-metric-lbl">Correct</span>
+        </div>
+        <div class="cert-metric-card cert-metric-wrong">
+          <span class="cert-metric-val cert-text-danger">{{ result().incorrectCount }}</span>
+          <span class="cert-metric-lbl">Incorrect</span>
+        </div>
+        <div class="cert-metric-card cert-metric-unanswered">
+          <span class="cert-metric-val cert-text-warning">{{ result().unansweredCount }}</span>
+          <span class="cert-metric-lbl">Unanswered</span>
+        </div>
+        <div class="cert-metric-card">
+          <span class="cert-metric-val">{{ formattedTime() }}</span>
+          <span class="cert-metric-lbl">Time Elapsed</span>
+        </div>
+      </div>
+
+      <div class="cert-results-actions">
+        <button class="btn-primary cert-full-btn" (click)="review.emit()">
+          📋 Review All Exam Answers
+        </button>
+
+        @if (result().wrongQuestions.length > 0) {
+          <button class="btn-secondary cert-full-btn" (click)="practiceWrong.emit()">
+            🔄 Practice on {{ result().wrongQuestions.length }} Incorrect Questions Only
+          </button>
+        }
+
+        <div class="cert-secondary-actions">
+          <button class="btn-secondary" (click)="retake.emit()">Retake Exam</button>
+          <button class="btn-tertiary" (click)="home.emit()">Back to Course</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

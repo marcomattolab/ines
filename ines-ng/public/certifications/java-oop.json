@@ -1,0 +1,254 @@
+[
+  {
+    "url": "https://example.com/java-oop/question-1",
+    "question_no": "Java OOP topic 1 question 1",
+    "question": "Which of the following best describes encapsulation in Java?",
+    "options": {
+      "A": "The ability of a class to inherit fields and methods from another class",
+      "B": "Hiding the internal state of an object and requiring interaction through public methods",
+      "C": "The ability of a method to take many forms at runtime",
+      "D": "Combining multiple classes into a single hierarchy"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Encapsulation is the mechanism of wrapping data (fields) and code (methods) together and restricting direct access to the data by making fields private.",
+      "Selected Answer: B Inheritance is described by option A, polymorphism by option C."
+    ],
+    "vote_counts": { "A": 4, "B": 90, "C": 5, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-oop/question-2",
+    "question_no": "Java OOP topic 1 question 2",
+    "question": "Which Java keyword is used to implement inheritance between classes?",
+    "options": {
+      "A": "implements",
+      "B": "inherits",
+      "C": "extends",
+      "D": "super"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C The extends keyword is used when a class inherits from another class.",
+      "Selected Answer: C implements is used for interfaces, not class inheritance."
+    ],
+    "vote_counts": { "A": 8, "B": 1, "C": 89, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-oop/question-3",
+    "question_no": "Java OOP topic 1 question 3",
+    "question": "What is polymorphism in object-oriented programming?",
+    "options": {
+      "A": "The ability of an object to take many forms and allow a single interface to represent different underlying types",
+      "B": "The restriction of direct access to object fields",
+      "C": "The process of creating multiple instances of a class",
+      "D": "The technique of reusing code by copying it"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Polymorphism lets subclasses override methods so a single reference type can behave differently based on the actual object.",
+      "Selected Answer: A Method overriding and overloading are both forms of polymorphism in Java."
+    ],
+    "vote_counts": { "A": 94, "B": 2, "C": 3, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/java-oop/question-4",
+    "question_no": "Java OOP topic 1 question 4",
+    "question": "Which of the following is TRUE about an abstract class in Java?",
+    "options": {
+      "A": "It can be instantiated directly with the new keyword",
+      "B": "It cannot contain any concrete (non-abstract) methods",
+      "C": "It may contain both abstract and concrete methods",
+      "D": "It cannot have constructors"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C An abstract class can contain abstract methods, concrete methods, fields and constructors, but it cannot be instantiated directly.",
+      "Selected Answer: C It can have constructors that are called from subclasses via super()."
+    ],
+    "vote_counts": { "A": 3, "B": 9, "C": 86, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-oop/question-5",
+    "question_no": "Java OOP topic 1 question 5",
+    "question": "What does the final keyword prevent when applied to a class?",
+    "options": {
+      "A": "The class from being serialized",
+      "B": "The class from being subclassed",
+      "C": "The class from being garbage collected",
+      "D": "The class from having static methods"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B A final class cannot be extended (subclassed).",
+      "Selected Answer: B final on a method prevents overriding; final on a class prevents inheritance."
+    ],
+    "vote_counts": { "A": 2, "B": 96, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-oop/question-6",
+    "question_no": "Java OOP topic 1 question 6",
+    "question": "Which access modifier makes a member visible only within its own class?",
+    "options": {
+      "A": "public",
+      "B": "protected",
+      "C": "default (no modifier)",
+      "D": "private"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: D private members are accessible only inside the same class.",
+      "Selected Answer: D protected allows same package and subclasses; default allows same package only."
+    ],
+    "vote_counts": { "A": 1, "B": 4, "C": 6, "D": 89 },
+    "most_voted": "D",
+    "community_answer": "D",
+    "correct_answer": "D"
+  },
+  {
+    "url": "https://example.com/java-oop/question-7",
+    "question_no": "Java OOP topic 1 question 7",
+    "question": "Choose two correct statements about interfaces in Java.",
+    "options": {
+      "A": "An interface can extend multiple other interfaces",
+      "B": "An interface can be instantiated directly",
+      "C": "A class can implement multiple interfaces",
+      "D": "All methods in an interface are final"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AC An interface can extend multiple interfaces and a class can implement multiple interfaces.",
+      "Selected Answer: AC Java supports multiple inheritance of type through interfaces."
+    ],
+    "vote_counts": { "A": 48, "B": 1, "C": 47, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "AC",
+    "correct_answer": "AC"
+  },
+  {
+    "url": "https://example.com/java-oop/question-8",
+    "question_no": "Java OOP topic 1 question 8",
+    "question": "What is method overloading in Java?",
+    "options": {
+      "A": "Redefining a method in a subclass with the same signature",
+      "B": "Defining multiple methods with the same name but different parameter lists",
+      "C": "Calling a method from within itself",
+      "D": "Binding a method call at compile time based on object type"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Overloading uses the same method name with different parameters; overriding is redefining in a subclass.",
+      "Selected Answer: B Overloading is resolved at compile time."
+    ],
+    "vote_counts": { "A": 10, "B": 86, "C": 2, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-oop/question-9",
+    "question_no": "Java OOP topic 1 question 9",
+    "question": "Which principle states that a subclass should be substitutable for its superclass without breaking the program?",
+    "options": {
+      "A": "Single Responsibility Principle",
+      "B": "Open/Closed Principle",
+      "C": "Liskov Substitution Principle",
+      "D": "Interface Segregation Principle"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C The Liskov Substitution Principle is the L in SOLID.",
+      "Selected Answer: C It requires subclasses to honor the contract of their superclass."
+    ],
+    "vote_counts": { "A": 2, "B": 4, "C": 91, "D": 3 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-oop/question-10",
+    "question_no": "Java OOP topic 1 question 10",
+    "question": "What is the purpose of the super keyword in a constructor?",
+    "options": {
+      "A": "To invoke the current class constructor",
+      "B": "To invoke the superclass constructor",
+      "C": "To create a static reference to the parent class",
+      "D": "To prevent the class from being instantiated"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B super() invokes the parent class constructor and must be the first statement.",
+      "Selected Answer: B this() invokes another constructor in the same class."
+    ],
+    "vote_counts": { "A": 5, "B": 90, "C": 2, "D": 3 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-oop/question-11",
+    "question_no": "Java OOP topic 1 question 11",
+    "question": "Which of the following is a benefit of composition over inheritance?",
+    "options": {
+      "A": "It creates a strict compile-time type hierarchy",
+      "B": "It allows behavior to change at runtime by swapping the contained object",
+      "C": "It automatically shares private fields between classes",
+      "D": "It eliminates the need for interfaces"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Composition gives more flexibility because behavior can be delegated and changed dynamically.",
+      "Selected Answer: B This is often summarized as 'favor composition over inheritance'."
+    ],
+    "vote_counts": { "A": 4, "B": 88, "C": 6, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-oop/question-12",
+    "question_no": "Java OOP topic 1 question 12",
+    "question": "Which concept allows two classes to define methods with the same name as long as the parameter lists differ?",
+    "options": {
+      "A": "Method overriding",
+      "B": "Method overloading",
+      "C": "Dynamic dispatch",
+      "D": "Encapsulation"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Overloading permits methods with the same name but different parameter lists.",
+      "Selected Answer: B Overriding requires the same signature and return type compatibility."
+    ],
+    "vote_counts": { "A": 7, "B": 90, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  }
+]

@@ -1,0 +1,45 @@
+<div class="cert-root" [style.--cert-accent]="accent()">
+  @switch (screen()) {
+    @case ('catalog') {
+      <app-cert-catalog-screen (select)="openCourse($event)" />
+    }
+    @case ('course-home') {
+      <app-cert-home-screen
+        (back)="backToCatalog()"
+        (startPractice)="startPractice($event)"
+        (startExamSetup)="openExamSetup()"
+      />
+    }
+    @case ('exam-setup') {
+      <app-cert-exam-setup (back)="goCourseHome()" (start)="startExam($event)" />
+    }
+    @case ('practice') {
+      <app-cert-practice-screen
+        [questions]="practiceQuestions()"
+        [context]="practiceContext()"
+        (back)="goCourseHome()"
+      />
+    }
+    @case ('exam') {
+      <app-cert-exam-screen (cancel)="cancelExam()" (finish)="onExamFinished($event)" />
+    }
+    @case ('results') {
+      @if (examResult(); as result) {
+        <app-cert-results-screen
+          [result]="result"
+          (home)="goCourseHome()"
+          (review)="reviewExam()"
+          (practiceWrong)="practiceWrongFromResult()"
+          (retake)="retakeExam()"
+        />
+      }
+    }
+    @case ('review') {
+      <app-cert-review-screen
+        [questions]="reviewQuestions()"
+        [userAnswers]="reviewAnswers()"
+        (back)="backToResults()"
+      />
+    }
+  }
+</div>

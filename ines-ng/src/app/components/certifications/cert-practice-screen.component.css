@@ -1,0 +1,27 @@
+.cert-back-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.cert-mode-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.cert-badge-sub {
+  font-size: 11px;
+  color: var(--accent-rose);
+}
+
+.cert-full-btn {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .cert-nav-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

@@ -1,0 +1,154 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <!-- Top Bar -->
+    <div class="cert-topbar">
+      <button class="cert-btn-back" (click)="back.emit()">
+        <mat-icon fontIcon="arrow_back" class="cert-back-icon"></mat-icon>
+        Results
+      </button>
+
+      <div class="cert-mode-badge">
+        <mat-icon fontIcon="fact_check" class="cert-mode-icon"></mat-icon>
+        Review Mode
+      </div>
+
+      <div class="cert-nav-controls">
+        <button class="btn-tertiary" [disabled]="currentIndex() === 0" (click)="prevQuestion()">
+          ←
+        </button>
+        <span class="cert-counter-text">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
+        <button
+          class="btn-tertiary"
+          [disabled]="currentIndex() === questions().length - 1"
+          (click)="nextQuestion()"
+        >
+          →
+        </button>
+      </div>
+    </div>
+
+    @if (currentQuestion(); as q) {
+      <div class="cert-card">
+        <div class="cert-question-header">
+          <span class="cert-question-number">Question #{{ currentIndex() + 1 }}</span>
+          @if (q.is_hotspot) {
+            <span class="cert-badge-hotspot">⚡ HOTSPOT</span>
+          }
+          @if (q.url) {
+            <a [href]="q.url" target="_blank" rel="noopener" class="cert-et-link">Discussion ↗</a>
+          }
+        </div>
+
+        <!-- Verdict Banner -->
+        <div
+          class="cert-verdict-banner"
+          [class.correct]="isCorrect()"
+          [class.wrong]="!isCorrect() && !isUnanswered()"
+          [class.unanswered]="isUnanswered()"
+        >
+          @if (isCorrect()) {
+            <span>✅ Your answer was correct!</span>
+          } @else if (isUnanswered()) {
+            <span>⚠️ You did not answer this question.</span>
+          } @else {
+            <span>❌ Your answer ({{ currentUserSelected().join(', ') }}) was incorrect.</span>
+          }
+        </div>
+
+        <div class="cert-question-text">{{ q.question }}</div>
+
+        @if (q.images && q.images.length > 0) {
+          <div class="cert-question-images">
+            @for (img of q.images; track img) {
+              <img [src]="img" alt="Question diagram" loading="lazy" />
+            }
+          </div>
+        }
+
+        <div class="cert-options-list">
+          @for (letter of optionKeys(); track letter) {
+            <div
+              class="cert-option-card"
+              [class.correct]="q.correct_answer.includes(letter)"
+              [class.wrong]="
+                currentUserSelected().includes(letter) && !q.correct_answer.includes(letter)
+              "
+            >
+              <span class="cert-option-letter">{{ letter }}</span>
+              <span class="cert-option-text">{{ q.options[letter] }}</span>
+              @if (currentUserSelected().includes(letter)) {
+                <span class="cert-user-choice-tag">Your Choice</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Answers & Explanations -->
+        <div class="cert-answer-reveal">
+          <div class="cert-answer-badge">
+            ✓ Correct Answer: {{ q.correct_answer }}
+            @if (q.community_answer && q.community_answer !== q.correct_answer) {
+              <span class="cert-community-note">· Community: {{ q.community_answer }}</span>
+            }
+          </div>
+
+          @if (voteBars().length > 0) {
+            <div class="cert-vote-distribution">
+              <span class="cert-vote-title">Community Vote Distribution:</span>
+              @for (v of voteBars(); track v.letter) {
+                <div class="cert-vote-bar-row">
+                  <span class="cert-vote-bar-letter">{{ v.letter }}</span>
+                  <div class="cert-vote-bar-track">
+                    <div
+                      class="cert-vote-bar-fill"
+                      [class.correct]="v.isCorrect"
+                      [style.width.%]="v.percentage"
+                    ></div>
+                  </div>
+                  <span class="cert-vote-bar-count">{{ v.percentage }}% ({{ v.count }})</span>
+                </div>
+              }
+            </div>
+          }
+
+          @if (q.discussion && q.discussion.length > 0) {
+            <div class="cert-discussion-wrapper">
+              <button class="btn-secondary" (click)="showDiscussion.set(!showDiscussion())">
+                {{
+                  showDiscussion()
+                    ? 'Hide Discussions'
+                    : 'Show Community Explanations (' + q.discussion.length + ')'
+                }}
+              </button>
+
+              @if (showDiscussion()) {
+                <div class="cert-discussion-box">
+                  @for (d of q.discussion; track $index) {
+                    <div class="cert-discussion-item">{{ d }}</div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Review Nav Buttons -->
+      <div class="cert-bottom-nav">
+        <button class="btn-secondary" [disabled]="currentIndex() === 0" (click)="prevQuestion()">
+          ← Previous
+        </button>
+
+        <button class="btn-primary" (click)="back.emit()">Back to Results</button>
+
+        <button
+          class="btn-secondary"
+          [disabled]="currentIndex() === questions().length - 1"
+          (click)="nextQuestion()"
+        >
+          Next →
+        </button>
+      </div>
+    }
+  </div>
+</div>

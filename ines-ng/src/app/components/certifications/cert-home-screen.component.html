@@ -1,0 +1,106 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <button class="cert-btn-back" (click)="back.emit()">
+      <mat-icon fontIcon="arrow_back" class="cert-back-icon"></mat-icon>
+      All courses
+    </button>
+
+    @if (catalog.activeCourse(); as course) {
+      <div class="cert-hero">
+        <div class="cert-hero-glow"></div>
+        <div class="cert-hero-content">
+          <span class="cert-hero-badge">{{ course.badge ?? 'Certification' }}</span>
+          <h1 class="cert-hero-title">
+            {{ course.name }}
+            @if (course.subtitle) {
+              <span class="cert-hero-subtitle">{{ course.subtitle }}</span>
+            }
+          </h1>
+          <p class="cert-hero-desc">{{ course.description }}</p>
+
+          <!-- Stats -->
+          <div class="cert-stats-row">
+            <div class="cert-stat-card">
+              <span class="cert-stat-value">{{ catalog.totalQuestions() }}</span>
+              <span class="cert-stat-label">Total Questions</span>
+            </div>
+            <div class="cert-stat-card">
+              <span class="cert-stat-value">{{ catalog.answeredCount() }}</span>
+              <span class="cert-stat-label">Answered</span>
+            </div>
+            <div class="cert-stat-card">
+              <span class="cert-stat-value cert-accent-text"
+                >{{ catalog.accuracyPercentage() }}%</span
+              >
+              <span class="cert-stat-label">Accuracy</span>
+            </div>
+            @if (catalog.failedCount() > 0) {
+              <div class="cert-stat-card cert-stat-failed">
+                <span class="cert-stat-value cert-danger-text">{{ catalog.failedCount() }}</span>
+                <span class="cert-stat-label">Needs Review</span>
+              </div>
+            }
+          </div>
+
+          <!-- Mode buttons -->
+          <div class="cert-mode-buttons">
+            <button
+              class="btn-primary cert-mode-btn"
+              (click)="onPracticeClick()"
+              [disabled]="catalog.loadingQuestions()"
+            >
+              <mat-icon fontIcon="menu_book" class="cert-btn-icon"></mat-icon>
+              Practice Mode
+            </button>
+            <button
+              class="btn-secondary cert-mode-btn"
+              (click)="onExamClick()"
+              [disabled]="catalog.loadingQuestions()"
+            >
+              <mat-icon fontIcon="timer" class="cert-btn-icon"></mat-icon>
+              Exam Simulation
+            </button>
+          </div>
+
+          @if (catalog.failedCount() > 0) {
+            <div class="cert-practice-wrong-wrapper">
+              <button class="btn-secondary" (click)="onPracticeWrongClick()">
+                <mat-icon fontIcon="replay" class="cert-btn-icon"></mat-icon>
+                Practice {{ catalog.failedCount() }} Incorrect Questions Only
+              </button>
+            </div>
+          }
+
+          <!-- Bottom controls -->
+          <div class="cert-bottom-actions">
+            <button class="btn-tertiary cert-sound-btn" (click)="sound.toggle()">
+              {{ sound.enabled() ? '🔊 Sound FX ON' : '🔇 Sound FX OFF' }}
+            </button>
+            @if (catalog.answeredCount() > 0) {
+              <button class="btn-tertiary cert-reset-btn" (click)="onResetProgress()">
+                Reset History
+              </button>
+            }
+          </div>
+
+          @if (catalog.loadingQuestions()) {
+            <div class="cert-loading-hint">
+              <span class="cert-hint-dot"></span>
+              <span>Loading {{ course.name }} questions…</span>
+            </div>
+          }
+
+          @if (catalog.questionError()) {
+            <div class="cert-error-banner">{{ catalog.questionError() }}</div>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">school</mat-icon>
+        <h3 class="text-base font-bold font-[var(--font-ui)]">No course selected</h3>
+        <p class="empty-text">Choose a certification path from the catalog to get started.</p>
+      </div>
+    }
+  </div>
+</div>

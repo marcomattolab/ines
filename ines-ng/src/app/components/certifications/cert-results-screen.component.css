@@ -1,0 +1,159 @@
+.cert-results-card {
+  max-width: 680px;
+  margin: 24px auto 60px;
+  padding: 40px 28px;
+  text-align: center;
+  animation: certFadeIn 0.3s ease;
+}
+
+.cert-result-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.cert-result-status-badge.passed {
+  background: color-mix(in srgb, var(--accent-green) 14%, transparent);
+  color: var(--accent-green);
+  border: 1px solid color-mix(in srgb, var(--accent-green) 40%, transparent);
+}
+
+.cert-result-status-badge.failed {
+  background: color-mix(in srgb, var(--accent-rose) 14%, transparent);
+  color: var(--accent-rose);
+  border: 1px solid color-mix(in srgb, var(--accent-rose) 40%, transparent);
+}
+
+.cert-status-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.cert-scaled-score {
+  font-size: clamp(48px, 8vw, 72px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-0);
+  font-family: var(--font-ui);
+  margin-bottom: 8px;
+}
+
+.cert-score-max {
+  font-size: 24px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.cert-score-desc {
+  font-size: 15px;
+  color: var(--text-1);
+  margin-bottom: 32px;
+}
+
+.cert-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.cert-metric-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cert-metric-correct {
+  border-color: color-mix(in srgb, var(--accent-green) 35%, transparent);
+}
+
+.cert-metric-wrong {
+  border-color: color-mix(in srgb, var(--accent-rose) 35%, transparent);
+}
+
+.cert-metric-unanswered {
+  border-color: color-mix(in srgb, var(--accent-amber) 35%, transparent);
+}
+
+.cert-metric-val {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-0);
+}
+
+.cert-metric-lbl {
+  font-size: 10px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.cert-text-success {
+  color: var(--accent-green);
+}
+
+.cert-text-danger {
+  color: var(--accent-rose);
+}
+
+.cert-text-warning {
+  color: var(--accent-amber);
+}
+
+.cert-results-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cert-full-btn {
+  width: 100%;
+}
+
+.cert-secondary-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+@media (min-width: 1200px) {
+  .cert-results-card {
+    max-width: 960px;
+    padding: 48px 40px;
+  }
+
+  .cert-results-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .cert-results-card {
+    padding: 28px 16px;
+    margin: 16px auto 40px;
+  }
+
+  .cert-result-status-badge {
+    font-size: 14px;
+    padding: 7px 18px;
+  }
+
+  .cert-secondary-actions {
+    flex-direction: column;
+  }
+}

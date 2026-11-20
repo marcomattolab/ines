@@ -1,0 +1,38 @@
+.cert-back-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.cert-setup-title {
+  font-family: var(--font-ui);
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--text-0);
+}
+
+.cert-setup-info {
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.6;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cert-btn-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.cert-start-btn {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .cert-setup-title {
+    font-size: 20px;
+  }
+}

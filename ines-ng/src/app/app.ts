@@ -11,6 +11,7 @@ import { LoaderOverlayComponent } from './components/loader-overlay/loader-overl
 import { InfoModalComponent } from './components/info-modal/info-modal.component';
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
+import { CertificationsTabComponent } from './components/certifications/certifications-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
@@ -27,6 +28,7 @@ export type Tab =
   | 'translate'
   | 'code'
   | 'learning'
+  | 'certifications'
   | 'labs';
 
 export type TabCategory = 'productivity' | 'dev' | 'vision';
@@ -130,6 +132,27 @@ const TABS: TabDef[] = [
     description: 'Quizzes, flashcards, slides & study tools',
     keywords: ['learning', 'study', 'quiz', 'flashcard', 'slides', 'apprendimento', 'studio'],
   },
+  {
+    id: 'certifications',
+    icon: 'emoji_events',
+    label: 'Certifications',
+    color: 'var(--tab-certifications)',
+    category: 'dev',
+    categoryLabel: 'Dev & Studio',
+    description: 'Certification trainer: practice & exam simulations',
+    keywords: [
+      'certification',
+      'certifications',
+      'exam',
+      'practice',
+      'aws',
+      'java',
+      'quiz',
+      'training',
+      'certificazione',
+      'esame',
+    ],
+  },
 
   // Vision & AI Labs
   {
@@ -159,6 +182,7 @@ const TABS: TabDef[] = [
     TranslateTabComponent,
     TodoTabComponent,
     LearningTabComponent,
+    CertificationsTabComponent,
     FormsModule,
     MatIconModule,
   ],

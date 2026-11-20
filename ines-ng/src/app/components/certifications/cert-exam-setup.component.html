@@ -1,0 +1,60 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <button class="cert-btn-back" (click)="back.emit()">
+      <mat-icon fontIcon="arrow_back" class="cert-back-icon"></mat-icon>
+      Back
+    </button>
+
+    <div class="cert-card">
+      <h2 class="cert-setup-title">Exam Simulation Configuration</h2>
+
+      @if (catalog.activeCourse()?.examInfo; as info) {
+        <p class="cert-setup-info">{{ info }}</p>
+      }
+
+      <div class="cert-form-group">
+        <label for="cert-num-q">Number of Questions</label>
+        <div class="cert-slider-group">
+          <input
+            id="cert-num-q"
+            type="range"
+            min="5"
+            max="85"
+            step="5"
+            [ngModel]="numQuestions()"
+            (ngModelChange)="numQuestions.set($event)"
+          />
+          <span class="cert-slider-val">{{ numQuestions() }}</span>
+        </div>
+        <p class="cert-form-hint">
+          The available question bank has {{ catalog.totalQuestions() }} questions.
+        </p>
+      </div>
+
+      <div class="cert-form-group">
+        <label for="cert-pass-t">Passing Threshold (%)</label>
+        <div class="cert-slider-group">
+          <input
+            id="cert-pass-t"
+            type="range"
+            min="50"
+            max="90"
+            step="5"
+            [ngModel]="passThreshold()"
+            (ngModelChange)="passThreshold.set($event)"
+          />
+          <span class="cert-slider-val">{{ passThreshold() }}%</span>
+        </div>
+        <p class="cert-form-hint">
+          The simulation scores on a 100–1000 scaled model, but you can adjust the percentage
+          required to pass.
+        </p>
+      </div>
+
+      <button class="btn-primary cert-start-btn" (click)="onStart()">
+        <mat-icon fontIcon="play_arrow" class="cert-btn-icon"></mat-icon>
+        Start Exam ({{ numQuestions() }} Questions)
+      </button>
+    </div>
+  </div>
+</div>

@@ -42,13 +42,13 @@
   font-size: 13px;
   color: var(--text-2);
   margin-top: 4px;
-  max-width: 620px;
+  max-width: 780px;
   line-height: 1.6;
 }
 
 .cert-course-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 

@@ -13,7 +13,7 @@
 }
 
 .cert-content {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   width: 100%;
 }
@@ -796,5 +796,11 @@
 
   .cert-jump-btn {
     height: 38px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cert-content {
+    max-width: 1200px;
   }
 }

@@ -10,6 +10,7 @@ import { SpeechService } from '../../core/services/speech.service';
 import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
@@ -28,6 +29,7 @@ export class BrainTabComponent implements OnDestroy, OnInit {
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);
+  readonly i18n = inject(I18nService);
 
   readonly searchQuery = signal('');
   readonly askQuery = signal('');

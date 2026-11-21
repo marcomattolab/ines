@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, inject, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MediaPipeTasksService } from '../../core/services/mediapipe-tasks.service';
 import { CameraHandle, errorMessage, frameLoop, startCamera } from '../../core/services/camera';
@@ -28,6 +29,7 @@ interface BgPreset {
 })
 export class BackgroundTabComponent implements OnDestroy {
   private readonly mp = inject(MediaPipeTasksService);
+  readonly i18n = inject(I18nService);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly out = viewChild.required<ElementRef<HTMLCanvasElement>>('out');

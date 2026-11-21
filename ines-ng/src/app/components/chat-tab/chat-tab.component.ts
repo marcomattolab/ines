@@ -23,6 +23,7 @@ import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { OcrService } from '../../core/services/ocr.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
 import { ChatInputDirective } from '../../shared/chat-input.directive';
+import { I18nService } from '../../core/services/i18n.service';
 
 interface UiMessage {
   id: number;
@@ -80,6 +81,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly toast = inject(ToastService);
   readonly km = inject(KnowledgeManagerService);
   readonly brain = inject(SecondBrainService);
+  readonly i18n = inject(I18nService);
   private readonly storage = inject(StorageService);
   private readonly dom = inject(DomUtilsService);
   readonly ocr = inject(OcrService);

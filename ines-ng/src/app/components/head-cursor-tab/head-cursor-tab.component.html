@@ -6,9 +6,9 @@
           fontIcon="accessibility_new"
           class="text-accent-rose w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Head Cursor
+        {{ i18n.t('tab.headcursor.title') }}
       </div>
-      <div class="panel-desc">Move your face to move the pointer · click with eyes or mouth</div>
+      <div class="panel-desc">{{ i18n.t('tab.headcursor.desc') }}</div>
     </div>
     <div class="flex gap-2">
       @if (status() === 'running') {

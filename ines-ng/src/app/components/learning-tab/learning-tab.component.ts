@@ -29,6 +29,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SlideDeckService, SLIDE_COLOR_THEMES } from '../../core/services/slide-deck.service';
 import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
 import { StorageService } from '../../core/services/storage.service';
+import { I18nService } from '../../core/services/i18n.service';
 import {
   buildFillBlanksPrompt,
   buildFlashcardsPrompt,
@@ -100,6 +101,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly deck = inject(SlideDeckService);
   private readonly storage = inject(StorageService);
+  readonly i18n = inject(I18nService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
   readonly chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');

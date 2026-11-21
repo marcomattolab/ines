@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AgentService, Agent, Skill } from '../../core/services/agent.service';
@@ -108,6 +109,7 @@ interface ProjectSummary {
 })
 export class DevAgentTabComponent implements OnInit, OnDestroy {
   readonly llm = inject(LlmService);
+  readonly i18n = inject(I18nService);
   readonly toast = inject(ToastService);
   readonly agentSvc = inject(AgentService);
   readonly project = inject(ProjectService);

@@ -6,9 +6,9 @@
           fontIcon="back_hand"
           class="text-accent-amber w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Sicilian Gestures
+        {{ i18n.t('tab.gestures.title') }}
       </div>
-      <div class="panel-desc">Hand landmarker on-device · Sicilian vocabulary and live actions</div>
+      <div class="panel-desc">{{ i18n.t('tab.gestures.desc') }}</div>
     </div>
     <app-button
       [variant]="status() === 'running' ? 'danger' : 'primary'"

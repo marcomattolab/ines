@@ -7,10 +7,10 @@
         [class.active]="active() === t.id"
         [style.--chip-accent]="t.hex"
         (click)="active.set(t.id)"
-        [attr.title]="t.label"
+        [attr.title]="toolLabel(t)"
       >
         <mat-icon [fontIcon]="t.icon" class="text-sm w-4 h-4 {{ t.color }}"></mat-icon>
-        {{ t.label }}
+        {{ toolLabel(t) }}
       </button>
     }
   </nav>

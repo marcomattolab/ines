@@ -22,6 +22,7 @@ import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-i
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { JsonParserService } from '../../core/services/json-parser.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { trackDragResize } from '../../shared/resize.util';
 
 type FilterTab = 'all' | 'active' | 'completed';
@@ -71,6 +72,7 @@ export class TodoTabComponent implements OnDestroy {
   readonly speech = inject(SpeechService);
   private readonly jsonParser = inject(JsonParserService);
   private readonly dom = inject(DomUtilsService);
+  readonly i18n = inject(I18nService);
   readonly recording = this.speech.recording;
   readonly timerText = this.speech.recordingTimer;
 

@@ -3,9 +3,9 @@
     <div class="flex items-center gap-3">
       <mat-icon fontIcon="check_box" class="text-purple-400 scale-110"></mat-icon>
       <div>
-        <div class="panel-title text-white">Daily Planner</div>
+        <div class="panel-title text-white">{{ i18n.t('tab.todo.title') }}</div>
         <div class="panel-desc text-zinc-400">
-          Organize your day with AI-powered task management
+          {{ i18n.t('tab.todo.desc') }}
         </div>
       </div>
     </div>
@@ -13,7 +13,7 @@
       @if (todoSvc.canUndo()) {
         <app-button variant="ghost" size="sm" (onClick)="undoLast()" title="Undo last action">
           <mat-icon fontIcon="undo" class="text-sm w-3.5 h-3.5"></mat-icon>
-          Undo
+          {{ i18n.t('action.undo') }}
         </app-button>
       }
       <label class="cursor-pointer" title="Import tasks from JSON or CSV">

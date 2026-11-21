@@ -29,7 +29,7 @@ describe('Tab hubs — tool definitions & switching', () => {
   });
 
   it('Code: coding + dev-agent + agents, default coding', () => {
-    const c = new CodeTabComponent();
+    const c = TestBed.runInInjectionContext(() => new CodeTabComponent());
     expect(c.tools.map((t) => t.id)).toEqual(['coding', 'dev-agent', 'agents']);
     expect(c.active()).toBe('coding');
     c.active.set('agents');
@@ -37,7 +37,7 @@ describe('Tab hubs — tool definitions & switching', () => {
   });
 
   it('Labs: 8 vision tools, unique ids, default vision', () => {
-    const c = new LabsTabComponent();
+    const c = TestBed.runInInjectionContext(() => new LabsTabComponent());
     expect(c.tools.map((t) => t.id)).toEqual([
       'vision',
       'assist',

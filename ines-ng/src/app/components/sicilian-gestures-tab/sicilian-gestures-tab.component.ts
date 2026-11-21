@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, inject, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { SettingsService } from '../../core/services/settings.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -64,6 +65,7 @@ const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 })
 export class SicilianGesturesTabComponent implements OnDestroy {
   private readonly settings = inject(SettingsService);
+  readonly i18n = inject(I18nService);
   private readonly speech = inject(SpeechService);
   private readonly toast = inject(ToastService);
 

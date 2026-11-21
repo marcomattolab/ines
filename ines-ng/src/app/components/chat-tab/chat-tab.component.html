@@ -3,9 +3,9 @@
     <div>
       <div class="panel-title">
         <mat-icon fontIcon="chat" class="text-accent-blue w-[18px] h-[18px] text-[18px]"></mat-icon>
-        Ines (General Assistant)
+        {{ i18n.t('tab.chat.title') }}
       </div>
-      <div class="panel-desc">AI on-device · private · offline</div>
+      <div class="panel-desc">{{ i18n.t('tab.chat.desc') }}</div>
     </div>
     <label class="cursor-pointer" title="Import chat from JSON">
       <input
@@ -18,12 +18,12 @@
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] text-xs font-medium text-[var(--text-1)] hover:bg-[var(--bg-3)] transition-colors"
       >
         <mat-icon fontIcon="upload" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
-        Import
+        {{ i18n.t('action.import') }}
       </span>
     </label>
     <app-button variant="danger" size="sm" (onClick)="showClearConfirm.set(true)">
       <mat-icon fontIcon="delete" class="w-[14px] h-[14px] text-[14px]"></mat-icon>
-      Clear
+      {{ i18n.t('action.clear') }}
     </app-button>
     <app-button
       variant="secondary"

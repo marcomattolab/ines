@@ -6,9 +6,9 @@
           fontIcon="visibility"
           class="text-accent-rose w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Vision Assistant
+        {{ i18n.t('tab.vision.title') }}
       </div>
-      <div class="panel-desc">On-device SML vision · Edge AI emotion & gesture analysis</div>
+      <div class="panel-desc">{{ i18n.t('tab.vision.desc') }}</div>
     </div>
     <app-button
       [variant]="vision.isRunning() ? 'danger' : 'primary'"

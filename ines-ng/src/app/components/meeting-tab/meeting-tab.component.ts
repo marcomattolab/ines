@@ -5,6 +5,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { TextProcessingService } from '../../core/services/text-processing.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 const SYSTEM_MEETING = `You are a specialist assistant for analyzing corporate meetings.
@@ -31,6 +32,7 @@ export class MeetingTabComponent implements OnDestroy {
   readonly speech = inject(SpeechService);
   private readonly dom = inject(DomUtilsService);
   private readonly textProc = inject(TextProcessingService);
+  readonly i18n = inject(I18nService);
 
   transcript = signal('');
   summary = signal('');

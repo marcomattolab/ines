@@ -8,6 +8,7 @@ import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { DropdownComponent } from '../../shared/components/dropdown/dropdown.component';
 import { TextProcessingService } from '../../core/services/text-processing.service';
+import { I18nService } from '../../core/services/i18n.service';
 
 const SYSTEM_TRANSLATE = `You are a professional translator.
 Translate the given text EXACTLY as requested, preserving style, tone and formatting.
@@ -39,6 +40,7 @@ export class TranslateTabComponent implements OnDestroy {
   readonly speech = inject(SpeechService);
   private readonly dom = inject(DomUtilsService);
   private readonly textProc = inject(TextProcessingService);
+  readonly i18n = inject(I18nService);
 
   languages = LANGUAGES;
 

@@ -3,13 +3,13 @@
     <div>
       <div class="panel-title">
         <mat-icon fontIcon="mic" class="text-accent-rose text-lg w-[18px] h-[18px]"></mat-icon>
-        Meeting Recorder
+        {{ i18n.t('tab.meeting.title') }}
       </div>
-      <div class="panel-desc">Vocal transcription + AI-generated summary</div>
+      <div class="panel-desc">{{ i18n.t('tab.meeting.desc') }}</div>
     </div>
     <app-button variant="danger" size="sm" (onClick)="clear()">
       <mat-icon fontIcon="delete" class="text-sm w-3.5 h-3.5"></mat-icon>
-      Clear
+      {{ i18n.t('action.clear') }}
     </app-button>
   </div>
 

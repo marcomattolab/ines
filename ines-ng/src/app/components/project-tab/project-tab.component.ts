@@ -12,6 +12,7 @@ import {
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ProjectService, ProjectChunk, ProjectDocument } from '../../core/services/project.service';
@@ -64,6 +65,7 @@ PROJECT CONTEXT
 })
 export class ProjectTabComponent implements OnInit {
   readonly llm = inject(LlmService);
+  readonly i18n = inject(I18nService);
   readonly project = inject(ProjectService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);

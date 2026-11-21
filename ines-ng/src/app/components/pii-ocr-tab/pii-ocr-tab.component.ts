@@ -1,5 +1,6 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import * as pdfjsLib from 'pdfjs-dist';
 import { OcrService, OcrWord } from '../../core/services/ocr.service';
 import {
@@ -26,6 +27,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 })
 export class PiiOcrTabComponent {
   protected readonly ocr = inject(OcrService);
+  readonly i18n = inject(I18nService);
   private readonly toast = inject(ToastService);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 

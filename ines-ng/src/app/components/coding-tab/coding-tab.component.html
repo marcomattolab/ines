@@ -4,9 +4,9 @@
     <div>
       <div class="panel-title">
         <mat-icon fontIcon="code" class="text-accent-cyan text-lg w-[18px] h-[18px]"></mat-icon>
-        Angular + TypeScript Assistant
+        {{ i18n.t('tab.coding.title') }}
       </div>
-      <div class="panel-desc">Standalone components · signals · inject() · RxJS · Tailwind</div>
+      <div class="panel-desc">{{ i18n.t('tab.coding.desc') }}</div>
     </div>
     <div class="flex items-center gap-2">
       @if (docFetch.isFetching()) {

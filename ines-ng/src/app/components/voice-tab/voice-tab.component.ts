@@ -10,6 +10,7 @@ import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-voice-tab',
@@ -24,6 +25,7 @@ export class VoiceTabComponent {
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);
+  readonly i18n = inject(I18nService);
 
   readonly langs = [
     { value: 'en-US', label: 'English' },

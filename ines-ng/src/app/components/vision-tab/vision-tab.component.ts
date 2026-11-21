@@ -1,6 +1,7 @@
 import { Component, inject, signal, viewChild, ElementRef, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { VisionService, FaceOverlayType } from '../../core/services/vision.service';
 import { ToastService } from '../../core/services/toast.service';
 import { LlmService } from '../../core/services/llm.service';
@@ -285,6 +286,7 @@ export class VisionTabComponent implements OnDestroy {
   readonly vision = inject(VisionService);
   readonly toast = inject(ToastService);
   readonly llm = inject(LlmService);
+  readonly i18n = inject(I18nService);
 
   readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   readonly meshCanvas = viewChild<ElementRef<HTMLCanvasElement>>('meshCanvas');

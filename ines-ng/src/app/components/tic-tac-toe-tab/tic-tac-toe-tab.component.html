@@ -6,9 +6,9 @@
           fontIcon="grid_on"
           class="text-accent-cyan w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Tris
+        {{ i18n.t('tab.tris.title') }}
       </div>
-      <div class="panel-desc">Two-player tic-tac-toe · mouse, pinch or head cursor</div>
+      <div class="panel-desc">{{ i18n.t('tab.tris.desc') }}</div>
     </div>
     <div class="flex gap-2">
       @if (status() === 'running' && mode() === 'head') {

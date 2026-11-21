@@ -22,6 +22,7 @@ import { MessageBubbleComponent } from '../../shared/message-bubble/message-bubb
 import { TypingIndicatorComponent } from '../../shared/typing-indicator/typing-indicator.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { I18nService } from '../../core/services/i18n.service';
 import JSZip from 'jszip';
 
 interface UiMessage {
@@ -74,6 +75,7 @@ export class CodingTabComponent implements AfterViewChecked, OnDestroy, OnInit {
   private readonly dom = inject(DomUtilsService);
   private readonly highlight = inject(SyntaxHighlightService);
   private readonly storage = inject(StorageService);
+  readonly i18n = inject(I18nService);
 
   messages = signal<UiMessage[]>([
     {

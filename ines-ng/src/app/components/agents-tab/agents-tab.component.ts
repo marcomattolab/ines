@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { AgentService, Agent, Skill, slugifySkill } from '../../core/services/agent.service';
 import { LlmService, ChatMessage } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -58,6 +59,7 @@ interface KnowledgeQA {
 })
 export class AgentsTabComponent implements AfterViewChecked, OnInit {
   readonly agentSvc = inject(AgentService);
+  readonly i18n = inject(I18nService);
   readonly llm = inject(LlmService);
   readonly toast = inject(ToastService);
   private readonly dom = inject(DomUtilsService);

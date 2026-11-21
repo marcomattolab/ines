@@ -49,6 +49,119 @@ const STRINGS: Record<string, { en: string; it: string }> = {
   'status.about': { en: 'About INES', it: 'Info su INES' },
   'status.dictate.start': { en: 'Start dictation', it: 'Avvia dettatura' },
   'status.dictate.stop': { en: 'Stop dictation', it: 'Ferma dettatura' },
+
+  'action.clear': { en: 'Clear', it: 'Svuota' },
+  'action.undo': { en: 'Undo', it: 'Annulla' },
+  'action.import': { en: 'Import', it: 'Importa' },
+  'action.cancel': { en: 'Cancel', it: 'Annulla' },
+  'action.save': { en: 'Save', it: 'Salva' },
+  'action.copy': { en: 'Copy', it: 'Copia' },
+  'action.download': { en: 'Download', it: 'Scarica' },
+
+  'tab.chat.title': { en: 'Ines (General Assistant)', it: 'Ines (Assistente Generale)' },
+  'tab.chat.desc': {
+    en: 'AI on-device · private · offline',
+    it: 'AI on-device · privata · offline',
+  },
+  'tab.voice.title': { en: 'INES Voice', it: 'INES Voce' },
+  'tab.voice.desc': {
+    en: 'Voice assistant · dictation & series of tasks',
+    it: 'Assistente vocale · dettatura e serie di attività',
+  },
+  'tab.translate.title': { en: 'Translator', it: 'Traduttore' },
+  'tab.translate.desc': {
+    en: 'Translate text between any language — completely offline',
+    it: 'Traduci testo in qualsiasi lingua — completamente offline',
+  },
+  'tab.meeting.title': { en: 'Meeting Recorder', it: 'Registratore Riunioni' },
+  'tab.meeting.desc': {
+    en: 'Vocal transcription + AI-generated summary',
+    it: 'Trascrizione vocale + riepilogo generato dall\u2019AI',
+  },
+  'tab.todo.title': { en: 'Daily Planner', it: 'Pianificatore Giornaliero' },
+  'tab.todo.desc': {
+    en: 'Organize your day with AI-powered task management',
+    it: 'Organizza la tua giornata con la gestione attività basata su AI',
+  },
+  'tab.brain.title': { en: 'Second Brain', it: 'Second Brain' },
+  'tab.learning.title': { en: 'Learning Center', it: 'Centro Apprendimento' },
+  'tab.learning.desc': {
+    en: 'RAG-powered analysis, Mind Maps, Quizzes & Exercises',
+    it: 'Analisi RAG, mappe mentali, quiz ed esercizi',
+  },
+  'tab.coding.title': {
+    en: 'Angular + TypeScript Assistant',
+    it: 'Assistente Angular + TypeScript',
+  },
+  'tab.coding.desc': {
+    en: 'Standalone components · signals · inject() · RxJS · Tailwind',
+    it: 'Componenti standalone · signals · inject() · RxJS · Tailwind',
+  },
+
+  'tab.vision.title': { en: 'Vision Assistant', it: 'Assistente Visione' },
+  'tab.vision.desc': {
+    en: 'On-device SML vision · Edge AI emotion & gesture analysis',
+    it: 'Visione SML on-device · analisi di emozioni e gesti con Edge AI',
+  },
+  'tab.visionassist.title': { en: 'Visual Assistant', it: 'Assistente Visivo' },
+  'tab.visionassist.desc': {
+    en: 'Describe a scene or read text aloud · on-device',
+    it: 'Descrivi una scena o leggi il testo ad alta voce · on-device',
+  },
+  'tab.piiocr.title': { en: 'OCR & personal data', it: 'OCR & dati personali' },
+  'tab.piiocr.desc': {
+    en: 'Read a document (image or PDF) and redact personal data · Tesseract.js on-device',
+    it: 'Leggi un documento (immagine o PDF) e oscura i dati personali · Tesseract.js on-device',
+  },
+  'tab.gestures.title': { en: 'Sicilian Gestures', it: 'Gesti Siciliani' },
+  'tab.gestures.desc': {
+    en: 'Hand landmarker on-device · Sicilian vocabulary and live actions',
+    it: 'Hand landmarker on-device · vocabolario siciliano e azioni live',
+  },
+  'tab.tris.title': { en: 'Tris', it: 'Tris' },
+  'tab.tris.desc': {
+    en: 'Two-player tic-tac-toe · mouse, pinch or head cursor',
+    it: 'Tris a due giocatori · mouse, pinch o cursore con la testa',
+  },
+  'tab.headcursor.title': { en: 'Head Cursor', it: 'Cursore Testa' },
+  'tab.headcursor.desc': {
+    en: 'Move your face to move the pointer · click with eyes or mouth',
+    it: 'Muovi il viso per muovere il puntatore · clicca con occhi o bocca',
+  },
+  'tab.background.title': { en: 'Smart Background', it: 'Sfondo Intelligente' },
+  'tab.background.desc': {
+    en: 'Real-time segmentation · blur, color or replace background',
+    it: 'Segmentazione in tempo reale · sfocatura, colore o sostituzione dello sfondo',
+  },
+  'tab.pinch.title': { en: 'Pinch & Scroll', it: 'Pinch & Scorri' },
+  'tab.pinch.desc': {
+    en: 'Scroll and click by pinching thumb and index · MediaPipe Hand Landmarker',
+    it: 'Scorri e clicca pizzicando pollice e indice · MediaPipe Hand Landmarker',
+  },
+
+  'agents.title': { en: 'Agents', it: 'Agenti' },
+  'agents.identity': { en: 'Identity', it: 'Identità' },
+  'agents.skills': { en: 'Skills', it: 'Competenze' },
+  'agents.searchDocs': { en: 'Search documents...', it: 'Cerca documenti...' },
+  'agents.searchSkills': { en: 'Search skills...', it: 'Cerca competenze...' },
+
+  'devagent.title': { en: 'Dev Agent', it: 'Dev Agent' },
+  'devagent.searchFiles': { en: 'Search files...', it: 'Cerca file...' },
+  'devagent.searchPath': {
+    en: 'Search files by name or path...',
+    it: 'Cerca file per nome o percorso...',
+  },
+  'devagent.clearRepo': { en: 'Clear repo', it: 'Svuota repository' },
+
+  'project.back': { en: 'Back to project', it: 'Torna al progetto' },
+  'project.searchDocs': { en: 'Search documents...', it: 'Cerca documenti...' },
+  'project.ask': {
+    en: 'Ask a question about your project docs...',
+    it: 'Fai una domanda sui documenti del progetto...',
+  },
+  'project.export': { en: 'Export project', it: 'Esporta progetto' },
+  'project.clearAll': { en: 'Clear all documents', it: 'Svuota tutti i documenti' },
+  'project.clearMemory': { en: 'Clear project memory', it: 'Svuota memoria progetto' },
 };
 
 @Injectable({ providedIn: 'root' })

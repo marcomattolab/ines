@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MediaPipeTasksService } from '../../core/services/mediapipe-tasks.service';
 import {
@@ -43,6 +44,7 @@ const LINES: readonly (readonly [number, number, number])[] = [
 })
 export class TicTacToeTabComponent implements OnDestroy {
   private readonly mp = inject(MediaPipeTasksService);
+  readonly i18n = inject(I18nService);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly cursor = viewChild.required<ElementRef<HTMLElement>>('cursor');

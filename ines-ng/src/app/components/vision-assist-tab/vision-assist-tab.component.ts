@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../core/services/i18n.service';
 import { CaptioningService } from '../../core/services/captioning.service';
 import { OcrService } from '../../core/services/ocr.service';
 import { SpeechService } from '../../core/services/speech.service';
@@ -28,6 +29,7 @@ const VOICE_KEY = 'ines.vision-assist.voice';
 })
 export class VisionAssistTabComponent implements OnDestroy {
   protected readonly caption = inject(CaptioningService);
+  readonly i18n = inject(I18nService);
   protected readonly ocr = inject(OcrService);
   private readonly speech = inject(SpeechService);
 

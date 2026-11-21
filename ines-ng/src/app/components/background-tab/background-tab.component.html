@@ -6,9 +6,9 @@
           fontIcon="wallpaper"
           class="text-accent-green w-[18px] h-[18px] text-[18px]"
         ></mat-icon>
-        Smart Background
+        {{ i18n.t('tab.background.title') }}
       </div>
-      <div class="panel-desc">Real-time segmentation · blur, color or replace background</div>
+      <div class="panel-desc">{{ i18n.t('tab.background.desc') }}</div>
     </div>
     <app-button
       [variant]="status() === 'running' ? 'danger' : 'primary'"

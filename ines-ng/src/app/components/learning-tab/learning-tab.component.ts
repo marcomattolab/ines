@@ -28,6 +28,19 @@ import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SlideDeckService, SLIDE_COLOR_THEMES } from '../../core/services/slide-deck.service';
 import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
+import { StorageService } from '../../core/services/storage.service';
+import {
+  buildFillBlanksPrompt,
+  buildFlashcardsPrompt,
+  buildMatchingPrompt,
+  buildMindmapPrompt,
+  buildOpenQuestionPrompt,
+  buildQuizPrompt,
+  buildStudyPlanPrompt,
+  buildSummaryPrompt,
+  cleanMermaidCode,
+  parseFlashcards,
+} from './learning-tools';
 
 type SubTab =
   | 'chat'
@@ -40,6 +53,9 @@ type SubTab =
   | 'matching'
   | 'openq'
   | 'slides';
+
+const ACTIVE_SUBTAB_KEY = 'ines_learning_subtab';
+const FLASHCARDS_STORAGE_KEY = 'ines_learning_flashcards';
 
 interface QuizQuestion {
   question: string;
@@ -83,6 +99,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   private readonly dom = inject(DomUtilsService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly deck = inject(SlideDeckService);
+  private readonly storage = inject(StorageService);
 
   readonly mermaidContainer = viewChild<ElementRef>('mermaidContainer');
   readonly chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');
@@ -136,7 +153,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     { id: 'slides', icon: 'slideshow', label: 'Slides', color: 'text-amber-400', hex: '#fbbf24' },
   ];
 
-  activeSubTab = signal<SubTab>('chat');
+  activeSubTab = signal<SubTab>(this.restoreSubTab());
   userInput = signal('');
   messages = signal<ChatMessage[]>([]);
   isGenerating = signal(false);
@@ -154,7 +171,9 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   quizSecondsLeft = signal(0);
   private timerHandle: any = null;
 
-  flashcards = signal<{ front: string; back: string }[]>([]);
+  flashcards = signal<{ front: string; back: string }[]>(
+    this.storage.get<{ front: string; back: string }[]>(FLASHCARDS_STORAGE_KEY) ?? [],
+  );
 
   fillBlanks = signal<FillBlank[]>([]);
   fillBlankAnswers = signal<string[]>([]);
@@ -205,6 +224,24 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
         });
       }
     });
+    effect(() => {
+      try {
+        sessionStorage.setItem(ACTIVE_SUBTAB_KEY, this.activeSubTab());
+      } catch {
+        /* best effort */
+      }
+    });
+    effect(() => this.storage.set(FLASHCARDS_STORAGE_KEY, this.flashcards()));
+  }
+
+  private restoreSubTab(): SubTab {
+    try {
+      const v = sessionStorage.getItem(ACTIVE_SUBTAB_KEY);
+      if (v && this.toolNav.some((t) => t.id === v)) return v as SubTab;
+    } catch {
+      /* best effort */
+    }
+    return 'chat';
   }
 
   readonly filteredDocs = computed(() => {
@@ -483,22 +520,12 @@ ${chunks.length > 0 ? 'Context:\n' + ctx : 'No relevant documents found — answ
       15,
       2000,
     );
-    const system = `Generate a Mermaid.js mindmap. Start with "mindmap" line 1. 2 spaces per indent. Put text with spaces in parentheses. Output ONLY valid mindmap syntax — no markdown. 5-8 main branches with sub-branches.
-
-Example:
-mindmap
-  root((Overview))
-    (Topic A)
-      (Subtopic)
-        (Detail)
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildMindmapPrompt(chunks.map((c) => c.text).join('\n\n'));
 
     try {
       const trimmed = this.llm.trimConversation(system, 'Generate a mindmap.', []);
       const result = await this.llm.generate(system, 'Generate a mindmap.', trimmed, () => {});
-      const code = this.cleanMermaidCode(result);
+      const code = cleanMermaidCode(result);
       await this.renderMindMap(code);
       this.isMindMapPlaceholder.set(false);
     } catch (err: any) {
@@ -511,38 +538,6 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       );
     }
     this.isGenerating.set(false);
-  }
-
-  cleanMermaidCode(raw: string): string {
-    const m = raw.match(/```(?:mermaid)?([\s\S]*?)```/i);
-    let c = m ? m[1] : raw;
-    const idx = c.toLowerCase().indexOf('mindmap');
-    c = idx !== -1 ? c.substring(idx) : 'mindmap\n' + c;
-    const lines = c.split('\n');
-    const res: string[] = ['mindmap'];
-    let found = false;
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t) continue;
-      if (t.toLowerCase() === 'mindmap') {
-        found = true;
-        continue;
-      }
-      if (!found) continue;
-      const ind = (line.match(/^(\s*)/)?.[1] || '').replace(/\t/g, '  ');
-      let txt = t
-        .replace(/^[-*+]\s+/, '')
-        .replace(/^\d+\.\s+/, '')
-        .trim();
-      txt = txt
-        .replace(/[()[\]{}"]/g, '')
-        .replace(/\\/g, '')
-        .trim();
-      if (!txt) continue;
-      res.push(' '.repeat(Math.min(ind.length, 8)) + `(${txt})`);
-    }
-    if (res.length === 1) res.push('  ((No concepts extracted))');
-    return res.join('\n');
   }
 
   private mermaidP: Promise<any> | null = null;
@@ -619,11 +614,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     const nq = Math.max(1, Math.min(15, Number(this.numQuizQuestions()) || 5));
     const no = Math.max(2, Math.min(6, Number(this.numQuizOptions()) || 4));
     const chunks = await this.km.getRelevantChunks('important facts key concepts', 6, 500);
-    const system = `Generate ${nq} multiple-choice questions with ${no} options each, one correct. Output ONLY a JSON array. Example:
-[{"question":"What is X?","options":["A","B","C","D"],"answer":0,"explanation":"Because..."}]
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildQuizPrompt(nq, no, chunks.map((c) => c.text).join('\n\n'));
 
     try {
       const trimmed = this.llm.trimConversation(system, `Generate ${nq} quiz questions.`, []);
@@ -712,11 +703,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     this.isGenerating.set(true);
     this.activeSubTab.set('flashcards');
     const chunks = await this.km.getRelevantChunks('key concepts definitions terms', 10, 1500);
-    const system = `Generate 15-20 flashcards (question/answer pairs). Output ONLY a JSON array. Example:
-[{"front":"What is Angular?","back":"A TypeScript-based web framework by Google"}]
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildFlashcardsPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(system, 'Generate flashcards as JSON.', [], () => {});
 
@@ -729,7 +716,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
         }));
 
       // Fallback: some models still return CSV or Q/A lines.
-      if (pairs.length === 0) pairs = this.parseFlashcards(result);
+      if (pairs.length === 0) pairs = parseFlashcards(result);
 
       this.flashcards.set(pairs);
       if (pairs.length === 0) {
@@ -751,74 +738,6 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     this.toast.success('Downloaded');
   }
 
-  private parseFlashcards(raw: string): { front: string; back: string }[] {
-    const text = raw.replace(/```(?:csv)?/gi, '').trim();
-    const pairs: { front: string; back: string }[] = [];
-    const isHeader = (a: string, b: string) =>
-      /^front$/i.test(a.trim()) && /^back$/i.test(b.trim());
-
-    for (const line of text.split('\n')) {
-      const t = line.trim();
-      if (!t) continue;
-
-      // Markdown table separator like |---|---|
-      if (/^\|?\s*:?-{2,}/.test(t)) continue;
-
-      // Markdown table row: | front | back |
-      const table = t.match(/^\|?\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|?$/);
-      if (table && !isHeader(table[1], table[2])) {
-        pairs.push({ front: table[1].trim(), back: table[2].trim() });
-        continue;
-      }
-
-      // Inline Q/A: "Q: … A: …" or "Question: … Answer: …"
-      const qa = t.match(
-        /^(?:q|question|front|f)\s*[:.\-]\s*(.+?)\s+(?:a|answer|back|b)\s*[:.\-]\s*(.+)$/i,
-      );
-      if (qa) {
-        pairs.push({ front: qa[1].trim(), back: qa[2].trim() });
-        continue;
-      }
-
-      // CSV: front,back
-      const cells = this.parseCsvCells(t);
-      if (cells.length >= 2 && cells[0] && cells[1] && !isHeader(cells[0], cells[1])) {
-        pairs.push({ front: cells[0], back: cells.slice(1).join(', ') });
-      }
-    }
-    return pairs;
-  }
-
-  private parseCsvCells(line: string): string[] {
-    const cells: string[] = [];
-    let cur = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (inQuotes) {
-        if (ch === '"') {
-          if (line[i + 1] === '"') {
-            cur += '"';
-            i++;
-          } else {
-            inQuotes = false;
-          }
-        } else {
-          cur += ch;
-        }
-      } else if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        cells.push(cur);
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    cells.push(cur);
-    return cells.map((c) => c.trim());
-  }
-
   // ── Study Plan ──
 
   async generateStudyPlan() {
@@ -830,10 +749,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       10,
       2500,
     );
-    const system = `Create a detailed study plan from the context. Include: ## Estimated Duration, ## Schedule, ## Key Topics, ## Learning Objectives, ## Practice Exercises, ## Review Milestones. Use Markdown.
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildStudyPlanPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(system, 'Create a study plan.', [], () => {});
       this.studyPlan.set(result);
@@ -854,10 +770,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       8,
       3000,
     );
-    const system = `Create a comprehensive summary. Include: ## TL;DR, ## Key Points (5-8 bullets), ## Main Concepts, ## Important Facts, ## Conclusion. Use Markdown.
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildSummaryPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(system, 'Summarize the documents.', [], () => {});
       this.summaryText.set(result);
@@ -878,11 +791,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       8,
       2000,
     );
-    const system = `Generate 6 fill-in-the-blank exercises. Output ONLY JSON array. Each: text (with ___), answer, hint. Example:
-[{"text":"Angular uses ___ as its language.","answer":"TypeScript","hint":"Superset of JavaScript"}]
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildFillBlanksPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(
         system,
@@ -938,11 +847,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
     this.isGenerating.set(true);
     this.activeSubTab.set('matching');
     const chunks = await this.km.getRelevantChunks('definitions glossary terms concepts', 8, 2000);
-    const system = `Generate 6 matching pairs (term -> definition). Output ONLY JSON array. Example:
-[{"term":"Angular","definition":"A TypeScript-based web framework by Google"}]
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildMatchingPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(
         system,
@@ -1015,11 +920,7 @@ ${chunks.map((c) => c.text).join('\n\n')}`;
       8,
       2000,
     );
-    const system = `Generate 1 thought-provoking open-ended question. Output ONLY JSON object. Example:
-{"question":"What are the trade-offs between...?","expected":"Key points: performance vs maintainability, etc."}
-
-Context:
-${chunks.map((c) => c.text).join('\n\n')}`;
+    const system = buildOpenQuestionPrompt(chunks.map((c) => c.text).join('\n\n'));
     try {
       const result = await this.llm.generate(
         system,

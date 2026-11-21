@@ -611,3 +611,17 @@ body.theme-light .cmd-chip:hover {
     display: none;
   }
 }
+
+/* Tab lazy-loading placeholder */
+.tab-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+}

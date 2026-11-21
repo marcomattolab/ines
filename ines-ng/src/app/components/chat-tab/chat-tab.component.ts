@@ -31,6 +31,8 @@ interface UiMessage {
   streaming?: boolean;
   sources?: string[];
   image?: string;
+  /** Full text sent to the model (includes extracted attachment text). */
+  modelText?: string;
 }
 
 const SYSTEM_CHAT = `You're a general AI assistant, helpful, precise, and friendly.
@@ -171,7 +173,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   private persist() {
     const msgs = this.messages()
       .slice(-MAX_STORED_MESSAGES)
-      .map(({ streaming, ...rest }) => rest);
+      .map(({ streaming, modelText, ...rest }) => rest);
     const stored: StoredChat = {
       messages: msgs,
       history: this.history.slice(-MAX_STORED_MESSAGES),
@@ -328,8 +330,6 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const displayText =
       text || (file ? (file.kind === 'pdf' ? `[PDF: ${file.name}]` : '[Image]') : '');
 
-    this.generating.set(true);
-    this.abortController = new AbortController();
     this.inputEl().nativeElement.value = '';
     this.inputEl().nativeElement.style.height = '';
     this.attachedFile.set(null);
@@ -340,20 +340,36 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       if (idx >= 0) {
         const kept = this.messages().slice(0, idx + 1);
         this.messages.set(kept);
+        // Drop the turn being edited (and any reply after it) from the LLM
+        // history. `assistantMsgs` includes the welcome bubble (present in
+        // messages but not in history), hence the `- 2`.
         const userMsgs = kept.filter((m) => m.role === 'user').length;
         const assistantMsgs = kept.filter((m) => m.role === 'ai').length;
-        this.history = this.history.slice(0, userMsgs + assistantMsgs - 1);
+        this.history = this.history.slice(0, userMsgs + assistantMsgs - 2);
       }
       this.editingMessageId.set(null);
       this.nextId = this.messages().reduce((max, m) => Math.max(max, m.id), 0) + 1;
     }
+
+    await this.runGeneration(modelText, displayText, text, file?.preview);
+  }
+
+  /** Core generation pipeline (used by send() and regenerate()). */
+  private async runGeneration(
+    modelText: string,
+    displayText: string,
+    query: string,
+    preview?: string,
+  ) {
+    this.generating.set(true);
+    this.abortController = new AbortController();
 
     this.history.push({ role: 'user', content: modelText });
     if (this.history.length > MAX_HISTORY_LENGTH)
       this.history = this.history.slice(-MAX_HISTORY_LENGTH);
     this.messages.update((m) => [
       ...m,
-      { id: this.nextId++, role: 'user', text: displayText, image: file?.preview },
+      { id: this.nextId++, role: 'user', text: displayText, image: preview, modelText },
     ]);
     this.typing.set(true);
     this.shouldScroll = true;
@@ -363,7 +379,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
     const contextParts: string[] = [];
 
     // Second brain: saved notes
-    const notes = (await this.brain.searchSemantic(text)).slice(0, 5);
+    const notes = (await this.brain.searchSemantic(query)).slice(0, 5);
     if (notes.length > 0) {
       sourceNames.push('Brain');
       contextParts.push('## Saved notes\n' + notes.map((n) => `- ${n.text}`).join('\n'));
@@ -371,7 +387,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     // Knowledge base: documents
     try {
-      const chunks = await this.km.getRelevantChunks(text, 3, 300);
+      const chunks = await this.km.getRelevantChunks(query, 3, 300);
       if (chunks.length > 0) {
         sourceNames.push(...chunks.map((c) => c.docName));
         contextParts.push(
@@ -392,7 +408,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     try {
       let full = '';
-      await this.llm.generate(
+      await this.llm.generateQueued(
         systemPrompt,
         modelText,
         trimmed,
@@ -446,6 +462,7 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   regenerate() {
+    if (this.generating()) return;
     const msgs = this.messages();
     const lastUser = [...msgs].reverse().find((m) => m.role === 'user');
     if (!lastUser) return;
@@ -461,11 +478,10 @@ export class ChatTabComponent implements AfterViewChecked, OnInit, OnDestroy {
       }
     }
     this.history = cutIdx >= 0 ? this.history.slice(0, cutIdx) : [];
-    const el = this.inputEl()?.nativeElement;
-    if (el) {
-      el.value = lastUser.text;
-      this.send();
-    }
+    // Reuse the full model input (incl. extracted attachment text) so
+    // regenerating an attachment message does not lose the file content.
+    const modelText = lastUser.modelText ?? lastUser.text;
+    void this.runGeneration(modelText, lastUser.text, lastUser.text, lastUser.image);
   }
 
   clear() {

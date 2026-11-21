@@ -4,6 +4,11 @@ import { LlmService } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
+/** Recommended on-device model, streamed straight from HuggingFace. */
+const RECOMMENDED_MODEL_URL =
+  'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-gpu.litertlm';
+const RECOMMENDED_MODEL_NAME = 'gemma-4-E2B-it-gpu.litertlm';
+
 @Component({
   selector: 'app-loader-overlay',
   standalone: true,
@@ -23,6 +28,7 @@ export class LoaderOverlayComponent implements OnInit {
   dropText = 'Drag and drop the model file here or click to select';
   cachedModelAvailable = signal(false);
   showSettings = signal(false);
+  downloadingRecommended = signal(false);
 
   async ngOnInit() {
     this.cachedModelAvailable.set(await this.llm.hasCachedModel());
@@ -61,6 +67,21 @@ export class LoaderOverlayComponent implements OnInit {
       setTimeout(() => this.closed.emit(), 600);
     } catch (err: any) {
       this.toast.error('Error loading model: ' + (err?.message ?? err));
+    }
+  }
+
+  /** One-click onboarding: stream + cache the recommended model in-app. */
+  async downloadRecommended() {
+    if (this.llm.modelStatus() === 'loading' || this.downloadingRecommended()) return;
+    this.downloadingRecommended.set(true);
+    this.dropText = 'Downloading recommended model (Gemma 4 E2B, ~2.6 GB)...';
+    try {
+      await this.llm.initModelFromUrl(RECOMMENDED_MODEL_URL, RECOMMENDED_MODEL_NAME);
+      setTimeout(() => this.closed.emit(), 600);
+    } catch (err: any) {
+      this.toast.error('Error downloading model: ' + (err?.message ?? err));
+    } finally {
+      this.downloadingRecommended.set(false);
     }
   }
 }

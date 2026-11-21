@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { SpeechService } from './speech.service';
-import { LlmService, ChatMessage } from './llm.service';
+import { LlmService, ChatMessage, PRECISE_SAMPLER } from './llm.service';
 import { TodoService } from './todo.service';
 import { JsonParserService } from './json-parser.service';
 import { ToastService } from './toast.service';
@@ -217,13 +217,27 @@ export class VoiceAssistantService {
     const byRules = parseByRules(text);
     const rulesHaveSpecific = byRules.some((t) => t.type !== 'answer');
 
+    // Fast path: a single, short deterministic command does not need an LLM
+    // classification round-trip — skip it to keep voice responses snappy.
+    if (rulesHaveSpecific && !this.hasMultiIntent(text)) {
+      return byRules;
+    }
+
     let llmResult: ParsedTask[] | null = null;
     if (this.llm.isReady() && !this.llm.isBusy()) {
       try {
         let raw = '';
-        await this.llm.generate(SYSTEM_VOICE, text, [], (_, __, full) => {
-          raw = full;
-        });
+        await this.llm.generate(
+          SYSTEM_VOICE,
+          text,
+          [],
+          (_, __, full) => {
+            raw = full;
+          },
+          undefined,
+          undefined,
+          PRECISE_SAMPLER,
+        );
         llmResult = this.jsonParser
           .parseArray<{ type?: string; text?: string }>(raw)
           .map((t) => ({ type: normalizeType(t?.type), text: String(t?.text ?? '') }))
@@ -245,6 +259,12 @@ export class VoiceAssistantService {
       return byRules;
     }
     return llmResult?.length ? llmResult : byRules;
+  }
+
+  /** Heuristic for compound commands that the deterministic parser cannot split. */
+  private hasMultiIntent(text: string): boolean {
+    const words = text.trim().split(/\s+/).length;
+    return words > 10 || /(?:e\s+poi|and\s+then|;\s|\n|\bpoi\b|\bthen\b)/i.test(text);
   }
 
   private async runQueue(): Promise<void> {
@@ -365,9 +385,17 @@ export class VoiceAssistantService {
       throw new Error('Load the model to translate.');
     }
     let out = '';
-    await this.llm.generate(SYSTEM_TRANSLATE, text, [], (_, __, full) => {
-      out = full;
-    });
+    await this.llm.generate(
+      SYSTEM_TRANSLATE,
+      text,
+      [],
+      (_, __, full) => {
+        out = full;
+      },
+      undefined,
+      undefined,
+      PRECISE_SAMPLER,
+    );
     this.addLog('ai', out);
     this.enqueueSpeech(out);
     return 'Translated';
@@ -378,9 +406,17 @@ export class VoiceAssistantService {
       throw new Error('Load the model to create agents.');
     }
     let raw = '';
-    await this.llm.generate(SYSTEM_AGENT, description, [], (_, __, full) => {
-      raw = full;
-    });
+    await this.llm.generate(
+      SYSTEM_AGENT,
+      description,
+      [],
+      (_, __, full) => {
+        raw = full;
+      },
+      undefined,
+      undefined,
+      PRECISE_SAMPLER,
+    );
     const data = this.jsonParser.parseObject<{
       name: string;
       description: string;
@@ -427,11 +463,8 @@ export class VoiceAssistantService {
     return 'Recalled from brain';
   }
 
-  async digestNow(): Promise<string> {
-    if (!this.llm.isReady()) {
-      throw new Error('Load the model for the daily digest.');
-    }
-
+  /** Builds the daily digest text without speaking (used at startup and by digestNow). */
+  private async buildDigest(): Promise<string> {
     const todos = this.todos.todos().filter((t) => !t.done);
     const notes = this.brain.notes().slice(0, 10);
 
@@ -444,9 +477,25 @@ export class VoiceAssistantService {
     notes.forEach((n) => lines.push(`- ${n.text}`));
 
     let summary = '';
-    await this.llm.generate(SYSTEM_DIGEST, lines.join('\n'), [], (_, __, full) => {
-      summary = full;
-    });
+    await this.llm.generate(
+      SYSTEM_DIGEST,
+      lines.join('\n'),
+      [],
+      (_, __, full) => {
+        summary = full;
+      },
+      undefined,
+      undefined,
+      PRECISE_SAMPLER,
+    );
+    return summary;
+  }
+
+  async digestNow(): Promise<string> {
+    if (!this.llm.isReady()) {
+      throw new Error('Load the model for the daily digest.');
+    }
+    const summary = await this.buildDigest();
     this.addLog('ai', summary);
     this.enqueueSpeech(summary);
     return 'Daily digest ready';
@@ -459,7 +508,10 @@ export class VoiceAssistantService {
     if (this.storage.get<string>('ines_last_digest_date') === today) return;
     this.storage.set('ines_last_digest_date', today);
     try {
-      await this.digestNow();
+      // Do not speak on startup — just log it and surface a toast.
+      const summary = await this.buildDigest();
+      this.addLog('ai', summary);
+      this.toast.show('Your daily digest is ready — open the Assistant tab.');
     } catch {
       /* digest is best-effort at startup */
     }

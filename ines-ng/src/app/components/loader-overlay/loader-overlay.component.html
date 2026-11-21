@@ -170,7 +170,15 @@
           >
             3
           </div>
-          <div>Requires Chrome/Edge with <strong>WebGPU enabled</strong></div>
+          <div>
+            @if (llm.supportsWebGpu()) {
+              <span class="text-[var(--accent-green)]">WebGPU detected ✓</span>
+            } @else {
+              <span class="text-[var(--accent-amber)]"
+                >WebGPU not detected — the model will run on CPU (slower)</span
+              >
+            }
+          </div>
         </div>
       </div>
 
@@ -207,6 +215,18 @@
             <span>{{ llm.progress().pct }}%</span>
           </div>
         </div>
+      }
+
+      @if (llm.modelStatus() !== 'loading') {
+        <app-button
+          variant="secondary"
+          [disabled]="downloadingRecommended()"
+          (onClick)="downloadRecommended()"
+          className="!w-full"
+        >
+          <mat-icon fontIcon="download" class="text-sm w-4 h-4"></mat-icon>
+          Download recommended model (~2.6 GB)
+        </app-button>
       }
 
       @if (cachedModelAvailable() && llm.modelStatus() !== 'loading') {

@@ -10,6 +10,8 @@ import { CommonModule } from '@angular/common';
       [type]="type()"
       [disabled]="disabled()"
       [class]="buttonClasses()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.title]="title()"
       (click)="onClick.emit($event)"
     >
       <ng-content></ng-content>
@@ -23,6 +25,8 @@ export class ButtonComponent {
   readonly size = input<'sm' | 'md' | 'lg'>('md');
   readonly disabled = input<boolean>(false);
   readonly className = input<string>('');
+  readonly ariaLabel = input<string>('');
+  readonly title = input<string>('');
   readonly onClick = output<MouseEvent>();
 
   readonly buttonClasses = computed(() => {

@@ -3,6 +3,7 @@ import { MatIcon } from '@angular/material/icon';
 import { LlmService } from '../../core/services/llm.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-status-bar',
@@ -14,6 +15,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 export class StatusBarComponent {
   readonly llm = inject(LlmService);
   readonly speech = inject(SpeechService);
+  readonly i18n = inject(I18nService);
   openLoader = output<void>();
   openInfo = output<void>();
 

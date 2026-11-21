@@ -19,6 +19,7 @@ import { SettingsService } from './core/services/settings.service';
 import { VoiceAssistantService } from './core/services/voice-assistant.service';
 import { TodoService } from './core/services/todo.service';
 import { SecondBrainService } from './core/services/second-brain.service';
+import { I18nService } from './core/services/i18n.service';
 
 export type Tab =
   | 'assistant'
@@ -38,10 +39,13 @@ export interface TabDef {
   id: Tab;
   icon: string;
   label: string;
+  labelIt: string;
   color: string;
   category: TabCategory;
   categoryLabel: string;
+  categoryLabelIt: string;
   description: string;
+  descriptionIt: string;
   keywords: string[];
   dividerBefore?: boolean;
 }
@@ -64,50 +68,65 @@ const TABS: TabDef[] = [
     id: 'assistant',
     icon: 'smart_toy',
     label: 'Assistant',
+    labelIt: 'Assistente',
     color: 'var(--tab-chat)',
     category: 'productivity',
     categoryLabel: 'Productivity',
+    categoryLabelIt: 'Produttività',
     description: 'On-device AI chat & voice assistant',
+    descriptionIt: 'Chat e assistente vocale on-device',
     keywords: ['assistant', 'chat', 'voice', 'voce', 'ai', 'gemma', 'conversazione', 'messaggi'],
   },
   {
     id: 'knowledge',
     icon: 'psychology',
     label: 'Knowledge',
+    labelIt: 'Conoscenza',
     color: 'var(--tab-brain)',
     category: 'productivity',
     categoryLabel: 'Productivity',
+    categoryLabelIt: 'Produttività',
     description: 'Second Brain, notes, documents & semantic memory',
+    descriptionIt: 'Second Brain, note, documenti e memoria semantica',
     keywords: ['knowledge', 'brain', 'notes', 'note', 'memoria', 'appunti', 'rag', 'documenti'],
   },
   {
     id: 'todo',
     icon: 'check-square',
     label: 'Todo',
+    labelIt: 'Attività',
     color: 'var(--tab-todo)',
     category: 'productivity',
     categoryLabel: 'Productivity',
+    categoryLabelIt: 'Produttività',
     description: 'Tasks, to-do list & reminders',
+    descriptionIt: 'Task, lista cose da fare e promemoria',
     keywords: ['todo', 'task', 'tasks', 'reminders', 'promemoria', 'compiti', 'activities'],
   },
   {
     id: 'meeting',
     icon: 'mic',
     label: 'Meeting',
+    labelIt: 'Riunioni',
     color: 'var(--tab-meeting)',
     category: 'productivity',
     categoryLabel: 'Productivity',
+    categoryLabelIt: 'Produttività',
     description: 'Meeting transcription & automatic summary',
+    descriptionIt: 'Trascrizione e riepilogo automatico delle riunioni',
     keywords: ['meeting', 'audio', 'riunione', 'verbale', 'transcription', 'trascrizione'],
   },
   {
     id: 'translate',
     icon: 'languages',
     label: 'Translate',
+    labelIt: 'Traduci',
     color: 'var(--tab-translate)',
     category: 'productivity',
     categoryLabel: 'Productivity',
+    categoryLabelIt: 'Produttività',
     description: 'On-device instant multilingual translator',
+    descriptionIt: 'Traduttore multilingue istantaneo on-device',
     keywords: ['translate', 'traduttore', 'languages', 'lingue', 'english', 'italian'],
   },
 
@@ -116,30 +135,39 @@ const TABS: TabDef[] = [
     id: 'code',
     icon: 'code',
     label: 'Code',
+    labelIt: 'Codice',
     color: 'var(--tab-coding)',
     category: 'dev',
     categoryLabel: 'Dev & Studio',
+    categoryLabelIt: 'Sviluppo & Studio',
     description: 'Code assistant, DevAgent & agent catalog',
+    descriptionIt: 'Assistente codice, DevAgent e catalogo agenti',
     keywords: ['code', 'coding', 'devagent', 'agents', 'programming', 'automation', 'typescript'],
   },
   {
     id: 'learning',
     icon: 'school',
     label: 'Learning',
+    labelIt: 'Apprendimento',
     color: 'var(--tab-learning)',
     category: 'dev',
     categoryLabel: 'Dev & Studio',
+    categoryLabelIt: 'Sviluppo & Studio',
     description: 'Quizzes, flashcards, slides & study tools',
+    descriptionIt: 'Quiz, flashcard, slide e strumenti di studio',
     keywords: ['learning', 'study', 'quiz', 'flashcard', 'slides', 'apprendimento', 'studio'],
   },
   {
     id: 'certifications',
     icon: 'emoji_events',
     label: 'Certifications',
+    labelIt: 'Certificazioni',
     color: 'var(--tab-certifications)',
     category: 'dev',
     categoryLabel: 'Dev & Studio',
+    categoryLabelIt: 'Sviluppo & Studio',
     description: 'Certification trainer: practice & exam simulations',
+    descriptionIt: 'Trainer per certificazioni: pratica ed esami simulati',
     keywords: [
       'certification',
       'certifications',
@@ -159,10 +187,13 @@ const TABS: TabDef[] = [
     id: 'labs',
     icon: 'science',
     label: 'Labs',
+    labelIt: 'Labs',
     color: 'var(--tab-vision)',
     category: 'vision',
     categoryLabel: 'Vision & Labs',
+    categoryLabelIt: 'Visione & Labs',
     description: 'Vision, gestures, OCR, camera & AI experiments',
+    descriptionIt: 'Visione, gesti, OCR, camera ed esperimenti AI',
     keywords: ['labs', 'vision', 'camera', 'gestures', 'ocr', 'experiments', 'webcam', 'ai'],
   },
 ];
@@ -209,18 +240,20 @@ export class AppComponent implements OnInit {
   readonly settings = inject(SettingsService);
   readonly todoService = inject(TodoService);
   readonly secondBrain = inject(SecondBrainService);
+  readonly i18n = inject(I18nService);
 
   settingsOpen = signal(false);
   readonly isLightTheme = this.settings.lightTheme;
 
   /** Tabs in the user-configured order (falls back to the default order). */
   readonly orderedTabs = computed(() => {
+    const tabs = this.tabs.map((t) => this.localizeTab(t));
     const order = this.settings.tabOrder();
-    if (!order.length) return this.tabs;
-    const byId = new Map<string, TabDef>(this.tabs.map((t) => [t.id as string, t]));
+    if (!order.length) return tabs;
+    const byId = new Map<string, TabDef>(tabs.map((t) => [t.id as string, t]));
     const ordered = order.map((id) => byId.get(id)).filter((t): t is TabDef => !!t);
     // Append tabs that are not in the saved order (e.g. newly added tabs).
-    for (const t of this.tabs) {
+    for (const t of tabs) {
       if (!order.includes(t.id)) ordered.push(t);
     }
     return ordered;
@@ -422,7 +455,7 @@ export class AppComponent implements OnInit {
       );
     });
 
-    for (const [idx, t] of matchingTabs.entries()) {
+    for (const t of matchingTabs) {
       items.push({
         id: `tab-${t.id}`,
         type: 'tab',
@@ -431,7 +464,6 @@ export class AppComponent implements OnInit {
         category: t.categoryLabel,
         icon: t.icon,
         color: t.color,
-        shortcut: idx < 9 ? `⌘${idx + 1}` : undefined,
         action: () => {
           this.selectCommandTab(t.id);
         },
@@ -470,6 +502,17 @@ export class AppComponent implements OnInit {
   resetTabs() {
     this.settings.reset();
     this.toast.success('Settings reset');
+  }
+
+  /** Returns the tab definition with label/description/category in the UI language. */
+  private localizeTab(t: TabDef): TabDef {
+    if (!this.i18n.isIt()) return t;
+    return {
+      ...t,
+      label: t.labelIt,
+      description: t.descriptionIt,
+      categoryLabel: t.categoryLabelIt,
+    };
   }
 
   ngOnInit() {
@@ -614,16 +657,6 @@ export class AppComponent implements OnInit {
       if (e.key === 'Escape') {
         e.preventDefault();
         this.closeCommandPalette();
-        return;
-      }
-    }
-
-    // Numeric shortcuts (Cmd+1..Cmd+9) when Command Palette is closed
-    if (e.ctrlKey || e.metaKey) {
-      const idx = parseInt(e.key, 10);
-      if (idx >= 1 && idx <= this.displayTabs().length) {
-        e.preventDefault();
-        this.selectCommandTab(this.displayTabs()[idx - 1].id);
         return;
       }
     }

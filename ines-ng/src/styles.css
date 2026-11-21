@@ -14,6 +14,20 @@
   --border: rgba(255, 255, 255, 0.08);
   --border-active: rgba(97, 176, 255, 0.38);
 
+  /* Semantic overlay/scrim tokens — use these instead of hardcoded
+     bg-white/[x] / bg-black/[x] so the light theme flips automatically. */
+  --overlay-02: rgba(255, 255, 255, 0.02);
+  --overlay-03: rgba(255, 255, 255, 0.03);
+  --overlay-04: rgba(255, 255, 255, 0.04);
+  --overlay-06: rgba(255, 255, 255, 0.06);
+  --overlay-07: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-soft: rgba(255, 255, 255, 0.05);
+  --scrim: rgba(0, 0, 0, 0.75);
+  --scrim-strong: rgba(0, 0, 0, 0.7);
+  --scrim-soft: rgba(0, 0, 0, 0.3);
+  --scrim-subtle: rgba(0, 0, 0, 0.2);
+
   --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.32);
   --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.42);
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.56);
@@ -773,6 +787,18 @@ select:focus-visible,
   --bg-glass: rgba(255, 255, 255, 0.78);
   --border: rgba(0, 0, 0, 0.1);
   --border-active: rgba(37, 99, 235, 0.45);
+
+  --overlay-02: rgba(0, 0, 0, 0.02);
+  --overlay-03: rgba(0, 0, 0, 0.03);
+  --overlay-04: rgba(0, 0, 0, 0.04);
+  --overlay-06: rgba(0, 0, 0, 0.06);
+  --overlay-07: rgba(0, 0, 0, 0.07);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-soft: rgba(0, 0, 0, 0.06);
+  --scrim: rgba(0, 0, 0, 0.4);
+  --scrim-strong: rgba(0, 0, 0, 0.38);
+  --scrim-soft: rgba(0, 0, 0, 0.15);
+  --scrim-subtle: rgba(0, 0, 0, 0.1);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 
 vi.mock('pdfjs-dist', () => ({
   GlobalWorkerOptions: { workerSrc: '' },
@@ -12,7 +13,7 @@ import { LabsTabComponent } from './labs-tab/labs-tab.component';
 
 describe('Tab hubs — tool definitions & switching', () => {
   it('Assistant: chat + voice, default chat', () => {
-    const c = new AssistantTabComponent();
+    const c = TestBed.runInInjectionContext(() => new AssistantTabComponent());
     expect(c.tools.map((t) => t.id)).toEqual(['chat', 'voice']);
     expect(c.active()).toBe('chat');
     c.active.set('voice');
@@ -20,7 +21,7 @@ describe('Tab hubs — tool definitions & switching', () => {
   });
 
   it('Knowledge: brain + project, default brain', () => {
-    const c = new KnowledgeTabComponent();
+    const c = TestBed.runInInjectionContext(() => new KnowledgeTabComponent());
     expect(c.tools.map((t) => t.id)).toEqual(['brain', 'project']);
     expect(c.active()).toBe('brain');
     c.active.set('project');

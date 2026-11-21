@@ -18,11 +18,11 @@
     <span class="flex items-center gap-1">
       @switch (llm.modelStatus()) {
         @case ('idle') {
-          No model loaded
+          {{ i18n.t('status.noModel') }}
         }
         @case ('loading') {
           <mat-icon fontIcon="hourglass_empty" class="animate-spin text-sm w-3.5 h-3.5"></mat-icon>
-          Loading...
+          {{ i18n.t('status.loading') }}
         }
         @case ('ready') {
           <mat-icon
@@ -41,7 +41,8 @@
       [variant]="isDictating() ? 'danger' : 'secondary'"
       size="sm"
       (onClick)="toggleDictation()"
-      [title]="isDictating() ? 'Stop dictation' : 'Start dictation'"
+      [ariaLabel]="isDictating() ? i18n.t('status.dictate.stop') : i18n.t('status.dictate.start')"
+      [title]="isDictating() ? i18n.t('status.dictate.stop') : i18n.t('status.dictate.start')"
     >
       <mat-icon
         [fontIcon]="isDictating() ? 'mic_off' : 'mic'"
@@ -51,9 +52,15 @@
     </app-button>
     <app-button variant="secondary" size="sm" (onClick)="openLoader.emit()">
       <mat-icon fontIcon="refresh" class="text-sm w-3.5 h-3.5"></mat-icon>
-      Load Model
+      {{ i18n.t('status.loadModel') }}
     </app-button>
-    <app-button variant="secondary" size="sm" (onClick)="openInfo.emit()" title="About INES">
+    <app-button
+      variant="secondary"
+      size="sm"
+      (onClick)="openInfo.emit()"
+      [ariaLabel]="i18n.t('status.about')"
+      [title]="i18n.t('status.about')"
+    >
       <mat-icon fontIcon="info" class="text-sm w-3.5 h-3.5"></mat-icon>
     </app-button>
   </div>

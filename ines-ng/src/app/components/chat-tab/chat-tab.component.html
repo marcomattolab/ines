@@ -200,7 +200,11 @@
         <mat-icon fontIcon="close" class="text-sm w-4 h-4"></mat-icon>
       </button>
     }
-    <label class="cursor-pointer shrink-0" title="Attach image or PDF">
+    <label
+      class="cursor-pointer shrink-0"
+      title="Attach image or PDF"
+      aria-label="Attach image or PDF"
+    >
       <input
         type="file"
         accept="image/*,.pdf,application/pdf"
@@ -224,6 +228,7 @@
       variant="primary"
       [disabled]="generating()"
       (onClick)="send()"
+      ariaLabel="Send message"
       title="Send (Enter)"
       className="!rounded-full !w-11 !h-11 !p-0"
     >
@@ -234,6 +239,7 @@
         variant="danger"
         size="sm"
         (onClick)="stopGeneration()"
+        ariaLabel="Stop generating"
         title="Stop generating"
         className="!rounded-full !w-9 !h-9 !p-0"
       >
@@ -245,6 +251,7 @@
         variant="secondary"
         size="sm"
         (onClick)="regenerate()"
+        ariaLabel="Regenerate last response"
         title="Regenerate last response"
         className="!rounded-full !w-9 !h-9 !p-0"
       >

@@ -1,8 +1,9 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { StorageService } from './storage.service';
-import { LlmService } from './llm.service';
+import { LlmService, PRECISE_SAMPLER } from './llm.service';
 import { KnowledgeManagerService } from './knowledge-manager.service';
 import { EmbeddingService, cosineSimilarity } from './embedding.service';
+import { ToastService } from './toast.service';
 
 export interface BrainNote {
   id: string;
@@ -21,6 +22,8 @@ export interface BrainNote {
 
 const STORAGE_KEY = 'ines_brain_notes';
 const FOLDERS_KEY = 'ines_brain_folders';
+/** Working-note count above which long-term consolidation kicks in automatically. */
+const AUTO_CONSOLIDATE_THRESHOLD = 30;
 
 /** Top-level folders of the second brain filesystem (Karpathy LLM OS). */
 export const DEFAULT_FOLDERS = [
@@ -255,6 +258,9 @@ export class SecondBrainService {
   private readonly km = inject(KnowledgeManagerService);
   readonly embeddings = inject(EmbeddingService);
 
+  private readonly toast = inject(ToastService);
+  private autoConsolidating = false;
+
   readonly notes = signal<BrainNote[]>(
     (this.storage.get<BrainNote[]>(STORAGE_KEY) ?? []).map((n) => ({
       ...n,
@@ -354,7 +360,26 @@ export class SecondBrainService {
         this.notes.update((list) => list.map((n) => (n.id === note.id ? { ...n, embedding } : n)));
       });
     }
+    void this.maybeAutoConsolidate();
     return note;
+  }
+
+  /** Best-effort consolidation once working memory grows past a threshold. */
+  private async maybeAutoConsolidate(): Promise<void> {
+    if (this.autoConsolidating || !this.llm.isReady()) return;
+    const working = this.notes().filter((n) => n.kind === 'note').length;
+    if (working <= AUTO_CONSOLIDATE_THRESHOLD) return;
+    this.autoConsolidating = true;
+    try {
+      const result = await this.consolidate();
+      if (result) {
+        this.toast.success(`Consolidated ${result.consolidated} notes into long-term memory`);
+      }
+    } catch {
+      /* best-effort */
+    } finally {
+      this.autoConsolidating = false;
+    }
   }
 
   delete(id: string): void {
@@ -435,9 +460,17 @@ export class SecondBrainService {
     const toCompress = working.slice(keepRecent);
     const content = toCompress.map((n) => `- ${n.text}`).join('\n');
     let summary = '';
-    await this.llm.generate(CONSOLIDATE_SYSTEM, content, [], (_, __, full) => {
-      summary = full;
-    });
+    await this.llm.generate(
+      CONSOLIDATE_SYSTEM,
+      content,
+      [],
+      (_, __, full) => {
+        summary = full;
+      },
+      undefined,
+      undefined,
+      PRECISE_SAMPLER,
+    );
 
     const memory: BrainNote = {
       id: crypto.randomUUID(),
@@ -480,9 +513,17 @@ export class SecondBrainService {
     const system = RECALL_SYSTEM + (context ? `\n\nMemory contents:\n${context}` : '');
 
     let answer = '';
-    await this.llm.generate(system, query, [], (_, __, full) => {
-      answer = full;
-    });
+    await this.llm.generate(
+      system,
+      query,
+      [],
+      (_, __, full) => {
+        answer = full;
+      },
+      undefined,
+      undefined,
+      PRECISE_SAMPLER,
+    );
     return answer;
   }
 }

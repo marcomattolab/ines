@@ -12,6 +12,16 @@ export interface ChatMessage {
   content: string;
 }
 
+/** Optional per-request sampling overrides (e.g. low temperature for factual/JSON tasks). */
+export interface SamplerParams {
+  temperature?: number;
+  topK?: number;
+  seed?: number;
+}
+
+/** Low-temperature sampling for factual/JSON/translation tasks. */
+export const PRECISE_SAMPLER: SamplerParams = { temperature: 0.2, topK: 20 };
+
 /**
  * LiteRT-LM Web API (the replacement for the deprecated MediaPipe LLM
  * Inference API). Pinned to an exact version because the JS API is currently
@@ -49,6 +59,8 @@ function extractMessageText(msg: any): string {
 export class LlmService {
   readonly modelStatus = signal<ModelStatus>('idle');
   readonly modelName = signal<string>('No model loaded');
+  /** WebGPU availability — drives the backend messaging in the UI. */
+  readonly supportsWebGpu = signal(this.detectWebGpu());
   readonly progress = signal<ProgressState>({ pct: 0, label: '' });
   readonly isReady = computed(() => this.modelStatus() === 'ready');
   readonly isBusy = signal(false);
@@ -58,11 +70,11 @@ export class LlmService {
   readonly temperature = signal(0.8);
   readonly randomSeed = signal(101);
   readonly topK = signal(40);
-  readonly requestCooldown = signal(0);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private engine: any = null;
   private lastRequestTime = 0;
+  private queue: Promise<unknown> = Promise.resolve();
 
   /**
    * Builds a LiteRT-LM Engine from a model source (URL, File or Blob).
@@ -80,6 +92,7 @@ export class LlmService {
     system: string,
     history: ChatMessage[],
     maxOutputTokens?: number,
+    sampler?: SamplerParams,
   ): Promise<any> {
     const { SamplerType } = await importLiteRtLm();
     return this.engine.createConversation({
@@ -93,9 +106,9 @@ export class LlmService {
         maxOutputTokens: maxOutputTokens ?? this.modelMaxTokens(),
         samplerParams: {
           type: SamplerType.TOP_K,
-          k: this.topK(),
-          temperature: this.temperature(),
-          seed: this.randomSeed(),
+          k: sampler?.topK ?? this.topK(),
+          temperature: sampler?.temperature ?? this.temperature(),
+          seed: sampler?.seed ?? this.randomSeed(),
         },
       },
     });
@@ -117,7 +130,7 @@ export class LlmService {
     this.setProgress(5, 'Initializing LiteRT-LM runtime...');
 
     try {
-      this.setProgress(30, 'Loading model into GPU (this can take a while)...');
+      this.setProgress(30, `Loading model into ${this.backendLabel()} (this can take a while)...`);
       this.engine = await this.createEngine(file);
 
       // Cache in the background — don't block the UI on a multi-GB IndexedDB write.
@@ -139,45 +152,79 @@ export class LlmService {
     this.setProgress(5, 'Connecting to model stream...');
 
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
+      let chunks: BlobPart[] = [];
+      let loaded = 0;
+
+      // Resume an interrupted download from the partial cache when possible.
+      const partial = await this.getPartialModelCache(url);
+      if (partial) {
+        chunks.push(partial.blob);
+        loaded = partial.blob.size;
+        this.setProgress(5, `Resuming download from ${Math.round(loaded / 1024 / 1024)}MB...`);
+      }
+
+      const response = await fetch(
+        url,
+        loaded > 0 ? { headers: { Range: `bytes=${loaded}-` } } : {},
+      );
+      if (!response.ok && response.status !== 206) {
         throw new Error(`Failed to fetch model from ${url} (Status: ${response.status})`);
       }
 
-      const contentLength = response.headers.get('content-length');
-      const total = parseInt(contentLength || '0', 10);
-      let loaded = 0;
+      let total = 0;
+      if (response.status === 206) {
+        // Server honored the Range header — keep the already-downloaded bytes.
+        const contentRange = response.headers.get('content-range');
+        if (contentRange) total = parseInt(contentRange.split('/')[1] || '0', 10);
+      } else {
+        // Server ignored Range (or no partial): restart from scratch.
+        chunks = [];
+        loaded = 0;
+        total = parseInt(response.headers.get('content-length') || '0', 10);
+        await this.deletePartialModelCache(url).catch(() => undefined);
+      }
 
       const reader = response.body?.getReader();
       if (!reader) {
         throw new Error('Response body reader is not available');
       }
 
-      const chunks: BlobPart[] = [];
+      let lastFlush = Date.now();
+      let bytesSinceFlush = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value);
           loaded += value.length;
+          bytesSinceFlush += value.length;
           if (total) {
             const pct = Math.floor((loaded / total) * 50); // Download is 0-50%
             this.setProgress(
               pct + 5,
-              `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`,
+              `Downloading model (${Math.round(loaded / 1024 / 1024)}MB / ${Math.round(
+                total / 1024 / 1024,
+              )}MB)...`,
             );
           } else {
             this.setProgress(30, `Downloading model (${Math.round(loaded / 1024 / 1024)}MB)...`);
           }
+          // Persist a resumable snapshot periodically (not on every chunk).
+          if (bytesSinceFlush > 256 * 1024 * 1024 || Date.now() - lastFlush > 3000) {
+            void this.savePartialModelCache(url, fileName, new Blob(chunks)).catch(() => undefined);
+            bytesSinceFlush = 0;
+            lastFlush = Date.now();
+          }
         }
       }
 
-      this.setProgress(55, 'Loading model into GPU (30–90 s)...');
+      this.setProgress(55, `Loading model into ${this.backendLabel()} (30–90 s)...`);
 
       const modelBlob = new Blob(chunks);
       this.engine = await this.createEngine(modelBlob);
 
       this.setProgress(85, 'Caching model in browser storage...');
+      await this.deletePartialModelCache(url).catch(() => undefined);
       void this.saveModelToCache(fileName, modelBlob).catch((cacheErr) =>
         console.warn(
           'Failed to cache model in IndexedDB (likely quota limit in incognito):',
@@ -205,32 +252,62 @@ export class LlmService {
     onToken: (partial: string, done: boolean, full: string) => void,
     signal?: AbortSignal,
     maxOutputTokens?: number,
+    sampler?: SamplerParams,
   ): Promise<string> {
     if (!this.engine) throw new Error('Model not loaded. Click "Load Model" first.');
     if (this.isBusy())
       throw new Error('Model is busy processing another request. Wait for it to finish.');
 
-    const now = Date.now();
-    if (now - this.lastRequestTime < this.requestCooldown()) {
-      throw new Error(
-        `Please wait ${Math.ceil((this.requestCooldown() - (now - this.lastRequestTime)) / 1000)}s before sending another request.`,
-      );
-    }
-
     this.isBusy.set(true);
-    this.lastRequestTime = now;
+    this.lastRequestTime = Date.now();
 
     const emitted = { value: false };
     try {
       return await this.withRetry(
         () =>
-          this.runGeneration(system, userMsg, history, onToken, signal, emitted, maxOutputTokens),
+          this.runGeneration(
+            system,
+            userMsg,
+            history,
+            onToken,
+            signal,
+            emitted,
+            maxOutputTokens,
+            sampler,
+          ),
         signal,
         () => emitted.value,
       );
     } finally {
       this.isBusy.set(false);
     }
+  }
+
+  /**
+   * Serializes generation requests on a FIFO queue so interactive callers
+   * (Chat, Translate) can simply await instead of receiving a "model busy"
+   * error. The voice assistant keeps its own task queue and still calls
+   * `generate()` directly.
+   */
+  generateQueued(
+    system: string,
+    userMsg: string,
+    history: ChatMessage[] = [],
+    onToken: (partial: string, done: boolean, full: string) => void,
+    signal?: AbortSignal,
+    maxOutputTokens?: number,
+    sampler?: SamplerParams,
+  ): Promise<string> {
+    const run = () =>
+      signal?.aborted
+        ? Promise.reject(new DOMException('Aborted', 'AbortError'))
+        : this.generate(system, userMsg, history, onToken, signal, maxOutputTokens, sampler);
+    const result = this.queue.then(run, run);
+    this.queue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   }
 
   /** One full generation attempt (fresh conversation per call, like the old stateless API). */
@@ -242,8 +319,9 @@ export class LlmService {
     signal: AbortSignal | undefined,
     emitted: { value: boolean },
     maxOutputTokens?: number,
+    sampler?: SamplerParams,
   ): Promise<string> {
-    const conversation = await this.createConversation(system, history, maxOutputTokens);
+    const conversation = await this.createConversation(system, history, maxOutputTokens, sampler);
     try {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
@@ -310,10 +388,13 @@ export class LlmService {
     system: string,
     userMsg: string,
     history: ChatMessage[],
-    maxTotalTokens = 384,
-    reserveOutput = 128,
+    maxTotalTokens?: number,
+    reserveOutput = 256,
   ): ChatMessage[] {
-    const maxInputTokens = maxTotalTokens - reserveOutput;
+    // Reserve room for the reply, the system prompt and RAG context so the
+    // conversation history is not silently dropped when RAG is active.
+    const window = Math.min(maxTotalTokens ?? 2048, this.contextWindow() || 8192);
+    const maxInputTokens = Math.max(0, window - reserveOutput);
     const systemTokens = LlmService.estimateTokens(system);
     const userTokens = LlmService.estimateTokens(userMsg);
     let budget = maxInputTokens - systemTokens - userTokens;
@@ -325,6 +406,11 @@ export class LlmService {
       if (tokens <= budget) {
         trimmed.unshift(msg);
         budget -= tokens;
+      } else if (trimmed.length === 0) {
+        // Keep the most recent turn even if it slightly exceeds the budget:
+        // partial context is better than none for follow-up questions.
+        trimmed.unshift(msg);
+        break;
       } else {
         break;
       }
@@ -338,6 +424,18 @@ export class LlmService {
 
   private setProgress(pct: number, label: string) {
     this.progress.set({ pct, label });
+  }
+
+  private detectWebGpu(): boolean {
+    try {
+      return typeof navigator !== 'undefined' && 'gpu' in navigator;
+    } catch {
+      return false;
+    }
+  }
+
+  private backendLabel(): string {
+    return this.supportsWebGpu() ? 'GPU' : 'CPU';
   }
 
   async hasCachedModel(): Promise<boolean> {
@@ -361,6 +459,7 @@ export class LlmService {
       const tx = db.transaction('models', 'readwrite');
       const store = tx.objectStore('models');
       store.delete('cached_model');
+      store.delete('cached_model_partial');
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => {
           try {
@@ -385,7 +484,7 @@ export class LlmService {
     this.setProgress(10, 'Found cached model. Initializing LiteRT-LM...');
 
     try {
-      this.setProgress(40, 'Loading cached model into GPU...');
+      this.setProgress(40, `Loading cached model into ${this.backendLabel()}...`);
       const model =
         cached.buffer instanceof ArrayBuffer
           ? new Blob([new Uint8Array(cached.buffer)])
@@ -416,6 +515,56 @@ export class LlmService {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+  }
+
+  private async getPartialModelCache(url: string): Promise<{ blob: Blob } | null> {
+    try {
+      const db = await this.openDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction('models', 'readonly');
+        const req = tx.objectStore('models').get('cached_model_partial');
+        req.onsuccess = () => {
+          const rec = req.result as { url?: string; buffer?: Blob } | undefined;
+          resolve(
+            rec && rec.url === url && rec.buffer instanceof Blob && rec.buffer.size > 0
+              ? { blob: rec.buffer }
+              : null,
+          );
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async savePartialModelCache(url: string, name: string, blob: Blob): Promise<void> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readwrite');
+      tx.objectStore('models').put({ url, name, buffer: blob }, 'cached_model_partial');
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('Transaction error'));
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  private async deletePartialModelCache(_url: string): Promise<void> {
+    try {
+      const db = await this.openDB();
+      const tx = db.transaction('models', 'readwrite');
+      tx.objectStore('models').delete('cached_model_partial');
+      return new Promise((resolve) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    } catch {
+      /* best effort */
+    }
   }
 
   private async saveModelToCache(name: string, model: Blob): Promise<void> {

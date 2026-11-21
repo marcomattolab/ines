@@ -10,7 +10,8 @@ export interface Todo {
   category?: 'work' | 'personal' | 'health' | 'other';
 }
 
-const STORAGE_KEY = 'localai_todos';
+const STORAGE_KEY = 'ines_todos';
+const LEGACY_STORAGE_KEY = 'localai_todos';
 const MAX_UNDO = 20;
 
 type UndoAction =
@@ -30,10 +31,21 @@ export class TodoService {
   readonly canUndo = signal(false);
 
   constructor() {
+    this.migrateLegacyKey();
     this.nextId = this.todos().reduce((max, t) => Math.max(max, t.id), 0) + 1;
     effect(() => {
       this.storage.set(STORAGE_KEY, this.todos());
     });
+  }
+
+  /** One-time migration from the pre-INES storage key to the namespaced one. */
+  private migrateLegacyKey(): void {
+    const legacy = this.storage.get<Todo[]>(LEGACY_STORAGE_KEY);
+    if (!legacy?.length) return;
+    if (!this.todos().length) {
+      this.todos.set(legacy);
+    }
+    this.storage.remove(LEGACY_STORAGE_KEY);
   }
 
   private pushUndo(action: UndoAction) {

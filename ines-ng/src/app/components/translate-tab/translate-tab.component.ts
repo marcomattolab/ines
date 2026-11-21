@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { LlmService } from '../../core/services/llm.service';
+import { LlmService, PRECISE_SAMPLER } from '../../core/services/llm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
@@ -98,10 +98,18 @@ export class TranslateTabComponent implements OnDestroy {
     this.translating.set(true);
     this.result.set(' ');
     try {
-      await this.llm.generate(SYSTEM_TRANSLATE, instruction, [], (_, done, full) => {
-        this.result.set(full);
-        this.translating.set(!done);
-      });
+      await this.llm.generateQueued(
+        SYSTEM_TRANSLATE,
+        instruction,
+        [],
+        (_, done, full) => {
+          this.result.set(full);
+          this.translating.set(!done);
+        },
+        undefined,
+        undefined,
+        PRECISE_SAMPLER,
+      );
     } catch (e: any) {
       const msg = e.message?.includes('INVALID_ARGUMENT')
         ? 'Text too long for the model.'

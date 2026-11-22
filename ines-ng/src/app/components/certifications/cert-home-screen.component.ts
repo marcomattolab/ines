@@ -1,6 +1,7 @@
 import { Component, inject, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { CertificationCatalogService } from '../../core/services/certification-catalog.service';
+import { CertificationProgressService } from '../../core/services/certification-progress.service';
 import { CertificationSoundService } from '../../core/services/certification-sound.service';
 
 @Component({
@@ -13,11 +14,13 @@ import { CertificationSoundService } from '../../core/services/certification-sou
 })
 export class CertHomeScreenComponent {
   protected readonly catalog = inject(CertificationCatalogService);
+  protected readonly progress = inject(CertificationProgressService);
   protected readonly sound = inject(CertificationSoundService);
 
   readonly back = output<void>();
   readonly startPractice = output<'all' | 'wrong'>();
   readonly startExamSetup = output<void>();
+  readonly openDashboard = output<void>();
 
   onPracticeClick(): void {
     this.sound.playIntro();
@@ -33,9 +36,14 @@ export class CertHomeScreenComponent {
     this.startExamSetup.emit();
   }
 
+  onDashboardClick(): void {
+    this.openDashboard.emit();
+  }
+
   onResetProgress(): void {
     if (confirm('Are you sure you want to reset all progress and history for this course?')) {
       this.catalog.resetProgress();
+      this.progress.reset();
     }
   }
 }

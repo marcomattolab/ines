@@ -2,6 +2,7 @@ import { Component, inject, input, output, signal, computed } from '@angular/cor
 import { MatIconModule } from '@angular/material/icon';
 import { Question } from '../../core/models/certification.model';
 import { CertificationCatalogService } from '../../core/services/certification-catalog.service';
+import { CertificationProgressService } from '../../core/services/certification-progress.service';
 import { CertificationSoundService } from '../../core/services/certification-sound.service';
 
 @Component({
@@ -15,6 +16,7 @@ import { CertificationSoundService } from '../../core/services/certification-sou
 export class CertPracticeScreenComponent {
   private readonly catalog = inject(CertificationCatalogService);
   protected readonly sound = inject(CertificationSoundService);
+  private readonly progress = inject(CertificationProgressService);
 
   readonly questions = input.required<Question[]>();
   readonly context = input<'all' | 'wrong'>('all');
@@ -128,6 +130,7 @@ export class CertPracticeScreenComponent {
     if (q) {
       this.catalog.recordAnswer(q, Array.from(this.selectedLetters()), isCorrect);
     }
+    this.progress.recordPracticeAnswer(isCorrect);
   }
 
   nextQuestion(): void {

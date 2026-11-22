@@ -7,6 +7,7 @@ import {
 } from '../../core/models/certification.model';
 import { CertificationCatalogService } from '../../core/services/certification-catalog.service';
 import { CertificationExamService } from '../../core/services/certification-exam.service';
+import { CertificationProgressService } from '../../core/services/certification-progress.service';
 import { CertificationSoundService } from '../../core/services/certification-sound.service';
 import { CertCatalogScreenComponent } from './cert-catalog-screen.component';
 import { CertHomeScreenComponent } from './cert-home-screen.component';
@@ -15,6 +16,7 @@ import { CertPracticeScreenComponent } from './cert-practice-screen.component';
 import { CertExamScreenComponent } from './cert-exam-screen.component';
 import { CertResultsScreenComponent } from './cert-results-screen.component';
 import { CertReviewScreenComponent } from './cert-review-screen.component';
+import { CertDashboardScreenComponent } from './cert-dashboard-screen.component';
 
 /**
  * Certification Hub — course-agnostic exam trainer.
@@ -34,6 +36,7 @@ import { CertReviewScreenComponent } from './cert-review-screen.component';
     CertExamScreenComponent,
     CertResultsScreenComponent,
     CertReviewScreenComponent,
+    CertDashboardScreenComponent,
   ],
   templateUrl: './certifications-tab.component.html',
   styleUrl: './certifications-tab.component.css',
@@ -42,6 +45,7 @@ import { CertReviewScreenComponent } from './cert-review-screen.component';
 export class CertificationsTabComponent {
   private readonly catalog = inject(CertificationCatalogService);
   private readonly exam = inject(CertificationExamService);
+  private readonly progress = inject(CertificationProgressService);
   private readonly sound = inject(CertificationSoundService);
 
   readonly screen = signal<CertScreenMode>('catalog');
@@ -59,6 +63,7 @@ export class CertificationsTabComponent {
     this.exam.cleanup();
     // selectCourse sets the active course + stats synchronously, then loads questions.
     void this.catalog.selectCourse(id);
+    this.progress.load(id);
     this.screen.set('course-home');
   }
 
@@ -76,6 +81,10 @@ export class CertificationsTabComponent {
 
   openExamSetup(): void {
     this.screen.set('exam-setup');
+  }
+
+  openDashboard(): void {
+    this.screen.set('dashboard');
   }
 
   startPractice(context: 'all' | 'wrong'): void {
@@ -104,6 +113,12 @@ export class CertificationsTabComponent {
   }
 
   onExamFinished(result: ExamResult): void {
+    this.progress.recordExamSession(
+      result.correctCount,
+      result.totalQuestions,
+      result.passed,
+      result.elapsedSeconds,
+    );
     this.examResult.set(result);
     this.screen.set('results');
   }

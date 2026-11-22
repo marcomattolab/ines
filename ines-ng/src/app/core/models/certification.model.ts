@@ -51,7 +51,8 @@ export type CertScreenMode =
   | 'practice'
   | 'exam'
   | 'results'
-  | 'review';
+  | 'review'
+  | 'dashboard';
 
 export interface ExamConfig {
   numQuestions: number;
@@ -75,4 +76,31 @@ export interface AnswerHistoryItem {
   selected: string[];
   isCorrect: boolean;
   timestamp: number;
+}
+
+/** A single completed session (exam or practice set) stored in local history. */
+export interface SessionRecord {
+  type: 'exam' | 'practice';
+  timestamp: number;
+  correct: number;
+  total: number;
+  scorePercentage: number;
+  passed: boolean;
+  elapsedSeconds: number;
+}
+
+/** Gamification + history profile persisted per course. */
+export interface ProgressProfile {
+  xp: number;
+  sessions: SessionRecord[];
+  lastActiveDay: string | null;
+  streakDays: number;
+}
+
+export interface Achievement {
+  id: string;
+  icon: string;
+  label: string;
+  description: string;
+  earned: boolean;
 }

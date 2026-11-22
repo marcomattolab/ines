@@ -1,0 +1,336 @@
+.cert-text-success {
+  color: var(--accent-green);
+}
+
+.cert-accent-text {
+  color: var(--cert-accent, var(--accent-blue));
+}
+
+.dash-header {
+  margin-bottom: 20px;
+}
+
+.dash-title {
+  font-family: var(--font-ui);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-0);
+  margin: 0;
+}
+
+.dash-subtitle {
+  font-size: 13px;
+  color: var(--cert-accent, var(--accent-blue));
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.dash-level-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dash-level-card {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dash-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #0b0f19;
+  background: linear-gradient(135deg, var(--cert-accent, var(--accent-blue)), #7c3aed);
+  box-shadow: 0 0 24px -6px var(--cert-accent, var(--accent-blue));
+}
+
+.dash-level-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-level-xp {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-0);
+  font-family: var(--font-mono);
+}
+
+.dash-level-next {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.dash-progress-track {
+  flex: 1;
+  min-width: 160px;
+  height: 10px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cert-accent, var(--accent-blue)), var(--accent-green));
+  border-radius: 999px;
+  transition: width 0.5s var(--spring-easing);
+}
+
+.dash-progress-fill.low {
+  background: var(--accent-rose);
+}
+
+.dash-progress-fill.mid {
+  background: var(--accent-amber);
+}
+
+.dash-streak-card {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  padding: 20px 26px;
+}
+
+.dash-streak-card.lit {
+  border-color: color-mix(in srgb, var(--accent-amber) 45%, transparent);
+  box-shadow: 0 0 22px -8px var(--accent-amber);
+}
+
+.dash-streak-icon {
+  font-size: 26px;
+}
+
+.dash-streak-value {
+  font-size: 34px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-0);
+  line-height: 1.1;
+}
+
+.dash-streak-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.dash-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dash-stat {
+  margin-bottom: 0;
+  padding: 16px;
+  text-align: center;
+}
+
+.dash-stat-value {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-0);
+}
+
+.dash-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.dash-section-title {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin: 0 0 18px;
+}
+
+.dash-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 180px;
+  overflow-x: auto;
+  padding: 8px 4px 0;
+}
+
+.dash-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  flex: 1;
+  height: 100%;
+}
+
+.dash-chart-value {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+}
+
+.dash-chart-track {
+  flex: 1;
+  width: 26px;
+  background: var(--bg-3);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.dash-chart-bar {
+  width: 100%;
+  min-height: 6px;
+  border-radius: 8px;
+  transition: height 0.5s var(--spring-easing);
+}
+
+.dash-chart-bar.passed {
+  background: linear-gradient(
+    180deg,
+    var(--accent-green),
+    color-mix(in srgb, var(--accent-green) 55%, transparent)
+  );
+}
+
+.dash-chart-bar.failed {
+  background: linear-gradient(
+    180deg,
+    var(--accent-rose),
+    color-mix(in srgb, var(--accent-rose) 55%, transparent)
+  );
+}
+
+.dash-chart-date {
+  font-size: 10px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+}
+
+.dash-achievements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.dash-achievement {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  opacity: 0.45;
+  filter: grayscale(1);
+  transition: all 0.25s var(--spring-easing);
+}
+
+.dash-achievement.earned {
+  opacity: 1;
+  filter: none;
+  border-color: color-mix(in srgb, var(--cert-accent, var(--accent-blue)) 40%, transparent);
+  background: color-mix(in srgb, var(--cert-accent, var(--accent-blue)) 8%, var(--bg-2));
+}
+
+.dash-achievement-icon {
+  font-size: 28px;
+}
+
+.dash-achievement-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  text-align: center;
+}
+
+.dash-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dash-topic-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.dash-topic-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dash-topic-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-0);
+}
+
+.dash-topic-count {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+}
+
+.dash-topic-row .dash-progress-track {
+  grid-column: 1 / -1;
+  height: 8px;
+}
+
+.dash-topic-accuracy {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+  justify-self: end;
+}
+
+.dash-empty {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .dash-level-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-streak-card {
+    flex-direction: row;
+    gap: 14px;
+    min-width: 0;
+  }
+}

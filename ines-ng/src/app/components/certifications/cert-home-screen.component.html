@@ -60,6 +60,10 @@
               <mat-icon fontIcon="timer" class="cert-btn-icon"></mat-icon>
               Exam Simulation
             </button>
+            <button class="btn-tertiary cert-mode-btn" (click)="onDashboardClick()">
+              <mat-icon fontIcon="bar_chart" class="cert-btn-icon"></mat-icon>
+              Progress Dashboard
+            </button>
           </div>
 
           @if (catalog.failedCount() > 0) {

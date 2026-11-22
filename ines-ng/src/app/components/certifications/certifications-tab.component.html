@@ -8,7 +8,11 @@
         (back)="backToCatalog()"
         (startPractice)="startPractice($event)"
         (startExamSetup)="openExamSetup()"
+        (openDashboard)="openDashboard()"
       />
+    }
+    @case ('dashboard') {
+      <app-cert-dashboard-screen (back)="goCourseHome()" />
     }
     @case ('exam-setup') {
       <app-cert-exam-setup (back)="goCourseHome()" (start)="startExam($event)" />

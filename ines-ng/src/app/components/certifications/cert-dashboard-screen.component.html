@@ -1,0 +1,132 @@
+<div class="cert-container">
+  <div class="cert-content">
+    <button class="cert-btn-back" (click)="back.emit()">
+      <mat-icon fontIcon="arrow_back" class="cert-back-icon"></mat-icon>
+      Course Home
+    </button>
+
+    <div class="dash-header">
+      <h1 class="dash-title">📊 Progress Dashboard</h1>
+      @if (catalog.activeCourse(); as course) {
+        <p class="dash-subtitle">{{ course.name }}</p>
+      }
+    </div>
+
+    <!-- Level + streak -->
+    <div class="dash-level-row">
+      <div class="cert-card dash-level-card">
+        <div class="dash-level-badge">LVL {{ progress.level() }}</div>
+        <div class="dash-level-meta">
+          <span class="dash-level-xp">{{ progress.xp() }} XP</span>
+          <span class="dash-level-next"
+            >{{ progress.nextLevelXp() - progress.xp() }} XP to level
+            {{ progress.level() + 1 }}</span
+          >
+        </div>
+        <div class="dash-progress-track">
+          <div class="dash-progress-fill" [style.width.%]="progress.levelProgress()"></div>
+        </div>
+      </div>
+
+      <div class="cert-card dash-streak-card" [class.lit]="progress.currentStreak() > 0">
+        <span class="dash-streak-icon">🔥</span>
+        <span class="dash-streak-value">{{ progress.currentStreak() }}</span>
+        <span class="dash-streak-label">Day Streak</span>
+      </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="dash-stats-grid">
+      <div class="cert-card dash-stat">
+        <span class="dash-stat-value">{{ progress.examCount() }}</span>
+        <span class="dash-stat-label">Exams Taken</span>
+      </div>
+      <div class="cert-card dash-stat">
+        <span class="dash-stat-value cert-text-success">{{ progress.passedCount() }}</span>
+        <span class="dash-stat-label">Exams Passed</span>
+      </div>
+      <div class="cert-card dash-stat">
+        <span class="dash-stat-value cert-accent-text">{{ progress.bestScore() }}%</span>
+        <span class="dash-stat-label">Best Score</span>
+      </div>
+      <div class="cert-card dash-stat">
+        <span class="dash-stat-value">{{ progress.averageScore() }}%</span>
+        <span class="dash-stat-label">Avg. Exam Score</span>
+      </div>
+      <div class="cert-card dash-stat">
+        <span class="dash-stat-value">{{ catalog.accuracyPercentage() }}%</span>
+        <span class="dash-stat-label">Overall Accuracy</span>
+      </div>
+    </div>
+
+    <!-- Score history chart -->
+    <div class="cert-card">
+      <h2 class="dash-section-title">📈 Exam Score History</h2>
+      @if (recentSessions().length > 0) {
+        <div class="dash-chart">
+          @for (bar of recentSessions(); track $index) {
+            <div class="dash-chart-col">
+              <span class="dash-chart-value">{{ bar.score }}%</span>
+              <div class="dash-chart-track">
+                <div
+                  class="dash-chart-bar"
+                  [class.passed]="bar.passed"
+                  [class.failed]="!bar.passed"
+                  [style.height.%]="bar.score"
+                ></div>
+              </div>
+              <span class="dash-chart-date">{{ bar.dateLabel }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="dash-empty">
+          No exam results yet. Complete an exam simulation to see your history here.
+        </p>
+      }
+    </div>
+
+    <!-- Achievements -->
+    <div class="cert-card">
+      <h2 class="dash-section-title">🏅 Achievements</h2>
+      <div class="dash-achievements">
+        @for (a of progress.achievements(); track a.id) {
+          <div class="dash-achievement" [class.earned]="a.earned" [title]="a.description">
+            <span class="dash-achievement-icon">{{ a.earned ? a.icon : '🔒' }}</span>
+            <span class="dash-achievement-label">{{ a.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Topic monitoring -->
+    <div class="cert-card">
+      <h2 class="dash-section-title">🎯 Weakest Topics (by accuracy)</h2>
+      @if (topicStats().length > 0) {
+        <div class="dash-topics">
+          @for (t of topicStats(); track t.topic) {
+            <div class="dash-topic-row">
+              <div class="dash-topic-head">
+                <span class="dash-topic-name">{{ t.topic }}</span>
+                <span class="dash-topic-count">{{ t.correct }}/{{ t.total }}</span>
+              </div>
+              <div class="dash-progress-track">
+                <div
+                  class="dash-progress-fill"
+                  [class.low]="t.accuracy < 50"
+                  [class.mid]="t.accuracy >= 50 && t.accuracy < 75"
+                  [style.width.%]="t.accuracy"
+                ></div>
+              </div>
+              <span class="dash-topic-accuracy">{{ t.accuracy }}%</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="dash-empty">
+          No answered questions yet. Practice to reveal your per-topic accuracy.
+        </p>
+      }
+    </div>
+  </div>
+</div>

@@ -186,6 +186,14 @@
         Loading…
       </div>
     }
+    @defer (when activeTab() === 'documents') {
+      <app-document-studio-tab [hidden]="activeTab() !== 'documents'" />
+    } @loading (minimum 150ms) {
+      <div class="tab-loading">
+        <mat-icon fontIcon="hourglass_empty" class="animate-spin"></mat-icon>
+        Loading…
+      </div>
+    }
     @defer (when activeTab() === 'labs') {
       <app-labs-tab [hidden]="activeTab() !== 'labs'" />
     } @loading (minimum 150ms) {

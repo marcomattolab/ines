@@ -12,6 +12,7 @@ import { InfoModalComponent } from './components/info-modal/info-modal.component
 import { MeetingTabComponent } from './components/meeting-tab/meeting-tab.component';
 import { TranslateTabComponent } from './components/translate-tab/translate-tab.component';
 import { CertificationsTabComponent } from './components/certifications/certifications-tab.component';
+import { DocumentStudioTabComponent } from './components/document-studio-tab/document-studio-tab.component';
 import { TodoTabComponent } from './components/todo-tab/todo-tab.component';
 import { ToastService } from './core/services/toast.service';
 import { LlmService } from './core/services/llm.service';
@@ -30,6 +31,7 @@ export type Tab =
   | 'code'
   | 'learning'
   | 'certifications'
+  | 'documents'
   | 'labs';
 
 export type TabCategory = 'productivity' | 'dev' | 'vision';
@@ -181,6 +183,28 @@ const TABS: TabDef[] = [
       'esame',
     ],
   },
+  {
+    id: 'documents',
+    icon: 'description',
+    label: 'Documents',
+    labelIt: 'Documenti',
+    color: 'var(--tab-documents)',
+    category: 'dev',
+    categoryLabel: 'Dev & Studio',
+    categoryLabelIt: 'Sviluppo & Studio',
+    description: 'Edge OCR document conversion to Markdown (MiniCPM)',
+    descriptionIt: 'Conversione documenti in Markdown con OCR Edge (MiniCPM)',
+    keywords: [
+      'documents',
+      'documenti',
+      'ocr',
+      'minicpm',
+      'pdf',
+      'markdown',
+      'office',
+      'conversione',
+    ],
+  },
 
   // Vision & AI Labs
   {
@@ -214,6 +238,7 @@ const TABS: TabDef[] = [
     TodoTabComponent,
     LearningTabComponent,
     CertificationsTabComponent,
+    DocumentStudioTabComponent,
     FormsModule,
     MatIconModule,
   ],

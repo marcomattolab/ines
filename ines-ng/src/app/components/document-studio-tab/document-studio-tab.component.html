@@ -1,0 +1,284 @@
+<div class="flex flex-col flex-1 overflow-hidden h-full">
+  <div class="panel-header">
+    <div class="flex items-center gap-3">
+      <mat-icon class="text-[var(--tab-documents)] scale-110">description</mat-icon>
+      <div>
+        <div class="panel-title text-white">Document Studio</div>
+        <div class="panel-desc text-zinc-400">
+          OCR Edge AI — MiniCPM: documenti e immagini → Markdown (backend locale)
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 min-w-0 flex-wrap justify-end">
+      @if (studio.healthError()) {
+        <span class="ds-pill ds-pill-bad"> <span class="ds-dot"></span> Backend offline </span>
+      } @else {
+        @if (studio.health(); as h) {
+          <span
+            class="ds-pill"
+            [class.ds-pill-good]="h.ocr_cli_available"
+            [class.ds-pill-warn]="!h.ocr_cli_available"
+          >
+            <span class="ds-dot"></span>
+            {{ h.ocr_cli_available ? 'OCR pronto' : 'CLI non configurato' }}
+          </span>
+          @if (!h.libreoffice_available) {
+            <span class="ds-pill ds-pill-warn" title="Serve LibreOffice per i file Office">
+              <span class="ds-dot"></span> LibreOffice mancante
+            </span>
+          }
+        } @else {
+          <span class="ds-pill"><span class="ds-dot"></span> Verifica backend…</span>
+        }
+      }
+
+      <div class="ds-url-wrap">
+        <input
+          class="ds-url-input"
+          [value]="studio.baseUrl()"
+          (change)="studio.setBaseUrl($any($event.target).value)"
+          placeholder="http://127.0.0.1:8000"
+          title="URL del backend FastAPI"
+        />
+        <button class="ds-url-refresh" (click)="studio.checkHealth()" title="Riprova health check">
+          <mat-icon class="scale-75">refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-5 space-y-5">
+    <!-- Config -->
+    <div class="ds-card">
+      <div class="ds-card-head">
+        <div>
+          <span class="ds-step">1</span>
+          <h2 class="ds-card-title">Conversione documenti</h2>
+        </div>
+        <span class="ds-chip">File locali</span>
+      </div>
+
+      <label class="ds-label" for="ds-source">Cartella sorgente</label>
+      <div class="ds-path">
+        <span class="ds-path-icon">↳</span>
+        <input
+          id="ds-source"
+          class="ds-input"
+          [(ngModel)]="sourceDir"
+          placeholder="/percorso/assoluto/della/cartella"
+        />
+      </div>
+
+      <label class="ds-label" for="ds-output">Cartella di destinazione</label>
+      <div class="ds-path">
+        <span class="ds-path-icon">↳</span>
+        <input
+          id="ds-output"
+          class="ds-input"
+          [(ngModel)]="outputDir"
+          placeholder="/percorso/assoluto/di/uscita"
+        />
+      </div>
+
+      <div class="ds-options">
+        <label class="ds-check">
+          <input type="checkbox" [(ngModel)]="recursive" />
+          <span class="ds-checkbox"></span>
+          <span>
+            <b>Includi sottocartelle</b>
+            <small>Scansione ricorsiva della sorgente</small>
+          </span>
+        </label>
+        <label class="ds-check">
+          <input type="checkbox" [(ngModel)]="overwrite" />
+          <span class="ds-checkbox"></span>
+          <span>
+            <b>Sovrascrivi .md esistenti</b>
+            <small>Rielabora anche i file già convertiti</small>
+          </span>
+        </label>
+      </div>
+
+      <button
+        class="ds-run"
+        [disabled]="studio.busy() || !sourceDir().trim() || !outputDir().trim()"
+        (click)="start()"
+      >
+        <span>▶</span>
+        {{ studio.busy() ? 'Elaborazione…' : 'Avvia conversione' }}
+        <b>→</b>
+      </button>
+      <p class="ds-hint">
+        L'output usa la stessa struttura relativa: un file <code>.md</code> per ogni documento.
+      </p>
+    </div>
+
+    <!-- Status -->
+    <div class="ds-card">
+      <div class="ds-card-head">
+        <div>
+          <span class="ds-step">2</span>
+          <h2 class="ds-card-title">Monitoraggio</h2>
+        </div>
+        @if (studio.job(); as j) {
+          <span
+            class="ds-status"
+            [class.good]="j.status === 'completed'"
+            [class.warn]="j.status === 'completed_with_errors'"
+            [class.bad]="j.status === 'failed'"
+          >
+            {{
+              j.status === 'completed'
+                ? 'Completato'
+                : j.status === 'completed_with_errors'
+                  ? 'Completato con errori'
+                  : j.status === 'failed'
+                    ? 'Fallito'
+                    : 'In corso'
+            }}
+          </span>
+        }
+      </div>
+
+      @if (isStarting()) {
+        <div class="ds-center-state">
+          <div class="ds-spinner"></div>
+          <strong>Avvio job…</strong>
+          <p>Scansione della cartella sorgente in corso.</p>
+        </div>
+      } @else if (!studio.job()) {
+        <div class="ds-center-state">
+          <span class="ds-orbit">◎</span>
+          <strong>{{ studio.healthError() ? 'Backend non raggiungibile' : 'Pronto' }}</strong>
+          <p>
+            @if (studio.healthError()) {
+              Avvia il backend FastAPI (default <code>127.0.0.1:8000</code>) e imposta il percorso
+              delle cartelle.
+            } @else {
+              Compila i percorsi e premi “Avvia conversione” per iniziare.
+            }
+          </p>
+        </div>
+      } @else {
+        @let j = studio.job()!;
+        <div class="ds-job">
+          <div class="ds-progress-row">
+            <div class="ds-big-pct">{{ percent() }}<small>%</small></div>
+            <div class="ds-progress">
+              <div class="ds-progress-fill" [style.width.%]="percent()"></div>
+            </div>
+          </div>
+
+          @if (isFinished()) {
+            <div class="ds-finished-banner" [class.warn]="j.failed > 0">
+              {{
+                j.failed > 0
+                  ? 'Elaborazione completata con errori.'
+                  : 'Elaborazione completata con successo.'
+              }}
+            </div>
+          }
+
+          @if (j.message) {
+            <div class="ds-message">{{ j.message }}</div>
+          }
+
+          <div class="ds-subline">
+            @if (j.current_file) {
+              <span
+                >File: <code>{{ j.current_file }}</code></span
+              >
+            }
+            @if (j.pages_total > 0) {
+              <span>Pagine: {{ j.pages_done }}/{{ j.pages_total }}</span>
+            }
+          </div>
+
+          <div class="ds-metrics">
+            <div>
+              <b>{{ j.completed }}/{{ j.total }}</b
+              ><small>Analizzati</small>
+            </div>
+            <div>
+              <b class="ok">{{ j.succeeded }}</b
+              ><small>Completati</small>
+            </div>
+            <div>
+              <b class="err">{{ j.failed }}</b
+              ><small>Errori</small>
+            </div>
+            <div>
+              <b>{{ j.skipped }}</b
+              ><small>Saltati</small>
+            </div>
+            <div>
+              <b>{{ fmtTime(elapsed()) }}</b
+              ><small>Tempo</small>
+            </div>
+            @if (eta() !== null) {
+              <div>
+                <b>{{ fmtTime(eta()!) }}</b
+                ><small>Stima rimanente</small>
+              </div>
+            }
+          </div>
+
+          @if (j.files.length) {
+            <div class="ds-feed-wrap">
+              <b class="ds-feed-title">File</b>
+              <div class="ds-feed">
+                @for (f of j.files; track f.file) {
+                  <div
+                    class="ds-feed-item"
+                    [class.done]="f.status === 'done'"
+                    [class.error]="f.status === 'error'"
+                    [class.processing]="f.status === 'processing'"
+                    [class.skipped]="f.status === 'skipped'"
+                  >
+                    <span class="ds-feed-dot"></span>
+                    <code>{{ f.file }}</code>
+                    <small>{{ labelForStatus(f.status) }}</small>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (j.errors.length) {
+            <div class="ds-errors">
+              <b>Errori</b>
+              @for (e of j.errors; track e.file) {
+                <div>
+                  <code>{{ e.file }}</code
+                  ><small>{{ e.error }}</small>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Capabilities -->
+    <div class="ds-card">
+      <div class="ds-card-head">
+        <div>
+          <span class="ds-step">3</span>
+          <h2 class="ds-card-title">Formati supportati</h2>
+        </div>
+      </div>
+      <div class="ds-caps">
+        <div>
+          <span>¶</span><b>PDF & immagini</b
+          ><small>OCR con MiniCPM (testo, tabelle, formule)</small>
+        </div>
+        <div><span>▦</span><b>Office</b><small>DOC/PPT/XLS → PDF via LibreOffice → OCR</small></div>
+        <div><span>∑</span><b>Testo</b><small>TXT, MD, CSV, JSON, XML, HTML → Markdown</small></div>
+        <div>
+          <span>◇</span><b>Diagrammi</b><small>Frecce e flowchart → Mermaid (best-effort)</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

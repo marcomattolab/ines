@@ -1,0 +1,632 @@
+/* Document Studio — MiniCPM edge OCR */
+
+.ds-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.ds-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.ds-card-head > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ds-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--tab-documents, var(--accent-green)) 16%, transparent);
+  color: var(--tab-documents, var(--accent-green));
+  border: 1px solid color-mix(in srgb, var(--tab-documents, var(--accent-green)) 40%, transparent);
+}
+
+.ds-card-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin: 0;
+}
+
+.ds-chip {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.ds-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 14px 0 6px;
+}
+
+.ds-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  transition: border-color 0.2s;
+}
+
+.ds-path:focus-within {
+  border-color: color-mix(in srgb, var(--tab-documents, var(--accent-green)) 55%, transparent);
+}
+
+.ds-path-icon {
+  color: var(--tab-documents, var(--accent-green));
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.ds-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 11px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-0);
+}
+
+.ds-input::placeholder {
+  color: var(--text-2);
+}
+
+.ds-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.ds-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+
+.ds-check input {
+  position: absolute;
+  opacity: 0;
+}
+
+.ds-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  border: 1px solid var(--border-active);
+  background: var(--bg-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.ds-check input:checked + .ds-checkbox {
+  background: var(--tab-documents, var(--accent-green));
+  border-color: var(--tab-documents, var(--accent-green));
+}
+
+.ds-check input:checked + .ds-checkbox::after {
+  content: '✓';
+  color: #052e22;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ds-check span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-check b {
+  font-size: 13px;
+  color: var(--text-0);
+}
+
+.ds-check small {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.ds-run {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: #052e22;
+  background: linear-gradient(
+    135deg,
+    var(--tab-documents, var(--accent-green)),
+    color-mix(in srgb, var(--tab-documents, var(--accent-green)) 65%, var(--accent-blue))
+  );
+  transition:
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.ds-run:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ds-run:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ds-hint {
+  font-size: 11px;
+  color: var(--text-2);
+  margin: 12px 0 0;
+  line-height: 1.6;
+}
+
+.ds-hint code,
+.ds-message code,
+.ds-subline code {
+  font-family: var(--font-mono);
+  color: var(--tab-documents, var(--accent-green));
+}
+
+/* Header pills */
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  white-space: nowrap;
+}
+
+.ds-pill-good {
+  color: var(--accent-green);
+  border-color: color-mix(in srgb, var(--accent-green) 40%, transparent);
+  background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+}
+
+.ds-pill-warn {
+  color: var(--accent-amber);
+  border-color: color-mix(in srgb, var(--accent-amber) 40%, transparent);
+  background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+}
+
+.ds-pill-bad {
+  color: var(--accent-rose);
+  border-color: color-mix(in srgb, var(--accent-rose) 40%, transparent);
+  background: color-mix(in srgb, var(--accent-rose) 10%, transparent);
+}
+
+.ds-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ds-url-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+}
+
+.ds-url-input {
+  width: 150px;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 7px 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-0);
+}
+
+.ds-url-refresh {
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.ds-url-refresh:hover {
+  color: var(--text-0);
+  background: var(--overlay-04);
+}
+
+/* Status area */
+.ds-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+
+.ds-status.good {
+  color: var(--accent-green);
+  border-color: color-mix(in srgb, var(--accent-green) 40%, transparent);
+}
+
+.ds-status.warn {
+  color: var(--accent-amber);
+  border-color: color-mix(in srgb, var(--accent-amber) 40%, transparent);
+}
+
+.ds-status.bad {
+  color: var(--accent-rose);
+  border-color: color-mix(in srgb, var(--accent-rose) 40%, transparent);
+}
+
+.ds-center-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.ds-center-state strong {
+  color: var(--text-0);
+  font-size: 14px;
+}
+
+.ds-center-state p {
+  color: var(--text-2);
+  font-size: 12px;
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.ds-center-state code {
+  font-family: var(--font-mono);
+  color: var(--tab-documents, var(--accent-green));
+}
+
+.ds-orbit {
+  font-size: 34px;
+  color: var(--tab-documents, var(--accent-green));
+  opacity: 0.6;
+}
+
+.ds-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border);
+  border-top-color: var(--tab-documents, var(--accent-green));
+  border-radius: 50%;
+  animation: dsSpin 0.8s linear infinite;
+}
+
+@keyframes dsSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ds-job {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ds-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ds-big-pct {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--text-0);
+  line-height: 1;
+}
+
+.ds-big-pct small {
+  font-size: 16px;
+  color: var(--text-2);
+}
+
+.ds-progress {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ds-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--tab-documents, var(--accent-green)), var(--accent-blue));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.ds-finished-banner {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: color-mix(in srgb, var(--accent-green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-green) 35%, transparent);
+}
+
+.ds-finished-banner.warn {
+  color: var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-amber) 35%, transparent);
+}
+
+.ds-message {
+  font-size: 13px;
+  color: var(--text-1);
+}
+
+.ds-subline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ds-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.ds-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+
+.ds-metrics b {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-0);
+}
+
+.ds-metrics b.ok {
+  color: var(--accent-green);
+}
+
+.ds-metrics b.err {
+  color: var(--accent-rose);
+}
+
+.ds-metrics small {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.ds-feed-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds-feed-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+}
+
+.ds-feed {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.ds-feed-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.ds-feed-item code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+}
+
+.ds-feed-item small {
+  font-size: 10px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ds-feed-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-2);
+  flex-shrink: 0;
+}
+
+.ds-feed-item.done .ds-feed-dot {
+  background: var(--accent-green);
+}
+
+.ds-feed-item.error .ds-feed-dot {
+  background: var(--accent-rose);
+}
+
+.ds-feed-item.processing .ds-feed-dot {
+  background: var(--accent-blue);
+  animation: dsPulse 1s ease-in-out infinite;
+}
+
+.ds-feed-item.skipped .ds-feed-dot {
+  background: var(--accent-amber);
+}
+
+@keyframes dsPulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.ds-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ds-errors > b {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-rose);
+}
+
+.ds-errors > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-rose) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-rose) 30%, transparent);
+}
+
+.ds-errors code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-0);
+}
+
+.ds-errors small {
+  font-size: 11px;
+  color: var(--text-2);
+  word-break: break-word;
+}
+
+/* Capabilities */
+.ds-caps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.ds-caps > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+
+.ds-caps span {
+  font-size: 20px;
+  color: var(--tab-documents, var(--accent-green));
+}
+
+.ds-caps b {
+  font-size: 13px;
+  color: var(--text-0);
+}
+
+.ds-caps small {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .ds-options {
+    grid-template-columns: 1fr;
+  }
+}

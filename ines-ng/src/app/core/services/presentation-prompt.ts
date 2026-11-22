@@ -193,6 +193,9 @@ p, li { font-size: clamp(1rem, 1.8vw, 1.1rem); color: var(--color-text); }
   transform:translateY(-1px); }
 .page-indicator { color:var(--color-text-dim); font-size:0.8rem; font-family:var(--font-mono); }
 
+/* Speaker notes are present in the HTML for PPTX export but never shown on-screen */
+.speaker-notes { display: none; }
+
 /* Title kicker badge */
 .hero-kicker {
   display: inline-block; padding: 6px 16px; border-radius: 999px;

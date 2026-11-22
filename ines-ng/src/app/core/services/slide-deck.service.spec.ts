@@ -118,4 +118,15 @@ describe('SlideDeckService', () => {
     expect(html).toContain('class="visual-frame"');
     expect(html).toContain('hero-kicker');
   });
+
+  it('embeds speaker notes into the HTML for PPTX export', () => {
+    const { service } = createService();
+    const html = service.renderDeck(
+      [{ type: 'bullets', heading: 'H', bullets: ['b'], notes: 'Say this out loud.' }],
+      { topic: 'T', colors: SLIDE_COLOR_THEMES.professional },
+    );
+
+    expect(html).toContain('class="speaker-notes"');
+    expect(html).toContain('Say this out loud.');
+  });
 });

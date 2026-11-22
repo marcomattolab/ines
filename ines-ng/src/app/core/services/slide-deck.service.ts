@@ -36,6 +36,7 @@ export interface Slide {
   meta?: string[];
   items?: { marker?: string; title?: string; text?: string }[];
   contact?: string;
+  notes?: string;
   value?: string;
   caption?: string;
   visual?: string;
@@ -85,6 +86,7 @@ Rules:
 - Insert a "divider" before each major topic shift.
 - Vary layouts (never repeat the same type twice in a row) and include at least one "stats", one "quote", and one "timeline", "comparison" or "big-number".
 - Benefit-driven headlines. 3-5 bullets max per slide, 6-14 words each. Use concrete numbers and dates.
+- Add a "notes" field to EVERY slide: 1-2 sentences of speaker notes (what to say and what to emphasize).
 - Write in the same language as the topic.`;
 
 const STYLE_GUIDES: Record<SlideStyle, string> = {
@@ -164,6 +166,7 @@ export class SlideDeckService {
         slide.author = str('author');
         slide.number = str('number');
         slide.contact = str('contact');
+        slide.notes = str('notes');
         slide.value = str('value');
         slide.caption = str('caption');
         slide.visual = str('visual');
@@ -266,7 +269,17 @@ export class SlideDeckService {
 
   /** Renders slide models into a complete, self-contained HTML document. */
   renderDeck(slides: Slide[], options: SlideDeckOptions): string {
-    const body = slides.map((s, i) => this.renderSlide(s, i + 1, options)).join('\n');
+    const body = slides
+      .map((s, i) => {
+        const slideHtml = this.renderSlide(s, i + 1, options);
+        const notes = s.notes?.trim();
+        if (!notes) return slideHtml;
+        return slideHtml.replace(
+          '</section>',
+          `<div class="speaker-notes">${this.esc(notes)}</div></section>`,
+        );
+      })
+      .join('\n');
 
     const css = PRESENTATION_CSS.replace(/\{PRIMARY\}/g, options.colors.primary)
       .replace(/\{SECONDARY\}/g, options.colors.secondary)
@@ -539,6 +552,7 @@ ${body}
       const hasQuote = slide.classList.contains('quote-slide');
 
       const headingText = heading?.textContent?.trim() || '';
+      const notesText = slide.querySelector('.speaker-notes')?.textContent?.trim() || '';
 
       if (hasHero || hasDivider) {
         const titleSlide = pptx.addSlide();
@@ -578,6 +592,7 @@ ${body}
             align: 'center',
           });
         }
+        if (notesText) titleSlide.addNotes(notesText);
       } else if (hasQuote) {
         const quoteSlide = pptx.addSlide();
         quoteSlide.background = { fill: '#000000' };
@@ -606,6 +621,7 @@ ${body}
             align: 'center',
           });
         }
+        if (notesText) quoteSlide.addNotes(notesText);
       } else if (statCards.length > 0) {
         const statSlide = pptx.addSlide();
         statSlide.background = { fill: '#000000' };
@@ -641,6 +657,7 @@ ${body}
             },
           );
         }
+        if (notesText) statSlide.addNotes(notesText);
       } else {
         const contentSlide = pptx.addSlide();
         contentSlide.background = { fill: '#000000' };
@@ -676,6 +693,7 @@ ${body}
             { x: 0.7, y: 1.5, w: 8.6, h: 4, valign: 'top' },
           );
         }
+        if (notesText) contentSlide.addNotes(notesText);
       }
     }
 

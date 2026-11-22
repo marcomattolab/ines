@@ -204,6 +204,7 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   slideCount = signal(0);
   slideCurrent = signal(0);
   slideError = signal('');
+  slideNotes = signal<string[]>([]);
 
   studyPlan = signal('');
   summaryText = signal('');
@@ -265,6 +266,11 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
     const active = Math.max(1, this.slideCurrent() || 1);
     const css = `<style>.slide{display:none!important}.slide[data-slide-number="${active}"]{display:flex!important}</style>`;
     return this.sanitizer.bypassSecurityTrustHtml(html.replace('</head>', css + '</head>'));
+  });
+
+  readonly currentSlideNotes = computed<string>(() => {
+    const idx = this.slideCurrent() - 1;
+    return idx >= 0 ? (this.slideNotes()[idx] ?? '') : '';
   });
 
   @HostListener('window:lm-regen')
@@ -1002,6 +1008,7 @@ Answer: ${a}`;
     this.slideCount.set(0);
     this.slideCurrent.set(0);
     this.slideError.set('');
+    this.slideNotes.set([]);
 
     try {
       const context = await this.km.getRagContext(topic, 8, 4000);
@@ -1019,6 +1026,7 @@ Answer: ${a}`;
       this.slideHtml.set(deck.html);
       this.slideCount.set(deck.slides.length);
       this.slideCurrent.set(1);
+      this.slideNotes.set(deck.slides.map((s) => s.notes?.trim() ?? ''));
       this.toast.success(`Presentation generated! ${deck.slides.length} slides`);
     } catch (e: any) {
       this.slideError.set(String(e?.message ?? e ?? ''));
@@ -1050,6 +1058,44 @@ Answer: ${a}`;
     } catch (e: any) {
       this.toast.error(e?.message ?? 'PPTX export failed');
     }
+  }
+
+  downloadSlidesPdf() {
+    const html = this.slideHtml();
+    if (!html) return;
+
+    const printCss = `
+      @page { size: 297mm 167mm; margin: 0; }
+      html, body { height: auto !important; overflow: visible !important; }
+      .slide {
+        height: 167mm !important;
+        min-height: 167mm !important;
+        page-break-after: always;
+        break-after: page;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
+      .speaker-notes { display: none !important; }
+    `;
+
+    const title = this.slideTopic().trim() || 'Presentation';
+    const printDoc = html.replace(
+      '</head>',
+      `<title>${this.dom.escapeHtml(title)}</title><style>${printCss}</style></head>`,
+    );
+
+    const w = window.open('', '_blank', 'width=1200,height=700');
+    if (!w) {
+      this.toast.error('Popup blocked — allow popups to export the PDF.');
+      return;
+    }
+    w.document.open();
+    w.document.write(printDoc);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
   }
 
   // ── TTS ──

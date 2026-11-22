@@ -1003,6 +1003,21 @@
             }
           </div>
 
+          @if (currentSlideNotes()) {
+            <div class="px-4 py-3 border-t border-[var(--border)] shrink-0 bg-[var(--bg-1)]">
+              <div
+                class="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[var(--text-2)]"
+              >
+                <mat-icon class="scale-50 text-amber-400">record_voice_over</mat-icon> Speaker Notes
+              </div>
+              <p
+                class="text-xs text-[var(--text-1)] mt-1.5 leading-relaxed max-h-20 overflow-y-auto"
+              >
+                {{ currentSlideNotes() }}
+              </p>
+            </div>
+          }
+
           <div class="flex items-center gap-2 p-3 border-t border-[var(--border)] shrink-0">
             <app-button
               variant="ghost"
@@ -1019,6 +1034,14 @@
               [disabled]="!slideHtml()"
             >
               <mat-icon class="scale-75">slideshow</mat-icon> PPTX
+            </app-button>
+            <app-button
+              variant="ghost"
+              size="sm"
+              (onClick)="downloadSlidesPdf()"
+              [disabled]="!slideHtml()"
+            >
+              <mat-icon class="scale-75">picture_as_pdf</mat-icon> PDF
             </app-button>
           </div>
         </div>

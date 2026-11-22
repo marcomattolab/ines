@@ -42,6 +42,20 @@
     "totalQuestions": 15
   },
   {
+    "id": "angular-dev-senior",
+    "name": "Angular Developer — Senior",
+    "description": "Senior-level Angular certification based on the current official angular.dev guides: signals and reactivity, zoneless change detection, advanced DI, modern templates, routing, HTTP interop, forms, performance, SSR/hydration and testing.",
+    "fileName": "certifications/angular-dev-senior.json",
+    "badge": "Angular Certified",
+    "subtitle": "Senior · Modern",
+    "accent": "#c3002f",
+    "examTitle": "Angular Developer Senior Certification",
+    "examInfo": "Senior-level multiple-choice certification covering modern Angular (signals, zoneless change detection, standalone, hydration). A passing score is 70%.",
+    "numQuestions": 45,
+    "passThreshold": 70,
+    "totalQuestions": 45
+  },
+  {
     "id": "python",
     "name": "Python",
     "description": "Python programming certification covering data structures, control flow, functions, OOP, decorators, lambdas and standard library modules.",
@@ -68,5 +82,61 @@
     "numQuestions": 15,
     "passThreshold": 70,
     "totalQuestions": 15
+  },
+  {
+    "id": "sql",
+    "name": "SQL",
+    "description": "SQL certification covering SELECT queries, joins, filtering, grouping, aggregation and database design fundamentals.",
+    "fileName": "certifications/sql.json",
+    "badge": "SQL Certified",
+    "subtitle": "Database Fundamentals",
+    "accent": "#336791",
+    "examTitle": "SQL Certification",
+    "examInfo": "Multiple-choice certification covering core SQL and relational database concepts. A passing score is 70%.",
+    "numQuestions": 12,
+    "passThreshold": 70,
+    "totalQuestions": 12
+  },
+  {
+    "id": "java-base",
+    "name": "Java Base",
+    "description": "Java core language certification: syntax, data types, control flow, OOP basics, collections and exception handling.",
+    "fileName": "certifications/java-base.json",
+    "badge": "Java Certified",
+    "subtitle": "Core Language",
+    "accent": "#5382a1",
+    "examTitle": "Java Base Certification",
+    "examInfo": "Multiple-choice certification covering core Java language fundamentals. A passing score is 70%.",
+    "numQuestions": 12,
+    "passThreshold": 70,
+    "totalQuestions": 12
+  },
+  {
+    "id": "ai-fundamentals",
+    "name": "AI Fundamentals",
+    "description": "Artificial Intelligence certification covering machine learning, neural networks, LLMs, RAG and core AI concepts.",
+    "fileName": "certifications/ai-fundamentals.json",
+    "badge": "AI Certified",
+    "subtitle": "Fundamentals",
+    "accent": "#7c3aed",
+    "examTitle": "AI Fundamentals Certification",
+    "examInfo": "Multiple-choice certification covering fundamental AI and machine learning concepts. A passing score is 70%.",
+    "numQuestions": 12,
+    "passThreshold": 70,
+    "totalQuestions": 12
+  },
+  {
+    "id": "cyber-security",
+    "name": "Cyber Security",
+    "description": "Cyber security certification covering the CIA triad, threats, encryption, authentication and security best practices.",
+    "fileName": "certifications/cyber-security.json",
+    "badge": "Security Certified",
+    "subtitle": "Fundamentals",
+    "accent": "#10b981",
+    "examTitle": "Cyber Security Certification",
+    "examInfo": "Multiple-choice certification covering fundamental cyber security concepts. A passing score is 70%.",
+    "numQuestions": 12,
+    "passThreshold": 70,
+    "totalQuestions": 12
   }
 ]

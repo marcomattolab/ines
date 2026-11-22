@@ -1,0 +1,238 @@
+[
+  {
+    "url": "https://example.com/cyber-security/question-1",
+    "question_no": "Cyber Security topic 1 question 1",
+    "question": "What does the CIA triad stand for?",
+    "options": {
+      "A": "Confidentiality, Integrity, Availability",
+      "B": "Control, Inspection, Authorization",
+      "C": "Confidence, Identity, Access",
+      "D": "Cipher, Integrity, Authentication"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The CIA triad is the core model: Confidentiality, Integrity and Availability."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-2",
+    "question_no": "Cyber Security topic 1 question 2",
+    "question": "What is phishing?",
+    "options": {
+      "A": "A fraudulent attempt to obtain sensitive information by impersonating a trusted entity",
+      "B": "A type of firewall",
+      "C": "An encryption algorithm",
+      "D": "A network monitoring tool"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Phishing tricks victims into revealing credentials or data via deceptive messages."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-3",
+    "question_no": "Cyber Security topic 1 question 3",
+    "question": "What is the main purpose of a firewall?",
+    "options": {
+      "A": "To filter and control incoming/outgoing network traffic",
+      "B": "To encrypt all hard drives",
+      "C": "To store passwords",
+      "D": "To detect viruses in email only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: A A firewall enforces security rules on network traffic."],
+    "vote_counts": { "A": 96, "B": 1, "C": 1, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-4",
+    "question_no": "Cyber Security topic 1 question 4",
+    "question": "What is encryption?",
+    "options": {
+      "A": "Converting data into an unreadable form using an algorithm and a key",
+      "B": "Deleting sensitive files",
+      "C": "Compressing data for storage",
+      "D": "Backing up data to the cloud"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Encryption protects data confidentiality by making it unreadable without the key."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-5",
+    "question_no": "Cyber Security topic 2 question 1",
+    "question": "What does 2FA stand for?",
+    "options": {
+      "A": "Two-Factor Authentication",
+      "B": "Two-Firewall Architecture",
+      "C": "Dual File Access",
+      "D": "Second Frame Algorithm"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Two-Factor Authentication requires two independent verification factors."
+    ],
+    "vote_counts": { "A": 99, "B": 0, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-6",
+    "question_no": "Cyber Security topic 2 question 2",
+    "question": "What is malware?",
+    "options": {
+      "A": "Malicious software designed to harm or exploit systems",
+      "B": "A hardware failure",
+      "C": "A backup tool",
+      "D": "A password manager"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Malware (malicious software) includes viruses, worms, trojans and ransomware."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-7",
+    "question_no": "Cyber Security topic 2 question 3",
+    "question": "What is a DDoS attack?",
+    "options": {
+      "A": "Overwhelming a service with excessive traffic from many sources",
+      "B": "Stealing a single password",
+      "C": "Installing a firewall",
+      "D": "Encrypting a database"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A A Distributed Denial-of-Service attack floods a target to disrupt availability."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-8",
+    "question_no": "Cyber Security topic 2 question 4",
+    "question": "What is the principle of least privilege?",
+    "options": {
+      "A": "Users get only the minimum access needed to perform their tasks",
+      "B": "All users receive administrator access",
+      "C": "Access is never reviewed",
+      "D": "Passwords are shared among teams"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Least privilege limits access rights to the minimum necessary."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 0, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-9",
+    "question_no": "Cyber Security topic 3 question 1",
+    "question": "What is social engineering?",
+    "options": {
+      "A": "Manipulating people into revealing confidential information",
+      "B": "A type of encryption",
+      "C": "Writing secure code",
+      "D": "A network topology"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Social engineering exploits human psychology rather than technical flaws."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-10",
+    "question_no": "Cyber Security topic 3 question 2",
+    "question": "What is a vulnerability?",
+    "options": {
+      "A": "A weakness that can be exploited by a threat",
+      "B": "A security patch",
+      "C": "A type of antivirus",
+      "D": "An encrypted message"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A A vulnerability is a flaw or weakness that an attacker can exploit."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-11",
+    "question_no": "Cyber Security topic 3 question 3",
+    "question": "What is HTTPS?",
+    "options": {
+      "A": "HTTP secured with TLS/SSL encryption",
+      "B": "A faster version of HTTP",
+      "C": "A database protocol",
+      "D": "A firewall rule"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: A HTTPS encrypts HTTP traffic using TLS/SSL."],
+    "vote_counts": { "A": 98, "B": 1, "C": 0, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/cyber-security/question-12",
+    "question_no": "Cyber Security topic 3 question 4",
+    "question": "What is a VPN primarily used for?",
+    "options": {
+      "A": "Creating an encrypted tunnel for network traffic",
+      "B": "Blocking all internet access",
+      "C": "Increasing CPU speed",
+      "D": "Storing cookies"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A A VPN encrypts traffic between a device and a remote network."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  }
+]

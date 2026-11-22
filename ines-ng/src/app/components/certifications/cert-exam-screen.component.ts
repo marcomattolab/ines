@@ -1,7 +1,6 @@
 import { Component, inject, output, signal, computed, effect } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { CertificationExamService } from '../../core/services/certification-exam.service';
-import { CertificationSoundService } from '../../core/services/certification-sound.service';
 import { ExamResult } from '../../core/models/certification.model';
 
 @Component({
@@ -14,7 +13,6 @@ import { ExamResult } from '../../core/models/certification.model';
 })
 export class CertExamScreenComponent {
   protected readonly exam = inject(CertificationExamService);
-  protected readonly sound = inject(CertificationSoundService);
 
   readonly cancel = output<void>();
   readonly finish = output<ExamResult>();
@@ -58,7 +56,6 @@ export class CertExamScreenComponent {
   });
 
   onSelectOption(letter: string): void {
-    this.sound.playSelectOption();
     this.exam.toggleOption(letter);
   }
 

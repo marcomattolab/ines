@@ -1,0 +1,240 @@
+[
+  {
+    "url": "https://example.com/ai/question-1",
+    "question_no": "AI topic 1 question 1",
+    "question": "What does AI stand for?",
+    "options": {
+      "A": "Automated Interface",
+      "B": "Artificial Intelligence",
+      "C": "Advanced Integration",
+      "D": "Algorithmic Inference"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: B AI stands for Artificial Intelligence."],
+    "vote_counts": { "A": 1, "B": 98, "C": 1, "D": 0 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-2",
+    "question_no": "AI topic 1 question 2",
+    "question": "What is machine learning?",
+    "options": {
+      "A": "Hard-coding rules for a program",
+      "B": "Learning patterns from data without being explicitly programmed",
+      "C": "A type of database",
+      "D": "A programming language"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Machine learning systems learn patterns from data rather than following explicit rules."
+    ],
+    "vote_counts": { "A": 2, "B": 96, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-3",
+    "question_no": "AI topic 1 question 3",
+    "question": "What characterizes supervised learning?",
+    "options": {
+      "A": "The model learns from labeled examples",
+      "B": "The model learns from unlabeled data only",
+      "C": "The model is not trained at all",
+      "D": "The model only clusters data"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Supervised learning uses labeled input-output pairs to learn a mapping."
+    ],
+    "vote_counts": { "A": 96, "B": 2, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/ai/question-4",
+    "question_no": "AI topic 1 question 4",
+    "question": "What characterizes unsupervised learning?",
+    "options": {
+      "A": "It requires a teacher for every example",
+      "B": "It finds structure in unlabeled data",
+      "C": "It only works on images",
+      "D": "It always uses reinforcement signals"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Unsupervised learning discovers patterns such as clusters in data without labels."
+    ],
+    "vote_counts": { "A": 1, "B": 96, "C": 1, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-5",
+    "question_no": "AI topic 2 question 1",
+    "question": "What is a neural network?",
+    "options": {
+      "A": "A graph database",
+      "B": "Layers of interconnected nodes inspired by neurons",
+      "C": "A networking protocol",
+      "D": "A CPU architecture"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Neural networks are composed of layers of nodes (neurons) with learned weights."
+    ],
+    "vote_counts": { "A": 1, "B": 97, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-6",
+    "question_no": "AI topic 2 question 2",
+    "question": "What is overfitting?",
+    "options": {
+      "A": "The model performs too well on all data",
+      "B": "The model memorizes training data and generalizes poorly",
+      "C": "The model underperforms on training data",
+      "D": "The model has too few parameters"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B Overfitting occurs when a model fits training data too closely and fails on unseen data."
+    ],
+    "vote_counts": { "A": 2, "B": 95, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-7",
+    "question_no": "AI topic 2 question 3",
+    "question": "What is the purpose of the training set?",
+    "options": {
+      "A": "To evaluate the final model only",
+      "B": "To fit the model parameters",
+      "C": "To store production data",
+      "D": "To label test data"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B The training set is used to learn (fit) the model parameters."
+    ],
+    "vote_counts": { "A": 2, "B": 96, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-8",
+    "question_no": "AI topic 2 question 4",
+    "question": "What does LLM stand for?",
+    "options": {
+      "A": "Low-Level Module",
+      "B": "Large Language Model",
+      "C": "Logical Learning Machine",
+      "D": "Linear Layer Matrix"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B LLM stands for Large Language Model, a model trained on large text corpora."
+    ],
+    "vote_counts": { "A": 1, "B": 98, "C": 1, "D": 0 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-9",
+    "question_no": "AI topic 3 question 1",
+    "question": "In natural language processing, what is a token?",
+    "options": {
+      "A": "A unit of text such as a word or subword",
+      "B": "A security credential",
+      "C": "A database record",
+      "D": "A neural layer"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Tokens are the basic text units that language models process."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/ai/question-10",
+    "question_no": "AI topic 3 question 2",
+    "question": "What does RAG stand for in the context of LLMs?",
+    "options": {
+      "A": "Random Access Generator",
+      "B": "Retrieval-Augmented Generation",
+      "C": "Recursive Auto Gradient",
+      "D": "Rule-based Answer Generator"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B RAG retrieves relevant documents and augments the prompt to improve generation."
+    ],
+    "vote_counts": { "A": 1, "B": 97, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/ai/question-11",
+    "question_no": "AI topic 3 question 3",
+    "question": "What does a loss function do?",
+    "options": {
+      "A": "It measures how wrong the model's predictions are",
+      "B": "It compresses the model",
+      "C": "It loads the training data",
+      "D": "It visualizes the network"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The loss function quantifies prediction error, which training minimizes."
+    ],
+    "vote_counts": { "A": 96, "B": 1, "C": 1, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/ai/question-12",
+    "question_no": "AI topic 3 question 4",
+    "question": "What is gradient descent used for?",
+    "options": {
+      "A": "Optimizing model parameters by minimizing the loss",
+      "B": "Encrypting data",
+      "C": "Sorting datasets",
+      "D": "Rendering graphics"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Gradient descent iteratively updates parameters to reduce the loss."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  }
+]

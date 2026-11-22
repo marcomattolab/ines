@@ -1,0 +1,947 @@
+[
+  {
+    "url": "https://angular.dev/guide/signals/computed",
+    "question_no": "Angular Senior question 1",
+    "question": "Which statement about computed() signals is correct?",
+    "options": {
+      "A": "They are lazily evaluated and their value is cached until a dependency changes",
+      "B": "They are eagerly recomputed on every change detection cycle",
+      "C": "They can only read writable signals, never other computed() signals",
+      "D": "They recompute every time they are read, regardless of dependencies"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A computed() is lazy: it only runs when read and re-runs only when a read dependency changes.",
+      "Selected Answer: A The result is memoized, so repeated reads without dependency changes return the cached value."
+    ],
+    "vote_counts": { "A": 91, "B": 4, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals/effect",
+    "question_no": "Angular Senior question 2",
+    "question": "How do you clean up resources created inside an effect()?",
+    "options": {
+      "A": "Return a cleanup function from the effect callback; it runs before the next execution and when the effect is destroyed",
+      "B": "Call a global onEffectCleanup() helper",
+      "C": "Effects cannot hold subscriptions",
+      "D": "Use ngOnDestroy only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The value returned from an effect callback, if it is a function, is treated as a cleanup function.",
+      "Selected Answer: A The cleanup runs before the effect runs again and also when the effect is destroyed."
+    ],
+    "vote_counts": { "A": 88, "B": 6, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/untracked",
+    "question_no": "Angular Senior question 3",
+    "question": "What is the purpose of untracked() inside a computed() or effect()?",
+    "options": {
+      "A": "It reads signals without registering them as dependencies",
+      "B": "It forces the effect to re-run immediately",
+      "C": "It marks a signal as writable",
+      "D": "It subscribes to RxJS observables"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A untracked() lets you read signal values without creating a reactive dependency on them.",
+      "Selected Answer: A It is useful when you want to read a value but not react to future changes of that value."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals/inputs",
+    "question_no": "Angular Senior question 4",
+    "question": "Which API declares an input signal that is mandatory and throws a runtime error if the parent does not bind it?",
+    "options": {
+      "A": "input.required<string>()",
+      "B": "input<string>()",
+      "C": "@Input({ required: false })",
+      "D": "output.required<string>()"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A input.required() creates a required input signal; Angular reports an error if no value is bound.",
+      "Selected Answer: A Plain input() is optional, and output.required() is for required outputs, not inputs."
+    ],
+    "vote_counts": { "A": 92, "B": 4, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals/model",
+    "question_no": "Angular Senior question 5",
+    "question": "What does the model() function provide?",
+    "options": {
+      "A": "A two-way bindable signal the component can both read and write",
+      "B": "A read-only input signal",
+      "C": "An RxJS BehaviorSubject",
+      "D": "A template reference variable"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A model() creates a signal that supports two-way binding: the parent passes a value and the child can emit updates.",
+      "Selected Answer: A It enables the [(name)] banana-in-a-box syntax without manual @Input/@Output pairs."
+    ],
+    "vote_counts": { "A": 90, "B": 5, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals/linked-signal",
+    "question_no": "Angular Senior question 6",
+    "question": "What is linkedSignal() used for?",
+    "options": {
+      "A": "Creating a writable signal whose value is derived from another signal but can also be overridden locally, resetting when the source changes",
+      "B": "Creating a read-only computed value",
+      "C": "Linking two DOM elements",
+      "D": "Sharing state across lazy routes"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A linkedSignal() models dependent state that follows a source signal but remains writable for local overrides.",
+      "Selected Answer: A When the source signal changes, the linked signal is reset to the computed value."
+    ],
+    "vote_counts": { "A": 86, "B": 6, "C": 4, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/best-practices/skipping-subtrees",
+    "question_no": "Angular Senior question 7",
+    "question": "With ChangeDetectionStrategy.OnPush, when is a component checked?",
+    "options": {
+      "A": "When an input reference changes, an event originates in the component, a signal read in the template changes, or markForCheck() is called",
+      "B": "After every asynchronous task, exactly like the default strategy",
+      "C": "Only on ngOnChanges",
+      "D": "Never; it always requires manual detectChanges()"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A OnPush components are checked when their inputs change by reference or when they are marked dirty.",
+      "Selected Answer: A Signals read in the template also mark the view dirty without needing NgZone."
+    ],
+    "vote_counts": { "A": 90, "B": 5, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/zoneless",
+    "question_no": "Angular Senior question 8",
+    "question": "With provideZonelessChangeDetection(), when is a component's template re-rendered?",
+    "options": {
+      "A": "When a signal read in the template changes, an event or output fires, or change detection is explicitly scheduled",
+      "B": "After every setTimeout or Promise callback completes",
+      "C": "Only when NgZone.onMicrotaskEmpty emits",
+      "D": "Zoneless mode cannot schedule change detection"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A In zoneless mode Angular schedules change detection itself when reactive state changes or events fire.",
+      "Selected Answer: A NgZone is no longer required, which reduces overhead and bundle size."
+    ],
+    "vote_counts": { "A": 89, "B": 6, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/ChangeDetectorRef",
+    "question_no": "Angular Senior question 9",
+    "question": "What is the difference between ChangeDetectorRef.markForCheck() and detectChanges()?",
+    "options": {
+      "A": "markForCheck() schedules checks up to the root, while detectChanges() immediately runs change detection for the component and its subtree",
+      "B": "They are identical",
+      "C": "detectChanges() is asynchronous and markForCheck() is synchronous",
+      "D": "markForCheck() only works with the default strategy"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A markForCheck() marks the component and its ancestors for checking in the next CD cycle.",
+      "Selected Answer: A detectChanges() synchronously checks the component and its children right away."
+    ],
+    "vote_counts": { "A": 87, "B": 5, "C": 5, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/afterRender",
+    "question_no": "Angular Senior question 10",
+    "question": "How do afterRender() and afterNextRender() differ?",
+    "options": {
+      "A": "afterRender() runs after every change detection cycle; afterNextRender() runs only once, after the next render",
+      "B": "afterNextRender() runs after every render",
+      "C": "They both run before the render",
+      "D": "afterRender() works only during SSR"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A afterRender() registers a callback for every render; afterNextRender() fires once after the next one.",
+      "Selected Answer: A These hooks are the modern way to run DOM code after Angular has rendered."
+    ],
+    "vote_counts": { "A": 88, "B": 5, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals",
+    "question_no": "Angular Senior question 11",
+    "question": "What is the main performance benefit of reading signals in templates?",
+    "options": {
+      "A": "Angular can re-render only the views affected by a signal change, enabling fine-grained and zoneless change detection",
+      "B": "Signals are always faster than immutable data in every case",
+      "C": "Signals eliminate the need for templates",
+      "D": "Signals remove the DOM entirely"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Signals let Angular track exactly which views depend on which values and update only those views.",
+      "Selected Answer: A This dependency tracking is the foundation for zoneless change detection."
+    ],
+    "vote_counts": { "A": 90, "B": 4, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/di/dependency-injection",
+    "question_no": "Angular Senior question 12",
+    "question": "Where can inject() be legally called?",
+    "options": {
+      "A": "In an injection context such as a constructor, field initializer, or provider factory",
+      "B": "Anywhere in a component method",
+      "C": "Only in ngOnDestroy",
+      "D": "Only inside templates"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A inject() must run in an injection context; Angular throws an error otherwise.",
+      "Selected Answer: A Constructors, field initializers, and factory functions are examples of valid injection contexts."
+    ],
+    "vote_counts": { "A": 91, "B": 4, "C": 2, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/InjectionToken",
+    "question_no": "Angular Senior question 13",
+    "question": "Why use an InjectionToken instead of a class for a DI value?",
+    "options": {
+      "A": "To provide values that have no runtime class representation (interfaces, config objects) and avoid name collisions",
+      "B": "InjectionToken is required for every service",
+      "C": "To make the value lazy by default",
+      "D": "To enable tree-shaking only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A InjectionToken provides a unique, typed key for values that are not classes.",
+      "Selected Answer: A It avoids collisions when injecting plain objects, strings, or configuration."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/di/dependency-injection",
+    "question_no": "Angular Senior question 14",
+    "question": "What is the difference between providedIn: 'root' and providedIn: 'any'?",
+    "options": {
+      "A": "'root' creates one app-wide singleton; 'any' gives each injector that requests it a separate instance (for example, per lazy-loaded chunk)",
+      "B": "They are identical",
+      "C": "'any' is a singleton and 'root' is per-module",
+      "D": "'any' is not a valid value"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A 'root' registers a single instance for the whole application.",
+      "Selected Answer: A 'any' creates a separate instance per requesting injector, useful to avoid shared mutable state."
+    ],
+    "vote_counts": { "A": 86, "B": 5, "C": 5, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/DestroyRef",
+    "question_no": "Angular Senior question 15",
+    "question": "What problem do DestroyRef and takeUntilDestroyed() solve?",
+    "options": {
+      "A": "They automatically unsubscribe RxJS subscriptions and clean up when the injector or component is destroyed",
+      "B": "They create new subscriptions",
+      "C": "They replace HttpClient",
+      "D": "They manage route guards"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A DestroyRef provides an onDestroy callback for the current injection context.",
+      "Selected Answer: A takeUntilDestroyed() uses it to complete an observable subscription on destroy, preventing memory leaks."
+    ],
+    "vote_counts": { "A": 90, "B": 3, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/runInInjectionContext",
+    "question_no": "Angular Senior question 16",
+    "question": "What is runInInjectionContext() used for?",
+    "options": {
+      "A": "Running code that calls inject() inside an explicit injection context when no natural context exists",
+      "B": "Creating a new component",
+      "C": "Registering a route",
+      "D": "Running SSR hydration"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A runInInjectionContext(injector, fn) executes fn with the given injector as the active injection context.",
+      "Selected Answer: A It is useful for calling inject() from event handlers or other non-injection contexts."
+    ],
+    "vote_counts": { "A": 87, "B": 4, "C": 4, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/templates/control-flow",
+    "question_no": "Angular Senior question 17",
+    "question": "Why does @for require or strongly recommend a track expression?",
+    "options": {
+      "A": "To give each item a stable identity so Angular can reuse and reorder DOM nodes efficiently",
+      "B": "To sort the collection",
+      "C": "To filter the collection",
+      "D": "To trigger change detection"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The track expression identifies each item so Angular can update the minimal set of DOM nodes.",
+      "Selected Answer: A Without a stable key, list updates can cause unnecessary DOM re-creation."
+    ],
+    "vote_counts": { "A": 93, "B": 2, "C": 2, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/defer",
+    "question_no": "Angular Senior question 18",
+    "question": "Choose two valid triggers for the @defer block.",
+    "options": {
+      "A": "on viewport",
+      "B": "on idle",
+      "C": "on compile",
+      "D": "on destroy"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AB on viewport and on idle are valid @defer triggers.",
+      "Selected Answer: AB Other valid triggers include on interaction, on hover, on timer, when, and on immediate."
+    ],
+    "vote_counts": { "A": 49, "B": 47, "C": 2, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A, B",
+    "correct_answer": "A, B"
+  },
+  {
+    "url": "https://angular.dev/guide/templates/variables",
+    "question_no": "Angular Senior question 19",
+    "question": "What does the @let template syntax do?",
+    "options": {
+      "A": "Declares a local variable with a reusable expression inside the template",
+      "B": "Creates a two-way binding",
+      "C": "Imports a module",
+      "D": "Defines a new component"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @let name = expression; declares a template-local variable that can be referenced below.",
+      "Selected Answer: A It avoids calling the same method or expression multiple times in a template."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/components/content-projection",
+    "question_no": "Angular Senior question 20",
+    "question": "How do you project different content into multiple named slots?",
+    "options": {
+      "A": "Use <ng-content select=\"...\"> with matching CSS selectors on the projected elements",
+      "B": "Use multiple <router-outlet> elements",
+      "C": "Use @Input for all content",
+      "D": "Use <ng-template #slot>"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The select attribute of ng-content projects elements matching the given selector into that slot.",
+      "Selected Answer: A This enables multi-slot content projection in a component."
+    ],
+    "vote_counts": { "A": 90, "B": 3, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/templates/control-flow",
+    "question_no": "Angular Senior question 21",
+    "question": "What must accompany @switch in the built-in control flow?",
+    "options": {
+      "A": "One or more @case blocks and an optional @default block",
+      "B": "A @for block",
+      "C": "A @defer block",
+      "D": "An *ngSwitch directive"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A @switch (expr) { @case (val) {...} @default {...} } is the modern control flow syntax.",
+      "Selected Answer: A It replaces the legacy *ngSwitch/*ngSwitchCase directives."
+    ],
+    "vote_counts": { "A": 91, "B": 3, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/routing/common-router-tasks",
+    "question_no": "Angular Senior question 22",
+    "question": "How do you lazy-load a standalone component route?",
+    "options": {
+      "A": "Use loadComponent with a dynamic import: () => import('./x').then(m => m.XComponent)",
+      "B": "Use the component property with a static import",
+      "C": "Use loadChildren with a string module path",
+      "D": "Use redirectTo"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A loadComponent takes a function returning a Promise of the component type.",
+      "Selected Answer: A The dynamic import creates a separate lazy chunk loaded only when the route is activated."
+    ],
+    "vote_counts": { "A": 92, "B": 3, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/router/CanActivateFn",
+    "question_no": "Angular Senior question 23",
+    "question": "What can a functional CanActivateFn guard return?",
+    "options": {
+      "A": "A boolean, a UrlTree, or an Observable or Promise resolving to either",
+      "B": "Only a boolean",
+      "C": "Only a UrlTree",
+      "D": "A component instance"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Functional guards can return boolean | UrlTree | Observable<boolean | UrlTree> | Promise<boolean | UrlTree>.",
+      "Selected Answer: A Returning a UrlTree redirects the navigation."
+    ],
+    "vote_counts": { "A": 88, "B": 5, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/router/withComponentInputBinding",
+    "question_no": "Angular Senior question 24",
+    "question": "What does withComponentInputBinding() enable?",
+    "options": {
+      "A": "Binding route params, query params, and resolved data directly to component @Input signals",
+      "B": "Enabling two-way binding in forms",
+      "C": "Lazy loading modules",
+      "D": "Server-side rendering"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A withComponentInputBinding() maps route information to component inputs instead of using ActivatedRoute.",
+      "Selected Answer: A It works with signal inputs and reduces boilerplate in routed components."
+    ],
+    "vote_counts": { "A": 87, "B": 4, "C": 4, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/router/ResolveFn",
+    "question_no": "Angular Senior question 25",
+    "question": "What is the purpose of a ResolveFn resolver?",
+    "options": {
+      "A": "Pre-fetch data before the route is activated so it is available when the component renders",
+      "B": "Decide whether a route can be activated",
+      "C": "Provide a fallback 404 page",
+      "D": "Track route changes for analytics"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A A resolver returns data that the router waits for before activating the route.",
+      "Selected Answer: A The resolved data can be read from ActivatedRoute or bound to inputs with withComponentInputBinding()."
+    ],
+    "vote_counts": { "A": 88, "B": 4, "C": 4, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/router/PreloadAllModules",
+    "question_no": "Angular Senior question 26",
+    "question": "What does PreloadAllModules do?",
+    "options": {
+      "A": "Preloads all lazy-loaded routes in the background after the app is ready",
+      "B": "Eagerly loads every route at startup",
+      "C": "Disables lazy loading",
+      "D": "Loads modules only on demand"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A PreloadAllModules preloads lazy chunks after the initial bundle is ready, balancing startup and navigation speed.",
+      "Selected Answer: A Custom preloading strategies can be written for finer control."
+    ],
+    "vote_counts": { "A": 86, "B": 5, "C": 4, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/http/interceptors",
+    "question_no": "Angular Senior question 27",
+    "question": "How are functional HTTP interceptors registered?",
+    "options": {
+      "A": "Pass withInterceptors([...]) to provideHttpClient()",
+      "B": "Add them to a component providers array",
+      "C": "Decorate them with @Injectable only",
+      "D": "Register them with the Router"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A provideHttpClient(withInterceptors([authInterceptor])) registers functional interceptors.",
+      "Selected Answer: A They run in order for every HttpClient request."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/signals/rxjs-interop",
+    "question_no": "Angular Senior question 28",
+    "question": "What do toSignal() and toObservable() do?",
+    "options": {
+      "A": "Bridge RxJS observables and Angular signals in both directions",
+      "B": "Convert templates to components",
+      "C": "Create new HttpClient instances",
+      "D": "Replace the Router"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A toSignal() converts an Observable into a Signal; toObservable() converts a Signal into an Observable.",
+      "Selected Answer: A They live in @angular/core/rxjs-interop."
+    ],
+    "vote_counts": { "A": 90, "B": 3, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/rxjs-interop/takeUntilDestroyed",
+    "question_no": "Angular Senior question 29",
+    "question": "What is the recommended modern way to prevent RxJS subscription leaks in a component?",
+    "options": {
+      "A": "Use takeUntilDestroyed() so the subscription completes when the component's injector is destroyed",
+      "B": "Store subscriptions in an array and never clean them up",
+      "C": "Call subscribe() directly in the template",
+      "D": "Use setTimeout to defer cleanup"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A takeUntilDestroyed() completes the stream when the current DestroyRef is destroyed.",
+      "Selected Answer: A It removes the need for manual ngOnDestroy unsubscribe boilerplate."
+    ],
+    "vote_counts": { "A": 91, "B": 3, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/http/making-requests",
+    "question_no": "Angular Senior question 30",
+    "question": "What does httpResource() provide?",
+    "options": {
+      "A": "A reactive, signal-based HTTP request that reloads when its dependent signals change",
+      "B": "A replacement for the Router",
+      "C": "A CSS framework",
+      "D": "A form control"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A httpResource() creates a resource that fetches data and re-fetches when its reactive dependencies change.",
+      "Selected Answer: A It is the modern signal-based alternative to manual HttpClient subscriptions."
+    ],
+    "vote_counts": { "A": 85, "B": 5, "C": 5, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/http/interceptors",
+    "question_no": "Angular Senior question 31",
+    "question": "Which is a typical use case for an HTTP interceptor?",
+    "options": {
+      "A": "Attaching auth headers or retrying and logging requests globally",
+      "B": "Defining routes",
+      "C": "Compiling templates",
+      "D": "Styling components"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Interceptors run on every request/response and are ideal for auth, logging, caching, and retries.",
+      "Selected Answer: A They keep cross-cutting HTTP concerns out of individual services."
+    ],
+    "vote_counts": { "A": 93, "B": 2, "C": 2, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/forms/reactive-forms",
+    "question_no": "Angular Senior question 32",
+    "question": "What does FormBuilder.group() return?",
+    "options": {
+      "A": "A FormGroup built from a configuration object of controls",
+      "B": "An array of controls",
+      "C": "A template variable",
+      "D": "An observable"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A FormBuilder.group() creates a FormGroup with the controls defined in its configuration object.",
+      "Selected Answer: A It is a convenient shortcut over manually instantiating FormGroup and FormControl."
+    ],
+    "vote_counts": { "A": 90, "B": 4, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/forms/form-validation",
+    "question_no": "Angular Senior question 33",
+    "question": "What must a custom async validator return?",
+    "options": {
+      "A": "An Observable or Promise resolving to a ValidationErrors object or null",
+      "B": "A boolean",
+      "C": "A string",
+      "D": "A FormControl"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Async validators return Observable<ValidationErrors | null> or Promise<ValidationErrors | null>.",
+      "Selected Answer: A null (or a resolved value without errors) means the control is valid."
+    ],
+    "vote_counts": { "A": 88, "B": 5, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/forms/typed-forms",
+    "question_no": "Angular Senior question 34",
+    "question": "What do Angular typed forms (generic FormControl, FormRecord, etc.) improve?",
+    "options": {
+      "A": "Compile-time type safety and autocompletion for form control values",
+      "B": "Runtime performance only",
+      "C": "Server-side rendering",
+      "D": "CSS encapsulation"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Typed forms give strong types for control values and catch mismatches at compile time.",
+      "Selected Answer: A FormRecord is useful for dynamic key-value control collections."
+    ],
+    "vote_counts": { "A": 87, "B": 5, "C": 4, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/forms/AbstractControl",
+    "question_no": "Angular Senior question 35",
+    "question": "Choose two observables exposed by FormControl and FormGroup for reacting to changes.",
+    "options": {
+      "A": "valueChanges",
+      "B": "statusChanges",
+      "C": "routerEvents",
+      "D": "httpResponses"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: AB valueChanges emits the control value and statusChanges emits validity status changes.",
+      "Selected Answer: AB Both return RxJS Observables that can be piped, debounced, or subscribed to."
+    ],
+    "vote_counts": { "A": 48, "B": 46, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A, B",
+    "correct_answer": "A, B"
+  },
+  {
+    "url": "https://angular.dev/guide/hydration",
+    "question_no": "Angular Senior question 36",
+    "question": "What does provideClientHydration() do?",
+    "options": {
+      "A": "Reuses the server-rendered DOM on the client instead of re-rendering from scratch",
+      "B": "Disables SSR",
+      "C": "Adds a service worker",
+      "D": "Preloads routes"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Hydration attaches event listeners and state to existing server-rendered DOM nodes.",
+      "Selected Answer: A It avoids a flash of re-rendered content and improves startup performance."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 4, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/incremental-hydration",
+    "question_no": "Angular Senior question 37",
+    "question": "What does incremental hydration (@defer(hydrate ...) / withIncrementalHydration()) enable?",
+    "options": {
+      "A": "Hydrating parts of the page only when triggered, instead of the whole page upfront",
+      "B": "Eagerly hydrating everything at once",
+      "C": "Removing the DOM",
+      "D": "Disabling change detection"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Incremental hydration hydrates deferred content when its trigger fires, reducing initial work.",
+      "Selected Answer: A It applies hydration lazily to @defer blocks with hydrate triggers."
+    ],
+    "vote_counts": { "A": 86, "B": 5, "C": 4, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/routing/common-router-tasks",
+    "question_no": "Angular Senior question 38",
+    "question": "What is the primary benefit of lazy-loading routes?",
+    "options": {
+      "A": "A smaller initial bundle and faster startup, because code loads only when needed",
+      "B": "More CSS in the main bundle",
+      "C": "Faster hydration of every route",
+      "D": "No measurable benefit"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Lazy loading splits the app into chunks that are fetched on navigation.",
+      "Selected Answer: A This reduces the JavaScript needed for the initial render."
+    ],
+    "vote_counts": { "A": 92, "B": 3, "C": 3, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/components/standalone",
+    "question_no": "Angular Senior question 39",
+    "question": "How do standalone components help bundle size?",
+    "options": {
+      "A": "Unused imports can be tree-shaken because dependencies are declared per component instead of in a shared NgModule",
+      "B": "They duplicate dependencies",
+      "C": "They disable tree-shaking",
+      "D": "They require a global module"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Standalone components declare their own imports, letting the compiler drop unused code.",
+      "Selected Answer: A NgModules can create shared, hard-to-shake dependency graphs."
+    ],
+    "vote_counts": { "A": 88, "B": 4, "C": 4, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/tools/cli/build",
+    "question_no": "Angular Senior question 40",
+    "question": "Which build tool does the modern Angular application builder (@angular/build) use?",
+    "options": {
+      "A": "esbuild and Vite, replacing the legacy webpack-based builder",
+      "B": "Grunt",
+      "C": "Gulp",
+      "D": "Babel CLI only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The application builder is powered by esbuild and Vite for faster builds.",
+      "Selected Answer: A It replaces the older webpack-based @angular-devkit/build-angular pipeline."
+    ],
+    "vote_counts": { "A": 90, "B": 3, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/testing",
+    "question_no": "Angular Senior question 41",
+    "question": "What is TestBed used for in Angular tests?",
+    "options": {
+      "A": "Configuring a testing module with components, services, and providers, and creating test fixtures",
+      "B": "Running the production server",
+      "C": "Compiling Sass",
+      "D": "Deploying the application"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A TestBed.configureTestingModule() sets up the injector and declarations for a unit test.",
+      "Selected Answer: A TestBed.createComponent() returns a ComponentFixture for testing a component."
+    ],
+    "vote_counts": { "A": 91, "B": 3, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/testing/components-scenarios",
+    "question_no": "Angular Senior question 42",
+    "question": "What does ComponentFixture.detectChanges() do in a test?",
+    "options": {
+      "A": "Runs change detection and updates the DOM so assertions reflect the current state",
+      "B": "Destroys the fixture",
+      "C": "Starts the application",
+      "D": "Creates a new component instance"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A detectChanges() triggers change detection and binds the template to the component state.",
+      "Selected Answer: A Call it after mutating inputs or component state before asserting on the rendered DOM."
+    ],
+    "vote_counts": { "A": 90, "B": 4, "C": 3, "D": 3 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/api/core/testing/fakeAsync",
+    "question_no": "Angular Senior question 43",
+    "question": "What do fakeAsync() and tick() provide in tests?",
+    "options": {
+      "A": "Synchronous control over timers, promises, and microtasks so async code can be tested deterministically",
+      "B": "Real network mocking",
+      "C": "Browser rendering",
+      "D": "CSS snapshots"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A fakeAsync() patches timers and microtasks; tick() advances the fake clock synchronously.",
+      "Selected Answer: A It lets you test debounced or delayed logic without real waiting."
+    ],
+    "vote_counts": { "A": 89, "B": 4, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/testing",
+    "question_no": "Angular Senior question 44",
+    "question": "How do you replace a service with a fake in a TestBed?",
+    "options": {
+      "A": "Provide an override with { provide: MyService, useValue: fakeService } or useFactory",
+      "B": "Delete the service",
+      "C": "Use @Input on the service",
+      "D": "Edit the production code"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A TestBed.overrideProvider() or a providers array with useValue/useFactory swaps the implementation.",
+      "Selected Answer: A This isolates the unit under test from real dependencies."
+    ],
+    "vote_counts": { "A": 90, "B": 3, "C": 3, "D": 4 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://angular.dev/guide/testing",
+    "question_no": "Angular Senior question 45",
+    "question": "Why might you call TestBed.flushEffects() or use manual change detection when testing effects and signals?",
+    "options": {
+      "A": "Effects are scheduled asynchronously, so flushing makes their side effects deterministic in the test",
+      "B": "Signals cannot be tested at all",
+      "C": "Effects run only in production",
+      "D": "To skip the test"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Effects run as scheduled tasks; flushing them ensures their callbacks have executed before assertions.",
+      "Selected Answer: A In zoneless tests, manual change detection or fixture.detectChanges() controls when views update."
+    ],
+    "vote_counts": { "A": 86, "B": 4, "C": 5, "D": 5 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  }
+]

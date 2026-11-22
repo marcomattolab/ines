@@ -1,0 +1,238 @@
+[
+  {
+    "url": "https://example.com/sql/question-1",
+    "question_no": "SQL topic 1 question 1",
+    "question": "Which SQL statement is used to retrieve data from a table?",
+    "options": {
+      "A": "GET",
+      "B": "SELECT",
+      "C": "FETCH",
+      "D": "READ"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B SELECT is the standard SQL statement used to query and retrieve rows from a table."
+    ],
+    "vote_counts": { "A": 2, "B": 95, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/sql/question-2",
+    "question_no": "SQL topic 1 question 2",
+    "question": "Which clause is used to filter rows returned by a SELECT statement?",
+    "options": {
+      "A": "FILTER",
+      "B": "GROUP BY",
+      "C": "WHERE",
+      "D": "HAVING"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C The WHERE clause filters rows before grouping or aggregation."
+    ],
+    "vote_counts": { "A": 1, "B": 4, "C": 93, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/sql/question-3",
+    "question_no": "SQL topic 1 question 3",
+    "question": "Which keyword is used to sort the result set?",
+    "options": {
+      "A": "SORT BY",
+      "B": "ORDER BY",
+      "C": "GROUP BY",
+      "D": "ARRANGE"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B ORDER BY sorts the result set, by default in ascending order."
+    ],
+    "vote_counts": { "A": 3, "B": 94, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/sql/question-4",
+    "question_no": "SQL topic 1 question 4",
+    "question": "Which statement is used to add new rows to a table?",
+    "options": {
+      "A": "INSERT INTO",
+      "B": "ADD ROW",
+      "C": "CREATE ROW",
+      "D": "APPEND"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: A INSERT INTO adds one or more new rows to a table."],
+    "vote_counts": { "A": 96, "B": 2, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/sql/question-5",
+    "question_no": "SQL topic 1 question 5",
+    "question": "Which statement is used to modify existing rows?",
+    "options": {
+      "A": "MODIFY",
+      "B": "CHANGE",
+      "C": "UPDATE",
+      "D": "SET ROW"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C UPDATE modifies existing rows, usually with a WHERE clause to target specific rows."
+    ],
+    "vote_counts": { "A": 2, "B": 1, "C": 95, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/sql/question-6",
+    "question_no": "SQL topic 1 question 6",
+    "question": "Which statement removes rows from a table?",
+    "options": {
+      "A": "REMOVE",
+      "B": "DELETE",
+      "C": "DROP",
+      "D": "TRUNCATE"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B DELETE removes rows from a table. DROP removes the table itself, and TRUNCATE removes all rows quickly without a WHERE clause."
+    ],
+    "vote_counts": { "A": 1, "B": 92, "C": 4, "D": 3 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/sql/question-7",
+    "question_no": "SQL topic 2 question 1",
+    "question": "Which JOIN returns only rows that have matching values in both tables?",
+    "options": {
+      "A": "LEFT JOIN",
+      "B": "RIGHT JOIN",
+      "C": "INNER JOIN",
+      "D": "FULL OUTER JOIN"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C INNER JOIN returns only the rows where the join condition matches in both tables."
+    ],
+    "vote_counts": { "A": 2, "B": 1, "C": 95, "D": 2 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/sql/question-8",
+    "question_no": "SQL topic 2 question 2",
+    "question": "Which JOIN returns all rows from the left table, with NULLs where there is no match?",
+    "options": {
+      "A": "LEFT JOIN",
+      "B": "INNER JOIN",
+      "C": "CROSS JOIN",
+      "D": "SELF JOIN"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A LEFT JOIN (LEFT OUTER JOIN) keeps every row from the left table."
+    ],
+    "vote_counts": { "A": 96, "B": 2, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/sql/question-9",
+    "question_no": "SQL topic 2 question 3",
+    "question": "Which aggregate function returns the number of rows?",
+    "options": {
+      "A": "SUM()",
+      "B": "AVG()",
+      "C": "COUNT()",
+      "D": "MAX()"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: C COUNT() returns the number of rows matching the query."],
+    "vote_counts": { "A": 2, "B": 1, "C": 96, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/sql/question-10",
+    "question_no": "SQL topic 2 question 4",
+    "question": "Which clause groups rows that have the same values in specified columns?",
+    "options": {
+      "A": "ORDER BY",
+      "B": "GROUP BY",
+      "C": "PARTITION BY",
+      "D": "DISTINCT"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B GROUP BY groups rows sharing the same values so aggregate functions can be applied."
+    ],
+    "vote_counts": { "A": 2, "B": 94, "C": 3, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/sql/question-11",
+    "question_no": "SQL topic 3 question 1",
+    "question": "What does a PRIMARY KEY constraint guarantee?",
+    "options": {
+      "A": "The column can contain duplicate values",
+      "B": "The column is unique and not NULL",
+      "C": "The column is automatically indexed only",
+      "D": "The column can reference another table"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B A PRIMARY KEY uniquely identifies each row and cannot be NULL."
+    ],
+    "vote_counts": { "A": 1, "B": 96, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/sql/question-12",
+    "question_no": "SQL topic 3 question 2",
+    "question": "What is a FOREIGN KEY?",
+    "options": {
+      "A": "A key that encrypts the table",
+      "B": "A column that references a primary key in another table",
+      "C": "A key used only for sorting",
+      "D": "A unique index on a non-null column"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B A FOREIGN KEY establishes a relationship by referencing a primary key in another table."
+    ],
+    "vote_counts": { "A": 1, "B": 95, "C": 2, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  }
+]

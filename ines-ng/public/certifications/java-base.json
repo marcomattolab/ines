@@ -1,0 +1,236 @@
+[
+  {
+    "url": "https://example.com/java-base/question-1",
+    "question_no": "Java Base topic 1 question 1",
+    "question": "Which method signature is the entry point of a Java application?",
+    "options": {
+      "A": "public static void main(String[] args)",
+      "B": "public void main(String args)",
+      "C": "public static int main(String[] args)",
+      "D": "private static void main(String[] args)"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The JVM looks for public static void main(String[] args) to start execution."
+    ],
+    "vote_counts": { "A": 97, "B": 1, "C": 1, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/java-base/question-2",
+    "question_no": "Java Base topic 1 question 2",
+    "question": "Which keyword is used to declare a constant in Java?",
+    "options": {
+      "A": "const",
+      "B": "static",
+      "C": "final",
+      "D": "immutable"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C The final keyword makes a variable's value unchangeable after assignment."
+    ],
+    "vote_counts": { "A": 4, "B": 2, "C": 93, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-base/question-3",
+    "question_no": "Java Base topic 1 question 3",
+    "question": "What is the default value of an int instance field?",
+    "options": {
+      "A": "null",
+      "B": "0",
+      "C": "-1",
+      "D": "undefined"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: B Numeric primitive instance fields default to 0."],
+    "vote_counts": { "A": 2, "B": 95, "C": 2, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-base/question-4",
+    "question_no": "Java Base topic 1 question 4",
+    "question": "Which collection preserves insertion order and allows duplicates?",
+    "options": {
+      "A": "HashSet",
+      "B": "HashMap",
+      "C": "ArrayList",
+      "D": "TreeSet"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C ArrayList is an ordered list that allows duplicates and preserves insertion order."
+    ],
+    "vote_counts": { "A": 2, "B": 1, "C": 94, "D": 3 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-base/question-5",
+    "question_no": "Java Base topic 2 question 1",
+    "question": "For objects, what is the difference between == and equals()?",
+    "options": {
+      "A": "== compares references, equals() compares content when overridden",
+      "B": "== compares content, equals() compares references",
+      "C": "They are always identical",
+      "D": "equals() only works on Strings"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A == checks reference identity; equals() checks logical equality when overridden (as in String)."
+    ],
+    "vote_counts": { "A": 95, "B": 2, "C": 1, "D": 2 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/java-base/question-6",
+    "question_no": "Java Base topic 2 question 2",
+    "question": "Which keyword is used to create a new object instance?",
+    "options": {
+      "A": "new",
+      "B": "create",
+      "C": "alloc",
+      "D": "instance"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A The new keyword invokes a constructor and allocates a new object."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/java-base/question-7",
+    "question_no": "Java Base topic 2 question 3",
+    "question": "What does JVM stand for?",
+    "options": {
+      "A": "Java Visual Machine",
+      "B": "Java Virtual Machine",
+      "C": "Just-in-time Virtual Machine",
+      "D": "Java Version Manager"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: B The JVM (Java Virtual Machine) executes Java bytecode."],
+    "vote_counts": { "A": 1, "B": 98, "C": 1, "D": 0 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-base/question-8",
+    "question_no": "Java Base topic 2 question 4",
+    "question": "Which loop is most appropriate when the number of iterations is unknown in advance?",
+    "options": {
+      "A": "for",
+      "B": "while",
+      "C": "do-while only",
+      "D": "for-each only"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: B A while loop repeats as long as a condition holds, which suits an unknown iteration count."
+    ],
+    "vote_counts": { "A": 2, "B": 93, "C": 3, "D": 2 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-base/question-9",
+    "question_no": "Java Base topic 3 question 1",
+    "question": "What is autoboxing in Java?",
+    "options": {
+      "A": "Automatic conversion between a primitive and its wrapper class",
+      "B": "Automatic garbage collection",
+      "C": "Automatic generation of getters and setters",
+      "D": "Automatic class loading"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A Autoboxing converts a primitive to its wrapper (e.g. int to Integer) and vice versa (unboxing)."
+    ],
+    "vote_counts": { "A": 95, "B": 2, "C": 2, "D": 1 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  },
+  {
+    "url": "https://example.com/java-base/question-10",
+    "question_no": "Java Base topic 3 question 2",
+    "question": "Which access modifier makes a member visible only within its own class?",
+    "options": {
+      "A": "public",
+      "B": "protected",
+      "C": "private",
+      "D": "default"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: C private members are accessible only inside the declaring class."
+    ],
+    "vote_counts": { "A": 1, "B": 1, "C": 97, "D": 1 },
+    "most_voted": "C",
+    "community_answer": "C",
+    "correct_answer": "C"
+  },
+  {
+    "url": "https://example.com/java-base/question-11",
+    "question_no": "Java Base topic 3 question 3",
+    "question": "What is the wrapper class for the primitive int?",
+    "options": {
+      "A": "Int",
+      "B": "Integer",
+      "C": "Number",
+      "D": "Int32"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": ["Selected Answer: B Integer is the wrapper class for the primitive int."],
+    "vote_counts": { "A": 1, "B": 97, "C": 1, "D": 1 },
+    "most_voted": "B",
+    "community_answer": "B",
+    "correct_answer": "B"
+  },
+  {
+    "url": "https://example.com/java-base/question-12",
+    "question_no": "Java Base topic 3 question 4",
+    "question": "Which statement is used to handle exceptions?",
+    "options": {
+      "A": "try-catch",
+      "B": "if-else",
+      "C": "switch-case",
+      "D": "assert"
+    },
+    "images": [],
+    "is_hotspot": false,
+    "discussion": [
+      "Selected Answer: A try-catch (optionally with finally) handles checked and unchecked exceptions."
+    ],
+    "vote_counts": { "A": 98, "B": 1, "C": 1, "D": 0 },
+    "most_voted": "A",
+    "community_answer": "A",
+    "correct_answer": "A"
+  }
+]

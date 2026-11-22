@@ -43,6 +43,8 @@ export class CertificationSoundService {
   private introAudio: HTMLAudioElement | null = null;
   private bgAudio: HTMLAudioElement | null = null;
   private sfxAudio: HTMLAudioElement | null = null;
+  /** Whether the background loop is currently meant to be playing. */
+  private bgActive = false;
 
   constructor() {
     if (typeof Audio !== 'undefined') {
@@ -92,18 +94,26 @@ export class CertificationSoundService {
 
   playIntro(): void {
     if (!this.enabled() || !this.introAudio) return;
+    this.bgActive = false;
     this.stopBackground();
+    this.stopSfx();
     this.introAudio.currentTime = 0;
     this.introAudio.play().catch(() => {});
   }
 
   playBackground(): void {
     if (!this.enabled() || !this.bgAudio) return;
+    this.bgActive = true;
+    // Already playing: don't restart it (this was cutting the music short
+    // every time a question was navigated).
+    if (!this.bgAudio.paused) return;
+    this.stopSfx();
     this.bgAudio.currentTime = 0;
     this.bgAudio.play().catch(() => {});
   }
 
   stopBackground(): void {
+    this.bgActive = false;
     if (!this.bgAudio) return;
     this.bgAudio.pause();
     this.bgAudio.currentTime = 0;
@@ -114,12 +124,10 @@ export class CertificationSoundService {
   }
 
   playCorrect(): void {
-    this.stopBackground();
     this.playSfx(SOUNDS['correct']);
   }
 
   playWrong(): void {
-    this.stopBackground();
     this.playSfx(SOUNDS['wrong']);
   }
 
@@ -139,12 +147,27 @@ export class CertificationSoundService {
     }
   }
 
+  private resumeBackground(): void {
+    if (!this.enabled() || !this.bgActive || !this.bgAudio || !this.bgAudio.paused) return;
+    this.bgAudio.play().catch(() => {});
+  }
+
   private playSfx(cfg: SoundDef): void {
     if (!this.enabled() || typeof Audio === 'undefined') return;
     try {
       this.stopSfx();
-      this.sfxAudio = this.createAudio(cfg, false);
-      this.sfxAudio.play().catch(() => {});
+
+      // A one-shot sound (select / correct / wrong) must never overlap the
+      // background loop: pause it now and resume it when the sfx finishes.
+      const resumeBg = this.bgActive && this.bgAudio && !this.bgAudio.paused;
+      if (resumeBg) {
+        this.bgAudio!.pause();
+      }
+
+      const audio = this.createAudio(cfg, false);
+      this.sfxAudio = audio;
+      audio.addEventListener('ended', () => this.resumeBackground());
+      audio.play().catch(() => {});
     } catch {
       /* ignore audio error */
     }

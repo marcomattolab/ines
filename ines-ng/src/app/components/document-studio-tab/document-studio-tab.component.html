@@ -45,6 +45,10 @@
           <mat-icon class="scale-75">refresh</mat-icon>
         </button>
       </div>
+
+      <button class="ds-info-btn" (click)="openInfo()" title="Come funziona">
+        <mat-icon class="scale-75">info</mat-icon>
+      </button>
     </div>
   </div>
 
@@ -281,4 +285,27 @@
       </div>
     </div>
   </div>
+
+  @if (infoOpen()) {
+    <div class="ds-modal-backdrop" (click)="closeInfo()">
+      <div class="ds-modal" (click)="$event.stopPropagation()">
+        <div class="ds-modal-head">
+          <h3>📄 Document Studio — Guida</h3>
+          <button class="ds-modal-close" (click)="closeInfo()" title="Chiudi">✕</button>
+        </div>
+        <div class="ds-modal-body" #modalBody>
+          @if (infoLoading()) {
+            <div class="ds-modal-loading">
+              <div class="ds-spinner"></div>
+              Caricamento documentazione…
+            </div>
+          } @else if (infoError()) {
+            <p class="ds-modal-error">{{ infoError() }}</p>
+          } @else if (infoHtml(); as doc) {
+            <div [innerHTML]="doc"></div>
+          }
+        </div>
+      </div>
+    </div>
+  }
 </div>

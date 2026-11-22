@@ -919,6 +919,29 @@
                 <option [value]="n">{{ n }} slides</option>
               }
             </select>
+            <select
+              class="bg-[var(--bg-1)] border border-[var(--border)] rounded-xl px-2 py-2 text-sm outline-none"
+              [value]="slideStyle()"
+              (change)="slideStyle.set($any($event.target).value)"
+              title="Design style"
+            >
+              <option value="modern">Modern</option>
+              <option value="minimal">Minimal</option>
+              <option value="bold">Bold</option>
+              <option value="corporate">Corporate</option>
+            </select>
+            <select
+              class="bg-[var(--bg-1)] border border-[var(--border)] rounded-xl px-2 py-2 text-sm outline-none"
+              [value]="slideTheme()"
+              (change)="slideTheme.set($any($event.target).value)"
+              title="Color theme"
+            >
+              <option value="professional">Blue</option>
+              <option value="ocean">Cyan</option>
+              <option value="forest">Green</option>
+              <option value="sunset">Orange</option>
+              <option value="monochrome">Mono</option>
+            </select>
             <app-button
               variant="primary"
               (onClick)="generateSlides()"

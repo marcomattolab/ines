@@ -192,6 +192,61 @@ p, li { font-size: clamp(1rem, 1.8vw, 1.1rem); color: var(--color-text); }
 .nav-btn:hover { background:var(--color-primary); color:#000; border-color:var(--color-primary);
   transform:translateY(-1px); }
 .page-indicator { color:var(--color-text-dim); font-size:0.8rem; font-family:var(--font-mono); }
+
+/* Title kicker badge */
+.hero-kicker {
+  display: inline-block; padding: 6px 16px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary); font-family: var(--font-mono); font-size: 0.78rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 22px;
+}
+
+/* Agenda */
+.agenda-list { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.agenda-item { display: flex; align-items: flex-start; gap: 20px; padding: 16px 20px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); }
+.agenda-num { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 800;
+  color: var(--color-primary); line-height: 1; min-width: 42px; }
+.agenda-content h3 { margin-bottom: 2px; }
+.agenda-content p { font-size: 0.9rem; color: var(--color-text-dim); }
+
+/* Numbered list */
+.numbered-list { display: flex; flex-direction: column; gap: 18px; margin-top: 8px; }
+.numbered-item { display: flex; align-items: flex-start; gap: 20px; }
+.numbered-num { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+  font-family: var(--font-mono); font-weight: 800; font-size: 1.1rem; }
+.numbered-content { padding-top: 4px; }
+.numbered-content h4 { margin-bottom: 2px; }
+.numbered-content p { font-size: 0.9rem; color: var(--color-text-dim); }
+
+/* Big number */
+.big-number-slide { background: var(--color-bg) !important; position: relative; }
+.big-number-value { display: block; font-size: clamp(6rem, 18vw, 12rem); font-weight: 900;
+  line-height: 0.95; letter-spacing: -0.03em; margin: 12px 0 8px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Comparison */
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 8px; }
+.comparison-col { background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: 26px 28px; }
+.comparison-inner .comparison-title { margin-bottom: 14px; font-size: 1.3rem; }
+.comparison-inner .bullet-list { gap: 12px; }
+
+/* Visual / image placeholder */
+.visual-frame { display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 16/7; background: var(--color-muted); border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg); margin-top: 8px; }
+.visual-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.visual-icon { font-size: 2.6rem; color: var(--color-primary); opacity: 0.5; }
+.visual-label { font-size: 0.9rem; color: var(--color-text-dim); }
+.visual-caption { margin-top: 16px; text-align: center; font-size: 0.9rem; color: var(--color-text-dim); }
 `;
 
 export const PRESENTATION_SYSTEM_PROMPT = `You are an elite presentation designer. Generate a complete, self-contained HTML slide deck.

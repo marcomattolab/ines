@@ -26,7 +26,12 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { JsonParserService } from '../../core/services/json-parser.service';
 import { DomUtilsService } from '../../core/services/dom-utils.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { SlideDeckService, SLIDE_COLOR_THEMES } from '../../core/services/slide-deck.service';
+import {
+  SlideDeckService,
+  SLIDE_COLOR_THEMES,
+  SlideColorTheme,
+  SlideStyle,
+} from '../../core/services/slide-deck.service';
 import { VoiceAssistantService } from '../../core/services/voice-assistant.service';
 import { StorageService } from '../../core/services/storage.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -193,6 +198,8 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
 
   slideTopic = signal('');
   slideCountCustom = signal(10);
+  slideStyle = signal<SlideStyle>('modern');
+  slideTheme = signal<SlideColorTheme>('professional');
   slideHtml = signal('');
   slideCount = signal(0);
   slideCurrent = signal(0);
@@ -263,6 +270,16 @@ export class LearningTabComponent implements AfterViewInit, OnDestroy, OnInit {
   @HostListener('window:lm-regen')
   onMindMapRegen() {
     this.generateMindMap();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onSlideKeys(e: KeyboardEvent) {
+    if (this.activeSubTab() !== 'slides' || !this.slideHtml() || this.isGenerating()) return;
+    if (e.key === 'ArrowRight') {
+      this.slideNext();
+    } else if (e.key === 'ArrowLeft') {
+      this.slidePrev();
+    }
   }
 
   @HostListener('dragover', ['$event'])
@@ -992,8 +1009,8 @@ Answer: ${a}`;
         topic,
         context: context || undefined,
         slideCount: this.slideCountCustom(),
-        style: 'modern',
-        colors: SLIDE_COLOR_THEMES.professional,
+        style: this.slideStyle(),
+        colors: SLIDE_COLOR_THEMES[this.slideTheme()],
         logo: 'INES',
         author: '',
         contact: '',

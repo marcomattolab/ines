@@ -26,6 +26,7 @@ export interface Slide {
   title?: string;
   subtitle?: string;
   text?: string;
+  kicker?: string;
   bullets?: string[];
   stats?: { number?: string; label?: string; desc?: string }[];
   cards?: { icon?: string; title?: string; text?: string }[];
@@ -35,6 +36,11 @@ export interface Slide {
   meta?: string[];
   items?: { marker?: string; title?: string; text?: string }[];
   contact?: string;
+  value?: string;
+  caption?: string;
+  visual?: string;
+  left?: { title?: string; points?: string[] };
+  right?: { title?: string; points?: string[] };
 }
 
 export interface SlideDeckOptions {
@@ -55,24 +61,30 @@ export interface SlideDeck {
   html: string;
 }
 
-const SYSTEM_JSON = `You are a presentation author. Create a slide deck as a JSON array.
+const SYSTEM_JSON = `You are an elite presentation designer. Create a slide deck as a JSON array.
 Output ONLY the JSON array — no markdown fences, no explanations.
 
 Each slide object has a "type" field plus the content fields for that type:
-{"type":"title","title":"...","subtitle":"...","meta":["Author","Date"]}
-{"type":"bullets","heading":"...","bullets":["...","..."]}
-{"type":"stats","heading":"...","stats":[{"number":"42%","label":"...","desc":"..."}]}
-{"type":"cards","heading":"...","cards":[{"icon":"1","title":"...","text":"..."}]}
+{"type":"title","title":"...","subtitle":"...","kicker":"TAGLINE","meta":["Author","Date"]}
+{"type":"agenda","heading":"Agenda","items":[{"title":"...","text":"..."}]}
+{"type":"bullets","kicker":"OVERLINE","heading":"...","bullets":["...","..."]}
+{"type":"numbered","kicker":"OVERLINE","heading":"...","items":[{"title":"...","text":"..."}]}
+{"type":"stats","kicker":"OVERLINE","heading":"...","stats":[{"number":"42%","label":"...","desc":"..."}]}
+{"type":"cards","kicker":"OVERLINE","heading":"...","cards":[{"icon":"1","title":"...","text":"..."}]}
+{"type":"big-number","value":"92%","heading":"...","text":"..."}
 {"type":"quote","quote":"...","author":"..."}
+{"type":"comparison","kicker":"OVERLINE","heading":"...","left":{"title":"A","points":["..."]},"right":{"title":"B","points":["..."]}}
+{"type":"two-col","kicker":"OVERLINE","heading":"...","text":"...","bullets":["...","..."]}
+{"type":"image","kicker":"OVERLINE","heading":"...","visual":"Concept diagram","caption":"..."}
+{"type":"timeline","kicker":"OVERLINE","heading":"...","items":[{"marker":"2024","title":"...","text":"..."}]}
 {"type":"divider","number":"02","title":"Section title","subtitle":"..."}
-{"type":"two-col","heading":"...","text":"...","bullets":["...","..."]}
-{"type":"timeline","heading":"...","items":[{"marker":"2024","title":"...","text":"..."}]}
 {"type":"closing","title":"Thank you","subtitle":"...","author":"...","contact":"..."}
 
 Rules:
-- First slide type "title", last slide type "closing".
-- Vary layouts; include at least one "stats", one "quote", and one "timeline" or "cards".
-- 3-5 bullets max per slide, 6-14 words each. Use concrete numbers and dates.
+- Slide 1 MUST be "title", slide 2 MUST be "agenda", the last slide MUST be "closing".
+- Insert a "divider" before each major topic shift.
+- Vary layouts (never repeat the same type twice in a row) and include at least one "stats", one "quote", and one "timeline", "comparison" or "big-number".
+- Benefit-driven headlines. 3-5 bullets max per slide, 6-14 words each. Use concrete numbers and dates.
 - Write in the same language as the topic.`;
 
 const STYLE_GUIDES: Record<SlideStyle, string> = {
@@ -147,10 +159,32 @@ export class SlideDeckService {
         slide.title = str('title');
         slide.subtitle = str('subtitle');
         slide.text = str('text');
+        slide.kicker = str('kicker');
         slide.quote = str('quote');
         slide.author = str('author');
         slide.number = str('number');
         slide.contact = str('contact');
+        slide.value = str('value');
+        slide.caption = str('caption');
+        slide.visual = str('visual');
+        if (s['left'] && typeof s['left'] === 'object') {
+          const l = s['left'] as Record<string, unknown>;
+          slide.left = {
+            title: typeof l['title'] === 'string' ? l['title'] : undefined,
+            points: Array.isArray(l['points'])
+              ? (l['points'] as unknown[]).map(String).filter(Boolean)
+              : undefined,
+          };
+        }
+        if (s['right'] && typeof s['right'] === 'object') {
+          const r = s['right'] as Record<string, unknown>;
+          slide.right = {
+            title: typeof r['title'] === 'string' ? r['title'] : undefined,
+            points: Array.isArray(r['points'])
+              ? (r['points'] as unknown[]).map(String).filter(Boolean)
+              : undefined,
+          };
+        }
         if (Array.isArray(s['bullets'])) {
           slide.bullets = (s['bullets'] as unknown[]).map(String).filter((b) => b.trim());
         }
@@ -201,6 +235,21 @@ export class SlideDeckService {
         return !!(s.items?.length || s.heading);
       case 'two-col':
         return !!(s.text || s.bullets?.length || s.heading);
+      case 'agenda':
+      case 'numbered':
+        return !!(s.items?.length || s.heading);
+      case 'big-number':
+        return !!(s.value || s.heading);
+      case 'comparison':
+        return !!(
+          s.left?.title ||
+          s.left?.points?.length ||
+          s.right?.title ||
+          s.right?.points?.length ||
+          s.heading
+        );
+      case 'image':
+        return !!(s.visual || s.caption || s.heading);
       default:
         return !!(s.bullets?.length || s.heading || s.text);
     }
@@ -238,6 +287,7 @@ ${body}
   private renderSlide(s: Slide, n: number, o: SlideDeckOptions): string {
     const esc = (v?: string) => this.esc(v ?? '');
     const num = `data-slide-number="${n}"`;
+    const kicker = s.kicker ? `<div class="slide-label">${esc(s.kicker)}</div>` : '';
 
     switch (s.type) {
       case 'title': {
@@ -249,6 +299,7 @@ ${body}
         return `<section class="slide hero" ${num}>
   <div class="slide-content center">
     <div class="logo">${esc(o.logo || '')}</div>
+    ${s.kicker ? `<div class="hero-kicker">${esc(s.kicker)}</div>` : ''}
     <h1 class="title">${esc(s.title || o.topic)}</h1>
     ${s.subtitle ? `<p class="subtitle">${esc(s.subtitle)}</p>` : ''}
     ${meta ? `<div class="title-meta">${meta}</div>` : ''}
@@ -260,7 +311,7 @@ ${body}
         const lis = (s.bullets ?? []).map((b) => `<li>${esc(b)}</li>`).join('');
         return `<section class="slide" ${num}>
   <div class="slide-content">
-    <div class="slide-label">${esc(s.heading || '')}</div>
+    ${kicker}
     <h2 class="slide-heading">${esc(s.heading || '')}</h2>
     <div class="accent-bar"></div>
     <ul class="bullet-list">${lis}</ul>
@@ -278,7 +329,7 @@ ${body}
           .join('');
         return `<section class="slide" ${num}>
   <div class="slide-content">
-    <div class="slide-label">${esc(s.heading || '')}</div>
+    ${kicker}
     <h2 class="slide-heading">${esc(s.heading || '')}</h2>
     <div class="accent-bar"></div>
     <div class="stats-grid">${cards}</div>
@@ -296,7 +347,7 @@ ${body}
           .join('');
         return `<section class="slide" ${num}>
   <div class="slide-content">
-    <div class="slide-label">${esc(s.heading || '')}</div>
+    ${kicker}
     <h2 class="slide-heading center">${esc(s.heading || '')}</h2>
     <div class="accent-bar center-bar"></div>
     <div class="cards-row">${cards}</div>
@@ -326,7 +377,7 @@ ${body}
         const lis = (s.bullets ?? []).map((b) => `<li>${esc(b)}</li>`).join('');
         return `<section class="slide" ${num}>
   <div class="slide-content">
-    <div class="slide-label">${esc(s.heading || '')}</div>
+    ${kicker}
     <h2 class="slide-heading">${esc(s.heading || '')}</h2>
     <div class="accent-bar"></div>
     <div class="grid-2">
@@ -348,13 +399,86 @@ ${body}
           .join('');
         return `<section class="slide" ${num}>
   <div class="slide-content">
-    <div class="slide-label">${esc(s.heading || '')}</div>
+    ${kicker}
     <h2 class="slide-heading">${esc(s.heading || '')}</h2>
     <div class="accent-bar"></div>
     <div class="timeline">${items}</div>
   </div>
 </section>`;
       }
+
+      case 'agenda': {
+        const items = (s.items ?? [])
+          .map(
+            (it, i) =>
+              `<div class="agenda-item"><span class="agenda-num">${String(i + 1).padStart(2, '0')}</span><div class="agenda-content"><h3>${esc(it.title)}</h3>${it.text ? `<p>${esc(it.text)}</p>` : ''}</div></div>`,
+          )
+          .join('');
+        return `<section class="slide" ${num}>
+  <div class="slide-content">
+    ${kicker}
+    <h2 class="slide-heading">${esc(s.heading || 'Agenda')}</h2>
+    <div class="accent-bar"></div>
+    <div class="agenda-list">${items}</div>
+  </div>
+</section>`;
+      }
+
+      case 'numbered': {
+        const items = (s.items ?? [])
+          .map(
+            (it, i) =>
+              `<div class="numbered-item"><span class="numbered-num">${i + 1}</span><div class="numbered-content"><h4>${esc(it.title)}</h4>${it.text ? `<p>${esc(it.text)}</p>` : ''}</div></div>`,
+          )
+          .join('');
+        return `<section class="slide" ${num}>
+  <div class="slide-content">
+    ${kicker}
+    <h2 class="slide-heading">${esc(s.heading || '')}</h2>
+    <div class="accent-bar"></div>
+    <div class="numbered-list">${items}</div>
+  </div>
+</section>`;
+      }
+
+      case 'big-number':
+        return `<section class="slide big-number-slide" ${num}>
+  <div class="slide-content center">
+    ${kicker}
+    <span class="big-number-value">${esc(s.value || '')}</span>
+    <h2 class="slide-heading">${esc(s.heading || '')}</h2>
+    ${s.text ? `<p class="body-lg">${esc(s.text)}</p>` : ''}
+  </div>
+</section>`;
+
+      case 'comparison': {
+        const col = (side?: { title?: string; points?: string[] }) => {
+          const title = side?.title ? `<h3 class="comparison-title">${esc(side.title)}</h3>` : '';
+          const lis = (side?.points ?? []).map((p) => `<li>${esc(p)}</li>`).join('');
+          return `<div class="comparison-col"><div class="comparison-inner">${title}<ul class="bullet-list">${lis}</ul></div></div>`;
+        };
+        return `<section class="slide" ${num}>
+  <div class="slide-content">
+    ${kicker}
+    <h2 class="slide-heading">${esc(s.heading || '')}</h2>
+    <div class="accent-bar"></div>
+    <div class="comparison-grid">${col(s.left)}${col(s.right)}</div>
+  </div>
+</section>`;
+      }
+
+      case 'image':
+        return `<section class="slide" ${num}>
+  <div class="slide-content">
+    ${kicker}
+    <h2 class="slide-heading">${esc(s.heading || '')}</h2>
+    <div class="accent-bar"></div>
+    <div class="visual-frame">
+      <div class="visual-inner"><span class="visual-icon">◈</span><span class="visual-label">${esc(s.visual || 'Visual')}</span></div>
+    </div>
+    ${s.caption ? `<p class="visual-caption">${esc(s.caption)}</p>` : ''}
+  </div>
+</section>`;
 
       case 'closing':
       default:

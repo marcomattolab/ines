@@ -27,6 +27,15 @@ import {
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
+const STUDIO_PREFS_KEY = 'ines_doc_studio_prefs';
+
+interface StudioPrefs {
+  source: string;
+  output: string;
+  recursive: boolean;
+  overwrite: boolean;
+}
+
 @Component({
   selector: 'app-document-studio-tab',
   standalone: true,
@@ -82,6 +91,12 @@ export class DocumentStudioTabComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    const prefs = this.loadPrefs();
+    this.sourceDir.set(prefs.source);
+    this.outputDir.set(prefs.output);
+    this.recursive.set(prefs.recursive);
+    this.overwrite.set(prefs.overwrite);
+
     // Keep elapsed/ETA fresh on every poll update.
     effect(
       () => {
@@ -90,6 +105,9 @@ export class DocumentStudioTabComponent implements OnInit, OnDestroy {
       },
       { allowSignalWrites: true },
     );
+
+    // Persist folder paths and options.
+    effect(() => this.savePrefs());
 
     effect(() => {
       const err = this.studio.error();
@@ -150,6 +168,40 @@ export class DocumentStudioTabComponent implements OnInit, OnDestroy {
 
   closeInfo(): void {
     this.infoOpen.set(false);
+  }
+
+  private loadPrefs(): StudioPrefs {
+    try {
+      const raw = localStorage.getItem(STUDIO_PREFS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw) as Partial<StudioPrefs>;
+        return {
+          source: typeof p.source === 'string' ? p.source : '',
+          output: typeof p.output === 'string' ? p.output : '',
+          recursive: typeof p.recursive === 'boolean' ? p.recursive : true,
+          overwrite: typeof p.overwrite === 'boolean' ? p.overwrite : false,
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+    return { source: '', output: '', recursive: true, overwrite: false };
+  }
+
+  private savePrefs(): void {
+    try {
+      localStorage.setItem(
+        STUDIO_PREFS_KEY,
+        JSON.stringify({
+          source: this.sourceDir(),
+          output: this.outputDir(),
+          recursive: this.recursive(),
+          overwrite: this.overwrite(),
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
   }
 
   private getMermaid(): Promise<any> {

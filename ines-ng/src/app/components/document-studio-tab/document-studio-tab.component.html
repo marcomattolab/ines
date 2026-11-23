@@ -188,6 +188,12 @@
             <div class="ds-message">{{ j.message }}</div>
           }
 
+          @if (isFinished() && j.output_dir) {
+            <div class="ds-message">
+              Output: <code>{{ j.output_dir }}</code>
+            </div>
+          }
+
           <div class="ds-subline">
             @if (j.current_file) {
               <span

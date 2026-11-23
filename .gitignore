@@ -1,2 +1,11 @@
 # macOS
 .DS_Store
+
+# MiniCPM Document Studio backend (heavy / generated artifacts)
+backend/.venv/
+.minicpm-ocr/
+models/
+tools/
+.runs/
+__pycache__/
+*.pyc
